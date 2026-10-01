@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://applyguard.local/contracts/evidence-match.schema.json",
+  "title": "Evidence Match",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["match_id", "jd_id", "candidate_id", "matches"],
+  "properties": {
+    "match_id": {"type": "string", "pattern": "^match_[a-zA-Z0-9_]+$"},
+    "jd_id": {"type": "string"},
+    "candidate_id": {"type": "string"},
+    "matches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["requirement_id", "experience_id", "claim_ids", "relevance_score", "evidence_strength", "rationale", "conflicts"],
+        "properties": {
+          "requirement_id": {"type": "string"},
+          "experience_id": {"type": "string"},
+          "claim_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true},
+          "relevance_score": {"type": "number", "minimum": 0, "maximum": 1},
+          "evidence_strength": {"type": "string", "enum": ["WEAK", "MEDIUM", "STRONG"]},
+          "rationale": {"type": "string", "minLength": 1},
+          "conflicts": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}
+

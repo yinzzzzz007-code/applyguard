@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://applyguard.local/contracts/resume-claim.schema.json",
+  "title": "Resume Claim",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["claim_id", "application_id", "text", "evidence_ids", "requirement_ids", "status"],
+  "properties": {
+    "claim_id": {"type": "string", "pattern": "^claim_[a-zA-Z0-9_]+$"},
+    "application_id": {"type": "string", "pattern": "^app_[a-zA-Z0-9_]+$"},
+    "text": {"type": "string", "minLength": 1},
+    "evidence_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true},
+    "requirement_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true},
+    "status": {"type": "string", "enum": ["DRAFT", "SELECTED", "BLOCKED"]}
+  }
+}
+

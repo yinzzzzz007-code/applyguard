@@ -1,0 +1,16 @@
+digraph Workflow {
+  graph [rankdir=LR, bgcolor="#FFFFFF", pad="0.2", nodesep="0.25", ranksep="0.3", fontname="Arial"];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=11, color="#25344A", fillcolor="#F4F6F8", fontcolor="#172033", margin="0.14,0.10"];
+  edge [color="#65758B", penwidth=1.6, arrowsize=0.75];
+  vault [label="1  Career Vault"];
+  parser [label="2  JD Parser"];
+  matcher [label="3  Evidence Matcher"];
+  selector [label="4  Resume Selector"];
+  validator [label="5  Claim Validator", fillcolor="#FCEAEC", color="#9F1D2E"];
+  mapper [label="6  ATS Form Mapper"];
+  risk [label="7  Risk Check", fillcolor="#FCEAEC", color="#9F1D2E"];
+  confirm [label="8  Human Confirmation", fillcolor="#FFF4DA", color="#A36B00"];
+  audit [label="9  Audit Record", fillcolor="#EEF5EC"];
+  vault -> parser -> matcher -> selector -> validator -> mapper -> risk -> confirm -> audit;
+  validator -> confirm [label="BLOCK", color="#9F1D2E", fontcolor="#9F1D2E", constraint=false];
+}

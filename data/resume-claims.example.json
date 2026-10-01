@@ -1,0 +1,13 @@
+{
+  "claims": [
+    {
+      "claim_id": "claim_python_api",
+      "application_id": "app_demo_001",
+      "text": "Built a Python HTTP API and added automated tests for core routes.",
+      "evidence_ids": ["ev_repo_api", "ev_test_report"],
+      "requirement_ids": ["req_python_api", "req_testing"],
+      "status": "SELECTED"
+    }
+  ]
+}
+

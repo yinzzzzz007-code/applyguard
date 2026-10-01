@@ -1,0 +1,13 @@
+{
+  "results": [
+    {
+      "claim_id": "claim_python_api",
+      "state": "VERIFIED",
+      "grounded": true,
+      "support_score": 0.95,
+      "unsupported_fragments": [],
+      "explanation": "Both implementation and test evidence support the selected statement."
+    }
+  ]
+}
+

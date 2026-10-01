@@ -1,0 +1,26 @@
+{
+  "match_id": "match_demo_001",
+  "jd_id": "jd_demo_swe_intern",
+  "candidate_id": "cand_demo_001",
+  "matches": [
+    {
+      "requirement_id": "req_python_api",
+      "experience_id": "exp_api_course_project",
+      "claim_ids": ["claim_python_api"],
+      "relevance_score": 0.92,
+      "evidence_strength": "STRONG",
+      "rationale": "The verified course project directly demonstrates Python API implementation.",
+      "conflicts": []
+    },
+    {
+      "requirement_id": "req_testing",
+      "experience_id": "exp_api_course_project",
+      "claim_ids": ["claim_python_api"],
+      "relevance_score": 0.88,
+      "evidence_strength": "STRONG",
+      "rationale": "The test report supports the automated-testing requirement.",
+      "conflicts": []
+    }
+  ]
+}
+

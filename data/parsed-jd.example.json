@@ -1,0 +1,33 @@
+{
+  "jd_id": "jd_demo_swe_intern",
+  "title": "Software Engineering Intern",
+  "company": "Example Technology Company",
+  "source_text": "We are looking for a software engineering intern who can build Python APIs, write automated tests, and collaborate with Git.",
+  "requirements": [
+    {
+      "requirement_id": "req_python_api",
+      "type": "HARD",
+      "category": "SKILL",
+      "text": "Build Python APIs",
+      "normalized_terms": ["Python", "HTTP API"],
+      "evidence_text": "can build Python APIs"
+    },
+    {
+      "requirement_id": "req_testing",
+      "type": "HARD",
+      "category": "RESPONSIBILITY",
+      "text": "Write automated tests",
+      "normalized_terms": ["automated testing"],
+      "evidence_text": "write automated tests"
+    },
+    {
+      "requirement_id": "req_git",
+      "type": "PREFERRED",
+      "category": "SKILL",
+      "text": "Collaborate with Git",
+      "normalized_terms": ["Git"],
+      "evidence_text": "collaborate with Git"
+    }
+  ]
+}
+

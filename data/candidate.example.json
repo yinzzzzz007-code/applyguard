@@ -1,0 +1,43 @@
+{
+  "candidate_id": "cand_demo_001",
+  "profile": {
+    "display_name": "Demo Candidate",
+    "education": "BSc Software Engineering student",
+    "consent": "Fictional proposal data only"
+  },
+  "experiences": [
+    {
+      "experience_id": "exp_api_course_project",
+      "candidate_id": "cand_demo_001",
+      "organization": "University Course Project",
+      "role": "Backend Developer",
+      "start_date": "2026-03",
+      "end_date": "2026-06",
+      "summary": "Built and tested a Python HTTP API for a team project.",
+      "skills": ["Python", "HTTP API", "automated testing", "Git"],
+      "claims": [
+        {
+          "claim_id": "claim_python_api",
+          "text": "Built a Python HTTP API and added automated tests for core routes.",
+          "evidence_ids": ["ev_repo_api", "ev_test_report"]
+        }
+      ],
+      "evidence_sources": [
+        {
+          "evidence_id": "ev_repo_api",
+          "type": "REPOSITORY",
+          "description": "Fictional repository snapshot showing API route implementation.",
+          "uri": null
+        },
+        {
+          "evidence_id": "ev_test_report",
+          "type": "DOCUMENT",
+          "description": "Fictional test report showing passing route tests.",
+          "uri": null
+        }
+      ],
+      "verification_state": "VERIFIED"
+    }
+  ]
+}
+

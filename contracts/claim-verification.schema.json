@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://applyguard.local/contracts/claim-verification.schema.json",
+  "title": "Claim Verification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["claim_id", "state", "grounded", "support_score", "unsupported_fragments", "explanation"],
+  "properties": {
+    "claim_id": {"type": "string"},
+    "state": {"type": "string", "enum": ["VERIFIED", "NEEDS_REVIEW", "BLOCKED"]},
+    "grounded": {"type": "boolean"},
+    "support_score": {"type": "number", "minimum": 0, "maximum": 1},
+    "unsupported_fragments": {"type": "array", "items": {"type": "string"}},
+    "explanation": {"type": "string", "minLength": 1}
+  }
+}
+

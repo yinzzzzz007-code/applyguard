@@ -1,0 +1,16 @@
+{
+  "application_id": "app_demo_001",
+  "risk_level": "MEDIUM",
+  "risks": [
+    {
+      "risk_id": "risk_missing_auth",
+      "type": "MISSING_FIELD",
+      "severity": "WARNING",
+      "message": "Work authorization is not available in the Career Vault.",
+      "related_claim_ids": [],
+      "mitigation": "Ask the user to provide or confirm the field before submission."
+    }
+  ],
+  "requires_human_confirmation": true
+}
+

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://applyguard.local/contracts/parsed-jd.schema.json",
+  "title": "Parsed JD",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["jd_id", "title", "company", "source_text", "requirements"],
+  "properties": {
+    "jd_id": {"type": "string", "pattern": "^jd_[a-zA-Z0-9_]+$"},
+    "title": {"type": "string", "minLength": 1},
+    "company": {"type": "string", "minLength": 1},
+    "source_text": {"type": "string", "minLength": 20},
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["requirement_id", "type", "category", "text", "normalized_terms", "evidence_text"],
+        "properties": {
+          "requirement_id": {"type": "string", "pattern": "^req_[a-zA-Z0-9_]+$"},
+          "type": {"type": "string", "enum": ["HARD", "PREFERRED"]},
+          "category": {"type": "string", "enum": ["SKILL", "EXPERIENCE", "EDUCATION", "RESPONSIBILITY", "OTHER"]},
+          "text": {"type": "string", "minLength": 1},
+          "normalized_terms": {"type": "array", "items": {"type": "string"}},
+          "evidence_text": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}
+

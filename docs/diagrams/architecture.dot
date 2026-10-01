@@ -1,0 +1,29 @@
+digraph Architecture {
+  graph [rankdir=LR, bgcolor="#FFFFFF", pad="0.25", nodesep="0.42", ranksep="0.62", fontname="Arial"];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=12, color="#25344A", fillcolor="#F4F6F8", fontcolor="#172033", margin="0.18,0.12"];
+  edge [color="#65758B", penwidth=1.7, arrowsize=0.8, fontname="Arial", fontsize=10];
+
+  user [label="Applicant", shape=oval, fillcolor="#FFFFFF"];
+  ui [label="Web UI / ATS Simulator", fillcolor="#E9EFF7"];
+  orchestrator [label="Workflow Orchestrator", fillcolor="#DDE8F4"];
+  vault [label="Career Vault\nExperience + evidence"];
+  parser [label="JD Parser"];
+  matcher [label="Evidence Matcher"];
+  selector [label="Resume Selector"];
+  validator [label="Claim Validator", fillcolor="#FCEAEC", color="#9F1D2E"];
+  risk [label="Risk Check", fillcolor="#FCEAEC", color="#9F1D2E"];
+  confirm [label="Human Confirmation", fillcolor="#FFF4DA", color="#A36B00"];
+  audit [label="Audit Record", shape=cylinder, fillcolor="#EEF5EC"];
+
+  user -> ui -> orchestrator;
+  orchestrator -> vault;
+  orchestrator -> parser;
+  vault -> matcher;
+  parser -> matcher;
+  matcher -> selector -> validator -> risk -> confirm;
+  confirm -> ui [label="confirm / edit / cancel"];
+  orchestrator -> audit [label="trace"];
+  validator -> audit [style=dashed];
+  risk -> audit [style=dashed];
+  confirm -> audit [style=dashed];
+}
