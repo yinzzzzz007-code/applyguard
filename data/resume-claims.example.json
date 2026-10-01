@@ -6,8 +6,10 @@
       "text": "Built a Python HTTP API and added automated tests for core routes.",
       "evidence_ids": ["ev_repo_api", "ev_test_report"],
       "requirement_ids": ["req_python_api", "req_testing"],
+      "evidence_support_score": 0.95,
+      "selection_reason": "High relevance to two hard requirements with repository and test evidence.",
+      "removed_alternatives": [],
       "status": "SELECTED"
     }
   ]
 }
-

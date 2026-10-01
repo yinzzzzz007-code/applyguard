@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://applyguard.local/contracts/form-mapping.schema.json",
+  "title": "ATS Form Mapping",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["application_id", "target", "fields", "unmapped_fields", "consistency_state"],
+  "properties": {
+    "application_id": {"type": "string", "pattern": "^app_[a-zA-Z0-9_]+$"},
+    "target": {"type": "string", "enum": ["ATS_SIMULATOR", "LIMITED_ATS_TARGET"]},
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["field_id", "label", "value", "source_claim_ids", "action"],
+        "properties": {
+          "field_id": {"type": "string"},
+          "label": {"type": "string", "minLength": 1},
+          "value": {"type": "string"},
+          "source_claim_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "action": {"type": "string", "enum": ["SAFE_TO_FILL", "REQUIRES_CONFIRMATION", "BLOCKED"]}
+        }
+      }
+    },
+    "unmapped_fields": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "consistency_state": {"type": "string", "enum": ["CONSISTENT", "NEEDS_REVIEW", "BLOCKED"]}
+  }
+}

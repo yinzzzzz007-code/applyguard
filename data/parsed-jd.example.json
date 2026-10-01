@@ -10,7 +10,8 @@
       "category": "SKILL",
       "text": "Build Python APIs",
       "normalized_terms": ["Python", "HTTP API"],
-      "evidence_text": "can build Python APIs"
+      "evidence_text": "can build Python APIs",
+      "confidence": 0.97
     },
     {
       "requirement_id": "req_testing",
@@ -18,7 +19,8 @@
       "category": "RESPONSIBILITY",
       "text": "Write automated tests",
       "normalized_terms": ["automated testing"],
-      "evidence_text": "write automated tests"
+      "evidence_text": "write automated tests",
+      "confidence": 0.96
     },
     {
       "requirement_id": "req_git",
@@ -26,8 +28,8 @@
       "category": "SKILL",
       "text": "Collaborate with Git",
       "normalized_terms": ["Git"],
-      "evidence_text": "collaborate with Git"
+      "evidence_text": "collaborate with Git",
+      "confidence": 0.91
     }
   ]
 }
-

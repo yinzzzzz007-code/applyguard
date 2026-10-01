@@ -1,29 +1,26 @@
 digraph Architecture {
-  graph [rankdir=LR, bgcolor="#FFFFFF", pad="0.25", nodesep="0.42", ranksep="0.62", fontname="Arial"];
-  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=12, color="#25344A", fillcolor="#F4F6F8", fontcolor="#172033", margin="0.18,0.12"];
-  edge [color="#65758B", penwidth=1.7, arrowsize=0.8, fontname="Arial", fontsize=10];
+  graph [rankdir=LR, bgcolor="#FFFFFF", pad="0.25", nodesep="0.38", ranksep="0.58", fontname="Arial", splines=ortho];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=10.5, color="#25344A", fillcolor="#F4F6F8", fontcolor="#172033", margin="0.16,0.11"];
+  edge [color="#65758B", penwidth=1.5, arrowsize=0.72, fontname="Arial", fontsize=9];
 
   user [label="Applicant", shape=oval, fillcolor="#FFFFFF"];
-  ui [label="Web UI / ATS Simulator", fillcolor="#E9EFF7"];
+  ui [label="Web App\nVault / Jobs / Resume", fillcolor="#E9EFF7"];
+  scanner [label="ATS Page Scanner\nor Proposal Simulator", fillcolor="#E9EFF7"];
+  api [label="Application API", fillcolor="#DDE8F4"];
   orchestrator [label="Workflow Orchestrator", fillcolor="#DDE8F4"];
-  vault [label="Career Vault\nExperience + evidence"];
-  parser [label="JD Parser"];
-  matcher [label="Evidence Matcher"];
-  selector [label="Resume Selector"];
-  validator [label="Claim Validator", fillcolor="#FCEAEC", color="#9F1D2E"];
-  risk [label="Risk Check", fillcolor="#FCEAEC", color="#9F1D2E"];
-  confirm [label="Human Confirmation", fillcolor="#FFF4DA", color="#A36B00"];
-  audit [label="Audit Record", shape=cylinder, fillcolor="#EEF5EC"];
+  router [label="Skill Router", fillcolor="#DDE8F4"];
+  skills [label="Specialized Skills\nJD Parser · Evidence Matcher · Resume Selector\nClaim Validator · ATS Form Mapper · Risk Skill", fillcolor="#FCEAEC", color="#9F1D2E"];
+  contract [label="Schema + Semantic Validator\nPass / Retry / Fallback", fillcolor="#FFF4DA", color="#A36B00"];
+  vault [label="Career Evidence Graph\nPostgreSQL + pgvector", shape=cylinder, fillcolor="#EEF5EC"];
+  confirm [label="Human Review\nEdit / Confirm / Cancel", fillcolor="#FFF4DA", color="#A36B00"];
+  audit [label="Application Version\n+ Audit Record", shape=cylinder, fillcolor="#EEF5EC"];
 
-  user -> ui -> orchestrator;
-  orchestrator -> vault;
-  orchestrator -> parser;
-  vault -> matcher;
-  parser -> matcher;
-  matcher -> selector -> validator -> risk -> confirm;
-  confirm -> ui [label="confirm / edit / cancel"];
-  orchestrator -> audit [label="trace"];
-  validator -> audit [style=dashed];
-  risk -> audit [style=dashed];
-  confirm -> audit [style=dashed];
+  user -> ui -> api -> orchestrator -> router;
+  scanner -> api;
+  router -> skills -> contract -> confirm;
+  vault -> skills [label="retrieval"];
+  orchestrator -> vault [label="read / write"];
+  confirm -> ui [label="decision"];
+  confirm -> audit;
+  orchestrator -> audit [style=dashed, label="trace"];
 }

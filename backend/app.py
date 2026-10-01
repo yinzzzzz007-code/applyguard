@@ -46,11 +46,19 @@ def build_mock_workflow(request: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(jd_text, str) or len(jd_text.strip()) < 20:
         raise ValueError("jd_text must contain at least 20 characters")
 
+    application_id = request.get("application_id") or "app_demo_001"
     parsed_jd = _load_json("parsed-jd.example.json")
     evidence_match = _load_json("evidence-match.example.json")
     resume_claims = _load_json("resume-claims.example.json")["claims"]
     verification_results = _load_json("claim-verification.example.json")["results"]
+    form_mapping = _load_json("form-mapping.example.json")
     risk_result = _load_json("risk-result.example.json")
+
+    evidence_match["candidate_id"] = candidate_id
+    for claim in resume_claims:
+        claim["application_id"] = application_id
+    form_mapping["application_id"] = application_id
+    risk_result["application_id"] = application_id
 
     step_trace = [
         {"step": "Career Vault", "status": "COMPLETED"},
@@ -66,18 +74,16 @@ def build_mock_workflow(request: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "trace_id": trace_id,
-        "application_id": request.get("application_id") or "app_demo_001",
+        "application_id": application_id,
         "candidate_id": candidate_id,
+        "execution_mode": "DETERMINISTIC_FIXTURE",
+        "mock_notice": "The proposal scaffold validates the workflow and contracts. It does not dynamically analyze the submitted JD.",
         "workflow_status": "AWAITING_HUMAN_CONFIRMATION",
         "parsed_jd": parsed_jd,
         "evidence_match": evidence_match,
         "resume_claims": resume_claims,
         "claim_verification": verification_results,
-        "ats_form_mapping": {
-            "job_title": parsed_jd["title"],
-            "candidate_summary": resume_claims[0]["text"],
-            "unmapped_fields": ["work_authorization"],
-        },
+        "ats_form_mapping": form_mapping,
         "risk_result": risk_result,
         "human_confirmation": {
             "required": True,
@@ -86,9 +92,13 @@ def build_mock_workflow(request: dict[str, Any]) -> dict[str, Any]:
         },
         "audit_record": {
             "audit_id": f"audit_{uuid.uuid4().hex[:12]}",
+            "application_id": application_id,
+            "version": 1,
             "created_at": _utc_now(),
             "event": "APPLICATION_DRAFT_PREPARED",
             "actor": "applyguard.mock-workflow",
+            "trace_id": trace_id,
+            "decision": "PENDING",
         },
         "step_trace": step_trace,
     }
@@ -185,4 +195,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -3,14 +3,16 @@ digraph Sequence {
   node [shape=box, style="rounded,filled", fontname="Arial", fontsize=11, color="#25344A", fillcolor="#F4F6F8", fontcolor="#172033"];
   edge [color="#65758B", penwidth=1.5, arrowsize=0.75, fontname="Arial", fontsize=10];
   start [label="Applicant enters JD and chooses stored experience", fillcolor="#E9EFF7"];
-  parse [label="Orchestrator requests Parsed JD"];
+  route [label="Skill Router dispatches typed request"];
+  parse [label="JD Skill returns requirements + source text"];
+  validate [label="Schema + semantic validators pass, retry, or fall back", fillcolor="#FFF4DA", color="#A36B00"];
   match [label="Matcher returns ranked evidence with rationale"];
   draft [label="Selector drafts claims with evidence IDs"];
   verify [label="Validator returns VERIFIED / NEEDS_REVIEW / BLOCKED", fillcolor="#FCEAEC", color="#9F1D2E"];
   map [label="Mapper prepares simulated ATS fields"];
-  check [label="Risk Check exposes unsupported or missing fields", fillcolor="#FCEAEC", color="#9F1D2E"];
-  decision [label="Applicant confirms, edits, or cancels", shape=diamond, fillcolor="#FFF4DA", color="#A36B00"];
-  audit [label="Audit Record stores trace and decision", fillcolor="#EEF5EC"];
-  start -> parse -> match -> draft -> verify -> map -> check -> decision -> audit;
+  check [label="Risk + consistency check classifies fill / confirm / block", fillcolor="#FCEAEC", color="#9F1D2E"];
+  decision [label="Applicant edits, confirms, cancels, or submits manually", shape=diamond, fillcolor="#FFF4DA", color="#A36B00"];
+  audit [label="Application version + audit record store trace and decision", fillcolor="#EEF5EC"];
+  start -> route -> parse -> validate -> match -> draft -> verify -> map -> check -> decision -> audit;
   decision -> draft [label="edit", color="#A36B00", fontcolor="#A36B00"];
 }

@@ -1,6 +1,6 @@
 # Interface contracts
 
-The JSON Schemas in `contracts/` are the proposal source of truth. All service implementations may change internally, but their exchanged objects must remain compatible.
+The JSON Schemas in `contracts/` are the proposal source of truth. All service implementations may change internally, but their exchanged objects must remain compatible or use an explicit contract version. The contracts preserve the selected topic's evidence graph, explainable selection, validation, risk, form mapping, and audit boundaries even when the proposal uses deterministic fixtures.
 
 ## Contract list
 
@@ -12,7 +12,21 @@ The JSON Schemas in `contracts/` are the proposal source of truth. All service i
 | `resume-claim.schema.json` | Resume Selector | Claim Validator |
 | `claim-verification.schema.json` | Claim Validator | Risk Check and UI |
 | `risk-result.schema.json` | Risk Check | Human Confirmation and UI |
+| `form-mapping.schema.json` | ATS Form Mapper Skill | Risk Skill and UI |
+| `audit-record.schema.json` | Workflow Orchestrator | Audit view and evaluation |
 | `error.schema.json` | Every service | UI, logs, and tests |
+
+## Shared skill boundary
+
+AI-assisted modules follow `Router → Specialized Skill → Validator`. Each skill result must pass JSON Schema validation and semantic validation. A failed result may retry once under the configured policy and must then use a deterministic fallback or stop safely. The workflow records which path produced the result.
+
+Required trace fields across skill outputs are:
+
+- `trace_id` or a parent workflow trace;
+- source evidence text or evidence IDs;
+- confidence or support score where uncertainty matters;
+- explanation for selection, removal, review, or blocking;
+- validation state and fallback state.
 
 ## API endpoints
 
@@ -36,7 +50,7 @@ Required request fields:
 - `candidate_id`: non-empty string.
 - `jd_text`: at least 20 characters.
 
-The response contains `parsed_jd`, `evidence_match`, `resume_claims`, `claim_verification`, `ats_form_mapping`, `risk_result`, `human_confirmation`, `audit_record`, and the nine-step `step_trace`.
+The response contains `parsed_jd`, `evidence_match`, `resume_claims`, `claim_verification`, `ats_form_mapping`, `risk_result`, `human_confirmation`, `audit_record`, and the nine-step `step_trace`. In the proposal scaffold these objects may come from fixtures; the endpoint must label itself as a mock and must not imply that the input JD was analyzed dynamically.
 
 ## Unified errors
 
@@ -64,5 +78,4 @@ Initial error codes:
 
 ## Change rule
 
-Backward-compatible fields may be added after A's handoff. Renaming or removing a field requires a versioned contract and coordinated updates across producers, consumers, examples, diagrams, and tests.
-
+Backward-compatible fields may be added after A's handoff. Renaming or removing a field requires a versioned contract and coordinated updates across producers, consumers, examples, diagrams, and tests. The fields added to preserve the selected topic's core mechanisms are part of the A-to-B baseline and must not be silently dropped.

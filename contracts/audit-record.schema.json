@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://applyguard.local/contracts/audit-record.schema.json",
+  "title": "Application Audit Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["audit_id", "application_id", "version", "created_at", "event", "actor", "trace_id", "decision"],
+  "properties": {
+    "audit_id": {"type": "string", "pattern": "^audit_[a-zA-Z0-9_]+$"},
+    "application_id": {"type": "string", "pattern": "^app_[a-zA-Z0-9_]+$"},
+    "version": {"type": "integer", "minimum": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "event": {"type": "string", "minLength": 1},
+    "actor": {"type": "string", "minLength": 1},
+    "trace_id": {"type": "string", "pattern": "^trace_[a-zA-Z0-9_]+$"},
+    "decision": {"type": "string", "enum": ["PENDING", "CONFIRMED", "EDITED", "CANCELLED", "SUBMITTED_BY_USER"]}
+  }
+}

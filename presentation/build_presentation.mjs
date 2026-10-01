@@ -6,7 +6,7 @@ import { Presentation, PresentationFile } from "@oai/artifact-tool";
 const workspaceDir = path.resolve(process.cwd());
 const SKILL_DIR = "C:/Users/84032/.codex/plugins/cache/openai-primary-runtime/presentations/26.905.11957/skills/presentations";
 const TMP_DIR = path.join(workspaceDir, ".build", "presentation");
-const FINAL_PPTX = path.join(workspaceDir, "presentation", "applyguard-proposal-foundation-final.pptx");
+const FINAL_PPTX = path.join(workspaceDir, "presentation", "applyguard-proposal-foundation-v1.1.1-final.pptx");
 const RUNTIME_PYTHON = "C:/Users/84032/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe";
 
 const {
@@ -106,7 +106,7 @@ function baseSlide(title, number) {
 
 function note(slide, extra = "") {
   slide.speakerNotes.textFrame.setText(
-    `Sources: Project_Kickoff.pdf, pages 5-7; team plan at https://my.feishu.cn/wiki/DAZgwqkIYixhoQk18E7cFlwhngb; docs/proposal-scope.md.${extra ? ` ${extra}` : ""}`,
+    `Sources: Project_Kickoff.pdf, pages 5-7; selected topic at https://tcnaj3eh0jga.feishu.cn/wiki/QQfmw6BmdiglaUk1T6VcpEhRnvd; team plan at https://my.feishu.cn/wiki/DAZgwqkIYixhoQk18E7cFlwhngb; docs/proposal-scope.md.${extra ? ` ${extra}` : ""}`,
   );
 }
 
@@ -149,7 +149,7 @@ function labelBox(slide, text, position, options = {}) {
     fontSize: 20,
     color: "#AAB9CA",
   });
-  addText(slide, "Proposal foundation  |  10 October 2026", { left: 78, top: 606, width: 720, height: 30 }, {
+  addText(slide, "Proposal foundation\n10 October 2026", { left: 78, top: 592, width: 720, height: 54 }, {
     fontSize: 17,
     color: "#AAB9CA",
   });
@@ -181,9 +181,9 @@ function labelBox(slide, text, position, options = {}) {
 {
   const slide = baseSlide("Target User", 3);
   const rows = [
-    ["Primary user", "University students and recent graduates applying for internships or entry-level software roles"],
-    ["Available evidence", "Course projects, internships, volunteer work, repositories, reports, and certificates"],
-    ["Decision pressure", "Select relevant experience, avoid exaggeration, and confirm risky ATS fields before submission"],
+    ["Primary user", "Senior undergraduates and postgraduates seeking software, AI, or data roles"],
+    ["Application pattern", "At least five jobs reviewed or applied to per week during a concentrated search period"],
+    ["Available evidence", "At least three substantial project, research, competition, or internship experiences"],
     ["Study input", "B will run 10-20 lightweight surveys and 4-6 semi-structured interviews before the proposal"],
   ];
   rows.forEach(([label, value], i) => {
@@ -241,7 +241,7 @@ function labelBox(slide, text, position, options = {}) {
 
 // 6. Workflow
 {
-  const slide = baseSlide("End-to-End Workflow", 6);
+  const slide = baseSlide("User Journey and Internal Pipeline", 6);
   const topXs = [52, 296, 540, 784, 1028];
   const topLabels = ["1\nCareer Vault", "2\nJD Parser", "3\nEvidence Matcher", "4\nResume Selector", "5\nClaim Validator"];
   const top = topLabels.map((label, i) => labelBox(slide, label, { left: topXs[i], top: 192, width: 200, height: 86 }, {
@@ -263,45 +263,51 @@ function labelBox(slide, text, position, options = {}) {
   for (let i = 0; i < bottom.length - 1; i++) {
     slide.shapes.connect(bottom[i], bottom[i + 1], { kind: "straight", fromSide: "left", toSide: "right", line: { style: "solid", fill: C.muted, width: 2 }, tail: { type: "arrow", width: "med", length: "med" } });
   }
-  addText(slide, "The proposal demo ends with an auditable draft. It does not submit an application.", { left: 170, top: 570, width: 930, height: 44 }, {
-    fontSize: 23, bold: true, color: C.crimson, alignment: "center",
+  addText(slide, "The 12-step user journey maps to these 9 modules. Final consistency runs before confirmation; the applicant submits manually.", { left: 120, top: 566, width: 1040, height: 62 }, {
+    fontSize: 21, bold: true, color: C.crimson, alignment: "center",
   });
   note(slide);
 }
 
 // 7. Architecture
 {
-  const slide = baseSlide("System Architecture", 7);
-  const user = labelBox(slide, "Applicant", { left: 52, top: 300, width: 170, height: 72 }, { geometry: "ellipse", fill: C.white });
-  const ui = labelBox(slide, "Web UI and\nATS Simulator", { left: 278, top: 290, width: 190, height: 92 }, { fill: C.bluePale, line: C.blue });
-  const orchestrator = labelBox(slide, "Workflow\nOrchestrator", { left: 520, top: 290, width: 190, height: 92 }, { fill: "#DDE8F4", line: C.blue });
-  const data = labelBox(slide, "Career Vault\nand contracts", { left: 762, top: 176, width: 190, height: 84 }, { fill: C.pale });
-  const intelligence = labelBox(slide, "Parser, matcher,\nselector, validator", { left: 762, top: 300, width: 190, height: 84 }, { fill: C.crimsonPale, line: C.crimson, color: C.crimson });
-  const control = labelBox(slide, "Risk check and\nhuman confirmation", { left: 762, top: 424, width: 190, height: 84 }, { fill: C.goldPale, line: C.gold, color: C.gold });
-  const audit = labelBox(slide, "Audit Record", { left: 1020, top: 300, width: 190, height: 84 }, { fill: C.greenPale, line: C.green, color: C.green });
+  const slide = baseSlide("Target System Architecture", 7);
+  const user = labelBox(slide, "Applicant", { left: 38, top: 292, width: 150, height: 66 }, { geometry: "ellipse", fill: C.white, fontSize: 17 });
+  const ui = labelBox(slide, "Web App +\nATS Scanner", { left: 218, top: 282, width: 160, height: 86 }, { fill: C.bluePale, line: C.blue, fontSize: 17 });
+  const api = labelBox(slide, "Application API +\nOrchestrator", { left: 418, top: 282, width: 180, height: 86 }, { fill: "#DDE8F4", line: C.blue, fontSize: 17 });
+  const router = labelBox(slide, "Skill Router", { left: 640, top: 282, width: 150, height: 86 }, { fill: "#DDE8F4", line: C.blue, fontSize: 18 });
+  const skills = labelBox(slide, "JD · Evidence · Resume\nClaim · Form Map · Risk", { left: 832, top: 184, width: 230, height: 100 }, { fill: C.crimsonPale, line: C.crimson, color: C.crimson, fontSize: 16 });
+  const validator = labelBox(slide, "Schema + Semantic Validator\nRetry or deterministic fallback", { left: 832, top: 380, width: 230, height: 100 }, { fill: C.goldPale, line: C.gold, color: C.gold, fontSize: 16 });
+  const data = labelBox(slide, "Career Evidence Graph\nPostgreSQL + pgvector", { left: 832, top: 510, width: 230, height: 82 }, { fill: C.greenPale, line: C.green, color: C.green, fontSize: 16 });
+  const review = labelBox(slide, "Human Review +\nVersioned Audit", { left: 1092, top: 386, width: 150, height: 86 }, { fill: C.goldPale, line: C.gold, color: C.gold, fontSize: 16 });
   slide.shapes.connect(user, ui, { kind: "straight", fromSide: "right", toSide: "left", line: { style: "solid", fill: C.muted, width: 2 }, tail: { type: "arrow" } });
-  slide.shapes.connect(ui, orchestrator, { kind: "straight", fromSide: "right", toSide: "left", line: { style: "solid", fill: C.muted, width: 2 }, tail: { type: "arrow" } });
-  [data, intelligence, control].forEach((target) => slide.shapes.connect(orchestrator, target, { kind: "elbow", fromSide: "right", toSide: "left", line: { style: "solid", fill: C.muted, width: 2 }, tail: { type: "arrow" } }));
-  [data, intelligence, control].forEach((source) => slide.shapes.connect(source, audit, { kind: "elbow", fromSide: "right", toSide: "left", line: { style: "dashed", fill: C.muted, width: 1.6 }, tail: { type: "arrow", width: "sm", length: "sm" } }));
-  addText(slide, "Module contracts let B, C, and D replace internals without redesigning the full system.", { left: 200, top: 586, width: 880, height: 42 }, { fontSize: 22, color: C.navy, alignment: "center" });
+  slide.shapes.connect(ui, api, { kind: "straight", fromSide: "right", toSide: "left", line: { style: "solid", fill: C.muted, width: 2 }, tail: { type: "arrow" } });
+  slide.shapes.connect(api, router, { kind: "straight", fromSide: "right", toSide: "left", line: { style: "solid", fill: C.muted, width: 2 }, tail: { type: "arrow" } });
+  slide.shapes.connect(router, skills, { kind: "elbow", fromSide: "right", toSide: "left", line: { style: "solid", fill: C.muted, width: 2 }, tail: { type: "arrow" } });
+  slide.shapes.connect(skills, validator, { kind: "straight", fromSide: "bottom", toSide: "top", line: { style: "solid", fill: C.muted, width: 2 }, tail: { type: "arrow" } });
+  slide.shapes.connect(validator, api, { kind: "elbow", fromSide: "left", toSide: "bottom", line: { style: "solid", fill: C.muted, width: 1.7 }, tail: { type: "arrow" } });
+  slide.shapes.connect(data, api, { kind: "elbow", fromSide: "left", toSide: "bottom", line: { style: "dashed", fill: C.green, width: 1.7 }, tail: { type: "arrow" } });
+  slide.shapes.connect(validator, review, { kind: "straight", fromSide: "right", toSide: "left", line: { style: "solid", fill: C.muted, width: 2 }, tail: { type: "arrow" } });
+  addText(slide, "The proposal uses fixtures and an ATS simulator while preserving every final-system boundary.", { left: 190, top: 622, width: 900, height: 34 }, { fontSize: 20, color: C.navy, alignment: "center" });
   note(slide);
 }
 
 // 8. Technical core
 {
-  const slide = baseSlide("Technical Core and AI Boundary", 8);
+  const slide = baseSlide("Four Technical Mechanisms", 8);
   const columns = [
-    ["Deterministic code", ["Schema validation", "Scores and constraints", "State transitions", "Confirmation gate"]],
-    ["AI-assisted modules", ["JD requirement extraction", "Claim drafting", "Explanation generation", "Provider fallback"]],
-    ["Enforced evidence", ["Evidence IDs", "Unsupported-fragment detection", "Visible risk reasons", "Audit trace"]],
+    ["Evidence Graph", ["Experience and claim links", "Metrics and source evidence", "Confidence and verification"]],
+    ["Constrained Selection", ["JD relevance and impact", "Length and evidence constraints", "Selection and removal reasons"]],
+    ["Claim Verification", ["Claim-level support score", "Unsupported fragments", "Verify, review, or block"]],
+    ["Risk-aware Execution", ["Safe fill", "Human confirmation", "Block high-risk actions"]],
   ];
-  const xs = [70, 440, 810];
+  const xs = [48, 348, 648, 948];
   columns.forEach(([heading, items], i) => {
-    addText(slide, heading, { left: xs[i], top: 170, width: 320, height: 44 }, { fontSize: 25, bold: true, color: i === 1 ? C.crimson : C.navy });
-    addShape(slide, "line", { left: xs[i], top: 228, width: 310, height: 1 }, "none", { fill: i === 1 ? C.crimson : C.line, width: i === 1 ? 3 : 1 });
-    addText(slide, items.join("\n\n"), { left: xs[i], top: 258, width: 320, height: 290 }, { fontSize: 23, color: C.ink });
+    addText(slide, heading, { left: xs[i], top: 168, width: 265, height: 62 }, { fontSize: 23, bold: true, color: i >= 2 ? C.crimson : C.navy });
+    addShape(slide, "line", { left: xs[i], top: 236, width: 260, height: 1 }, "none", { fill: i >= 2 ? C.crimson : C.line, width: i >= 2 ? 3 : 1 });
+    addText(slide, items.join("\n\n"), { left: xs[i], top: 268, width: 268, height: 260 }, { fontSize: 20, color: C.ink });
   });
-  addText(slide, "AI can propose content. Contracts, checks, and the applicant decide what proceeds.", { left: 140, top: 584, width: 1000, height: 42 }, { fontSize: 25, bold: true, color: C.crimson, alignment: "center" });
+  addText(slide, "The Skill Router may call AI, but validators and the applicant control every transition.", { left: 130, top: 582, width: 1020, height: 42 }, { fontSize: 23, bold: true, color: C.crimson, alignment: "center" });
   note(slide);
 }
 
@@ -331,10 +337,10 @@ function labelBox(slide, text, position, options = {}) {
 {
   const slide = baseSlide("Team Plan", 10);
   const rows = [
-    ["A", "1-2 Oct", "Scope, architecture, contracts, repository foundation, handoff"],
-    ["B", "3-4 Oct", "Career Vault, evidence matching, formative user study"],
-    ["C", "5-6 Oct", "JD parser, claim validation, risk engine, failure tests"],
-    ["D", "7-8 Oct", "Frontend integration, demo flow, presentation assembly"],
+    ["A", "1-2 Oct", "Canonical scope, target architecture, contracts, repository scaffold"],
+    ["B", "3-4 Oct", "Evidence Graph, constrained selection, formative user study"],
+    ["C", "5-6 Oct", "Skill Router, JD skill, claim validation, risk and failure tests"],
+    ["D", "7-8 Oct", "ATS mapping, human review, integration, demo and presentation"],
   ];
   rows.forEach(([owner, date, work], i) => {
     const y = 166 + i * 112;
@@ -352,7 +358,7 @@ function labelBox(slide, text, position, options = {}) {
   const slide = baseSlide("Proposal Demo", 11);
   const steps = [
     ["01", "Load fictional Career Vault evidence"],
-    ["02", "Paste one software-engineering job description"],
+    ["02", "Paste the fixed proposal job description fixture"],
     ["03", "Inspect evidence matches and selected resume claim"],
     ["04", "Show the risk result and human-confirmation gate"],
   ];
@@ -375,7 +381,7 @@ for (let i = 0; i < presentation.slides.items.length; i++) {
 
 const stagingDir = path.join(workspaceDir, ".codex-finalizer");
 await fs.mkdir(stagingDir, { recursive: true });
-const candidatePath = path.join(stagingDir, "applyguard-proposal-foundation.candidate.pptx");
+const candidatePath = path.join(stagingDir, "applyguard-proposal-foundation-v1.1.1.candidate.pptx");
 await (await PresentationFile.exportPptx(presentation)).save(candidatePath);
 
 const requirements = {
@@ -398,7 +404,7 @@ const result = await finalizePresentation({
   ],
   fontPolicy: { basis: "design", families: [fontFamily] },
   verifyArtifactToolImport: true,
-  receiptPath: path.join(stagingDir, "applyguard-proposal-foundation-final.validation.json"),
+  receiptPath: path.join(stagingDir, "applyguard-proposal-foundation-v1.1.1-final.validation.json"),
 });
 
 console.log(JSON.stringify({ final: FINAL_PPTX, fontFamily, validation: result }, null, 2));

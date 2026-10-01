@@ -14,13 +14,14 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["requirement_id", "experience_id", "claim_ids", "relevance_score", "evidence_strength", "rationale", "conflicts"],
+        "required": ["requirement_id", "experience_id", "claim_ids", "relevance_score", "evidence_strength", "confidence", "rationale", "conflicts"],
         "properties": {
           "requirement_id": {"type": "string"},
           "experience_id": {"type": "string"},
           "claim_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true},
           "relevance_score": {"type": "number", "minimum": 0, "maximum": 1},
           "evidence_strength": {"type": "string", "enum": ["WEAK", "MEDIUM", "STRONG"]},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1},
           "rationale": {"type": "string", "minLength": 1},
           "conflicts": {"type": "array", "items": {"type": "string"}}
         }
@@ -28,4 +29,3 @@
     }
   }
 }
-

@@ -1,6 +1,7 @@
 {
   "application_id": "app_demo_001",
   "risk_level": "MEDIUM",
+  "action": "REQUIRES_CONFIRMATION",
   "risks": [
     {
       "risk_id": "risk_missing_auth",
@@ -8,9 +9,9 @@
       "severity": "WARNING",
       "message": "Work authorization is not available in the Career Vault.",
       "related_claim_ids": [],
-      "mitigation": "Ask the user to provide or confirm the field before submission."
+      "mitigation": "Ask the user to provide or confirm the field before submission.",
+      "recommended_action": "CONFIRM"
     }
   ],
   "requires_human_confirmation": true
 }
-

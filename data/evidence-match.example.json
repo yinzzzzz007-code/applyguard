@@ -9,6 +9,7 @@
       "claim_ids": ["claim_python_api"],
       "relevance_score": 0.92,
       "evidence_strength": "STRONG",
+      "confidence": 0.94,
       "rationale": "The verified course project directly demonstrates Python API implementation.",
       "conflicts": []
     },
@@ -18,9 +19,9 @@
       "claim_ids": ["claim_python_api"],
       "relevance_score": 0.88,
       "evidence_strength": "STRONG",
+      "confidence": 0.92,
       "rationale": "The test report supports the automated-testing requirement.",
       "conflicts": []
     }
   ]
 }
-

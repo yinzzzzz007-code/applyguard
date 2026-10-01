@@ -4,27 +4,28 @@
   "title": "Risk Result",
   "type": "object",
   "additionalProperties": false,
-  "required": ["application_id", "risk_level", "risks", "requires_human_confirmation"],
+  "required": ["application_id", "risk_level", "action", "risks", "requires_human_confirmation"],
   "properties": {
     "application_id": {"type": "string"},
     "risk_level": {"type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "BLOCK"]},
+    "action": {"type": "string", "enum": ["SAFE_TO_FILL", "REQUIRES_CONFIRMATION", "BLOCKED"]},
     "risks": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["risk_id", "type", "severity", "message", "related_claim_ids", "mitigation"],
+        "required": ["risk_id", "type", "severity", "message", "related_claim_ids", "mitigation", "recommended_action"],
         "properties": {
           "risk_id": {"type": "string"},
           "type": {"type": "string", "enum": ["UNSUPPORTED_CLAIM", "CONFLICT", "MISSING_FIELD", "PRIVACY", "OTHER"]},
           "severity": {"type": "string", "enum": ["INFO", "WARNING", "ERROR"]},
           "message": {"type": "string"},
           "related_claim_ids": {"type": "array", "items": {"type": "string"}},
-          "mitigation": {"type": "string"}
+          "mitigation": {"type": "string"},
+          "recommended_action": {"type": "string", "enum": ["FILL", "CONFIRM", "EDIT", "BLOCK"]}
         }
       }
     },
     "requires_human_confirmation": {"type": "boolean"}
   }
 }
-

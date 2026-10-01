@@ -15,11 +15,21 @@
       "end_date": "2026-06",
       "summary": "Built and tested a Python HTTP API for a team project.",
       "skills": ["Python", "HTTP API", "automated testing", "Git"],
+      "metrics": [
+        {
+          "metric_id": "metric_route_tests",
+          "name": "Core route tests",
+          "value": "6 passing tests",
+          "evidence_ids": ["ev_test_report"]
+        }
+      ],
       "claims": [
         {
           "claim_id": "claim_python_api",
           "text": "Built a Python HTTP API and added automated tests for core routes.",
-          "evidence_ids": ["ev_repo_api", "ev_test_report"]
+          "evidence_ids": ["ev_repo_api", "ev_test_report"],
+          "confidence": 0.95,
+          "verification_state": "VERIFIED"
         }
       ],
       "evidence_sources": [
@@ -40,4 +50,3 @@
     }
   ]
 }
-

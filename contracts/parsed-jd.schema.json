@@ -16,17 +16,17 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["requirement_id", "type", "category", "text", "normalized_terms", "evidence_text"],
+        "required": ["requirement_id", "type", "category", "text", "normalized_terms", "evidence_text", "confidence"],
         "properties": {
           "requirement_id": {"type": "string", "pattern": "^req_[a-zA-Z0-9_]+$"},
           "type": {"type": "string", "enum": ["HARD", "PREFERRED"]},
           "category": {"type": "string", "enum": ["SKILL", "EXPERIENCE", "EDUCATION", "RESPONSIBILITY", "OTHER"]},
           "text": {"type": "string", "minLength": 1},
           "normalized_terms": {"type": "array", "items": {"type": "string"}},
-          "evidence_text": {"type": "string", "minLength": 1}
+          "evidence_text": {"type": "string", "minLength": 1},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1}
         }
       }
     }
   }
 }
-

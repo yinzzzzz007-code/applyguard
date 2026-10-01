@@ -1,0 +1,15 @@
+{
+  "application_id": "app_demo_001",
+  "target": "ATS_SIMULATOR",
+  "fields": [
+    {
+      "field_id": "field_candidate_summary",
+      "label": "Candidate summary",
+      "value": "Built a Python HTTP API and added automated tests for core routes.",
+      "source_claim_ids": ["claim_python_api"],
+      "action": "SAFE_TO_FILL"
+    }
+  ],
+  "unmapped_fields": ["work_authorization"],
+  "consistency_state": "NEEDS_REVIEW"
+}
