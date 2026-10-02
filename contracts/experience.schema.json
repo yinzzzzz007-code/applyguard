@@ -8,11 +8,13 @@
   "properties": {
     "experience_id": {"type": "string", "pattern": "^exp_[a-zA-Z0-9_]+$"},
     "candidate_id": {"type": "string", "pattern": "^cand_[a-zA-Z0-9_]+$"},
+    "title": {"type": "string", "minLength": 1},
     "organization": {"type": "string", "minLength": 1},
     "role": {"type": "string", "minLength": 1},
     "start_date": {"type": ["string", "null"], "pattern": "^[0-9]{4}-[0-9]{2}$"},
     "end_date": {"type": ["string", "null"], "pattern": "^[0-9]{4}-[0-9]{2}$"},
     "summary": {"type": "string", "minLength": 1},
+    "responsibilities": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
     "skills": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
     "metrics": {
       "type": "array",
@@ -53,7 +55,11 @@
           "evidence_id": {"type": "string", "pattern": "^ev_[a-zA-Z0-9_]+$"},
           "type": {"type": "string", "enum": ["REPOSITORY", "DOCUMENT", "CERTIFICATE", "REFERENCE", "OTHER"]},
           "description": {"type": "string", "minLength": 1},
-          "uri": {"type": ["string", "null"]}
+          "uri": {"type": ["string", "null"]},
+          "source_type": {"type": "string", "enum": ["REPOSITORY", "DOCUMENT", "CERTIFICATE", "REFERENCE", "OTHER"]},
+          "source_reference": {"type": ["string", "null"]},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+          "verification_status": {"type": "string", "enum": ["UNVERIFIED", "NEEDS_REVIEW", "VERIFIED", "CONFLICTING"]}
         }
       }
     },

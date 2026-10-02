@@ -1,0 +1,86 @@
+{
+  "candidate_id": "cand_demo_001",
+  "profile": {
+    "display_name": "Fictional Candidate",
+    "education": "Fictional BSc Software Engineering student",
+    "consent": "Fictional proposal data only; no personal data"
+  },
+  "experiences": [
+    {
+      "experience_id": "exp_api_course_project",
+      "candidate_id": "cand_demo_001",
+      "title": "Backend Developer",
+      "organization": "Northbridge Course Lab",
+      "role": "Backend Developer",
+      "start_date": "2026-03",
+      "end_date": "2026-06",
+      "summary": "Built and tested a Python HTTP API for a fictional team project.",
+      "responsibilities": ["Designed Python HTTP API routes for a course project.", "Added automated tests for core routes and error responses."],
+      "skills": ["Python", "HTTP API", "automated testing", "Git"],
+      "metrics": [{"metric_id": "metric_route_tests", "name": "Core route tests", "value": "12 passing tests", "evidence_ids": ["ev_repo_api", "ev_test_report"]}],
+      "claims": [{"claim_id": "claim_python_api", "text": "Built a Python HTTP API and added automated tests for core routes.", "evidence_ids": ["ev_repo_api", "ev_test_report"], "confidence": 0.95, "verification_state": "VERIFIED"}],
+      "evidence_sources": [
+        {"evidence_id": "ev_repo_api", "type": "REPOSITORY", "source_type": "REPOSITORY", "description": "Fictional repository snapshot showing API route implementation.", "source_reference": "fictional://northbridge/api-course-project", "uri": null, "confidence": 0.96, "verification_status": "VERIFIED"},
+        {"evidence_id": "ev_test_report", "type": "DOCUMENT", "source_type": "DOCUMENT", "description": "Fictional test report showing passing route tests.", "source_reference": "fictional://northbridge/api-test-report", "uri": null, "confidence": 0.94, "verification_status": "VERIFIED"}
+      ],
+      "verification_state": "VERIFIED"
+    },
+    {
+      "experience_id": "exp_fullstack_portal",
+      "candidate_id": "cand_demo_001",
+      "title": "Full-stack Developer",
+      "organization": "Harbor Student Services Lab",
+      "role": "Full-stack Developer",
+      "start_date": "2025-10",
+      "end_date": "2026-02",
+      "summary": "Created a fictional student-services portal with a TypeScript frontend and Node.js API.",
+      "responsibilities": ["Implemented React and TypeScript interface components.", "Connected a Node.js API to PostgreSQL for portal records."],
+      "skills": ["TypeScript", "React", "Node.js", "PostgreSQL", "HTTP API", "Git"],
+      "metrics": [{"metric_id": "metric_portal_scenarios", "name": "Documented portal scenarios", "value": "8 fictional acceptance scenarios", "evidence_ids": ["ev_portal_repo", "ev_portal_notes"]}],
+      "claims": [{"claim_id": "claim_fullstack_portal", "text": "Built a TypeScript and React portal backed by a Node.js API and PostgreSQL.", "evidence_ids": ["ev_portal_repo", "ev_portal_notes"], "confidence": 0.91, "verification_state": "VERIFIED"}],
+      "evidence_sources": [
+        {"evidence_id": "ev_portal_repo", "type": "REPOSITORY", "source_type": "REPOSITORY", "description": "Fictional repository snapshot for the portal frontend and API.", "source_reference": "fictional://harbor/student-portal", "uri": null, "confidence": 0.92, "verification_status": "VERIFIED"},
+        {"evidence_id": "ev_portal_notes", "type": "DOCUMENT", "source_type": "DOCUMENT", "description": "Fictional acceptance notes for portal scenarios.", "source_reference": "fictional://harbor/portal-acceptance-notes", "uri": null, "confidence": 0.88, "verification_status": "VERIFIED"}
+      ],
+      "verification_state": "VERIFIED"
+    },
+    {
+      "experience_id": "exp_ml_evaluation",
+      "candidate_id": "cand_demo_001",
+      "title": "Machine Learning Research Assistant",
+      "organization": "Cedar AI Study Group",
+      "role": "Machine Learning Research Assistant",
+      "start_date": "2025-07",
+      "end_date": "2025-09",
+      "summary": "Fine-tuned a fictional language-model prototype with LoRA and documented evaluation results.",
+      "responsibilities": ["Prepared a reproducible PyTorch fine-tuning configuration.", "Compared LoRA experiments using a documented evaluation set."],
+      "skills": ["Python", "PyTorch", "LoRA", "LLM fine-tuning", "model evaluation"],
+      "metrics": [{"metric_id": "metric_ml_experiments", "name": "Documented experiment runs", "value": "6 fictional evaluation runs", "evidence_ids": ["ev_ml_notebook", "ev_ml_report"]}],
+      "claims": [{"claim_id": "claim_ml_lora_evaluation", "text": "Fine-tuned a language-model prototype with LoRA in PyTorch and documented evaluation results.", "evidence_ids": ["ev_ml_notebook", "ev_ml_report"], "confidence": 0.9, "verification_state": "VERIFIED"}],
+      "evidence_sources": [
+        {"evidence_id": "ev_ml_notebook", "type": "REPOSITORY", "source_type": "REPOSITORY", "description": "Fictional notebook snapshot for PyTorch and LoRA experiments.", "source_reference": "fictional://cedar/ml-notebook", "uri": null, "confidence": 0.9, "verification_status": "VERIFIED"},
+        {"evidence_id": "ev_ml_report", "type": "DOCUMENT", "source_type": "DOCUMENT", "description": "Fictional evaluation report for language-model experiments.", "source_reference": "fictional://cedar/ml-evaluation-report", "uri": null, "confidence": 0.89, "verification_status": "VERIFIED"}
+      ],
+      "verification_state": "VERIFIED"
+    },
+    {
+      "experience_id": "exp_data_pipeline",
+      "candidate_id": "cand_demo_001",
+      "title": "Data Engineering Project Member",
+      "organization": "Maple Analytics Studio",
+      "role": "Data Engineering Project Member",
+      "start_date": "2025-03",
+      "end_date": "2025-06",
+      "summary": "Built a fictional Python and SQL data pipeline with documented transformation checks.",
+      "responsibilities": ["Implemented ETL transformations in Python and SQL.", "Prepared a dashboard-ready dataset and documented quality checks."],
+      "skills": ["Python", "SQL", "ETL", "data pipelines", "data quality", "dashboarding"],
+      "metrics": [{"metric_id": "metric_pipeline_checks", "name": "Documented transformation checks", "value": "10 fictional quality checks", "evidence_ids": ["ev_pipeline_repo", "ev_pipeline_report"]}],
+      "claims": [{"claim_id": "claim_data_pipeline", "text": "Built a Python and SQL ETL pipeline with documented data-quality checks.", "evidence_ids": ["ev_pipeline_repo", "ev_pipeline_report"], "confidence": 0.92, "verification_state": "VERIFIED"}],
+      "evidence_sources": [
+        {"evidence_id": "ev_pipeline_repo", "type": "REPOSITORY", "source_type": "REPOSITORY", "description": "Fictional repository snapshot for ETL transformations.", "source_reference": "fictional://maple/data-pipeline", "uri": null, "confidence": 0.93, "verification_status": "VERIFIED"},
+        {"evidence_id": "ev_pipeline_report", "type": "DOCUMENT", "source_type": "DOCUMENT", "description": "Fictional data-quality report.", "source_reference": "fictional://maple/data-quality-report", "uri": null, "confidence": 0.9, "verification_status": "VERIFIED"}
+      ],
+      "verification_state": "VERIFIED"
+    }
+  ]
+}

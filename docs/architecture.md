@@ -51,10 +51,21 @@ The proposal scaffold may return a deterministic fixture at the Specialized Skil
 - ATS integration: a controlled simulator before the proposal and one limited final-project target; the user performs the final submission.
 - AI boundary: models may extract, rank, draft, or explain. Deterministic code validates schemas, checks evidence support, applies risk policy, and controls state transitions.
 
+## B implementation status: deterministic proposal baseline
+
+The B-owned implementation preserves the target boundaries above without adding a new module:
+
+- `JsonCareerVaultRepository` reads `data/career-vault.seed.json`, a fictional JSON store. `CareerVaultRepository` is the storage boundary for a future PostgreSQL + pgvector implementation.
+- `EvidenceMatcher` consumes the existing parsed-JD contract and uses normalized skill terms, responsibility text, verification states, evidence confidence, metrics, conflict penalties, and missing-evidence penalties. It emits an explanation, evidence IDs, score breakdown, and selector-readiness flag.
+- `ResumeSelector` consumes the matcher output and retains only strong, conflict-free claims with evidence IDs. It uses deterministic relevance/support ranking, duplicate removal, a claim-count budget, and a character budget. Its count-limit implementation adapts the retained Apache-2.0 Resume Matcher bullet selector with only a Claim-to-bullet interface conversion; attribution is in `THIRD_PARTY_NOTICES.md`. Its removed-claim record identifies low relevance, insufficient evidence, conflict, redundancy, count limit, or length limit.
+- `POST /api/v1/workflow/mock` computes exactly these B steps. The JD Parser, Claim Validator, ATS Form Mapper, Risk Check, Human Confirmation UI, and Audit integration remain outside B's implementation scope. The endpoint retains their frozen fixtures and human-confirmation stop.
+
+This is a proposal baseline, not vector retrieval, semantic matching, final claim validation, production CRUD, or real ATS integration.
+
 ## Control boundaries
 
-- Deterministic code handles schema validation, semantic checks, constraints, state transitions, and the confirmation gate.
+- In the target architecture, deterministic code handles schema validation, semantic checks, constraints, state transitions, and the confirmation gate. The current B implementation enforces evidence and selection constraints; full runtime schema/semantic validation remains future integration work.
 - AI components may parse or draft content, but they cannot bypass contract validation or user confirmation.
 - The proposal demonstration uses fictional data and ends before external submission.
-- Every module logs a trace ID so a failure can be connected to its input and output.
+- The target workflow propagates a trace ID through every module. The current mock response and audit record expose one, but B's standalone services do not yet implement per-module trace logging.
 - The current standard-library server is disposable scaffolding. A records the reuse decision before the team adopts a final framework.

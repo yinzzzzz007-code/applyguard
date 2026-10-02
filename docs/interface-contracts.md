@@ -79,3 +79,13 @@ Initial error codes:
 ## Change rule
 
 Backward-compatible fields may be added after A's handoff. Renaming or removing a field requires a versioned contract and coordinated updates across producers, consumers, examples, diagrams, and tests. The fields added to preserve the selected topic's core mechanisms are part of the A-to-B baseline and must not be silently dropped.
+
+## B compatibility extensions
+
+B added optional fields only; every pre-B valid object remains valid.
+
+- `experience.schema.json` now permits optional `title` and `responsibilities`. Evidence sources may additionally carry `source_type`, `source_reference`, `confidence`, and `verification_status`. Existing `role`, `summary`, `type`, `description`, `uri`, and verification fields remain unchanged.
+- `evidence-match.schema.json` now permits optional match-level `evidence_ids`, `missing_evidence`, `ready_for_selection`, and a bounded `score_breakdown`; it also permits top-level `uncovered_requirements`. Its original required fields and names are unchanged.
+- The mock endpoint adds the backward-compatible `resume_selection` object for B's removed-claim audit. Each item in `resume_claims` continues to satisfy `resume-claim.schema.json`.
+
+These extensions expose B's deterministic baseline. They do not implement C's JD Parser or Claim Validator, nor D's form mapping or Human Confirmation UI.

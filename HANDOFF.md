@@ -25,15 +25,11 @@ Any breaking change requires a short architecture decision note and updates to c
 - Frozen JSON Schemas and fixed seed data.
 - Proposal scope, complete user journey, target architecture, internal workflow, sequence, module responsibilities, and presentation skeleton.
 
-## B's next work package
+## B implementation status
 
-1. Replace file-backed fictional data with the simplified Career Evidence Graph and Career Vault.
-2. Keep `experience.schema.json` compatible while adding storage and retrieval.
-3. Replace fixed evidence matches with a baseline scoring implementation.
-4. Add unit tests for matching scores, evidence strength, conflicts, and insufficient evidence.
-5. Prepare five fixed JDs and the matching benchmark dataset.
-6. Run the formative user study defined in the team plan and provide the traceability matrix.
-7. Implement the constrained-selection baseline and record why each claim was selected or removed.
+B completed the deterministic Career Vault, Evidence Matcher, constrained Resume Selector, five-case fictional Benchmark, and unit tests without breaking the frozen endpoint, step trace, confirmation gate, or audit record. `B_TO_C_HANDOFF.md` records the service interfaces, compatibility extensions, and C integration checklist.
+
+The formative user-study package is ready in `docs/user-study/`, but no participants, results, statistics, quotes, or conclusions have been fabricated. Collection and the resulting traceability matrix remain a real-world team activity.
 
 ## Run and verify before handoff
 
@@ -51,7 +47,7 @@ Then verify:
 
 ## Known limitations
 
-- JD parsing and evidence matching are deterministic proposal mocks.
+- JD parsing remains a fixed fixture; evidence matching is a computed deterministic proposal baseline, not a semantic model.
 - Data is fictional and stored as JSON.
 - The ATS page is simulated rather than connected to a real job portal.
 - No application is submitted automatically.

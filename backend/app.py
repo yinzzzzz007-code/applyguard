@@ -11,9 +11,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
+from backend.services.career_vault import CareerVault
+from backend.services.evidence_matcher import EvidenceMatcher
+from backend.services.resume_selector import ResumeSelector
+
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 FRONTEND_DIR = ROOT / "frontend"
+CAREER_VAULT_PATH = DATA_DIR / "career-vault.seed.json"
 
 
 def _load_json(name: str) -> dict[str, Any]:
@@ -47,16 +52,17 @@ def build_mock_workflow(request: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("jd_text must contain at least 20 characters")
 
     application_id = request.get("application_id") or "app_demo_001"
+    # JD Parser belongs to C. B deliberately uses this frozen parsed-JD fixture.
     parsed_jd = _load_json("parsed-jd.example.json")
-    evidence_match = _load_json("evidence-match.example.json")
-    resume_claims = _load_json("resume-claims.example.json")["claims"]
+    career_vault = CareerVault.from_json(CAREER_VAULT_PATH)
+    experiences = career_vault.list_experiences(candidate_id)
+    evidence_match = EvidenceMatcher().match(parsed_jd, experiences)
+    selection = ResumeSelector().select(evidence_match, experiences, application_id, max_claims=1)
+    resume_claims = selection.claims
     verification_results = _load_json("claim-verification.example.json")["results"]
     form_mapping = _load_json("form-mapping.example.json")
     risk_result = _load_json("risk-result.example.json")
 
-    evidence_match["candidate_id"] = candidate_id
-    for claim in resume_claims:
-        claim["application_id"] = application_id
     form_mapping["application_id"] = application_id
     risk_result["application_id"] = application_id
 
@@ -77,11 +83,17 @@ def build_mock_workflow(request: dict[str, Any]) -> dict[str, Any]:
         "application_id": application_id,
         "candidate_id": candidate_id,
         "execution_mode": "DETERMINISTIC_FIXTURE",
-        "mock_notice": "The proposal scaffold validates the workflow and contracts. It does not dynamically analyze the submitted JD.",
+        "mock_notice": "Career Vault, Evidence Matcher, and Resume Selector use deterministic B baseline logic. JD Parser remains a fixed parsed-jd.example.json fixture; the submitted JD is not dynamically parsed.",
         "workflow_status": "AWAITING_HUMAN_CONFIRMATION",
         "parsed_jd": parsed_jd,
         "evidence_match": evidence_match,
         "resume_claims": resume_claims,
+        "resume_selection": {
+            "mode": "DETERMINISTIC_EVIDENCE_CONSTRAINED",
+            "removed_claims": selection.removed_claims,
+            "max_claims": 1,
+            "max_characters": 420,
+        },
         "claim_verification": verification_results,
         "ats_form_mapping": form_mapping,
         "risk_result": risk_result,
