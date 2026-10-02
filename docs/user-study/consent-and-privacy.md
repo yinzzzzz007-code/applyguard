@@ -10,7 +10,7 @@ Participation is voluntary. Participants may skip any question, stop at any time
 
 ## Data collected
 
-The study records only anonymous responses about workflow, tools, time estimates, concerns, preferences, and critical failure cases. Participants are labeled `P01`, `P02`, and so on.
+The survey and interview notes record responses about workflow, tools, time estimates, concerns, preferences, and critical failure cases under IDs such as `P01`. An optional process photograph is a **separate, potentially identifiable** data type governed by [photo-consent-zh.md](photo-consent-zh.md), not by general study consent.
 
 ## Data not collected
 
@@ -22,11 +22,11 @@ Ask separately: `May the team use a short anonymous quotation in project materia
 
 ## Interview notes
 
-Use anonymized written notes only. Do not make audio or video recordings, photograph, or retain a participant's resume, JD, ATS page, or other artifacts.
+Use anonymized written notes only. Do not make audio or video recordings or retain a participant's resume, JD, ATS page, or other artifacts. An optional process photograph may be taken **only after separate, specific consent**, under the restrictions in [photo-consent-zh.md](photo-consent-zh.md). Participation and quotation consent never imply photo consent.
 
 ## Storage and reporting
 
-Keep notes in the project response template, separate any temporary scheduling contact, and remove accidental identifiers before analysis. Report only aggregated or anonymized findings actually collected. Do not fabricate participant counts, percentages, quotations, SUS scores, or conclusions.
+Keep notes in the project response template, separate any temporary scheduling contact, and remove accidental identifiers before analysis. Keep any original photograph outside Git and restrict access; show only consented, de-identified versions. Do not describe the entire study as anonymous if photographs were taken. Report only aggregated or anonymized findings actually collected. Do not fabricate participant counts, percentages, quotations, SUS scores, or conclusions.
 
 ## Consent record
 

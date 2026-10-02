@@ -1,17 +1,17 @@
 # ApplyGuard formative study: lightweight coding template
 
-> Start coding only after receiving consented, anonymized responses. Codes below are an initial guide, not results.
+> Start coding only after receiving consented, anonymized responses. Codes below refer to [the released Chinese survey](survey-release-zh.md) Q1–Q10 and the interview notes. They are an initial guide, not results. Do not use question numbers from the archived English draft.
 
 | Code | Definition | Example evidence reference | Notes |
 | --- | --- | --- | --- |
-| WORKFLOW_FRAGMENTATION | Experience, JD, resume, and ATS information live in disconnected places | `P__ Q5/Q8/Q10` |  |
-| RETAILORING_EFFORT | Repeated manual rewriting or reordering for each JD | `P__ Q5–Q7` |  |
-| EVIDENCE_RETRIEVAL | Difficulty finding proof for a claim or metric | `P__ Q9/Q11` |  |
-| AI_GROUNDING_RISK | Concern about invented, exaggerated, omitted, or repeated content | `P__ Q11/Q17` |  |
-| ATS_FRICTION | Difficulty transferring approved information to forms | `P__ Q5/Q11/Q15` |  |
-| CONFIRMATION_BOUNDARY | Action that should require preview, confirmation, or blocking | `P__ Q12–Q14` |  |
-| CRITICAL_FAILURE | Harmful outcome that must be prevented or recovered from | `P__ Q17/Q19` |  |
-| TRACEABILITY_VALUE | Perceived usefulness or limitation of claim-to-evidence links | `P__ Q15–Q17` |  |
+| WORKFLOW_FRAGMENTATION | Experience, JD, resume, and ATS information live in disconnected places | `P__ Q3/Q4/Q7; interview` |  |
+| RETAILORING_EFFORT | Repeated manual rewriting or reordering for each JD | `P__ Q1/Q2/Q3/Q7; interview` |  |
+| EVIDENCE_RETRIEVAL | Difficulty finding proof for a claim or metric | `P__ Q5/Q7; interview` |  |
+| AI_GROUNDING_RISK | Concern about invented, exaggerated, omitted, or repeated content | `P__ Q6/Q7/Q9; interview` |  |
+| ATS_FRICTION | Difficulty transferring approved information to forms | `P__ Q3/Q7/Q10; interview` |  |
+| CONFIRMATION_BOUNDARY | Action that should require preview, confirmation, or blocking | `P__ Q9/Q10; interview` |  |
+| CRITICAL_FAILURE | Harmful outcome that must be prevented or recovered from | `P__ Q7/Q9/Q10/open; interview` |  |
+| TRACEABILITY_VALUE | Perceived usefulness or limitation of claim-to-evidence links | `P__ Q8; interview` |  |
 
 ## Coding procedure
 

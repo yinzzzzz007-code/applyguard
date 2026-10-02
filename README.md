@@ -45,7 +45,7 @@ The B-owned modules are runnable, deterministic, and fixture-backed:
 
 `POST /api/v1/workflow/mock` now computes its Career Vault, Evidence Matcher, and Resume Selector steps. It still uses `data/parsed-jd.example.json` because JD Parser belongs to C; it does **not** parse the submitted `jd_text`. Claim validation, ATS mapping, and risk output remain their frozen fixtures.
 
-For B-specific verification, run the standard test command above. See [B_TO_C_HANDOFF.md](B_TO_C_HANDOFF.md) for integration details and `docs/user-study/` for formative-study materials.
+For B-specific verification, run the standard test command above. See [B_TO_C_HANDOFF.md](B_TO_C_HANDOFF.md) for integration details and the [Proposal formative-study kit](docs/user-study/README.md) for the released questionnaire, interview guide, privacy/photo consent, and evidence templates. No participant results are included.
 
 ## Frozen internal pipeline
 

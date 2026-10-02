@@ -1,5 +1,7 @@
 # ApplyGuard formative study: lightweight survey
 
+> Archived English planning draft. Do **not** distribute this alongside the frozen Chinese form: [survey-release-zh.md](survey-release-zh.md). Question numbers below do not match the released instrument.
+
 ## Use
 
 This is a mostly closed-choice survey for 10–20 eligible participants. It reconstructs the **current workflow first**; the ApplyGuard concept probe appears only at the end to reduce leading questions. It supports requirements discovery, not product evaluation.

@@ -1,5 +1,7 @@
 # ApplyGuard formative study: semi-structured interview guide
 
+> Extended English planning draft, not the fieldwork instrument. Use the [10–15 minute Chinese release guide](interview-guide-zh.md) for the Proposal study; do not combine question numbers or session durations.
+
 ## Session plan
 
 Target: 4–6 eligible participants. Duration: 30–45 minutes. Use anonymous ID `Pxx`. A participant may optionally walk through a de-identified past resume version and JD on their own screen; the team does not collect, retain, or request the files. Use fictional materials if this is not comfortable. Never request an ATS account, phone number, employer name, or login.

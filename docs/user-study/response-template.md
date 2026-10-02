@@ -11,6 +11,9 @@
 - Consent recorded: yes / no
 - Anonymous quotation: none / allowed
 - Audio/video recording: not collected
+- Process photograph: none / separate consent recorded (A / B / C / D choices; see private consent record)
+- Original photograph stored outside Git: not applicable / yes
+- De-identification and second-person check: not applicable / pending / complete
 - Notes redacted: yes / no
 
 ## Participant profile
