@@ -84,6 +84,8 @@ class MemberBTests(unittest.TestCase):
         self.assertTrue(api["responsibilities"])
         self.assertEqual(api["evidence_sources"][0]["source_type"], "REPOSITORY")
         self.assertEqual(api["evidence_sources"][0]["verification_status"], "VERIFIED")
+        self.assertNotIn("calculation", api["metrics"][0])
+        self.assertEqual(api["metrics"][1]["calculation"]["displayed_percent"], 100)
 
     def test_career_vault_rejects_broken_evidence_links(self) -> None:
         seed = load(DATA / "career-vault.seed.json")
@@ -95,6 +97,43 @@ class MemberBTests(unittest.TestCase):
             with self.subTest(mutate=mutate):
                 payload = copy.deepcopy(seed)
                 mutate(payload["experiences"][0])
+                with self.assertRaises(ValueError):
+                    JsonCareerVaultRepository._validate(payload)
+
+    def test_vault_accepts_complete_structured_metric_arithmetic(self) -> None:
+        seed = load(DATA / "career-vault.seed.json")
+        for calculation in (
+            {"numerator": 12, "denominator": 12, "displayed_percent": 100},
+            {"baseline": 100, "result": 125, "change_type": "relative_percent", "displayed_change": 25},
+            {"baseline": 60, "result": 70, "change_type": "percentage_points", "displayed_change": 10},
+            {"numerator": 12, "denominator": 12, "displayed_percent": 100,
+             "baseline": 60, "result": 70, "change_type": "percentage_points", "displayed_change": 10},
+        ):
+            with self.subTest(calculation=calculation):
+                payload = copy.deepcopy(seed)
+                payload["experiences"][0]["metrics"][1]["calculation"] = calculation
+                JsonCareerVaultRepository._validate(payload)
+
+    def test_vault_rejects_inconsistent_or_incomplete_metric_arithmetic(self) -> None:
+        seed = load(DATA / "career-vault.seed.json")
+        for calculation in (
+            {"numerator": 12, "denominator": 12, "displayed_percent": 80},
+            {"numerator": 12, "denominator": 0, "displayed_percent": 100},
+            {"numerator": 12, "denominator": 12},
+            {"baseline": 100, "result": 125, "change_type": "relative_percent", "displayed_change": 20},
+            {"baseline": 0, "result": 125, "change_type": "relative_percent", "displayed_change": 25},
+            {"baseline": 60, "result": 70, "change_type": "percentage_points", "displayed_change": 16.67},
+            {"baseline": 60, "result": 70, "change_type": "percentage_points"},
+            {"numerator": True, "denominator": 12, "displayed_percent": 100},
+            {"numerator": float("nan"), "denominator": 12, "displayed_percent": 100},
+            {"numerator": float("inf"), "denominator": 12, "displayed_percent": 100},
+            {"numerator": "12", "denominator": 12, "displayed_percent": 100},
+            {"numerator": 12, "denominator": 12, "displayed_percent": 100, "unexpected": 1},
+            None,
+        ):
+            with self.subTest(calculation=calculation):
+                payload = copy.deepcopy(seed)
+                payload["experiences"][0]["metrics"][1]["calculation"] = calculation
                 with self.assertRaises(ValueError):
                     JsonCareerVaultRepository._validate(payload)
 

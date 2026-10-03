@@ -47,6 +47,8 @@ The B-owned modules are runnable, deterministic, and fixture-backed:
 
 For B-specific verification, run the standard test command above. See [B_TO_C_HANDOFF.md](B_TO_C_HANDOFF.md) for integration details and the [Proposal formative-study kit](docs/user-study/README.md) for the released questionnaire, interview guide, privacy/photo consent, and evidence templates. No participant results are included.
 
+Career Vault also checks optional structured Metric arithmetic when a fictional experience supplies a complete `calculation` object; existing Metrics without one remain valid. This is an ingestion check, not final Claim validation. See [third-party notices](THIRD_PARTY_NOTICES.md) for the retained ASu Resume Skills implementation and MIT license.
+
 ## Frozen internal pipeline
 
 1. Career Vault

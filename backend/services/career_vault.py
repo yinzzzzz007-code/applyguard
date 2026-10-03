@@ -2,8 +2,53 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 from pathlib import Path
 from typing import Any, Protocol
+
+from backend.services.third_party.asu_metric_validation import validate_metric
+
+
+_RATIO_FIELDS = {"numerator", "denominator", "displayed_percent"}
+_CHANGE_FIELDS = {"baseline", "result", "change_type", "displayed_change"}
+
+
+def _validate_metric_calculation(metric: dict[str, Any]) -> None:
+    """Check only optional, fully structured Vault arithmetic at ingestion.
+
+    This is not final Claim validation or verification that a source is truthful.
+    """
+    if "calculation" not in metric:
+        return
+    calculation = metric["calculation"]
+    metric_id = metric.get("metric_id", "<unknown metric>")
+    if not isinstance(calculation, dict) or not calculation:
+        raise ValueError(f"{metric_id} calculation must be a nonempty object")
+    if set(calculation) - (_RATIO_FIELDS | _CHANGE_FIELDS):
+        raise ValueError(f"{metric_id} calculation has unsupported fields")
+    ratio_present = set(calculation) & _RATIO_FIELDS
+    change_present = set(calculation) & _CHANGE_FIELDS
+    if ratio_present and ratio_present != _RATIO_FIELDS:
+        raise ValueError(f"{metric_id} percentage calculation requires numerator, denominator, and displayed_percent")
+    if change_present and change_present != _CHANGE_FIELDS:
+        raise ValueError(f"{metric_id} change calculation requires baseline, result, change_type, and displayed_change")
+    if not ratio_present and not change_present:
+        raise ValueError(f"{metric_id} calculation has no supported arithmetic fields")
+    for field in (_RATIO_FIELDS | _CHANGE_FIELDS) - {"change_type"}:
+        if field not in calculation:
+            continue
+        value = calculation[field]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"{metric_id} calculation.{field} must be a finite number")
+        try:
+            if not math.isfinite(value):
+                raise ValueError(f"{metric_id} calculation.{field} must be a finite number")
+        except OverflowError as exc:
+            raise ValueError(f"{metric_id} calculation.{field} must be a finite number") from exc
+    errors: list[str] = []
+    validate_metric({"id": metric_id, "metric": calculation}, errors)
+    if errors:
+        raise ValueError("; ".join(errors))
 
 
 class CareerVaultRepository(Protocol):
@@ -62,6 +107,7 @@ class JsonCareerVaultRepository:
                 metric_evidence_ids = metric.get("evidence_ids", [])
                 if not metric_evidence_ids or not set(metric_evidence_ids).issubset(source_ids):
                     raise ValueError("Career Vault metrics must reference evidence in their experience")
+                _validate_metric_calculation(metric)
 
             for claim in experience.get("claims", []):
                 claim_id = claim.get("claim_id")

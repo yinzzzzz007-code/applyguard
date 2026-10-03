@@ -17,11 +17,14 @@
       "summary": "Built and tested a Python HTTP API for a fictional team project.",
       "responsibilities": ["Designed Python HTTP API routes for a course project.", "Added automated tests for core routes and error responses."],
       "skills": ["Python", "HTTP API", "automated testing", "Git"],
-      "metrics": [{"metric_id": "metric_route_tests", "name": "Core route tests", "value": "12 passing tests", "evidence_ids": ["ev_repo_api", "ev_test_report"]}],
+      "metrics": [
+        {"metric_id": "metric_route_tests", "name": "Core route tests", "value": "12 passing tests", "evidence_ids": ["ev_repo_api", "ev_test_report"]},
+        {"metric_id": "metric_route_pass_rate", "name": "Fictional route-test pass rate", "value": "100% (12 of 12 fictional route tests)", "evidence_ids": ["ev_test_report"], "calculation": {"numerator": 12, "denominator": 12, "displayed_percent": 100}}
+      ],
       "claims": [{"claim_id": "claim_python_api", "text": "Built a Python HTTP API and added automated tests for core routes.", "evidence_ids": ["ev_repo_api", "ev_test_report"], "confidence": 0.95, "verification_state": "VERIFIED"}],
       "evidence_sources": [
         {"evidence_id": "ev_repo_api", "type": "REPOSITORY", "source_type": "REPOSITORY", "description": "Fictional repository snapshot showing API route implementation.", "source_reference": "fictional://northbridge/api-course-project", "uri": null, "confidence": 0.96, "verification_status": "VERIFIED"},
-        {"evidence_id": "ev_test_report", "type": "DOCUMENT", "source_type": "DOCUMENT", "description": "Fictional test report showing passing route tests.", "source_reference": "fictional://northbridge/api-test-report", "uri": null, "confidence": 0.94, "verification_status": "VERIFIED"}
+        {"evidence_id": "ev_test_report", "type": "DOCUMENT", "source_type": "DOCUMENT", "description": "Fictional test report showing 12 of 12 route tests passing.", "source_reference": "fictional://northbridge/api-test-report", "uri": null, "confidence": 0.94, "verification_status": "VERIFIED"}
       ],
       "verification_state": "VERIFIED"
     },

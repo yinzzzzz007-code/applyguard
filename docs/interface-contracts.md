@@ -85,6 +85,7 @@ Backward-compatible fields may be added after A's handoff. Renaming or removing 
 B added optional fields only; every pre-B valid object remains valid.
 
 - `experience.schema.json` now permits optional `title` and `responsibilities`. Evidence sources may additionally carry `source_type`, `source_reference`, `confidence`, and `verification_status`. Existing `role`, `summary`, `type`, `description`, `uri`, and verification fields remain unchanged.
+- Its existing Metric objects additionally permit an optional `calculation` object with explicit numerator/denominator/percentage or baseline/result/change fields. The B Vault adapter rejects partial or inconsistent arithmetic at ingestion; the retained upstream calculation permits 0.5 absolute rounding tolerance. Old Metric objects without `calculation` remain valid; this check does not establish that free-text `value` or a resume Claim is true.
 - `evidence-match.schema.json` now permits optional match-level `evidence_ids`, `missing_evidence`, `ready_for_selection`, and a bounded `score_breakdown`; it also permits top-level `uncovered_requirements`. Its original required fields and names are unchanged.
 - The mock endpoint adds the backward-compatible `resume_selection` object for B's removed-claim audit. Each item in `resume_claims` continues to satisfy `resume-claim.schema.json`.
 
