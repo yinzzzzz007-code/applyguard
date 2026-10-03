@@ -59,4 +59,4 @@ Install `requirements.txt` before running the commands above. Use `parse_mode: "
 - Rule fallback is conservative and dictionary-limited; semantic checks do not cover every natural-language paraphrase or mixed negation. Ambiguous rewording requires review.
 - Real formative-study failure cases await B's collection, then A requirement confirmation and C regression additions.
 - The server remains proposal scaffolding. No application is automatically submitted.
-- C is published separately from main/B; A can review and merge it for final integration.
+- C is prepared on a separate branch from main/B; A can review and merge it for final integration after GitHub publication.
