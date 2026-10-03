@@ -69,3 +69,10 @@ This is a proposal baseline, not vector retrieval, semantic matching, final clai
 - The proposal demonstration uses fictional data and ends before external submission.
 - The target workflow propagates a trace ID through every module. The current mock response and audit record expose one, but B's standalone services do not yet implement per-module trace logging.
 - The current standard-library server is disposable scaffolding. A records the reuse decision before the team adopts a final framework.
+
+# C implementation note (proposal stage)
+
+The running mock workflow now has an optional C-owned Skill Router. It calls JD Parser, B Matcher and Selector, Claim Validator, the ATS fixture, and Risk Check in the frozen nine-step order. Parser output is checked against the existing Parsed JD Schema and source text before B consumes it; claim and risk outputs pass their frozen Schemas. A failed model parse retries once, then explicitly falls back to deterministic extraction or stops with an audit record. The model transport is configured through environment variables. Browser scanning, actual ATS mapping, external source verification, and final submission remain outside this proposal implementation.
+
+
+C audit refinements: all module output boundaries now validate frozen schemas; any failed execution stops remaining steps and records an audit event. Per-field controls enforce Claim verification before aggregate risk calculation. Explicit `offline` mode never constructs a model client. The transport defaults to `gpt-4o-mini` and 2048 output tokens per attempt; both are configurable for provider-supported alternatives. A changed model requires renewed quality and cost evaluation. Audit persistence and browser actions are still future A/D integration.

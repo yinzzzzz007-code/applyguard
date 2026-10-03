@@ -1,0 +1,344 @@
+{
+  "dataset_id": "fictional_c_benchmark_v1",
+  "jd_cases": [
+    {
+      "id": "jd_benchmark_python_backend",
+      "text": "Fictional company seeks a developer who can build Python HTTP APIs, write automated tests, and collaborate with Git.",
+      "expected_terms": [
+        "Git",
+        "HTTP API",
+        "Python",
+        "automated testing"
+      ]
+    },
+    {
+      "id": "jd_benchmark_fullstack",
+      "text": "Fictional company needs a full-stack developer with React, TypeScript, Node.js, and PostgreSQL experience.",
+      "expected_terms": [
+        "Node.js",
+        "PostgreSQL",
+        "React",
+        "TypeScript"
+      ]
+    },
+    {
+      "id": "jd_benchmark_ml",
+      "text": "Fictional company needs Python, PyTorch, LoRA fine-tuning, and model evaluation experience for machine learning work.",
+      "expected_terms": [
+        "LLM fine-tuning",
+        "LoRA",
+        "PyTorch",
+        "model evaluation"
+      ]
+    },
+    {
+      "id": "jd_benchmark_data",
+      "text": "Fictional company seeks Python and SQL experience building ETL data pipelines with data-quality checks.",
+      "expected_terms": [
+        "ETL",
+        "Python",
+        "SQL",
+        "data pipelines",
+        "data quality"
+      ]
+    },
+    {
+      "id": "jd_benchmark_embedded_mismatch",
+      "text": "Fictional company needs C++ firmware, microcontroller debugging, and PCB design experience for embedded systems.",
+      "expected_terms": [
+        "C++",
+        "PCB design",
+        "firmware",
+        "microcontrollers"
+      ]
+    },
+    {
+      "id": "c_api",
+      "text": "Backend Developer requires Python, HTTP API, and automated tests. Git preferred.",
+      "expected_terms": [
+        "Python",
+        "HTTP API",
+        "automated tests",
+        "Git"
+      ]
+    },
+    {
+      "id": "c_ml",
+      "text": "ML Intern requires PyTorch, LoRA, and LLM experience.",
+      "expected_terms": [
+        "PyTorch",
+        "LoRA",
+        "LLM"
+      ]
+    },
+    {
+      "id": "c_data",
+      "text": "Data Engineer requires Python, SQL, and ETL.",
+      "expected_terms": [
+        "Python",
+        "SQL",
+        "ETL"
+      ]
+    },
+    {
+      "id": "c_web",
+      "text": "Full-stack Developer requires TypeScript, React, Node.js and PostgreSQL.",
+      "expected_terms": [
+        "TypeScript",
+        "React",
+        "Node.js",
+        "PostgreSQL"
+      ]
+    },
+    {
+      "id": "c_gap",
+      "text": "Infrastructure Engineer requires CUDA and Kubernetes.",
+      "expected_terms": [
+        "CUDA",
+        "Kubernetes"
+      ]
+    }
+  ],
+  "claim_cases": [
+    {
+      "id": "python_api_verified",
+      "claim_id": "claim_python_api",
+      "text": "Built a Python HTTP API and added automated tests for core routes.",
+      "expected_state": "VERIFIED"
+    },
+    {
+      "id": "python_api_review_contributed",
+      "claim_id": "claim_python_api",
+      "text": "Contributed to: Built a Python HTTP API and added automated tests for core routes.",
+      "expected_state": "NEEDS_REVIEW"
+    },
+    {
+      "id": "python_api_review_helped",
+      "claim_id": "claim_python_api",
+      "text": "Helped with: Built a Python HTTP API and added automated tests for core routes.",
+      "expected_state": "NEEDS_REVIEW"
+    },
+    {
+      "id": "python_api_owner",
+      "claim_id": "claim_python_api",
+      "text": "Owned the entire project: Built a Python HTTP API and added automated tests for core routes.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "python_api_production",
+      "claim_id": "claim_python_api",
+      "text": "Deployed to production: Built a Python HTTP API and added automated tests for core routes.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "python_api_cuda",
+      "claim_id": "claim_python_api",
+      "text": "Built a Python HTTP API and added automated tests for core routes. Used CUDA.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "python_api_kubernetes",
+      "claim_id": "claim_python_api",
+      "text": "Built a Python HTTP API and added automated tests for core routes. Used Kubernetes.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "python_api_docker",
+      "claim_id": "claim_python_api",
+      "text": "Built a Python HTTP API and added automated tests for core routes. Used Docker.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "python_api_metric",
+      "claim_id": "claim_python_api",
+      "text": "Built a Python HTTP API and added automated tests for core routes. Delivered a 75% improvement.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "python_api_date",
+      "claim_id": "claim_python_api",
+      "text": "Built a Python HTTP API and added automated tests for core routes. Completed on 2027-01.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "fullstack_portal_verified",
+      "claim_id": "claim_fullstack_portal",
+      "text": "Built a TypeScript and React portal backed by a Node.js API and PostgreSQL.",
+      "expected_state": "VERIFIED"
+    },
+    {
+      "id": "fullstack_portal_review_contributed",
+      "claim_id": "claim_fullstack_portal",
+      "text": "Contributed to: Built a TypeScript and React portal backed by a Node.js API and PostgreSQL.",
+      "expected_state": "NEEDS_REVIEW"
+    },
+    {
+      "id": "fullstack_portal_review_helped",
+      "claim_id": "claim_fullstack_portal",
+      "text": "Helped with: Built a TypeScript and React portal backed by a Node.js API and PostgreSQL.",
+      "expected_state": "NEEDS_REVIEW"
+    },
+    {
+      "id": "fullstack_portal_owner",
+      "claim_id": "claim_fullstack_portal",
+      "text": "Owned the entire project: Built a TypeScript and React portal backed by a Node.js API and PostgreSQL.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "fullstack_portal_production",
+      "claim_id": "claim_fullstack_portal",
+      "text": "Deployed to production: Built a TypeScript and React portal backed by a Node.js API and PostgreSQL.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "fullstack_portal_cuda",
+      "claim_id": "claim_fullstack_portal",
+      "text": "Built a TypeScript and React portal backed by a Node.js API and PostgreSQL. Used CUDA.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "fullstack_portal_kubernetes",
+      "claim_id": "claim_fullstack_portal",
+      "text": "Built a TypeScript and React portal backed by a Node.js API and PostgreSQL. Used Kubernetes.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "fullstack_portal_docker",
+      "claim_id": "claim_fullstack_portal",
+      "text": "Built a TypeScript and React portal backed by a Node.js API and PostgreSQL. Used Docker.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "fullstack_portal_metric",
+      "claim_id": "claim_fullstack_portal",
+      "text": "Built a TypeScript and React portal backed by a Node.js API and PostgreSQL. Delivered a 75% improvement.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "fullstack_portal_date",
+      "claim_id": "claim_fullstack_portal",
+      "text": "Built a TypeScript and React portal backed by a Node.js API and PostgreSQL. Completed on 2027-01.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "ml_lora_evaluation_verified",
+      "claim_id": "claim_ml_lora_evaluation",
+      "text": "Fine-tuned a language-model prototype with LoRA in PyTorch and documented evaluation results.",
+      "expected_state": "VERIFIED"
+    },
+    {
+      "id": "ml_lora_evaluation_review_contributed",
+      "claim_id": "claim_ml_lora_evaluation",
+      "text": "Contributed to: Fine-tuned a language-model prototype with LoRA in PyTorch and documented evaluation results.",
+      "expected_state": "NEEDS_REVIEW"
+    },
+    {
+      "id": "ml_lora_evaluation_review_helped",
+      "claim_id": "claim_ml_lora_evaluation",
+      "text": "Helped with: Fine-tuned a language-model prototype with LoRA in PyTorch and documented evaluation results.",
+      "expected_state": "NEEDS_REVIEW"
+    },
+    {
+      "id": "ml_lora_evaluation_owner",
+      "claim_id": "claim_ml_lora_evaluation",
+      "text": "Owned the entire project: Fine-tuned a language-model prototype with LoRA in PyTorch and documented evaluation results.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "ml_lora_evaluation_production",
+      "claim_id": "claim_ml_lora_evaluation",
+      "text": "Deployed to production: Fine-tuned a language-model prototype with LoRA in PyTorch and documented evaluation results.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "ml_lora_evaluation_cuda",
+      "claim_id": "claim_ml_lora_evaluation",
+      "text": "Fine-tuned a language-model prototype with LoRA in PyTorch and documented evaluation results. Used CUDA.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "ml_lora_evaluation_kubernetes",
+      "claim_id": "claim_ml_lora_evaluation",
+      "text": "Fine-tuned a language-model prototype with LoRA in PyTorch and documented evaluation results. Used Kubernetes.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "ml_lora_evaluation_docker",
+      "claim_id": "claim_ml_lora_evaluation",
+      "text": "Fine-tuned a language-model prototype with LoRA in PyTorch and documented evaluation results. Used Docker.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "ml_lora_evaluation_metric",
+      "claim_id": "claim_ml_lora_evaluation",
+      "text": "Fine-tuned a language-model prototype with LoRA in PyTorch and documented evaluation results. Delivered a 75% improvement.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "ml_lora_evaluation_date",
+      "claim_id": "claim_ml_lora_evaluation",
+      "text": "Fine-tuned a language-model prototype with LoRA in PyTorch and documented evaluation results. Completed on 2027-01.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "data_pipeline_verified",
+      "claim_id": "claim_data_pipeline",
+      "text": "Built a Python and SQL ETL pipeline with documented data-quality checks.",
+      "expected_state": "VERIFIED"
+    },
+    {
+      "id": "data_pipeline_review_contributed",
+      "claim_id": "claim_data_pipeline",
+      "text": "Contributed to: Built a Python and SQL ETL pipeline with documented data-quality checks.",
+      "expected_state": "NEEDS_REVIEW"
+    },
+    {
+      "id": "data_pipeline_review_helped",
+      "claim_id": "claim_data_pipeline",
+      "text": "Helped with: Built a Python and SQL ETL pipeline with documented data-quality checks.",
+      "expected_state": "NEEDS_REVIEW"
+    },
+    {
+      "id": "data_pipeline_owner",
+      "claim_id": "claim_data_pipeline",
+      "text": "Owned the entire project: Built a Python and SQL ETL pipeline with documented data-quality checks.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "data_pipeline_production",
+      "claim_id": "claim_data_pipeline",
+      "text": "Deployed to production: Built a Python and SQL ETL pipeline with documented data-quality checks.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "data_pipeline_cuda",
+      "claim_id": "claim_data_pipeline",
+      "text": "Built a Python and SQL ETL pipeline with documented data-quality checks. Used CUDA.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "data_pipeline_kubernetes",
+      "claim_id": "claim_data_pipeline",
+      "text": "Built a Python and SQL ETL pipeline with documented data-quality checks. Used Kubernetes.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "data_pipeline_docker",
+      "claim_id": "claim_data_pipeline",
+      "text": "Built a Python and SQL ETL pipeline with documented data-quality checks. Used Docker.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "data_pipeline_metric",
+      "claim_id": "claim_data_pipeline",
+      "text": "Built a Python and SQL ETL pipeline with documented data-quality checks. Delivered a 75% improvement.",
+      "expected_state": "BLOCKED"
+    },
+    {
+      "id": "data_pipeline_date",
+      "claim_id": "claim_data_pipeline",
+      "text": "Built a Python and SQL ETL pipeline with documented data-quality checks. Completed on 2027-01.",
+      "expected_state": "BLOCKED"
+    }
+  ]
+}

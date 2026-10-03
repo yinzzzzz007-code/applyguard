@@ -1,8 +1,8 @@
-# A-to-B handoff
+# Project handoff — C implementation ready for review
 
 ## Version
 
-`proposal-v0.1-foundation`
+C delivery branch based on B `64cae15`; release label: `proposal-v0.3-ai-core`. A foundation history: `proposal-v0.1-foundation`
 
 ## What is frozen
 
@@ -18,7 +18,7 @@ Any breaking change requires a short architecture decision note and updates to c
 
 ## What works now
 
-- A dependency-free local HTTP service.
+- A standard-library HTTP service; C contract validation additionally requires `jsonschema`.
 - A browser demo page.
 - A deterministic mock workflow that returns evidence matches, selected claims, verification results, a risk result, a human-confirmation gate, and an audit record.
 - Health, happy-path, invalid-request, and not-found tests.
@@ -45,12 +45,18 @@ Then verify:
 - Every resume claim has at least one `evidence_id`.
 - The risk result identifies unsupported claims and requests confirmation when needed.
 
-## Known limitations
+## C implementation status
 
-- JD parsing remains a fixed fixture; evidence matching is a computed deterministic proposal baseline, not a semantic model.
-- Data is fictional and stored as JSON.
-- The ATS page is simulated rather than connected to a real job portal.
-- No application is submitted automatically.
-- The AI provider boundary exists only in the architecture and interface plan.
-- The current standard-library server is disposable scaffolding. A must record the Resume Matcher compatibility decision before the team adopts a final framework.
-- The final project still requires the Skill Router, semantic validator, retry/fallback behavior, Career Evidence Graph storage, and one limited ATS target.
+JD Parser, model transport, prompt, schema/source checks, bounded retry, fallback/safe stop, Claim Validator, Risk Engine and nine-step Router are implemented. Three offline demos and the 10-JD/40-claim benchmark are runnable. See `docs/C-requirements-audit.md` for the itemized audit, test evidence, and known limits; `C_TO_D_HANDOFF.md` specifies D integration.
+
+Install `requirements.txt` before running the commands above. Use `parse_mode: "offline"` to exercise C without spending API credits; the no-key/no-mode request retains the old A/B fixture for compatibility. The current low-cost demo defaults to `gpt-4o-mini` and 2048 maximum output tokens; both can be changed through `APPLYGUARD_AI_MODEL` and `APPLYGUARD_AI_MAX_TOKENS` after checking provider compatibility and cost.
+
+## Known limitations and ownership
+
+- B Vault and evidence are fictional read-only JSON, not external truth verification.
+- D ATS mapping remains a simulator fixture; final review UI, actual fill, and task-based usability study belong to D.
+- A/B application version and audit persistence remain future integration; C returns an in-memory audit record.
+- Rule fallback is conservative and dictionary-limited; semantic checks do not cover every natural-language paraphrase or mixed negation. Ambiguous rewording requires review.
+- Real formative-study failure cases await B's collection, then A requirement confirmation and C regression additions.
+- The server remains proposal scaffolding. No application is automatically submitted.
+- C is published separately from main/B; A can review and merge it for final integration.

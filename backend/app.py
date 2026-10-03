@@ -14,6 +14,8 @@ from typing import Any
 from backend.services.career_vault import CareerVault
 from backend.services.evidence_matcher import EvidenceMatcher
 from backend.services.resume_selector import ResumeSelector
+from backend.services.skill_router import SkillRouter, WorkflowStopped, validate_request_ids
+from backend.services.model_client import HttpModelClient
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
@@ -50,6 +52,15 @@ def build_mock_workflow(request: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("candidate_id must be a non-empty string")
     if not isinstance(jd_text, str) or len(jd_text.strip()) < 20:
         raise ValueError("jd_text must contain at least 20 characters")
+
+    if len(jd_text) > 20000:
+        raise ValueError("jd_text must contain at most 20000 characters")
+    validate_request_ids(request)
+    if request.get("parse_mode") not in (None, "fixture", "dynamic", "offline"):
+        raise ValueError("parse_mode must be fixture, dynamic or offline")
+    if request.get("parse_mode") in ("dynamic", "offline") or (request.get("parse_mode") is None and os.getenv("APPLYGUARD_AI_API_KEY")):
+        model = HttpModelClient() if request.get("parse_mode") != "offline" and os.getenv("APPLYGUARD_AI_API_KEY") else None
+        return SkillRouter(CAREER_VAULT_PATH, _load_json("form-mapping.example.json"), model=model).run({**request, "trace_id": trace_id})
 
     application_id = request.get("application_id") or "app_demo_001"
     # JD Parser belongs to C. B deliberately uses this frozen parsed-JD fixture.
@@ -164,6 +175,8 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
 
         try:
             content_length = int(self.headers.get("Content-Length", "0"))
+            if not 0 < content_length <= 262144:
+                raise ValueError("request body must be between 1 and 262144 bytes")
             raw = self.rfile.read(content_length)
             request = json.loads(raw.decode("utf-8"))
             if not isinstance(request, dict):
@@ -173,10 +186,15 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.BAD_REQUEST, _error("INVALID_JSON", "Request body is not valid JSON", trace_id))
             return
         except ValueError as exc:
+            details = [{"step_trace": exc.step_trace, "audit_record": exc.audit_record}] if isinstance(exc, WorkflowStopped) else None
             self._send_json(
-                HTTPStatus.UNPROCESSABLE_ENTITY,
-                _error("VALIDATION_ERROR", str(exc), trace_id),
+                HTTPStatus.INTERNAL_SERVER_ERROR if isinstance(exc, WorkflowStopped) and exc.code == "INTERNAL_ERROR" else HTTPStatus.UNPROCESSABLE_ENTITY,
+                _error(exc.code if isinstance(exc, WorkflowStopped) else "VALIDATION_ERROR", str(exc), exc.trace_id if isinstance(exc, WorkflowStopped) else trace_id, details),
             )
+            return
+        except Exception:
+            logging.exception("Unexpected workflow error, trace_id=%s", trace_id)
+            self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, _error("INTERNAL_ERROR", "Workflow failed", trace_id))
             return
 
         self._send_json(HTTPStatus.OK, response)

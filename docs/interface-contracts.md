@@ -90,3 +90,10 @@ B added optional fields only; every pre-B valid object remains valid.
 - The mock endpoint adds the backward-compatible `resume_selection` object for B's removed-claim audit. Each item in `resume_claims` continues to satisfy `resume-claim.schema.json`.
 
 These extensions expose B's deterministic baseline. They do not implement C's JD Parser or Claim Validator, nor D's form mapping or Human Confirmation UI.
+
+## C compatible workflow extension
+
+`POST /api/v1/workflow/mock` accepts optional `parse_mode: "dynamic" | "offline" | "fixture"`. Dynamic mode uses the supplied JD, C verification, and C risk result. With an API key in the environment, dynamic mode is the default; no-key/no-mode retains the original fixture behavior. The response adds `component_modes` to identify model/fallback parsing and ATS fixture mapping. No frozen contract fields or enums were changed. A parse safe-stop uses the existing 422 error envelope; `error.details[0]` contains a step trace and failed-parse audit record. Audit `decision` remains the frozen `PENDING`; the event and workflow/risk states convey blocked status.
+
+
+C audit additions: `offline` disables model creation even when an API key exists. `field_controls` provides per-field `level` (L0–L3), `action`, `show_sources`, and `source_claim_ids` outside the frozen core contracts. Aggregate risk and per-field controls are different axes. Evidence can be joined through `claim_id` → `resume_claims.evidence_ids` → Vault evidence sources without modifying the frozen verification schema. Source confidence is a conservative support bound, not calibrated truth probability. Every module failure has a skipped remainder and audit event; HTTP 500 is reserved for execution failure, 422 for validation failure. Requests are limited to 262144 bytes, JD text to 20000 characters, parsed requirements to 40; oversized results are rejected rather than silently truncated.
