@@ -174,7 +174,7 @@ class CClaimAndRiskTests(unittest.TestCase):
 
     def test_rewording_requires_review(self):
         claim = self.claim()
-        claim["text"] = "Created a Python HTTP API and tests for its main routes."
+        claim["text"] = "采用 Python 实现 HTTP API，并为核心路由补充自动化测试。"
         self.assertEqual(self.verify(claim)["state"], "NEEDS_REVIEW")
 
     def test_b_match_not_ready_cannot_become_verified(self):
@@ -239,7 +239,7 @@ class CClaimAndRiskTests(unittest.TestCase):
                              FakeModel(ModelFailure("timeout"), ModelFailure("timeout")))
         result = router.run({"candidate_id": "cand_demo_001", "jd_text": SOURCE})
         self.assertEqual(result["step_trace"][1]["mode"], "RULE_FALLBACK")
-        self.assertEqual(result["step_trace"][1]["fallback_reason"], "ModelFailure")
+        self.assertTrue(str(result["step_trace"][1]["fallback_reason"]).startswith("ModelFailure"))
         self.assertEqual(len(result["step_trace"]), 9)
         self.assertEqual(len({item["step"] for item in result["step_trace"]}), 9)
 

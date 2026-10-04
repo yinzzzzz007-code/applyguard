@@ -1,87 +1,87 @@
 {
   "candidate_id": "cand_demo_001",
   "profile": {
-    "display_name": "Fictional Candidate",
-    "education": "Fictional BSc Software Engineering student",
-    "consent": "Fictional proposal data only; no personal data"
+    "display_name": "林晓舟（演示）",
+    "education": "软件工程本科在读（虚构）",
+    "consent": "仅用于课程演示的虚构数据，不含真实个人信息"
   },
   "experiences": [
     {
       "experience_id": "exp_api_course_project",
       "candidate_id": "cand_demo_001",
-      "title": "Backend Developer",
-      "organization": "Northbridge Course Lab",
-      "role": "Backend Developer",
+      "title": "后端开发",
+      "organization": "北桥课程实验组（虚构）",
+      "role": "后端开发",
       "start_date": "2026-03",
       "end_date": "2026-06",
-      "summary": "Built and tested a Python HTTP API for a fictional team project.",
-      "responsibilities": ["Designed Python HTTP API routes for a course project.", "Added automated tests for core routes and error responses."],
+      "summary": "在虚构团队合作中已完成使用 Python 实现 HTTP API，并补充自动化测试。",
+      "responsibilities": ["为课程项目设计 Python HTTP API 路由。", "为核心路由与错误响应补充自动化测试。"],
       "skills": ["Python", "HTTP API", "automated testing", "Git"],
       "metrics": [
-        {"metric_id": "metric_route_tests", "name": "Core route tests", "value": "12 passing tests", "evidence_ids": ["ev_repo_api", "ev_test_report"]},
-        {"metric_id": "metric_route_pass_rate", "name": "Fictional route-test pass rate", "value": "100% (12 of 12 fictional route tests)", "evidence_ids": ["ev_test_report"], "calculation": {"numerator": 12, "denominator": 12, "displayed_percent": 100}}
+        {"metric_id": "metric_route_tests", "name": "核心路由测试", "value": "12 条测试通过", "evidence_ids": ["ev_repo_api", "ev_test_report"]},
+        {"metric_id": "metric_route_pass_rate", "name": "路由测试通过率（虚构）", "value": "100%（12 条中 12 条通过）", "evidence_ids": ["ev_test_report"], "calculation": {"numerator": 12, "denominator": 12, "displayed_percent": 100}}
       ],
-      "claims": [{"claim_id": "claim_python_api", "text": "Built a Python HTTP API and added automated tests for core routes.", "evidence_ids": ["ev_repo_api", "ev_test_report"], "confidence": 0.95, "verification_state": "VERIFIED"}],
+      "claims": [{"claim_id": "claim_python_api", "text": "已完成使用 Python 实现 HTTP API，并为核心路由补充自动化测试。", "evidence_ids": ["ev_repo_api", "ev_test_report"], "confidence": 0.95, "verification_state": "VERIFIED"}],
       "evidence_sources": [
-        {"evidence_id": "ev_repo_api", "type": "REPOSITORY", "source_type": "REPOSITORY", "description": "Fictional repository snapshot showing API route implementation.", "source_reference": "fictional://northbridge/api-course-project", "uri": null, "confidence": 0.96, "verification_status": "VERIFIED"},
-        {"evidence_id": "ev_test_report", "type": "DOCUMENT", "source_type": "DOCUMENT", "description": "Fictional test report showing 12 of 12 route tests passing.", "source_reference": "fictional://northbridge/api-test-report", "uri": null, "confidence": 0.94, "verification_status": "VERIFIED"}
+        {"evidence_id": "ev_repo_api", "type": "REPOSITORY", "source_type": "REPOSITORY", "description": "虚构代码仓库快照，展示接口路由实现。", "source_reference": "fictional://northbridge/api-course-project", "uri": null, "confidence": 0.96, "verification_status": "VERIFIED"},
+        {"evidence_id": "ev_test_report", "type": "DOCUMENT", "source_type": "DOCUMENT", "description": "虚构测试报告，显示 12 条中 12 条路由测试通过。", "source_reference": "fictional://northbridge/api-test-report", "uri": null, "confidence": 0.94, "verification_status": "VERIFIED"}
       ],
       "verification_state": "VERIFIED"
     },
     {
       "experience_id": "exp_fullstack_portal",
       "candidate_id": "cand_demo_001",
-      "title": "Full-stack Developer",
-      "organization": "Harbor Student Services Lab",
-      "role": "Full-stack Developer",
+      "title": "全栈开发",
+      "organization": "港湾学生服务实验组（虚构）",
+      "role": "全栈开发",
       "start_date": "2025-10",
       "end_date": "2026-02",
-      "summary": "Created a fictional student-services portal with a TypeScript frontend and Node.js API.",
-      "responsibilities": ["Implemented React and TypeScript interface components.", "Connected a Node.js API to PostgreSQL for portal records."],
+      "summary": "用 TypeScript 前端与 Node.js 接口搭建虚构的学生服务门户。",
+      "responsibilities": ["实现 React 与 TypeScript 界面组件。", "将 Node.js HTTP API 接入 PostgreSQL 门户数据。"],
       "skills": ["TypeScript", "React", "Node.js", "PostgreSQL", "HTTP API", "Git"],
-      "metrics": [{"metric_id": "metric_portal_scenarios", "name": "Documented portal scenarios", "value": "8 fictional acceptance scenarios", "evidence_ids": ["ev_portal_repo", "ev_portal_notes"]}],
-      "claims": [{"claim_id": "claim_fullstack_portal", "text": "Built a TypeScript and React portal backed by a Node.js API and PostgreSQL.", "evidence_ids": ["ev_portal_repo", "ev_portal_notes"], "confidence": 0.91, "verification_state": "VERIFIED"}],
+      "metrics": [{"metric_id": "metric_portal_scenarios", "name": "已记录的门户场景", "value": "8 个虚构验收场景", "evidence_ids": ["ev_portal_repo", "ev_portal_notes"]}],
+      "claims": [{"claim_id": "claim_fullstack_portal", "text": "用 TypeScript 与 React 搭建门户，后端为 Node.js 与 PostgreSQL。", "evidence_ids": ["ev_portal_repo", "ev_portal_notes"], "confidence": 0.91, "verification_state": "VERIFIED"}],
       "evidence_sources": [
-        {"evidence_id": "ev_portal_repo", "type": "REPOSITORY", "source_type": "REPOSITORY", "description": "Fictional repository snapshot for the portal frontend and API.", "source_reference": "fictional://harbor/student-portal", "uri": null, "confidence": 0.92, "verification_status": "VERIFIED"},
-        {"evidence_id": "ev_portal_notes", "type": "DOCUMENT", "source_type": "DOCUMENT", "description": "Fictional acceptance notes for portal scenarios.", "source_reference": "fictional://harbor/portal-acceptance-notes", "uri": null, "confidence": 0.88, "verification_status": "VERIFIED"}
+        {"evidence_id": "ev_portal_repo", "type": "REPOSITORY", "source_type": "REPOSITORY", "description": "虚构代码仓库快照，包含门户前端与接口。", "source_reference": "fictional://harbor/student-portal", "uri": null, "confidence": 0.92, "verification_status": "VERIFIED"},
+        {"evidence_id": "ev_portal_notes", "type": "DOCUMENT", "source_type": "DOCUMENT", "description": "虚构验收说明，记录门户场景。", "source_reference": "fictional://harbor/portal-acceptance-notes", "uri": null, "confidence": 0.88, "verification_status": "VERIFIED"}
       ],
       "verification_state": "VERIFIED"
     },
     {
       "experience_id": "exp_ml_evaluation",
       "candidate_id": "cand_demo_001",
-      "title": "Machine Learning Research Assistant",
-      "organization": "Cedar AI Study Group",
-      "role": "Machine Learning Research Assistant",
+      "title": "机器学习研究助理",
+      "organization": "雪松人工智能学习小组（虚构）",
+      "role": "机器学习研究助理",
       "start_date": "2025-07",
       "end_date": "2025-09",
-      "summary": "Fine-tuned a fictional language-model prototype with LoRA and documented evaluation results.",
-      "responsibilities": ["Prepared a reproducible PyTorch fine-tuning configuration.", "Compared LoRA experiments using a documented evaluation set."],
+      "summary": "用 LoRA 对虚构语言模型原型做微调，并记录评测结果。",
+      "responsibilities": ["整理可复现的 PyTorch 微调配置。", "用已记录的评测集对比 LoRA 实验。"],
       "skills": ["Python", "PyTorch", "LoRA", "LLM fine-tuning", "model evaluation"],
-      "metrics": [{"metric_id": "metric_ml_experiments", "name": "Documented experiment runs", "value": "6 fictional evaluation runs", "evidence_ids": ["ev_ml_notebook", "ev_ml_report"]}],
-      "claims": [{"claim_id": "claim_ml_lora_evaluation", "text": "Fine-tuned a language-model prototype with LoRA in PyTorch and documented evaluation results.", "evidence_ids": ["ev_ml_notebook", "ev_ml_report"], "confidence": 0.9, "verification_state": "VERIFIED"}],
+      "metrics": [{"metric_id": "metric_ml_experiments", "name": "已记录的实验次数", "value": "6 次虚构评测运行", "evidence_ids": ["ev_ml_notebook", "ev_ml_report"]}],
+      "claims": [{"claim_id": "claim_ml_lora_evaluation", "text": "在 PyTorch 中用 LoRA 微调语言模型原型，并记录评测结果。", "evidence_ids": ["ev_ml_notebook", "ev_ml_report"], "confidence": 0.9, "verification_state": "VERIFIED"}],
       "evidence_sources": [
-        {"evidence_id": "ev_ml_notebook", "type": "REPOSITORY", "source_type": "REPOSITORY", "description": "Fictional notebook snapshot for PyTorch and LoRA experiments.", "source_reference": "fictional://cedar/ml-notebook", "uri": null, "confidence": 0.9, "verification_status": "VERIFIED"},
-        {"evidence_id": "ev_ml_report", "type": "DOCUMENT", "source_type": "DOCUMENT", "description": "Fictional evaluation report for language-model experiments.", "source_reference": "fictional://cedar/ml-evaluation-report", "uri": null, "confidence": 0.89, "verification_status": "VERIFIED"}
+        {"evidence_id": "ev_ml_notebook", "type": "REPOSITORY", "source_type": "REPOSITORY", "description": "虚构笔记本快照，记录 PyTorch 与 LoRA 实验。", "source_reference": "fictional://cedar/ml-notebook", "uri": null, "confidence": 0.9, "verification_status": "VERIFIED"},
+        {"evidence_id": "ev_ml_report", "type": "DOCUMENT", "source_type": "DOCUMENT", "description": "虚构评测报告，记录语言模型实验结果。", "source_reference": "fictional://cedar/ml-evaluation-report", "uri": null, "confidence": 0.89, "verification_status": "VERIFIED"}
       ],
       "verification_state": "VERIFIED"
     },
     {
       "experience_id": "exp_data_pipeline",
       "candidate_id": "cand_demo_001",
-      "title": "Data Engineering Project Member",
-      "organization": "Maple Analytics Studio",
-      "role": "Data Engineering Project Member",
+      "title": "数据工程项目成员",
+      "organization": "枫叶分析工作室（虚构）",
+      "role": "数据工程项目成员",
       "start_date": "2025-03",
       "end_date": "2025-06",
-      "summary": "Built a fictional Python and SQL data pipeline with documented transformation checks.",
-      "responsibilities": ["Implemented ETL transformations in Python and SQL.", "Prepared a dashboard-ready dataset and documented quality checks."],
+      "summary": "用 Python 与 SQL 搭建虚构数据管道，并记录转换校验。",
+      "responsibilities": ["用 Python 与 SQL 实现 ETL 转换。", "整理可供看板使用的数据集，并记录数据质量校验。"],
       "skills": ["Python", "SQL", "ETL", "data pipelines", "data quality", "dashboarding"],
-      "metrics": [{"metric_id": "metric_pipeline_checks", "name": "Documented transformation checks", "value": "10 fictional quality checks", "evidence_ids": ["ev_pipeline_repo", "ev_pipeline_report"]}],
-      "claims": [{"claim_id": "claim_data_pipeline", "text": "Built a Python and SQL ETL pipeline with documented data-quality checks.", "evidence_ids": ["ev_pipeline_repo", "ev_pipeline_report"], "confidence": 0.92, "verification_state": "VERIFIED"}],
+      "metrics": [{"metric_id": "metric_pipeline_checks", "name": "已记录的转换校验", "value": "10 项虚构质量校验", "evidence_ids": ["ev_pipeline_repo", "ev_pipeline_report"]}],
+      "claims": [{"claim_id": "claim_data_pipeline", "text": "用 Python 与 SQL 搭建 ETL 数据管道，并记录数据质量校验。", "evidence_ids": ["ev_pipeline_repo", "ev_pipeline_report"], "confidence": 0.92, "verification_state": "VERIFIED"}],
       "evidence_sources": [
-        {"evidence_id": "ev_pipeline_repo", "type": "REPOSITORY", "source_type": "REPOSITORY", "description": "Fictional repository snapshot for ETL transformations.", "source_reference": "fictional://maple/data-pipeline", "uri": null, "confidence": 0.93, "verification_status": "VERIFIED"},
-        {"evidence_id": "ev_pipeline_report", "type": "DOCUMENT", "source_type": "DOCUMENT", "description": "Fictional data-quality report.", "source_reference": "fictional://maple/data-quality-report", "uri": null, "confidence": 0.9, "verification_status": "VERIFIED"}
+        {"evidence_id": "ev_pipeline_repo", "type": "REPOSITORY", "source_type": "REPOSITORY", "description": "虚构代码仓库快照，展示 ETL 转换。", "source_reference": "fictional://maple/data-pipeline", "uri": null, "confidence": 0.93, "verification_status": "VERIFIED"},
+        {"evidence_id": "ev_pipeline_report", "type": "DOCUMENT", "source_type": "DOCUMENT", "description": "虚构数据质量报告。", "source_reference": "fictional://maple/data-quality-report", "uri": null, "confidence": 0.9, "verification_status": "VERIFIED"}
       ],
       "verification_state": "VERIFIED"
     }

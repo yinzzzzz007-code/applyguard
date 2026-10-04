@@ -80,7 +80,7 @@ class MemberBTests(unittest.TestCase):
     def test_career_vault_reads_structured_fictional_experiences(self) -> None:
         self.assertEqual(len(self.experiences), 4)
         api = self.vault.get_experience("cand_demo_001", "exp_api_course_project")
-        self.assertEqual(api["title"], "Backend Developer")
+        self.assertEqual(api["title"], "后端开发")
         self.assertTrue(api["responsibilities"])
         self.assertEqual(api["evidence_sources"][0]["source_type"], "REPOSITORY")
         self.assertEqual(api["evidence_sources"][0]["verification_status"], "VERIFIED")
@@ -154,7 +154,7 @@ class MemberBTests(unittest.TestCase):
 
     def test_mock_fixture_claim_references_follow_computed_selection(self) -> None:
         response = build_mock_workflow(
-            {"candidate_id": "cand_demo_001", "jd_text": "Fictional Python backend role with HTTP APIs and tests."}
+            {"candidate_id": "cand_demo_001", "jd_text": "Fictional Python backend role with HTTP APIs and tests.", "parse_mode": "fixture"}
         )
         selected_ids = {claim["claim_id"] for claim in response["resume_claims"]}
         self.assertEqual(selected_ids, {item["claim_id"] for item in response["claim_verification"]})

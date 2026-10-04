@@ -23,7 +23,7 @@ def _tokens(text: str) -> set[str]:
     return set(re.findall(r"[a-z0-9+#]+|[\u3400-\u9fff]+", text.casefold()))
 
 
-_REWORD = set("a an the and or of in on for to with its their my i we was were is are at by as this that created built developed implemented helped contributed worked main core successfully".split())
+_REWORD = set("a an the and or of in on for to with its their my i we was were is are at by as this that created built developed implemented helped contributed worked main core successfully 使用 采用 实现 编写 补充 完成 进行 相关 为其 核心 路由".split())
 _LEAD = re.compile(r"\b(?:owner|owned|led|lead|managed|architected|solely|single-handedly)\b|主导|负责人|独立负责", re.I)
 _PLANNED = re.compile(r"\b(?:planned|planning|proposed|not yet|prototype only)\b|计划|拟开展|尚未|未交付", re.I)
 _DELIVERED = re.compile(r"\b(?:built|deployed|delivered|completed|shipped|released)\b|已完成|已交付|上线", re.I)

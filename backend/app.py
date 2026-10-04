@@ -23,6 +23,32 @@ FRONTEND_DIR = ROOT / "frontend"
 CAREER_VAULT_PATH = DATA_DIR / "career-vault.seed.json"
 
 
+def _load_dotenv(path: Path) -> None:
+    """Load KEY=VALUE from repo-root .env into os.environ (does not override existing vars)."""
+    if not path.is_file():
+        return
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if not key or not value:
+            continue
+        # Allow .env to fill blanks; do not clobber a non-empty shell export.
+        if os.environ.get(key):
+            continue
+        os.environ[key] = value
+
+
+_load_dotenv(ROOT / ".env")
+
+
 def _load_json(name: str) -> dict[str, Any]:
     with (DATA_DIR / name).open("r", encoding="utf-8") as stream:
         return json.load(stream)
@@ -133,10 +159,20 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: Any) -> None:
         logging.info("request client=%s message=%s", self.client_address[0], format % args)
 
+    def _cors_headers(self) -> None:
+        # Proposal local UI (Vite :5173) may call the API directly when not using the proxy.
+        origin = self.headers.get("Origin", "")
+        if origin.startswith("http://127.0.0.1:") or origin.startswith("http://localhost:"):
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+            self.send_header("Vary", "Origin")
+
     def _send_json(self, status: HTTPStatus, payload: dict[str, Any]) -> None:
         body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
         self.send_response(status.value)
         self.send_header("Content-Type", "application/json; charset=utf-8")
+        self._cors_headers()
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -149,10 +185,36 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def do_OPTIONS(self) -> None:  # noqa: N802
+        self.send_response(HTTPStatus.NO_CONTENT.value)
+        self._cors_headers()
+        self.end_headers()
+
     def do_GET(self) -> None:  # noqa: N802
         trace_id = f"trace_{uuid.uuid4().hex[:12]}"
         if self.path == "/":
-            self._send_html(FRONTEND_DIR / "index.html")
+            # Prefer Vite production build when present; otherwise legacy static demo.
+            dist_index = FRONTEND_DIR / "dist" / "index.html"
+            legacy = FRONTEND_DIR / "legacy-demo.html"
+            if dist_index.exists():
+                self._send_html(dist_index)
+            elif legacy.exists():
+                self._send_html(legacy)
+            else:
+                self._send_html(FRONTEND_DIR / "index.html")
+            return
+        if self.path == "/legacy-demo.html":
+            self._send_html(FRONTEND_DIR / "legacy-demo.html")
+            return
+        if self.path.startswith("/assets/") and (FRONTEND_DIR / "dist" / self.path.lstrip("/")).exists():
+            asset = FRONTEND_DIR / "dist" / self.path.lstrip("/")
+            data = asset.read_bytes()
+            ctype = "application/javascript" if asset.suffix == ".js" else "text/css" if asset.suffix == ".css" else "application/octet-stream"
+            self.send_response(HTTPStatus.OK.value)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
             return
         if self.path == "/health":
             self._send_json(
@@ -215,6 +277,12 @@ def main() -> None:
     )
     server = create_server(host, port)
     logging.info("ApplyGuard foundation listening at http://%s:%s", host, port)
+    logging.info(
+        "AI config: key=%s base=%s model=%s",
+        "set" if os.getenv("APPLYGUARD_AI_API_KEY") else "missing",
+        os.getenv("APPLYGUARD_AI_BASE_URL", ""),
+        os.getenv("APPLYGUARD_AI_MODEL", ""),
+    )
     try:
         server.serve_forever()
     except KeyboardInterrupt:

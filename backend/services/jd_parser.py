@@ -56,6 +56,52 @@ def _grounded_text(text: str, evidence: str) -> bool:
                else word in _words(evidence) for word in words)
 
 
+def _term_in_evidence(term: str, evidence: str) -> bool:
+    """Accept exact substrings; keep English multi-word grounding via tokens."""
+    if not isinstance(term, str) or not term.strip():
+        return False
+    cleaned = term.strip()
+    if cleaned.casefold() in evidence.casefold():
+        return True
+    if re.search(r"[\u3400-\u9fff]", cleaned):
+        # Reject invented CJK compounds that are not contiguous in the quote.
+        return False
+    return _grounded_text(cleaned, evidence)
+
+
+def _seed_terms_from_evidence(evidence: str) -> list[str]:
+    seeded = [term for term in _TERMS if any(
+        re.search(r"(?<![a-z0-9])" + re.escape(alias) + r"(?![a-z0-9])", evidence, re.I)
+        for alias in _TERM_ALIASES.get(term, (term,)))]
+    for part in re.split(r"[，,、/；;：:\|\s]+", evidence):
+        part = part.strip(" 。；;（）()【】[]“”\"'")
+        if not part or len(part) < 2 or len(part) > 24:
+            continue
+        if re.search(r"[\u3400-\u9fffA-Za-z]", part) and part not in seeded:
+            seeded.append(part)
+    return seeded[:12]
+
+
+def _coerce_grounded_terms(item: dict[str, Any]) -> dict[str, Any] | None:
+    """Drop model terms that are not present in evidence_text (common on CJK JDs)."""
+    evidence = item.get("evidence_text")
+    terms = item.get("normalized_terms")
+    if not isinstance(evidence, str) or not isinstance(terms, list):
+        return None
+    original = [term.strip() for term in terms if isinstance(term, str) and term.strip()]
+    grounded = [term for term in original if _term_in_evidence(term, evidence)]
+    if not grounded:
+        if original:
+            # Keep fabricated-skill rejection: do not replace invented terms with seeded ones.
+            return None
+        grounded = _seed_terms_from_evidence(evidence)
+    if not grounded:
+        return None
+    coerced = dict(item)
+    coerced["normalized_terms"] = grounded
+    return coerced
+
+
 def _source_supported(item: dict[str, Any], source: str) -> bool:
     evidence = item.get("evidence_text")
     if not isinstance(evidence, str) or evidence not in source:
@@ -68,16 +114,26 @@ def _source_supported(item: dict[str, Any], source: str) -> bool:
     if not isinstance(item.get("text"), str) or not _grounded_text(item["text"], evidence):
         return False
     terms = item.get("normalized_terms")
-    return isinstance(terms, list) and all(isinstance(term, str) and _grounded_text(term, evidence) for term in terms)
+    return isinstance(terms, list) and bool(terms) and all(
+        isinstance(term, str) and _term_in_evidence(term, evidence) for term in terms
+    )
 
 
 def _preferred_context(evidence: str, source: str) -> bool:
     preferred = False
     contexts = []
     for span in _spans(source):
-        if re.fullmatch(r"(?:preferred(?: qualifications| requirements| skills)?|nice.to.have|优先条件|加分项)\s*[:：]?", span, re.I):
+        if re.fullmatch(
+            r"(?:preferred(?: qualifications| requirements| skills)?|nice.to.have|优先条件|加分项(?:或注意事项)?)\s*[:：]?",
+            span,
+            re.I,
+        ):
             preferred = True
-        elif re.fullmatch(r"(?:requirements|required(?: qualifications| skills)?|responsibilities|基本要求|任职要求|岗位职责)\s*[:：]?", span, re.I):
+        elif re.fullmatch(
+            r"(?:requirements|required(?: qualifications| skills)?|responsibilities|基本要求|任职要求|岗位要求|岗位职责|岗位描述)\s*[:：]?",
+            span,
+            re.I,
+        ):
             preferred = False
         if evidence in span or span in evidence:
             contexts.append(preferred or bool(_PREFERRED.search(span)))
@@ -139,7 +195,10 @@ class JDParser:
                     parsed, repaired = self._adapt(raw, source)
                     return parsed, "MODEL_SPAN_REPAIRED" if repaired else "MODEL", None
                 except (ModelFailure, JDParseError, ValueError, TypeError, KeyError) as exc:
-                    failure = type(exc).__name__
+                    detail = str(exc).strip()
+                    failure = f"{type(exc).__name__}: {detail}" if detail else type(exc).__name__
+                    if len(failure) > 160:
+                        failure = failure[:157] + "..."
                     if isinstance(exc, ModelFailure) and not exc.retryable:
                         break
         try:
@@ -165,8 +224,16 @@ class JDParser:
         for number, item in enumerate(raw["requirements"], 1):
             if not isinstance(item, dict):
                 raise JDParseError("Requirement is not an object")
+            coerced = _coerce_grounded_terms(item)
+            if coerced is None:
+                raise JDParseError("Requirement is not grounded in JD")
+            if coerced.get("normalized_terms") != item.get("normalized_terms"):
+                repaired_any = True
+            item = coerced
             if not _source_supported(item, source):
                 repaired = _repair_quote(item, source)
+                if repaired is not None:
+                    repaired = _coerce_grounded_terms(repaired) or repaired
                 if repaired is None or not _source_supported(repaired, source):
                     raise JDParseError("Requirement is not grounded in JD")
                 item = repaired
@@ -190,13 +257,21 @@ class JDParser:
         for line in _spans(source):
             if _injection(line) or _NEGATIVE.search(line):
                 continue
-            if re.fullmatch(r"(?:preferred(?: qualifications| requirements| skills)?|nice.to.have|优先条件|加分项)\s*[:：]?", line, re.I):
+            if re.fullmatch(
+                r"(?:preferred(?: qualifications| requirements| skills)?|nice.to.have|优先条件|加分项(?:或注意事项)?)\s*[:：]?",
+                line,
+                re.I,
+            ):
                 section_preferred, section_category = True, None
                 continue
-            if re.fullmatch(r"(?:requirements|required(?: qualifications| skills)?|基本要求|任职要求)\s*[:：]?", line, re.I):
+            if re.fullmatch(
+                r"(?:requirements|required(?: qualifications| skills)?|基本要求|任职要求|岗位要求)\s*[:：]?",
+                line,
+                re.I,
+            ):
                 section_preferred, section_category = False, None
                 continue
-            if re.fullmatch(r"(?:responsibilities|职责|岗位职责)\s*[:：]?", line, re.I):
+            if re.fullmatch(r"(?:responsibilities|职责|岗位职责|岗位描述)\s*[:：]?", line, re.I):
                 section_preferred, section_category = False, "RESPONSIBILITY"
                 continue
             line_preferred = section_preferred or bool(_PREFERRED.search(line))

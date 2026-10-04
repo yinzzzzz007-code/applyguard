@@ -5,6 +5,8 @@ from typing import Any
 
 
 _NON_ALNUM = re.compile(r"[^a-z0-9+#.]+")
+# Keep CJK / fullwidth letters so Chinese JD terms are not wiped to empty strings.
+_KEEP_CHARS = re.compile(r"[^a-z0-9+#.\u3400-\u9fff]+")
 _ALIASES = {
     "rest api": "http api",
     "restful api": "http api",
@@ -20,10 +22,58 @@ _ALIASES = {
     "etl pipeline": "etl",
     "etl pipelines": "etl",
     "data pipeline": "data pipelines",
+    "pytorch": "pytorch",
+    "tensorflow": "tensorflow",
+    "tf": "tensorflow",
 }
 _MENTION_VARIANTS = {
     "data pipelines": {"etl pipeline", "etl pipelines"},
     "llm fine tuning": {"fine tuned a language model"},
+    "pytorch": {"pytorch", "py torch"},
+    "tensorflow": {"tensorflow", "tensor flow"},
+}
+# Chinese JD phrases → English vault terms (deterministic soft bridges, not free semantics).
+_CJK_BRIDGES = {
+    "本科": {"bsc", "bachelor", "undergraduate", "student"},
+    "学历": {"bsc", "bachelor", "degree", "student"},
+    "计算机": {"software", "computer", "engineering", "python"},
+    "人工智能": {"machine learning", "llm", "pytorch", "model evaluation"},
+    "数学": {"math", "mathematics"},
+    "深度学习": {"pytorch", "machine learning", "model evaluation", "llm"},
+    "机器学习": {"pytorch", "machine learning", "model evaluation", "llm"},
+    "推荐系统": {"machine learning", "model evaluation", "pytorch", "llm"},
+    "推荐": {"machine learning", "model evaluation", "pytorch"},
+    "召回": {"machine learning", "model evaluation"},
+    "排序": {"machine learning", "model evaluation"},
+    "模型算法": {"pytorch", "model evaluation", "llm", "machine learning"},
+    "模型": {"pytorch", "model evaluation", "llm"},
+    "算法": {"python", "pytorch", "model evaluation"},
+    "编程": {"python", "java", "c++", "typescript"},
+    "神经网络": {"pytorch", "machine learning", "llm"},
+    "多模态": {"llm", "machine learning", "model evaluation"},
+    "强化学习": {"machine learning", "model evaluation", "pytorch"},
+    "自动化测试": {"automated testing"},
+    "接口服务": {"http api"},
+    "数据处理": {"data pipelines", "etl"},
+    "数据管道": {"data pipelines", "etl"},
+    "后端开发": {"python", "http api"},
+    "版本协作": {"git"},
+    "版本控制": {"git"},
+    "微调": {"llm fine tuning"},
+    "评测": {"model evaluation"},
+}
+
+# English requirement terms → Chinese vault wording (skills stay English).
+_EN_CJK_VARIANTS = {
+    "automated testing": ("自动化测试", "单元测试"),
+    "http api": ("接口服务",),
+    "git": ("版本协作", "版本控制"),
+    "data pipelines": ("数据管道", "数据处理"),
+    "etl": ("数据管道",),
+    "data quality": ("数据质量",),
+    "model evaluation": ("评测",),
+    "llm fine tuning": ("微调",),
+    "machine learning": ("机器学习",),
 }
 
 
@@ -31,14 +81,39 @@ def _plain_normalise(value: str) -> str:
     return _NON_ALNUM.sub(" ", value.casefold()).strip()
 
 
+def _term_normalise(value: str) -> str:
+    return _KEEP_CHARS.sub(" ", value.casefold()).strip()
+
+
 def _normalise(value: str) -> str:
-    cleaned = _plain_normalise(value)
-    return _ALIASES.get(cleaned, cleaned)
+    cleaned = _term_normalise(value)
+    if not cleaned:
+        return ""
+    ascii_form = _plain_normalise(value)
+    if ascii_form:
+        return _ALIASES.get(ascii_form, ascii_form)
+    return cleaned
+
+
+def _has_cjk(value: str) -> bool:
+    return bool(re.search(r"[\u3400-\u9fff]", value))
 
 
 def _mentions(term: str, text: str) -> bool:
-    """Match complete terms or explicit aliases; never match inside another word."""
+    """Match complete terms, CJK substrings, aliases, or explicit CJK→EN bridges."""
+    if not term or not text:
+        return False
     normalised_text = _plain_normalise(text)
+    raw_fold = text.casefold()
+    if _has_cjk(term):
+        if term.casefold() in raw_fold:
+            return True
+        bridges = _CJK_BRIDGES.get(term) or {
+            bridge for key, vals in _CJK_BRIDGES.items() if key in term for bridge in vals
+        }
+        return any(_mentions(bridge, text) for bridge in bridges)
+    if any(phrase in raw_fold for phrase in _EN_CJK_VARIANTS.get(term, ())):
+        return True
     if term == "model evaluation":
         return bool(
             re.search(r"(?<![a-z0-9+#])model(?![a-z0-9+#])", normalised_text)
@@ -49,6 +124,7 @@ def _mentions(term: str, text: str) -> bool:
     return any(
         re.search(rf"(?<![a-z0-9+#]){re.escape(variant)}(?![a-z0-9+#])", normalised_text)
         for variant in variants
+        if variant
     )
 
 
@@ -68,7 +144,7 @@ class EvidenceMatcher:
         uncovered: list[dict[str, Any]] = []
 
         for requirement in parsed_jd["requirements"]:
-            requirement_terms = {_normalise(term) for term in requirement.get("normalized_terms", []) if term.strip()}
+            requirement_terms = self._requirement_terms(requirement)
             if not requirement_terms:
                 uncovered.append(
                     {
@@ -104,13 +180,37 @@ class EvidenceMatcher:
             "uncovered_requirements": uncovered,
         }
 
+    @staticmethod
+    def _requirement_terms(requirement: dict[str, Any]) -> set[str]:
+        terms: set[str] = set()
+        raw_terms = requirement.get("normalized_terms", [])
+        for term in raw_terms:
+            if isinstance(term, str) and term.strip():
+                normalised = _normalise(term)
+                if normalised:
+                    terms.add(normalised)
+        text = requirement.get("text") or requirement.get("evidence_text") or ""
+        # Only enrich from prose for Chinese JDs; English fixtures must keep exact term sets.
+        has_cjk = _has_cjk(text if isinstance(text, str) else "") or any(
+            isinstance(term, str) and _has_cjk(term) for term in raw_terms
+        )
+        if has_cjk and isinstance(text, str):
+            for token in re.findall(r"[A-Za-z][A-Za-z0-9+#.]{1,24}", text):
+                normalised = _normalise(token)
+                if normalised:
+                    terms.add(normalised)
+            for cjk in re.findall(r"[\u3400-\u9fff]{2,12}", text):
+                if cjk in _CJK_BRIDGES:
+                    terms.add(cjk)
+        return terms
+
     def _score_requirement(
         self,
         requirement: dict[str, Any],
         requirement_terms: set[str],
         experience: dict[str, Any],
     ) -> dict[str, Any] | None:
-        skill_terms = {_normalise(skill) for skill in experience.get("skills", [])}
+        skill_terms = {term for skill in experience.get("skills", []) if (term := _normalise(skill))}
         responsibility_text = " ".join(
             [experience.get("summary", ""), *experience.get("responsibilities", []), experience.get("title", ""), experience.get("role", "")]
         )
@@ -120,8 +220,15 @@ class EvidenceMatcher:
         ]
         if not claims:
             return None
-        supported_terms = {term for term in requirement_terms if any(_mentions(term, claim["text"]) for claim in claims)}
-        keyword_hits = sorted(requirement_terms.intersection(skill_terms).intersection(supported_terms))
+        # Term is supported only when a linked claim states it (CJK terms may bridge to EN claim wording).
+        supported_terms = {
+            term for term in requirement_terms if any(_mentions(term, claim["text"]) for claim in claims)
+        }
+        keyword_hits = sorted(
+            term
+            for term in supported_terms
+            if term in skill_terms or any(_mentions(term, skill) for skill in experience.get("skills", []))
+        )
         responsibility_hits = sorted(term for term in supported_terms if _mentions(term, responsibility_text))
         if not keyword_hits and not responsibility_hits:
             return None
@@ -148,6 +255,9 @@ class EvidenceMatcher:
         ) else 0.0
         conflict_penalty = 0.3 if conflicts else 0.0
         missing_penalty = 0.25 if missing_evidence else 0.0
+        # Chinese JDs often list many terms; keep partial EN/CJK bridge hits visible as MEDIUM.
+        if missing_evidence and (keyword_hits or responsibility_hits) and any(_has_cjk(term) for term in requirement_terms):
+            missing_penalty = min(missing_penalty, 0.1)
         relevance = _clamp(
             0.45 * keyword_overlap
             + 0.15 * responsibility_overlap

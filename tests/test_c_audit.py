@@ -41,7 +41,7 @@ class AuditTests(unittest.TestCase):
         with patch('urllib.request.urlopen', return_value=response) as transport:
             HttpModelClient(api_key='dummy').complete_json('system', 'fictional')
         body = json.loads(transport.call_args.args[0].data)
-        self.assertEqual(body['model'], 'gpt-4o-mini')
+        self.assertEqual(body['model'], 'deepseek-flash')
         self.assertEqual(body['max_tokens'], 2048)
         with patch('urllib.request.urlopen', return_value=response) as transport:
             HttpModelClient(api_key='dummy', model='provider-better-model', max_tokens=4096).complete_json('system', 'fictional')
