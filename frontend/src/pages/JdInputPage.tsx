@@ -1,9 +1,9 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getApiClient, SAMPLE_JD, type WorkflowParseMode } from '../api/client'
 import { EmptyState, ErrorState, LoadingState } from '../components/States'
 import { useDemo } from '../context/DemoContext'
-import { ZH_EXEC, ZH_MAPPER, ZH_PARSER, ZH_WORKFLOW, zhLookup } from '../i18n'
+import { ZH_EXEC, ZH_MAPPER, ZH_PARSER, ZH_WORKFLOW, zhLookup, zhText } from '../i18n'
 
 export function JdInputPage() {
   const navigate = useNavigate()
@@ -14,9 +14,20 @@ export function JdInputPage() {
   const [errorMsg, setErrorMsg] = useState('')
   const [backendHint, setBackendHint] = useState('')
   const [lastParseMode, setLastParseMode] = useState<WorkflowParseMode | null>(null)
+  const requestId = useRef(0)
+  const jdFallbackReason = workflow?.step_trace.find((step) => step.step === 'JD Parser')?.fallback_reason
+  const requestedMode = workflow?.component_modes?.requested_parse_mode
+  const ruleParsed = workflow?.component_modes?.jd_parser === 'RULE_FALLBACK'
+  const offlineRules = ruleParsed && !jdFallbackReason && (requestedMode === 'OFFLINE' || !requestedMode)
+  const executionLabel = offlineRules
+    ? '离线规则解析'
+    : ruleParsed && jdFallbackReason
+      ? '模型失败后规则回退'
+      : zhLookup(ZH_EXEC, workflow?.execution_mode)
 
   const run = useCallback(
     async (parseMode: WorkflowParseMode = 'offline') => {
+      const thisRequest = ++requestId.current
       setStatus('loading')
       setErrorMsg('')
       setBackendHint('')
@@ -24,6 +35,7 @@ export function JdInputPage() {
 
       if (scenario === 'live') {
         const health = await getApiClient().getHealth()
+        if (thisRequest !== requestId.current) return
         if (health.error) {
           setErrorMsg(health.error.message)
           setStatus('error')
@@ -34,6 +46,7 @@ export function JdInputPage() {
       }
 
       const res = await getApiClient().runWorkflow(jdRawInput, { parseMode })
+      if (thisRequest !== requestId.current) return
       if (res.empty && res.error?.code === 'EMPTY_JD') {
         setErrorMsg(res.error.message)
         setStatus('empty')
@@ -129,13 +142,13 @@ export function JdInputPage() {
           <h3>工作流已返回</h3>
           <p>
             状态：<strong>{zhLookup(ZH_WORKFLOW, workflow.workflow_status)}</strong> · 执行方式：
-            {zhLookup(ZH_EXEC, workflow.execution_mode)} · 解析：
-            {zhLookup(ZH_PARSER, workflow.component_modes?.jd_parser, '—')} · 网申映射：
+            {executionLabel} · 解析：
+            {offlineRules ? '离线规则' : zhLookup(ZH_PARSER, workflow.component_modes?.jd_parser, '—')} · 网申映射：
             {zhLookup(ZH_MAPPER, workflow.component_modes?.ats_form_mapper, '—')}
-            {lastParseMode ? (
+            {requestedMode ? (
               <>
                 {' '}
-                · 请求：{lastParseMode === 'dynamic' ? '模型解析' : '离线规则'}
+                · 请求：{requestedMode === 'DYNAMIC' ? '模型解析' : '离线规则'}
               </>
             ) : null}
           </p>
@@ -144,31 +157,22 @@ export function JdInputPage() {
             @ {workflow.parsed_jd.company === 'UNKNOWN' ? '未知公司' : workflow.parsed_jd.company} · 要求{' '}
             {workflow.parsed_jd.requirements.length} 条
           </p>
-          {workflow.component_modes?.jd_parser === 'RULE_FALLBACK' && (
+          {ruleParsed && (
             <div className="callout warn">
-              <p>
-                岗位解析处于<strong>规则回退</strong>
-                （不是页面坏了）。工作流仍会成功返回，用规则结果继续演示。
-              </p>
-              {lastParseMode === 'dynamic' ? (
+              {offlineRules ? (
                 <p className="muted">
-                  {(() => {
-                    const reason = workflow.step_trace.find((s) => s.fallback_reason)?.fallback_reason
-                    if (!reason) {
-                      return '原因：后端未加载到模型密钥（改完配置后需重启后端）。'
-                    }
-                    if (reason.includes('not grounded') || reason.includes('JDParseError')) {
-                      return '原因：模型有返回，但条目未能通过原文核对。已尽量保留可核对的中文词条。'
-                    }
-                    return '原因：模型调用失败后回退。常见：密钥无效、模型名不对、网络超时或输出被截断。'
-                  })()}
+                  本次主动选择离线解析，只提取规则能识别的要求；结果可能少于岗位原文，建议逐条核对。
                 </p>
               ) : (
-                <p className="muted">预录回退场景会标明模型超时原因，见步骤轨迹。</p>
+                <p className="muted">
+                  {jdFallbackReason
+                    ? `模型解析未通过，已改用规则结果。原因：${zhText(jdFallbackReason)}`
+                    : '模型路径未启用，已用规则结果继续。请检查后端模型密钥配置。'}
+                </p>
               )}
             </div>
           )}
-          {lastParseMode === 'dynamic' &&
+          {requestedMode === 'DYNAMIC' &&
             (workflow.component_modes?.jd_parser === 'MODEL' ||
               workflow.component_modes?.jd_parser === 'MODEL_SPAN_REPAIRED') && (
               <div className="callout">

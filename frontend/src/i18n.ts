@@ -122,6 +122,7 @@ const PHRASE: Array<[RegExp | string, string]> = [
   ['ready_for_selection', '可写入'],
   ['unsupported_block', '不支持阻断'],
   ['timeout_fallback', '超时回退'],
+  ['JDParseError: Requirement is not grounded in JD', '模型条目未通过岗位原文核对'],
   ['Skill overlap', '技能重合'],
   ['Responsibility overlap', '职责重合'],
   ['Linked evidence', '关联证据'],

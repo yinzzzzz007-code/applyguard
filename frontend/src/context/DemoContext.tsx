@@ -61,6 +61,10 @@ function sourceLabel(scenario: DemoScenario, workflow: WorkflowResponse | null):
   if (scenario === 'live' && workflow) {
     const parser = workflow.component_modes?.jd_parser
     if (parser === 'MODEL' || parser === 'MODEL_SPAN_REPAIRED') return '在线 · 模型解析'
+    if (workflow.component_modes?.requested_parse_mode === 'DYNAMIC' ||
+        workflow.step_trace.some((step) => step.step === 'JD Parser' && step.fallback_reason)) {
+      return '在线 · 模型路径转规则'
+    }
     return '在线 · 离线规则'
   }
   if (scenario === 'error') return '错误演示（无成功响应）'
