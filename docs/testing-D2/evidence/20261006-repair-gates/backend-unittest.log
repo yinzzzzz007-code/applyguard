@@ -1,0 +1,14 @@
+﻿command: python -m unittest discover -s tests -v
+cwd: E:\软件工程\applyguard-D-2
+started_utc: 2026-10-06T10:27:56.1348900Z
+ended_utc: 2026-10-06T10:27:57.3021023Z
+exit_code: 1
+
+python.exe : test_built_spa_deep_link_and_seed_file (test_api.ApiTests.test_built_spa_deep_link_and_seed_file) ... ok
+At E:\软件工程\applyguard-D-2\docs\testing-D2\scripts\Run-Repair-Gates.ps1:18 char:15
++     $output = & $Executable @Arguments 2>&1 | Out-String
++               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (test_built_spa_...ed_file) ... ok:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+

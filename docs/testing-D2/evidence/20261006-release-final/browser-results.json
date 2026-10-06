@@ -1,0 +1,36 @@
+{
+  "events": [
+    {
+      "id": "E2E-01",
+      "result": "PASS",
+      "detail": "经历库可加载",
+      "at": "2026-10-06T10:54:58.189Z"
+    },
+    {
+      "id": "E2E-02",
+      "result": "PASS",
+      "detail": "保存成功后才显示已保存，后端可读回",
+      "at": "2026-10-06T10:54:58.211Z"
+    },
+    {
+      "id": "E2E-02A",
+      "result": "PASS",
+      "detail": "保存失败保持未保存状态和旧版本，重试后可恢复",
+      "at": "2026-10-06T10:54:58.718Z"
+    },
+    {
+      "id": "E2E-02B",
+      "result": "PASS",
+      "detail": "保存中继续编辑不会被旧响应覆盖，当前稿仍须再次保存",
+      "at": "2026-10-06T10:54:59.827Z"
+    },
+    {
+      "id": "E2E-FAIL",
+      "result": "FAIL",
+      "detail": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.resume-entry').filter({ hasText: '项目条目' }).first().locator('textarea')\u001b[22m\n\n    at main (E:\\软件工程\\applyguard-D-2\\docs\\testing-D2\\scripts\\Browser-Repair-Regression.cjs:89:44)",
+      "at": "2026-10-06T10:55:29.841Z"
+    }
+  ],
+  "pageErrors": [],
+  "browserVersion": "155.0.8059.27"
+}

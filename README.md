@@ -20,7 +20,7 @@ python -m venv .venv
 
 Use the project virtualenv. The machine-default Python may lack `jsonschema`; missing dependencies are not C test failures.
 
-### D frontend (Proposal UI)
+### D-2 local demo UI
 
 Windows one-click (backend + Vite + browser):
 
@@ -38,7 +38,11 @@ npm run dev
 
 Open the Vite URL (default `http://127.0.0.1:5173`). It proxies `/api` and `/health` to `127.0.0.1:8000`. Live demos must send `parse_mode: "offline"` for `cand_demo_001` (the UI does this). Pre-recorded BLOCKED / Fallback packs under `frontend/public/prerecorded/` come from `python -m demo.run_c_cases` and are labeled as pre-recorded, not live API output.
 
-The simulated ATS page is a fixture + risk controls UI — not a real job-site scanner. Human confirmation is local-only; `audit_record` is not persisted by the backend. The Application History page saves only simulation summaries in this browser, without personal details or JD/resume text. BLOCKED or pending content cannot enter the copyable application draft.
+The simulated ATS page is an editable local form with risk controls, not a real job-site scanner. Editing an automatically mapped value invalidates its confirmation until restored or rechecked. Human confirmation is local-only; `audit_record` is not persisted by the backend. The Application History page saves only simulation summaries in this browser, without personal details or JD/resume text. Claims with no linked evidence and BLOCKED claims cannot enter the copyable draft.
+
+The Career Vault form can be used without importing a resume. Optional text-PDF upload previews extracted contact, education, experience and award/competition lines before the user confirms replacement. Scanned PDFs have no OCR path and return a clear error. A confirmed replacement removes old seed experiences and evidence from the active version. Drafts are saved atomically under ignored `data/local/`; set `APPLYGUARD_LOCAL_DATA_DIR` to an isolated directory for testing. Changed experience text does not inherit seed claims or evidence, so it cannot be copied as verified until evidence is added and checked. Awards remain structured but unverified. Current editing of a claim still lacks a backend re-verification loop.
+
+The active vault and saved form can be read at `GET /api/v1/vault` and `GET /api/v1/vault/draft`; `POST /api/v1/vault/draft` saves a draft, and `POST /api/v1/vault/pdf-extract` accepts a raw `application/pdf` body for preview only. The backend also serves the built SPA's assets, public demo files and named deep links.
 
 D's task-study protocol is at `docs/usability-study/D-task-study.md` (no participant results yet). A captioned walkthrough video and script are at `presentation/demo-video/`.
 
@@ -65,7 +69,7 @@ curl -sS http://127.0.0.1:8000/api/v1/workflow/mock -H 'Content-Type: applicatio
   -d '{"candidate_id":"cand_demo_001","jd_text":"Software Engineering Intern requires Python HTTP APIs, automated tests, and Git.","parse_mode":"offline"}'
 ```
 
-The low-cost demo defaults to DeepSeek (`APPLYGUARD_AI_BASE_URL=https://api.deepseek.com`, `APPLYGUARD_AI_MODEL=deepseek-flash`) and 2048 maximum output tokens per attempt. These are temporary defaults: set `APPLYGUARD_AI_MODEL` to a provider-supported stronger model and `APPLYGUARD_AI_MAX_TOKENS` to a suitable value (1–16384) when quality needs justify the additional cost. Authentication/configuration failures do not retry; transient or invalid output failures retry at most once. Set `APPLYGUARD_AI_BASE_URL` for the compatible provider. Confirm the chosen provider supports chat completions, JSON object response format, and `max_tokens`; rerun quality evaluation after changing models. `parse_mode: "offline"` guarantees zero API calls even if a key exists; `dynamic` enables model calls when a key exists. Keep the key in a shell environment or ignored `.env`, not in tracked files. This service reads process environment variables; it does not load `.env` automatically.
+The low-cost demo defaults to DeepSeek (`APPLYGUARD_AI_BASE_URL=https://api.deepseek.com`, `APPLYGUARD_AI_MODEL=deepseek-flash`) and 2048 maximum output tokens per attempt. These are temporary defaults: set `APPLYGUARD_AI_MODEL` to a provider-supported stronger model and `APPLYGUARD_AI_MAX_TOKENS` to a suitable value (1–16384) when quality needs justify the additional cost. Authentication/configuration failures do not retry; transient or invalid output failures retry at most once. Set `APPLYGUARD_AI_BASE_URL` for the compatible provider. Confirm the chosen provider supports chat completions, JSON object response format, and `max_tokens`; rerun quality evaluation after changing models. `parse_mode: "offline"` guarantees zero API calls even if a key exists; `dynamic` enables model calls when a key exists. Keep the key in a shell environment or ignored `.env`, not in tracked files. This service reads process environment variables and fills unset values from a repository-root `.env`; keep `.env` ignored and never commit secrets.
 
 ## Test
 
@@ -76,7 +80,7 @@ python -m demo.run_c_cases
 cd frontend; npm run build; npm run lint; npm run smoke
 ```
 
-`python -m eval.c_benchmark --model` opts into paid model calls for ten fictional JDs. See `docs/ai-evaluation-C.md` for the measured offline results and limits.
+`python -m eval.c_benchmark` now defaults to `eval/c_cases_zh_v2.json`, generated from the current Chinese seed and frozen case transformations. It reports dataset and seed SHA-256 hashes. This is an in-distribution regression set, not an independent user or model-quality estimate. The old `eval/c_cases.json` and `eval/results/c-offline-audit.json` remain historical; use `--cases eval/c_cases.json` to reproduce the old-set mismatch. `--model` opts into paid model calls. Latest executed logs, browser trace, screenshots, limitations and defect status are under `docs/testing-D2/`.
 
 ## B deterministic proposal baseline
 
@@ -88,7 +92,7 @@ The B-owned modules are runnable, deterministic, and fixture-backed:
 - `backend/services/resume_selector.py` selects only strong, conflict-free, evidence-backed claims under deterministic count, length, and redundancy constraints. Its count-limit step adapts the retained Apache-2.0 Resume Matcher bullet selector; see `THIRD_PARTY_NOTICES.md`.
 - `data/benchmarks/fixed-jd-benchmark.json` contains five fictional fixed JD cases. It is a test set, not an evaluation result.
 
-The default no-key, no-`parse_mode` request preserves the original A/B fixture response for existing consumers. Dynamic requests compute C's Parser, Claim Validator, and Risk Check while keeping B's services unchanged. ATS mapping remains D's fixed fixture.
+The default no-key, no-`parse_mode` request preserves the original A/B fixture response for existing consumers. Dynamic requests compute C's Parser, Claim Validator, and Risk Check. The shipped ATS fixture follows the current selected claim; custom mappings retain mismatch checks.
 
 For B-specific verification, run the standard test command above. See [B_TO_C_HANDOFF.md](B_TO_C_HANDOFF.md) for integration details and the [Proposal formative-study kit](docs/user-study/README.md) for the released questionnaire, interview guide, privacy/photo consent, and evidence templates. No participant results are included.
 

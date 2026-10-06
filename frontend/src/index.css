@@ -719,10 +719,12 @@ code {
   align-items: center;
   margin-bottom: 1rem;
   padding: 0.85rem 1rem;
-  background: #f3f7ff;
-  border: 1px solid #d6e4ff;
+  background: #fff;
+  border: 1px solid #dce5df;
   border-radius: var(--radius-md);
 }
+
+.resume-toolbar.saved { background: #e4f7eb; border-color: #84ca9d; }
 
 .resume-toolbar strong {
   font-size: 13px;
@@ -1049,6 +1051,11 @@ textarea.resume-input {
 }
 
 .em-hl {
+  display: inline;
+  border: 0;
+  font: inherit;
+  text-align: inherit;
+  vertical-align: baseline;
   border-radius: 3px;
   padding: 0.05em 0.12em;
   cursor: pointer;
@@ -1316,3 +1323,27 @@ textarea.resume-input {
 .rr-card.on .rr-tip {
   display: block;
 }
+.ats-form-shell {
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  border: 1px solid #dce5df;
+  border-radius: 18px;
+  background: #f7faf8;
+}
+
+.em-hl:focus-visible { outline: 2px solid #006b54; outline-offset: 2px; }
+
+.ats-form-heading {
+  display: grid;
+  gap: .4rem;
+  padding: .3rem .25rem 1.2rem;
+}
+
+.ats-form-heading strong { font-size: 1.45rem; }
+.ats-form-heading p { margin: 0; color: #56645c; }
+.ats-form-field { display: grid; gap: .45rem; margin: .8rem 0; font-weight: 600; }
+.ats-form-field .resume-input { max-width: 100%; background: white; }
+
+.btn.resume-save { background: #fff; border-color: #9aaea2; color: #1c3a2b; }
+.btn.resume-save.saved { background: #dff6e8; border-color: #4aaf72; color: #14532d; }
+.btn.resume-save.saved:hover:not(:disabled) { background: #cdf0db; }

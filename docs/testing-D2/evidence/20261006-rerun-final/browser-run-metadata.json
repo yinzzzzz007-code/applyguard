@@ -1,0 +1,8 @@
+{
+  "started_utc": "2026-10-06T14:47:34.1345885Z",
+  "exit_code": 1,
+  "command": "node docs/testing-D2/scripts/Browser-Repair-Regression.cjs",
+  "frontend_base": "http://127.0.0.1:5174",
+  "backend_pid": 56196,
+  "ended_utc": "2026-10-06T14:47:40.5659860Z"
+}

@@ -1,0 +1,23 @@
+[
+  {
+    "pid": 60340,
+    "name": "python",
+    "executable": "D:\\jianglingtian\\miniconda3\\python.exe",
+    "started_local": "2026-10-06T22:50:27.1068850+08:00",
+    "stopped_utc": "2026-10-06T14:54:43.6649936Z"
+  },
+  {
+    "pid": 52736,
+    "name": "node",
+    "executable": "D:\\Program Files\\nodejs\\node.exe",
+    "started_local": "2026-10-06T18:02:02.2309328+08:00",
+    "stopped_utc": "2026-10-06T14:54:43.6722933Z"
+  },
+  {
+    "pid": 62800,
+    "name": "node",
+    "executable": "D:\\Program Files\\nodejs\\node.exe",
+    "started_local": "2026-10-06T18:01:23.9906798+08:00",
+    "stopped_utc": "2026-10-06T14:54:43.6738396Z"
+  }
+]

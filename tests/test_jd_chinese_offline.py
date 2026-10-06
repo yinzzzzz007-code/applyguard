@@ -29,6 +29,14 @@ JD = """多模态评测研发实习生实习
 
 
 class ChineseOfflineJDTests(unittest.TestCase):
+    def test_single_line_demo_title_and_bonus_are_separate(self) -> None:
+        text = "后端开发实习生。岗位职责：使用 Python 编写接口服务、补充自动化测试，并使用版本协作。加分项：有数据处理相关项目经验。"
+        parsed, _, _ = JDParser(None).parse(text)
+        self.assertEqual(parsed["title"], "后端开发实习生")
+        self.assertEqual(len(parsed["requirements"]), 4)
+        self.assertFalse(any(item["text"] == parsed["title"] for item in parsed["requirements"]))
+        self.assertEqual([item["type"] for item in parsed["requirements"]], ["HARD", "HARD", "HARD", "PREFERRED"])
+
     def test_offline_result_preserves_title_and_grounded_requirements(self):
         parsed, mode, failure = JDParser().parse(JD)
         self.assertEqual((mode, failure), ("RULE_FALLBACK", None))

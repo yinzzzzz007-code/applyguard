@@ -5,7 +5,7 @@ import { ZH_ACTION, ZH_MAPPER, zhLookup, zhText } from '../i18n'
 
 export function AtsSimulatorPage() {
   const navigate = useNavigate()
-  const { workflow, fieldDecisions, setFieldDecision, atsFieldAcksComplete } = useDemo()
+  const { workflow, fieldDecisions, atsDraftValues, setFieldDecision, setAtsDraftValue, atsFieldAcksComplete } = useDemo()
 
   if (!workflow) {
     return (
@@ -68,12 +68,20 @@ export function AtsSimulatorPage() {
         </div>
       )}
 
+      <div className="ats-form-shell">
+        <div className="ats-form-heading">
+          <span className="muted">校园招聘 · 在线申请表（本地模拟）</span>
+          <strong>拟填信息核对</strong>
+          <p>可试填并检查来源；修改自动映射值后须回到经历库重新核验，不能直接作为已通过字段。</p>
+        </div>
       <div className="stack">
         {mapping.fields.map((f) => {
           const control = controls[f.field_id]
           const level = control?.level ?? 'L0'
           const action = control?.action ?? f.action
           const d = fieldDecisions[f.field_id]
+          const draftValue = atsDraftValues[f.field_id] ?? f.value
+          const edited = draftValue !== f.value
           return (
             <article key={f.field_id} className="item-block">
               <div className="item-head">
@@ -83,10 +91,12 @@ export function AtsSimulatorPage() {
                   <span className="tag">{zhLookup(ZH_ACTION, action)}</span>
                 </span>
               </div>
-              <p>
-                <strong>拟填值：</strong>
-                {f.value}
-              </p>
+              <label className="ats-form-field">
+                <span>拟填值 · {zhText(f.label)}</span>
+                <input className="resume-input" value={draftValue} disabled={action === 'BLOCKED'}
+                  onChange={(event) => setAtsDraftValue(f.field_id, event.target.value)} />
+              </label>
+              {edited ? <p className="danger-text">已修改自动映射值；当前证据未核验新值。恢复原值或返回经历库重新处理。</p> : null}
               <p>
                 <strong>来源陈述：</strong>
                 {f.source_claim_ids.length
@@ -162,7 +172,13 @@ export function AtsSimulatorPage() {
                   <span className="tag">{zhLookup(ZH_ACTION, control.action)}</span>
                 </span>
               </div>
-              <p className="warn-text">无拟填值；不得从简历推断，须由用户本人提供。</p>
+              <label className="ats-form-field">
+                <span>本人填写 · {zhText(control.field_id)}</span>
+                <input className="resume-input" value={atsDraftValues[control.field_id] ?? ''}
+                  disabled={control.action === 'BLOCKED'} placeholder="仅在本页模拟，不保存或提交"
+                  onChange={(event) => setAtsDraftValue(control.field_id, event.target.value)} />
+              </label>
+              <p className="warn-text">未映射字段不进入自动复制稿；请在真实招聘网站由本人填写。</p>
               {control.action !== 'BLOCKED' && (
                 <label className="check-line">
                   <input
@@ -178,6 +194,7 @@ export function AtsSimulatorPage() {
             </article>
           )
         })}
+      </div>
 
       <div className="callout">
         <h4>提交前风险检查</h4>

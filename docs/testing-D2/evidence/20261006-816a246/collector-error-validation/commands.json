@@ -1,0 +1,85 @@
+[
+  {
+    "id": "backend-unittest",
+    "program": "__missing_test_python__",
+    "args": [
+      "-X",
+      "utf8",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-v"
+    ],
+    "cwd": "E:\\软件工程\\applyguard-D-2",
+    "started_at": "2026-10-06T00:46:45.2910806+00:00",
+    "finished_at": "2026-10-06T00:46:45.4196400+00:00",
+    "elapsed_ms": 127,
+    "exit_code": null,
+    "status": "ERROR",
+    "log": "logs/backend-unittest.log"
+  },
+  {
+    "id": "frontend-build",
+    "program": "npm.cmd",
+    "args": [
+      "run",
+      "build"
+    ],
+    "cwd": "E:\\软件工程\\applyguard-D-2\\frontend",
+    "started_at": "2026-10-06T00:46:45.4267791+00:00",
+    "finished_at": "2026-10-06T00:46:47.7962795+00:00",
+    "elapsed_ms": 2369,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "logs/frontend-build.log"
+  },
+  {
+    "id": "frontend-lint",
+    "program": "npm.cmd",
+    "args": [
+      "run",
+      "lint"
+    ],
+    "cwd": "E:\\软件工程\\applyguard-D-2\\frontend",
+    "started_at": "2026-10-06T00:46:47.7988401+00:00",
+    "finished_at": "2026-10-06T00:46:48.5740885+00:00",
+    "elapsed_ms": 775,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "logs/frontend-lint.log"
+  },
+  {
+    "id": "frontend-smoke",
+    "program": "npm.cmd",
+    "args": [
+      "run",
+      "smoke"
+    ],
+    "cwd": "E:\\软件工程\\applyguard-D-2\\frontend",
+    "started_at": "2026-10-06T00:46:48.5767854+00:00",
+    "finished_at": "2026-10-06T00:46:49.8118882+00:00",
+    "elapsed_ms": 1235,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "logs/frontend-smoke.log"
+  },
+  {
+    "id": "offline-benchmark",
+    "program": "__missing_test_python__",
+    "args": [
+      "-X",
+      "utf8",
+      "-m",
+      "eval.c_benchmark"
+    ],
+    "cwd": "E:\\软件工程\\applyguard-D-2",
+    "started_at": "2026-10-06T00:46:49.8139442+00:00",
+    "finished_at": "2026-10-06T00:46:49.8604041+00:00",
+    "elapsed_ms": 46,
+    "exit_code": null,
+    "status": "ERROR",
+    "log": "logs/offline-benchmark.log"
+  }
+]

@@ -1,0 +1,27 @@
+2026-10-06 22:46:41,628 INFO ApplyGuard foundation listening at http://127.0.0.1:8000
+2026-10-06 22:46:41,628 INFO AI config: key=missing base= model=
+2026-10-06 22:47:02,091 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:36,418 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:36,429 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:36,429 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 404 -
+2026-10-06 22:47:36,529 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 404 -
+2026-10-06 22:47:38,054 INFO request client=127.0.0.1 message="POST /api/v1/vault/draft HTTP/1.1" 200 -
+2026-10-06 22:47:38,065 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:38,151 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:38,506 INFO request client=127.0.0.1 message="POST /api/v1/vault/draft HTTP/1.1" 200 -
+2026-10-06 22:47:38,523 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:38,565 INFO request client=127.0.0.1 message="GET /api/v1/vault HTTP/1.1" 200 -
+2026-10-06 22:47:38,728 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:38,740 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:38,741 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:38,752 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:39,383 INFO request client=127.0.0.1 message="GET /health HTTP/1.1" 200 -
+2026-10-06 22:47:39,450 INFO request client=127.0.0.1 message="POST /api/v1/workflow/mock HTTP/1.1" 200 -
+2026-10-06 22:47:39,687 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:39,698 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:39,768 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:39,778 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:40,056 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:40,068 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:40,081 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 22:47:40,093 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -

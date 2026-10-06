@@ -1,0 +1,284 @@
+{
+  "results": [
+    {
+      "id": "I01",
+      "expected": "同标签刷新恢复已保存内容",
+      "actual": "交互甲已保存（虚构）"
+    },
+    {
+      "id": "I02",
+      "expected": "未保存刷新前有提醒或恢复草稿",
+      "actual": {
+        "value": "交互甲已保存（虚构）",
+        "newDialogs": []
+      }
+    },
+    {
+      "id": "I03",
+      "expected": "重载与dirty/持久化语义明确",
+      "actual": {
+        "afterReset": {
+          "value": "林晓舟（演示）",
+          "state": "cand_demo_001"
+        },
+        "afterRefresh": "交互甲已保存（虚构）"
+      }
+    },
+    {
+      "id": "I04",
+      "expected": "重复点击当前场景不无提示重置输入",
+      "actual": {
+        "jd": "后端开发实习生。岗位职责：使用 Python 编写接口服务、补充自动化测试，并使用版本协作。加分项：有数据处理相关项目经验。",
+        "newDialogs": []
+      }
+    },
+    {
+      "id": "I05",
+      "expected": "表单输入有可访问名称",
+      "actual": {
+        "count": 45,
+        "fields": [
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*姓名"
+          },
+          {
+            "tag": "SELECT",
+            "id": "",
+            "nearLabel": "*性别"
+          },
+          {
+            "tag": "SELECT",
+            "id": "",
+            "nearLabel": "民族"
+          },
+          {
+            "tag": "SELECT",
+            "id": "",
+            "nearLabel": "政治面貌"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*手机号码"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*电子邮箱"
+          },
+          {
+            "tag": "SELECT",
+            "id": "",
+            "nearLabel": "*证件类型"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*证件号码"
+          },
+          {
+            "tag": "SELECT",
+            "id": "",
+            "nearLabel": "*招聘项目"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*期望职位"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*期望城市"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "到岗时间"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*学校"
+          },
+          {
+            "tag": "SELECT",
+            "id": "",
+            "nearLabel": "*学历"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*专业"
+          },
+          {
+            "tag": "SELECT",
+            "id": "",
+            "nearLabel": "*是否全日制"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*入学时间"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*毕业时间"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "成绩 / 排名"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*公司 / 组织"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*职位"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*开始时间"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*结束时间"
+          },
+          {
+            "tag": "TEXTAREA",
+            "id": "",
+            "nearLabel": "*工作 / 项目描述"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*项目名称"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*担任角色"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*开始时间"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*结束时间"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "所属组织"
+          },
+          {
+            "tag": "TEXTAREA",
+            "id": "",
+            "nearLabel": "*工作 / 项目描述"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*项目名称"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*担任角色"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*开始时间"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*结束时间"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "所属组织"
+          },
+          {
+            "tag": "TEXTAREA",
+            "id": "",
+            "nearLabel": "*工作 / 项目描述"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*项目名称"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*担任角色"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*开始时间"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*结束时间"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "所属组织"
+          },
+          {
+            "tag": "TEXTAREA",
+            "id": "",
+            "nearLabel": "*工作 / 项目描述"
+          },
+          {
+            "tag": "INPUT",
+            "id": "",
+            "nearLabel": "*专业技能"
+          },
+          {
+            "tag": "TEXTAREA",
+            "id": "",
+            "nearLabel": "获奖 / 补充"
+          },
+          {
+            "tag": "TEXTAREA",
+            "id": "",
+            "nearLabel": "自我评价"
+          }
+        ]
+      }
+    },
+    {
+      "id": "I06",
+      "expected": "375px经历库无整页溢出",
+      "actual": {
+        "innerWidth": 375,
+        "scrollWidth": 375
+      }
+    }
+  ],
+  "dialogs": [
+    {
+      "type": "confirm",
+      "message": "用种子数据覆盖当前编辑？未保存修改将丢失。"
+    }
+  ]
+}

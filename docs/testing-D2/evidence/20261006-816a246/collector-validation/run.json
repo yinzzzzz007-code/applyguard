@@ -1,0 +1,16 @@
+{
+  "run_id": "20261006T004203591Z-816a246-21a1c5",
+  "commit": "816a24601385481b7261aba893c4c950503d7880",
+  "executor": "Codex 离线审计",
+  "started_at": "2026-10-06T00:42:03.6161664+00:00",
+  "project": "E:\\软件工程\\applyguard-D-2",
+  "os": "Microsoft Windows NT 10.0.26200.0",
+  "powershell": "7.6.5",
+  "timezone": "China Standard Time",
+  "python": "Python 3.13.11",
+  "node": "v24.13.0",
+  "npm": "11.6.2",
+  "mode": "OFFLINE",
+  "note": "No browser, PDF or real-model tests are implied by this command collector.",
+  "finished_at": "2026-10-06T00:42:12.1964235+00:00"
+}

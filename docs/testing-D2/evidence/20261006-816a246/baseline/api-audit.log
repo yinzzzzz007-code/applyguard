@@ -1,0 +1,109 @@
+{
+  "seed_checks": [
+    {
+      "claim_id": "claim_python_api",
+      "state": "VERIFIED"
+    },
+    {
+      "claim_id": "claim_fullstack_portal",
+      "state": "VERIFIED"
+    },
+    {
+      "claim_id": "claim_ml_lora_evaluation",
+      "state": "VERIFIED"
+    },
+    {
+      "claim_id": "claim_data_pipeline",
+      "state": "VERIFIED"
+    }
+  ],
+  "manual_backend": {
+    "claim_id": "claim_manual_probe",
+    "state": "BLOCKED",
+    "grounded": false,
+    "support_score": 0.0,
+    "unsupported_fragments": [
+      "claim_id"
+    ],
+    "explanation": "Claim ID is not present exactly once in the candidate Vault."
+  },
+  "routes": [
+    {
+      "path": "/",
+      "status": 200,
+      "type": "text/html; charset=utf-8"
+    },
+    {
+      "path": "/health",
+      "status": 200,
+      "type": "application/json; charset=utf-8"
+    },
+    {
+      "path": "/data/career-vault.seed.json",
+      "status": 404,
+      "body": "{\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"Route not found\",\n    \"details\": [],\n    \"trace_id\": \"trace_1a4b0b2e78c6\"\n  }\n}"
+    },
+    {
+      "path": "/prerecorded/unsupported_block.json",
+      "status": 404,
+      "body": "{\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"Route not found\",\n    \"details\": [],\n    \"trace_id\": \"trace_0464af946c30\"\n  }\n}"
+    },
+    {
+      "path": "/jd",
+      "status": 404,
+      "body": "{\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"Route not found\",\n    \"details\": [],\n    \"trace_id\": \"trace_d9fc4b4bb5a2\"\n  }\n}"
+    }
+  ],
+  "seed_hash": {
+    "data\\career-vault.seed.json": "09822c8f6b0e824f7f2ff76f91fa564dd92d68e54d863ae01cf121d0573cbf69",
+    "frontend\\public\\data\\career-vault.seed.json": "09822c8f6b0e824f7f2ff76f91fa564dd92d68e54d863ae01cf121d0573cbf69"
+  },
+  "ml_requirements": [
+    {
+      "requirement_id": "req_001",
+      "type": "HARD",
+      "category": "SKILL",
+      "text": "熟悉多模态",
+      "normalized_terms": [
+        "多模态"
+      ],
+      "evidence_text": "熟悉多模态",
+      "confidence": 0.45
+    }
+  ],
+  "ml_matches": {
+    "match_id": "match_16a8dfef4de2_demo_001",
+    "jd_id": "jd_16a8dfef4de2",
+    "candidate_id": "cand_demo_001",
+    "matches": [
+      {
+        "requirement_id": "req_001",
+        "experience_id": "exp_ml_evaluation",
+        "claim_ids": [
+          "claim_ml_lora_evaluation"
+        ],
+        "relevance_score": 0.9835,
+        "evidence_strength": "STRONG",
+        "confidence": 0.945,
+        "rationale": "Skill overlap: 多模态. Responsibility overlap: 多模态. Linked evidence: ev_ml_notebook, ev_ml_report.",
+        "conflicts": [],
+        "evidence_ids": [
+          "ev_ml_notebook",
+          "ev_ml_report"
+        ],
+        "missing_evidence": [],
+        "ready_for_selection": true,
+        "score_breakdown": {
+          "keyword_overlap": 1.0,
+          "responsibility_overlap": 1.0,
+          "verification_score": 1.0,
+          "confidence_score": 0.89,
+          "metric_bonus": 0.1,
+          "conflict_penalty": 0.0,
+          "missing_evidence_penalty": 0.0
+        }
+      }
+    ],
+    "uncovered_requirements": []
+  }
+}

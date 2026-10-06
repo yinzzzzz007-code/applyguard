@@ -1,0 +1,82 @@
+{
+  "audit_date": "2026-10-06",
+  "user_timezone": "Asia/Shanghai",
+  "baseline_commit": "816a24601385481b7261aba893c4c950503d7880",
+  "scope": "offline/local; fictional data; no external model or real ATS submission",
+  "browser": "Chrome 155.0.8059.27 headless via bundled Playwright",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "width": 375,
+      "height": 812
+    }
+  ],
+  "actual_outputs": {
+    "unittest_default": {
+      "run": 64,
+      "errors": 24,
+      "status": "FAIL_ENCODING"
+    },
+    "unittest_utf8": {
+      "run": 79,
+      "status": "PASS"
+    },
+    "build": "PASS",
+    "lint": {
+      "exit": 0,
+      "warnings": 2
+    },
+    "smoke": {
+      "assertion_script": "PASS",
+      "node_tests": 3
+    },
+    "benchmark": {
+      "jd_count": 10,
+      "claim_count": 40,
+      "claim_state_accuracy": 0.7,
+      "supported_claim_acceptance_rate": 0,
+      "false_block_rate": 1,
+      "accepted_claim_precision": null
+    }
+  },
+  "browser_runs": {
+    "01": "ERROR: ambiguous add button selector, partial observations retained",
+    "02": "ERROR: incorrect next-button locator, partial observations retained",
+    "03": "completed B01-B08; product failures retained",
+    "interaction-run-01": "completed I01-I06; product failures and positive observations retained"
+  },
+  "clock_note": "Raw timestamps from the browser and command host are retained; do not infer cross-process durations. Audit date uses user timezone.",
+  "sources": {
+    "课件以及课程要求/02_Requirements_and_Object_Oriented_Analysis.pdf": "a3fd5cc25db26fd9a71147de082c51e7712ab471b3903e4554ceee7a066c74ef",
+    "课件以及课程要求/Project_Kickoff.pdf": "b773cc7be7ce5d3b0a0035fd6c177f0704503a2de21ee6ca62aefd6c4fd1012e",
+    "课件以及课程要求/01_AI_Era_Software_Engineering(1).pdf": "9c869384fa0b96f471efb6f525bf066990583db2dc51e12440401a6a586f77fb",
+    "frontend/package-lock.json": "1d1f52b436a86b21aa3ff66d412a9a398a5221881fc608cfcc8249b618205d71",
+    "frontend/design/DESIGN.md": "87bc025751a4d0d83fb89ee70a140d35d891a4fb7474d5908b97a23d7c8c3e29"
+  },
+  "ai_use": {
+    "tasks": [
+      "course reading",
+      "code review",
+      "test design",
+      "offline/browser probes",
+      "documentation"
+    ],
+    "human_review": "pending; no fabricated participant or human approval records",
+    "roles": "scholar completed independently; skeptic/economist partial; remaining viewpoints and evidence review by root assistant after agent quota interruption"
+  },
+  "untested": [
+    "real model provider",
+    "PDF import (not implemented)",
+    "backend drafts (not implemented)",
+    "structured awards (not implemented)",
+    "real user study",
+    "full cross-browser/performance suite"
+  ]
+}

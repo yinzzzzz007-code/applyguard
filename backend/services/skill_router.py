@@ -124,6 +124,16 @@ class SkillRouter:
         def map_fixture():
             mapping = copy.deepcopy(self.form_mapping)
             mapping["application_id"] = application_id
+            # The shipped simulator template follows the currently selected claim.
+            # Keep custom mappings intact so mismatch checks remain meaningful.
+            for field in mapping["fields"]:
+                if (field["field_id"] == "field_candidate_summary" and
+                    field["source_claim_ids"] == ["claim_python_api"] and
+                    field["value"] == "已完成使用 Python 实现 HTTP API，并为核心路由补充自动化测试。" and
+                    selection.claims):
+                    chosen = selection.claims[0]
+                    field["source_claim_ids"] = [chosen["claim_id"]]
+                    field["value"] = chosen["text"]
             validate_contract("form-mapping", mapping)
             for field in mapping["fields"]:
                 refs = field["source_claim_ids"]
@@ -154,7 +164,7 @@ class SkillRouter:
         trace.append({"step": "Audit Record", "status": "CREATED"})
         return {"trace_id": trace_id, "application_id": application_id, "candidate_id": candidate_id,
                 "execution_mode": "DYNAMIC_MODEL" if parser_mode.startswith("MODEL") else "DETERMINISTIC_FALLBACK",
-                "mock_notice": "C results are computed; ATS mapping is a simulator fixture and audit storage is in-memory.",
+                "mock_notice": "核验结果按当前经历计算；网申映射仅用于本地模拟，审计记录暂存于内存。",
                 "workflow_status": "BLOCKED" if risk["action"] == "BLOCKED" else "AWAITING_HUMAN_CONFIRMATION",
                 "parsed_jd": parsed, "evidence_match": matched, "resume_claims": selection.claims,
                 "resume_selection": {"mode": "DETERMINISTIC_EVIDENCE_CONSTRAINED", "removed_claims": selection.removed_claims,

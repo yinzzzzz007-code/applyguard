@@ -1,0 +1,728 @@
+{
+  "runtime": {
+    "python": "3.13.11 | packaged by Anaconda, Inc. | (main, Dec 10 2025, 21:21:58) [MSC v.1929 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "default_chinese": {
+    "trace_id": "trace_060fa84a460c",
+    "application_id": "app_demo_001",
+    "candidate_id": "cand_demo_001",
+    "execution_mode": "DETERMINISTIC_FALLBACK",
+    "mock_notice": "C results are computed; ATS mapping is a simulator fixture and audit storage is in-memory.",
+    "workflow_status": "AWAITING_HUMAN_CONFIRMATION",
+    "parsed_jd": {
+      "jd_id": "jd_b6060aee543e",
+      "title": "UNKNOWN",
+      "company": "UNKNOWN",
+      "source_text": "后端开发实习生。岗位职责：使用 Python 编写接口服务、补充自动化测试，并使用版本协作。加分项：有数据处理相关项目经验。",
+      "requirements": [
+        {
+          "requirement_id": "req_001",
+          "type": "HARD",
+          "category": "RESPONSIBILITY",
+          "text": "后端开发实习生",
+          "normalized_terms": [
+            "后端开发"
+          ],
+          "evidence_text": "后端开发实习生",
+          "confidence": 0.45
+        },
+        {
+          "requirement_id": "req_002",
+          "type": "HARD",
+          "category": "SKILL",
+          "text": "岗位职责：使用 Python 编写接口服务、补充自动化测试，并使用版本协作",
+          "normalized_terms": [
+            "Python"
+          ],
+          "evidence_text": "岗位职责：使用 Python 编写接口服务、补充自动化测试，并使用版本协作",
+          "confidence": 0.45
+        }
+      ]
+    },
+    "evidence_match": {
+      "match_id": "match_b6060aee543e_demo_001",
+      "jd_id": "jd_b6060aee543e",
+      "candidate_id": "cand_demo_001",
+      "matches": [
+        {
+          "requirement_id": "req_001",
+          "experience_id": "exp_api_course_project",
+          "claim_ids": [
+            "claim_python_api"
+          ],
+          "relevance_score": 0.991,
+          "evidence_strength": "STRONG",
+          "confidence": 0.97,
+          "rationale": "Skill overlap: 后端开发. Responsibility overlap: 后端开发. Linked evidence: ev_repo_api, ev_test_report.",
+          "conflicts": [],
+          "evidence_ids": [
+            "ev_repo_api",
+            "ev_test_report"
+          ],
+          "missing_evidence": [],
+          "ready_for_selection": true,
+          "score_breakdown": {
+            "keyword_overlap": 1.0,
+            "responsibility_overlap": 1.0,
+            "verification_score": 1.0,
+            "confidence_score": 0.94,
+            "metric_bonus": 0.1,
+            "conflict_penalty": 0.0,
+            "missing_evidence_penalty": 0.0
+          }
+        },
+        {
+          "requirement_id": "req_001",
+          "experience_id": "exp_data_pipeline",
+          "claim_ids": [
+            "claim_data_pipeline"
+          ],
+          "relevance_score": 0.985,
+          "evidence_strength": "STRONG",
+          "confidence": 0.95,
+          "rationale": "Skill overlap: 后端开发. Responsibility overlap: 后端开发. Linked evidence: ev_pipeline_repo, ev_pipeline_report.",
+          "conflicts": [],
+          "evidence_ids": [
+            "ev_pipeline_repo",
+            "ev_pipeline_report"
+          ],
+          "missing_evidence": [],
+          "ready_for_selection": true,
+          "score_breakdown": {
+            "keyword_overlap": 1.0,
+            "responsibility_overlap": 1.0,
+            "verification_score": 1.0,
+            "confidence_score": 0.9,
+            "metric_bonus": 0.1,
+            "conflict_penalty": 0.0,
+            "missing_evidence_penalty": 0.0
+          }
+        },
+        {
+          "requirement_id": "req_002",
+          "experience_id": "exp_api_course_project",
+          "claim_ids": [
+            "claim_python_api"
+          ],
+          "relevance_score": 0.991,
+          "evidence_strength": "STRONG",
+          "confidence": 0.97,
+          "rationale": "Skill overlap: python. Responsibility overlap: python. Linked evidence: ev_repo_api, ev_test_report.",
+          "conflicts": [],
+          "evidence_ids": [
+            "ev_repo_api",
+            "ev_test_report"
+          ],
+          "missing_evidence": [],
+          "ready_for_selection": true,
+          "score_breakdown": {
+            "keyword_overlap": 1.0,
+            "responsibility_overlap": 1.0,
+            "verification_score": 1.0,
+            "confidence_score": 0.94,
+            "metric_bonus": 0.1,
+            "conflict_penalty": 0.0,
+            "missing_evidence_penalty": 0.0
+          }
+        },
+        {
+          "requirement_id": "req_002",
+          "experience_id": "exp_data_pipeline",
+          "claim_ids": [
+            "claim_data_pipeline"
+          ],
+          "relevance_score": 0.985,
+          "evidence_strength": "STRONG",
+          "confidence": 0.95,
+          "rationale": "Skill overlap: python. Responsibility overlap: python. Linked evidence: ev_pipeline_repo, ev_pipeline_report.",
+          "conflicts": [],
+          "evidence_ids": [
+            "ev_pipeline_repo",
+            "ev_pipeline_report"
+          ],
+          "missing_evidence": [],
+          "ready_for_selection": true,
+          "score_breakdown": {
+            "keyword_overlap": 1.0,
+            "responsibility_overlap": 1.0,
+            "verification_score": 1.0,
+            "confidence_score": 0.9,
+            "metric_bonus": 0.1,
+            "conflict_penalty": 0.0,
+            "missing_evidence_penalty": 0.0
+          }
+        }
+      ],
+      "uncovered_requirements": []
+    },
+    "resume_claims": [
+      {
+        "claim_id": "claim_python_api",
+        "application_id": "app_demo_001",
+        "text": "已完成使用 Python 实现 HTTP API，并为核心路由补充自动化测试。",
+        "evidence_ids": [
+          "ev_repo_api",
+          "ev_test_report"
+        ],
+        "requirement_ids": [
+          "req_001",
+          "req_002"
+        ],
+        "evidence_support_score": 0.95,
+        "selection_reason": "Selected for requirements req_001, req_002: high relevance and verified evidence (ev_repo_api, ev_test_report). A documented metric contributed to ranking.",
+        "removed_alternatives": [
+          {
+            "claim_id": "claim_fullstack_portal",
+            "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+          },
+          {
+            "claim_id": "claim_ml_lora_evaluation",
+            "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+          }
+        ],
+        "status": "SELECTED"
+      },
+      {
+        "claim_id": "claim_data_pipeline",
+        "application_id": "app_demo_001",
+        "text": "用 Python 与 SQL 搭建 ETL 数据管道，并记录数据质量校验。",
+        "evidence_ids": [
+          "ev_pipeline_repo",
+          "ev_pipeline_report"
+        ],
+        "requirement_ids": [
+          "req_001",
+          "req_002"
+        ],
+        "evidence_support_score": 0.92,
+        "selection_reason": "Selected for requirements req_001, req_002: high relevance and verified evidence (ev_pipeline_repo, ev_pipeline_report). A documented metric contributed to ranking.",
+        "removed_alternatives": [
+          {
+            "claim_id": "claim_fullstack_portal",
+            "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+          },
+          {
+            "claim_id": "claim_ml_lora_evaluation",
+            "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+          }
+        ],
+        "status": "SELECTED"
+      }
+    ],
+    "resume_selection": {
+      "mode": "DETERMINISTIC_EVIDENCE_CONSTRAINED",
+      "removed_claims": [
+        {
+          "claim_id": "claim_fullstack_portal",
+          "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+        },
+        {
+          "claim_id": "claim_ml_lora_evaluation",
+          "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+        }
+      ],
+      "max_claims": 3,
+      "max_characters": 420
+    },
+    "claim_verification": [
+      {
+        "claim_id": "claim_python_api",
+        "state": "VERIFIED",
+        "grounded": true,
+        "support_score": 0.94,
+        "unsupported_fragments": [],
+        "explanation": "Candidate-owned verified evidence supports the unchanged Vault claim."
+      },
+      {
+        "claim_id": "claim_data_pipeline",
+        "state": "VERIFIED",
+        "grounded": true,
+        "support_score": 0.9,
+        "unsupported_fragments": [],
+        "explanation": "Candidate-owned verified evidence supports the unchanged Vault claim."
+      }
+    ],
+    "ats_form_mapping": {
+      "application_id": "app_demo_001",
+      "target": "ATS_SIMULATOR",
+      "fields": [
+        {
+          "field_id": "field_candidate_summary",
+          "label": "Candidate summary",
+          "value": "Built a Python HTTP API and added automated tests for core routes.",
+          "source_claim_ids": [
+            "claim_python_api"
+          ],
+          "action": "REQUIRES_CONFIRMATION"
+        }
+      ],
+      "unmapped_fields": [
+        "work_authorization"
+      ],
+      "consistency_state": "NEEDS_REVIEW"
+    },
+    "risk_result": {
+      "application_id": "app_demo_001",
+      "risk_level": "HIGH",
+      "action": "REQUIRES_CONFIRMATION",
+      "risks": [
+        {
+          "risk_id": "risk_001",
+          "type": "MISSING_FIELD",
+          "severity": "WARNING",
+          "message": "ATS field work_authorization is missing; its value must not be guessed.",
+          "related_claim_ids": [],
+          "mitigation": "Ask the user to supply and confirm the value.",
+          "recommended_action": "CONFIRM"
+        },
+        {
+          "risk_id": "risk_002",
+          "type": "PRIVACY",
+          "severity": "WARNING",
+          "message": "Missing sensitive field work_authorization needs the user's own answer.",
+          "related_claim_ids": [],
+          "mitigation": "Do not infer sensitive values.",
+          "recommended_action": "CONFIRM"
+        },
+        {
+          "risk_id": "risk_003",
+          "type": "OTHER",
+          "severity": "WARNING",
+          "message": "ATS field Candidate summary is ambiguous or needs evidence review.",
+          "related_claim_ids": [
+            "claim_python_api"
+          ],
+          "mitigation": "Review the claim and mapped value.",
+          "recommended_action": "CONFIRM"
+        }
+      ],
+      "requires_human_confirmation": true
+    },
+    "field_controls": [
+      {
+        "field_id": "field_candidate_summary",
+        "level": "L2",
+        "action": "REQUIRES_CONFIRMATION",
+        "show_sources": true,
+        "source_claim_ids": [
+          "claim_python_api"
+        ]
+      },
+      {
+        "field_id": "work_authorization",
+        "level": "L3",
+        "action": "REQUIRES_CONFIRMATION",
+        "show_sources": false,
+        "source_claim_ids": []
+      }
+    ],
+    "human_confirmation": {
+      "required": true,
+      "reason": "User must review the application before submission.",
+      "allowed_actions": [
+        "CONFIRM",
+        "EDIT",
+        "CANCEL"
+      ]
+    },
+    "audit_record": {
+      "audit_id": "audit_4c64f667bad9",
+      "application_id": "app_demo_001",
+      "version": 1,
+      "created_at": "2026-10-06T00:23:33.506577Z",
+      "event": "APPLICATION_DRAFT_PREPARED",
+      "actor": "applyguard.mock-workflow",
+      "trace_id": "trace_060fa84a460c",
+      "decision": "PENDING"
+    },
+    "step_trace": [
+      {
+        "step": "Career Vault",
+        "status": "COMPLETED"
+      },
+      {
+        "step": "JD Parser",
+        "status": "COMPLETED",
+        "mode": "RULE_FALLBACK"
+      },
+      {
+        "step": "Evidence Matcher",
+        "status": "COMPLETED"
+      },
+      {
+        "step": "Resume Selector",
+        "status": "COMPLETED"
+      },
+      {
+        "step": "Claim Validator",
+        "status": "COMPLETED"
+      },
+      {
+        "step": "ATS Form Mapper",
+        "status": "COMPLETED",
+        "mode": "FIXTURE"
+      },
+      {
+        "step": "Risk Check",
+        "status": "COMPLETED"
+      },
+      {
+        "step": "Human Confirmation",
+        "status": "PENDING"
+      },
+      {
+        "step": "Audit Record",
+        "status": "CREATED"
+      }
+    ],
+    "component_modes": {
+      "career_vault": "DETERMINISTIC_SEED",
+      "evidence_matcher": "DETERMINISTIC",
+      "resume_selector": "DETERMINISTIC",
+      "claim_validator": "DETERMINISTIC",
+      "ats_form_mapper": "FIXTURE",
+      "risk_check": "DETERMINISTIC",
+      "human_confirmation": "STOP_ONLY",
+      "audit_record": "IN_MEMORY",
+      "jd_prompt_version": "jd-parse-v1",
+      "requested_parse_mode": "OFFLINE",
+      "jd_parser": "RULE_FALLBACK"
+    }
+  },
+  "unrelated_ml": {
+    "trace_id": "trace_f2da2f5be9c9",
+    "application_id": "app_demo_001",
+    "candidate_id": "cand_demo_001",
+    "execution_mode": "DETERMINISTIC_FALLBACK",
+    "mock_notice": "C results are computed; ATS mapping is a simulator fixture and audit storage is in-memory.",
+    "workflow_status": "BLOCKED",
+    "parsed_jd": {
+      "jd_id": "jd_16a8dfef4de2",
+      "title": "算法开发实习生",
+      "company": "UNKNOWN",
+      "source_text": "算法开发实习生\n任职要求\n熟悉推荐系统。熟悉强化学习。熟悉多模态。",
+      "requirements": [
+        {
+          "requirement_id": "req_001",
+          "type": "HARD",
+          "category": "SKILL",
+          "text": "熟悉多模态",
+          "normalized_terms": [
+            "多模态"
+          ],
+          "evidence_text": "熟悉多模态",
+          "confidence": 0.45
+        }
+      ]
+    },
+    "evidence_match": {
+      "match_id": "match_16a8dfef4de2_demo_001",
+      "jd_id": "jd_16a8dfef4de2",
+      "candidate_id": "cand_demo_001",
+      "matches": [
+        {
+          "requirement_id": "req_001",
+          "experience_id": "exp_ml_evaluation",
+          "claim_ids": [
+            "claim_ml_lora_evaluation"
+          ],
+          "relevance_score": 0.9835,
+          "evidence_strength": "STRONG",
+          "confidence": 0.945,
+          "rationale": "Skill overlap: 多模态. Responsibility overlap: 多模态. Linked evidence: ev_ml_notebook, ev_ml_report.",
+          "conflicts": [],
+          "evidence_ids": [
+            "ev_ml_notebook",
+            "ev_ml_report"
+          ],
+          "missing_evidence": [],
+          "ready_for_selection": true,
+          "score_breakdown": {
+            "keyword_overlap": 1.0,
+            "responsibility_overlap": 1.0,
+            "verification_score": 1.0,
+            "confidence_score": 0.89,
+            "metric_bonus": 0.1,
+            "conflict_penalty": 0.0,
+            "missing_evidence_penalty": 0.0
+          }
+        }
+      ],
+      "uncovered_requirements": []
+    },
+    "resume_claims": [
+      {
+        "claim_id": "claim_ml_lora_evaluation",
+        "application_id": "app_demo_001",
+        "text": "在 PyTorch 中用 LoRA 微调语言模型原型，并记录评测结果。",
+        "evidence_ids": [
+          "ev_ml_notebook",
+          "ev_ml_report"
+        ],
+        "requirement_ids": [
+          "req_001"
+        ],
+        "evidence_support_score": 0.9,
+        "selection_reason": "Selected for requirements req_001: high relevance and verified evidence (ev_ml_notebook, ev_ml_report). A documented metric contributed to ranking.",
+        "removed_alternatives": [
+          {
+            "claim_id": "claim_data_pipeline",
+            "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+          },
+          {
+            "claim_id": "claim_fullstack_portal",
+            "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+          },
+          {
+            "claim_id": "claim_python_api",
+            "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+          }
+        ],
+        "status": "SELECTED"
+      }
+    ],
+    "resume_selection": {
+      "mode": "DETERMINISTIC_EVIDENCE_CONSTRAINED",
+      "removed_claims": [
+        {
+          "claim_id": "claim_data_pipeline",
+          "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+        },
+        {
+          "claim_id": "claim_fullstack_portal",
+          "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+        },
+        {
+          "claim_id": "claim_python_api",
+          "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+        }
+      ],
+      "max_claims": 3,
+      "max_characters": 420
+    },
+    "claim_verification": [
+      {
+        "claim_id": "claim_ml_lora_evaluation",
+        "state": "VERIFIED",
+        "grounded": true,
+        "support_score": 0.89,
+        "unsupported_fragments": [],
+        "explanation": "Candidate-owned verified evidence supports the unchanged Vault claim."
+      }
+    ],
+    "ats_form_mapping": {
+      "application_id": "app_demo_001",
+      "target": "ATS_SIMULATOR",
+      "fields": [
+        {
+          "field_id": "field_candidate_summary",
+          "label": "Candidate summary",
+          "value": "Built a Python HTTP API and added automated tests for core routes.",
+          "source_claim_ids": [
+            "claim_python_api"
+          ],
+          "action": "BLOCKED"
+        }
+      ],
+      "unmapped_fields": [
+        "work_authorization"
+      ],
+      "consistency_state": "BLOCKED"
+    },
+    "risk_result": {
+      "application_id": "app_demo_001",
+      "risk_level": "BLOCK",
+      "action": "BLOCKED",
+      "risks": [
+        {
+          "risk_id": "risk_001",
+          "type": "MISSING_FIELD",
+          "severity": "WARNING",
+          "message": "ATS field work_authorization is missing; its value must not be guessed.",
+          "related_claim_ids": [],
+          "mitigation": "Ask the user to supply and confirm the value.",
+          "recommended_action": "CONFIRM"
+        },
+        {
+          "risk_id": "risk_002",
+          "type": "PRIVACY",
+          "severity": "WARNING",
+          "message": "Missing sensitive field work_authorization needs the user's own answer.",
+          "related_claim_ids": [],
+          "mitigation": "Do not infer sensitive values.",
+          "recommended_action": "CONFIRM"
+        },
+        {
+          "risk_id": "risk_003",
+          "type": "OTHER",
+          "severity": "ERROR",
+          "message": "ATS field Candidate summary is blocked or references an unverified claim ID.",
+          "related_claim_ids": [
+            "claim_python_api"
+          ],
+          "mitigation": "Correct the field and verify every linked claim before continuing.",
+          "recommended_action": "BLOCK"
+        },
+        {
+          "risk_id": "risk_004",
+          "type": "CONFLICT",
+          "severity": "ERROR",
+          "message": "ATS mapping is inconsistent.",
+          "related_claim_ids": [],
+          "mitigation": "Resolve mapping conflict.",
+          "recommended_action": "BLOCK"
+        }
+      ],
+      "requires_human_confirmation": true
+    },
+    "field_controls": [
+      {
+        "field_id": "field_candidate_summary",
+        "level": "L3",
+        "action": "BLOCKED",
+        "show_sources": true,
+        "source_claim_ids": [
+          "claim_python_api"
+        ]
+      },
+      {
+        "field_id": "work_authorization",
+        "level": "L3",
+        "action": "REQUIRES_CONFIRMATION",
+        "show_sources": false,
+        "source_claim_ids": []
+      }
+    ],
+    "human_confirmation": {
+      "required": true,
+      "reason": "Blocked content must be corrected before review.",
+      "allowed_actions": [
+        "EDIT",
+        "CANCEL"
+      ]
+    },
+    "audit_record": {
+      "audit_id": "audit_787844e86442",
+      "application_id": "app_demo_001",
+      "version": 1,
+      "created_at": "2026-10-06T00:23:33.512839Z",
+      "event": "APPLICATION_DRAFT_BLOCKED",
+      "actor": "applyguard.mock-workflow",
+      "trace_id": "trace_f2da2f5be9c9",
+      "decision": "PENDING"
+    },
+    "step_trace": [
+      {
+        "step": "Career Vault",
+        "status": "COMPLETED"
+      },
+      {
+        "step": "JD Parser",
+        "status": "COMPLETED",
+        "mode": "RULE_FALLBACK"
+      },
+      {
+        "step": "Evidence Matcher",
+        "status": "COMPLETED"
+      },
+      {
+        "step": "Resume Selector",
+        "status": "COMPLETED"
+      },
+      {
+        "step": "Claim Validator",
+        "status": "COMPLETED"
+      },
+      {
+        "step": "ATS Form Mapper",
+        "status": "COMPLETED",
+        "mode": "FIXTURE"
+      },
+      {
+        "step": "Risk Check",
+        "status": "COMPLETED"
+      },
+      {
+        "step": "Human Confirmation",
+        "status": "BLOCKED"
+      },
+      {
+        "step": "Audit Record",
+        "status": "CREATED"
+      }
+    ],
+    "component_modes": {
+      "career_vault": "DETERMINISTIC_SEED",
+      "evidence_matcher": "DETERMINISTIC",
+      "resume_selector": "DETERMINISTIC",
+      "claim_validator": "DETERMINISTIC",
+      "ats_form_mapper": "FIXTURE",
+      "risk_check": "DETERMINISTIC",
+      "human_confirmation": "STOP_ONLY",
+      "audit_record": "IN_MEMORY",
+      "jd_prompt_version": "jd-parse-v1",
+      "requested_parse_mode": "OFFLINE",
+      "jd_parser": "RULE_FALLBACK"
+    }
+  },
+  "chinese_seed_verification": [
+    {
+      "claim_id": "claim_python_api",
+      "state": "VERIFIED"
+    },
+    {
+      "claim_id": "claim_fullstack_portal",
+      "state": "VERIFIED"
+    },
+    {
+      "claim_id": "claim_ml_lora_evaluation",
+      "state": "VERIFIED"
+    },
+    {
+      "claim_id": "claim_data_pipeline",
+      "state": "VERIFIED"
+    }
+  ],
+  "manual_backend_verification": {
+    "claim_id": "claim_manual_probe",
+    "state": "BLOCKED",
+    "grounded": false,
+    "support_score": 0.0,
+    "unsupported_fragments": [
+      "claim_id"
+    ],
+    "explanation": "Claim ID is not present exactly once in the candidate Vault."
+  },
+  "static_routes": [
+    {
+      "path": "/",
+      "status": 200,
+      "type": "text/html; charset=utf-8"
+    },
+    {
+      "path": "/health",
+      "status": 200,
+      "type": "application/json; charset=utf-8"
+    },
+    {
+      "path": "/data/career-vault.seed.json",
+      "status": 404,
+      "body": "{\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"Route not found\",\n    \"details\": [],\n    \"trace_id\": \"trace_1a4b0b2e78c6\"\n  }\n}"
+    },
+    {
+      "path": "/prerecorded/unsupported_block.json",
+      "status": 404,
+      "body": "{\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"Route not found\",\n    \"details\": [],\n    \"trace_id\": \"trace_0464af946c30\"\n  }\n}"
+    },
+    {
+      "path": "/jd",
+      "status": 404,
+      "body": "{\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"Route not found\",\n    \"details\": [],\n    \"trace_id\": \"trace_d9fc4b4bb5a2\"\n  }\n}"
+    }
+  ],
+  "seed_sha256": {
+    "data\\career-vault.seed.json": "09822c8f6b0e824f7f2ff76f91fa564dd92d68e54d863ae01cf121d0573cbf69",
+    "frontend\\public\\data\\career-vault.seed.json": "09822c8f6b0e824f7f2ff76f91fa564dd92d68e54d863ae01cf121d0573cbf69"
+  }
+}

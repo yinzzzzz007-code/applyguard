@@ -27,6 +27,8 @@ export const ZH_ACTION: Record<string, string> = {
   BLOCKED: '已阻断',
   REQUIRES_CONFIRMATION: '须确认',
   SAFE_TO_FILL: '可建议填写',
+  NEEDS_REVIEW: '待复核',
+  CONSISTENT: '一致',
 }
 
 export const ZH_STEP: Record<string, string> = {
@@ -145,6 +147,7 @@ const PHRASE: Array<[RegExp | string, string]> = [
   ['Resolve mapping conflict.', '请先解决映射冲突。'],
   ['No experience has sufficiently verified, conflict-free evidence for selection.', '没有任何经历具备足够、已核验且无冲突的证据可供选入。'],
   ['work_authorization', '工作许可'],
+  ['Missing sensitive field', '敏感字段'],
   ['Candidate summary', '候选人摘要'],
   ['ATS_SIMULATOR', '网申模拟器'],
   ['applyguard-foundation', '申请护栏服务'],

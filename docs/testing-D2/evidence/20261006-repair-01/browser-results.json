@@ -1,0 +1,36 @@
+{
+  "events": [
+    {
+      "id": "E2E-01",
+      "result": "PASS",
+      "detail": "经历库可加载",
+      "at": "2026-10-06T09:33:20.059Z"
+    },
+    {
+      "id": "E2E-02",
+      "result": "PASS",
+      "detail": "保存成功后才显示已保存，后端可读回",
+      "at": "2026-10-06T09:33:20.200Z"
+    },
+    {
+      "id": "E2E-03",
+      "result": "PASS",
+      "detail": "编辑保存后旧种子证据不再出现在活动经历",
+      "at": "2026-10-06T09:33:20.571Z"
+    },
+    {
+      "id": "E2E-04",
+      "result": "PASS",
+      "detail": "刷新后从后端恢复草稿",
+      "at": "2026-10-06T09:33:21.341Z"
+    },
+    {
+      "id": "E2E-FAIL",
+      "result": "FAIL",
+      "detail": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: '简历审查' })\u001b[22m\n\n    at main (E:\\软件工程\\applyguard-D-2\\docs\\testing-D2\\scripts\\Browser-Repair-Regression.cjs:52:52)",
+      "at": "2026-10-06T09:33:51.642Z"
+    }
+  ],
+  "pageErrors": [],
+  "browserVersion": "155.0.8059.27"
+}

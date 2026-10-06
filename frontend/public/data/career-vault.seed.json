@@ -5,6 +5,9 @@
     "education": "软件工程本科在读（虚构）",
     "consent": "仅用于课程演示的虚构数据，不含真实个人信息"
   },
+  "awards": [
+    {"id": "award_demo_001", "name": "北桥课程项目展示赛（虚构）", "category": "竞赛", "organizer": "北桥课程实验组（虚构）", "level": "校级", "rank": "优胜奖", "date": "2026-06", "role": "团队成员", "sourceLine": "虚构演示奖项；未提供证明，不能作为已核验证据"}
+  ],
   "experiences": [
     {
       "experience_id": "exp_api_course_project",

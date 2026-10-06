@@ -1,0 +1,41 @@
+2026-10-06 18:16:15,934 INFO ApplyGuard foundation listening at http://127.0.0.1:8000
+2026-10-06 18:16:15,934 INFO AI config: key=missing base= model=
+2026-10-06 18:16:49,513 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:49,524 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:49,525 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 404 -
+2026-10-06 18:16:49,611 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 404 -
+2026-10-06 18:16:51,033 INFO request client=127.0.0.1 message="POST /api/v1/vault/draft HTTP/1.1" 200 -
+2026-10-06 18:16:51,044 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:51,081 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:51,410 INFO request client=127.0.0.1 message="POST /api/v1/vault/draft HTTP/1.1" 200 -
+2026-10-06 18:16:51,424 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:51,456 INFO request client=127.0.0.1 message="GET /api/v1/vault HTTP/1.1" 200 -
+2026-10-06 18:16:51,623 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:51,635 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:51,635 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:51,647 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:52,317 INFO request client=127.0.0.1 message="GET /health HTTP/1.1" 200 -
+2026-10-06 18:16:52,391 INFO request client=127.0.0.1 message="POST /api/v1/workflow/mock HTTP/1.1" 200 -
+2026-10-06 18:16:52,611 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:52,622 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:52,689 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:52,700 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:53,227 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:53,239 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:53,250 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:53,261 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:53,358 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:53,370 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:53,371 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:53,382 INFO request client=127.0.0.1 message="POST /api/v1/vault/pdf-extract HTTP/1.1" 200 -
+2026-10-06 18:16:53,383 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:53,508 INFO request client=127.0.0.1 message="POST /api/v1/vault/draft HTTP/1.1" 200 -
+2026-10-06 18:16:53,523 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:53,565 INFO request client=127.0.0.1 message="GET /api/v1/vault HTTP/1.1" 200 -
+2026-10-06 18:16:53,736 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:53,746 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:53,752 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:53,761 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:16:54,464 WARNING EOF marker not found
+2026-10-06 18:16:54,464 INFO request client=127.0.0.1 message="POST /api/v1/vault/pdf-extract HTTP/1.1" 422 -
+2026-10-06 18:16:54,494 INFO request client=127.0.0.1 message="GET /api/v1/vault HTTP/1.1" 200 -

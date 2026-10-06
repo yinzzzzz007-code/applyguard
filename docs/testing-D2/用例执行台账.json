@@ -1,0 +1,1105 @@
+{
+  "note": "正式用例初始执行台账；本轮定向复现见evidence中的observations，不能当作完整110条已执行",
+  "cases": [
+    {
+      "case_id": "EN-01",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "EN-02",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "EN-03",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "EN-04",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "VA-01",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "VA-02",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "VA-03",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "VA-04",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "VA-05",
+      "priority": "P2",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "VA-06",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "SV-01",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "SV-02",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "SV-03",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "SV-04",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "SV-05",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "SV-06",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "SV-07",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "SV-08",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "PF-01",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "PF-02",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "PF-03",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "PF-04",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "PF-05",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "PF-06",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "PF-07",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "PF-08",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "PF-09",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AW-01",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AW-02",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AW-03",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AW-04",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AW-05",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AW-06",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "JD-01",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "JD-02",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "JD-03",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "JD-04",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "JD-05",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "JD-06",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "JD-07",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "MT-01",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "MT-02",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "MT-03",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "MT-04",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "MT-05",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "MT-06",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "EV-01",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "EV-02",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "EV-03",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "EV-04",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "CL-01",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "CL-02",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "CL-03",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "CL-04",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "CL-05",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "CL-06",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "CL-07",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "CL-08",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AT-01",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AT-02",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AT-03",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AT-04",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AT-05",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AT-06",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "CF-01",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "CF-02",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "CF-03",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "CF-04",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "CF-05",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "CF-06",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "UI-01",
+      "priority": "P2",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "UI-02",
+      "priority": "P2",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "UI-03",
+      "priority": "P2",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "UI-04",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "UI-05",
+      "priority": "P2",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "UI-06",
+      "priority": "P2",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "SC-01",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "SC-02",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "SC-03",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "SC-04",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "SC-05",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "SC-06",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AI-01",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AI-02",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AI-03",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AI-04",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "AI-05",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "NF-01",
+      "priority": "P2",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "NF-02",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "NF-03",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "NF-04",
+      "priority": "P2",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "NF-05",
+      "priority": "P2",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "LG-01",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "LG-02",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "LG-03",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "LG-04",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "LG-05",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "E2E-01",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "E2E-02",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "E2E-03",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "E2E-04",
+      "priority": "P0",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "E2E-05",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "IX-01",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "IX-02",
+      "priority": "P2",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "IX-03",
+      "priority": "P2",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "IX-04",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "IX-05",
+      "priority": "P1",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "IX-06",
+      "priority": "P2",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "IX-07",
+      "priority": "P2",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    },
+    {
+      "case_id": "IX-08",
+      "priority": "P2",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence": [],
+      "run_id": null,
+      "executor": null,
+      "reviewer": null
+    }
+  ]
+}

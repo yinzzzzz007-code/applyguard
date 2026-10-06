@@ -1,0 +1,14 @@
+2026-10-06 08:19:58,889 INFO request client=127.0.0.1 message="GET /health HTTP/1.1" 200 -
+2026-10-06 08:19:58,985 INFO request client=127.0.0.1 message="POST /api/v1/workflow/mock HTTP/1.1" 200 -
+2026-10-06 08:21:49,956 INFO request client=127.0.0.1 message="GET /health HTTP/1.1" 200 -
+2026-10-06 08:21:49,974 INFO request client=127.0.0.1 message="POST /api/v1/workflow/mock HTTP/1.1" 200 -
+2026-10-06 08:22:29,947 INFO request client=127.0.0.1 message="GET /health HTTP/1.1" 200 -
+2026-10-06 08:22:29,968 INFO request client=127.0.0.1 message="POST /api/v1/workflow/mock HTTP/1.1" 200 -
+2026-10-06 08:23:33,726 INFO request client=127.0.0.1 message="GET / HTTP/1.1" 200 -
+2026-10-06 08:23:33,728 INFO request client=127.0.0.1 message="GET /health HTTP/1.1" 200 -
+2026-10-06 08:23:33,730 INFO request client=127.0.0.1 message="GET /data/career-vault.seed.json HTTP/1.1" 404 -
+2026-10-06 08:23:33,733 INFO request client=127.0.0.1 message="GET /prerecorded/unsupported_block.json HTTP/1.1" 404 -
+2026-10-06 08:23:33,736 INFO request client=127.0.0.1 message="GET /jd HTTP/1.1" 404 -
+2026-10-06 08:24:06,522 INFO request client=127.0.0.1 message="GET /health HTTP/1.1" 200 -
+2026-10-06 08:24:06,544 INFO request client=127.0.0.1 message="POST /api/v1/workflow/mock HTTP/1.1" 200 -
+

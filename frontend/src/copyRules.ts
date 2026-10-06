@@ -12,12 +12,15 @@ export function copyableClaim(
 ): boolean {
   const verification = workflow.claim_verification.find((item) => item.claim_id === claimId)
   const decision = decisions[claimId]
-  if (!verification || !workflow.resume_claims.some((claim) => claim.claim_id === claimId)) return false
+  const claim = workflow.resume_claims.find((item) => item.claim_id === claimId)
+  if (!verification || !claim?.evidence_ids.length) return false
   if (decision?.decision === 'reject' || decision?.freshness === 'rejected') return false
   if (decision?.decision === 'edit' || decision?.freshness === 'edited_pending_reverify') return false
   if (verification.state === 'BLOCKED') return false
-  if (verification.state === 'NEEDS_REVIEW') return decision?.decision === 'confirm'
-  return verification.state === 'VERIFIED'
+  if (verification.state === 'NEEDS_REVIEW') {
+    return !verification.unsupported_fragments.length && decision?.decision === 'confirm'
+  }
+  return verification.state === 'VERIFIED' && verification.grounded
 }
 
 export function copyableField(

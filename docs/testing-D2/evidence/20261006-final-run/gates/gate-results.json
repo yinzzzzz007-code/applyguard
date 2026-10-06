@@ -1,0 +1,56 @@
+﻿[
+    {
+        "name":  "backend-unittest",
+        "command":  "python -m unittest discover -s tests -v",
+        "cwd":  "E:\\软件工程\\applyguard-D-2",
+        "started_utc":  "2026-10-06T10:40:15.6860907Z",
+        "ended_utc":  "2026-10-06T10:40:17.6363162Z",
+        "exit_code":  0,
+        "log":  "backend-unittest.log"
+    },
+    {
+        "name":  "benchmark-zh-v2",
+        "command":  "python -m eval.c_benchmark",
+        "cwd":  "E:\\软件工程\\applyguard-D-2",
+        "started_utc":  "2026-10-06T10:40:17.6423180Z",
+        "ended_utc":  "2026-10-06T10:40:18.6901028Z",
+        "exit_code":  0,
+        "log":  "benchmark-zh-v2.log"
+    },
+    {
+        "name":  "frontend-build",
+        "command":  "npm.cmd run build",
+        "cwd":  "E:\\软件工程\\applyguard-D-2\\frontend",
+        "started_utc":  "2026-10-06T10:40:18.6931033Z",
+        "ended_utc":  "2026-10-06T10:40:21.1233432Z",
+        "exit_code":  0,
+        "log":  "frontend-build.log"
+    },
+    {
+        "name":  "frontend-lint",
+        "command":  "npm.cmd run lint",
+        "cwd":  "E:\\软件工程\\applyguard-D-2\\frontend",
+        "started_utc":  "2026-10-06T10:40:21.1253445Z",
+        "ended_utc":  "2026-10-06T10:40:21.8504944Z",
+        "exit_code":  0,
+        "log":  "frontend-lint.log"
+    },
+    {
+        "name":  "frontend-smoke",
+        "command":  "npm.cmd run smoke",
+        "cwd":  "E:\\软件工程\\applyguard-D-2\\frontend",
+        "started_utc":  "2026-10-06T10:40:21.8525029Z",
+        "ended_utc":  "2026-10-06T10:40:23.0190704Z",
+        "exit_code":  0,
+        "log":  "frontend-smoke.log"
+    },
+    {
+        "name":  "private-draft-git",
+        "command":  "git check-ignore / git ls-files",
+        "cwd":  "E:\\软件工程\\applyguard-D-2",
+        "started_utc":  "2026-10-06T10:40:23.0849011Z",
+        "ended_utc":  "2026-10-06T10:40:23.0849011Z",
+        "exit_code":  0,
+        "log":  "private-draft-git.log"
+    }
+]

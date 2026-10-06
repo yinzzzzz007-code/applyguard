@@ -1,0 +1,14 @@
+
+> applyguard-frontend@0.0.0 build
+> tsc -b && vite build
+
+vite v8.3.2 building client environment for production...
+transforming...
+✓ 42 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.80 kB │ gzip:   0.46 kB
+dist/assets/index-CGLCE8KI.css   18.34 kB │ gzip:   4.78 kB
+dist/assets/index-C92E7B_h.js   342.14 kB │ gzip: 107.42 kB
+
+✓ built in 149ms

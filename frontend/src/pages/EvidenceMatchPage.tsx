@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { EvidenceMatchItem, ParsedRequirement } from '../api/types'
 import { EmptyState } from '../components/States'
@@ -84,11 +84,11 @@ function buildHighlights(jdText: string, views: ReqView[]): HlSpan[] {
   return chosen.sort((a, b) => a.start - b.start)
 }
 
-function renderHighlightedJd(
-  jdText: string,
-  spans: HlSpan[],
-  onOpen: (reqId: string) => void,
-): ReactNode[] {
+function HighlightedJd({ jdText, spans, onOpen }: {
+  jdText: string
+  spans: HlSpan[]
+  onOpen: (reqId: string) => void
+}): ReactNode[] {
   if (!jdText) return ['（无岗位原文，仅有解析结果）']
   const nodes: ReactNode[] = []
   let cursor = 0
@@ -97,14 +97,15 @@ function renderHighlightedJd(
       nodes.push(jdText.slice(cursor, span.start))
     }
     nodes.push(
-      <mark
+      <button
+        type="button"
         key={`${span.reqId}-${span.start}-${i}`}
         className={`em-hl em-hl-${span.tone}`}
-        title="点击查看匹配详情"
+        aria-label={`查看要求匹配详情：${jdText.slice(span.start, span.end)}`}
         onClick={() => onOpen(span.reqId)}
       >
         {jdText.slice(span.start, span.end)}
-      </mark>,
+      </button>,
     )
     cursor = span.end
   })
@@ -114,8 +115,44 @@ function renderHighlightedJd(
 
 export function EvidenceMatchPage() {
   const navigate = useNavigate()
-  const { workflow, jdRawInput } = useDemo()
+  const { workflow } = useDemo()
   const [activeReqId, setActiveReqId] = useState<string | null>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLElement | null>(null)
+  const openRequirement = useCallback((id: string) => {
+    triggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    setActiveReqId(id)
+  }, [])
+  const closeRequirement = useCallback(() => {
+    setActiveReqId(null)
+    triggerRef.current?.focus()
+  }, [])
+
+  useEffect(() => {
+    if (!activeReqId) return
+    const modal = modalRef.current
+    modal?.querySelector<HTMLElement>('button')?.focus()
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closeRequirement()
+      }
+      if (event.key !== 'Tab' || !modal) return
+      const focusable = [...modal.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled])')]
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [activeReqId, closeRequirement])
 
   const views = useMemo(() => {
     if (!workflow) return [] as ReqView[]
@@ -145,10 +182,7 @@ export function EvidenceMatchPage() {
     })
   }, [workflow])
 
-  const jdText = useMemo(
-    () => (jdRawInput || workflow?.parsed_jd.source_text || '').trim(),
-    [jdRawInput, workflow],
-  )
+  const jdText = (workflow?.parsed_jd.source_text || '').trim()
 
   const highlights = useMemo(() => buildHighlights(jdText, views), [jdText, views])
 
@@ -204,7 +238,7 @@ export function EvidenceMatchPage() {
             {workflow.parsed_jd.requirements.length} 条要求
           </p>
           <div className="em-jd-body" role="article">
-            {renderHighlightedJd(jdText, highlights, setActiveReqId)}
+            <HighlightedJd jdText={jdText} spans={highlights} onOpen={openRequirement} />
           </div>
           <p className="muted em-jd-hint">
             {highlights.length
@@ -227,7 +261,7 @@ export function EvidenceMatchPage() {
                 <button
                   type="button"
                   className={`em-req em-req-${v.tone}`}
-                  onClick={() => setActiveReqId(v.requirement.requirement_id)}
+                  onClick={() => openRequirement(v.requirement.requirement_id)}
                 >
                   <span className="em-req-top">
                     <span className="em-chip compact">{v.label}</span>
@@ -255,10 +289,11 @@ export function EvidenceMatchPage() {
         <div
           className="em-modal-backdrop"
           role="presentation"
-          onClick={() => setActiveReqId(null)}
+          onClick={closeRequirement}
         >
           <div
             className="em-modal"
+            ref={modalRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="em-modal-title"
@@ -271,7 +306,7 @@ export function EvidenceMatchPage() {
                   {active.requirement.requirement_id.replace(/^req_0*/, '要求 ')}
                 </h3>
               </div>
-              <button type="button" className="btn secondary" onClick={() => setActiveReqId(null)}>
+              <button type="button" className="btn secondary" onClick={closeRequirement}>
                 关闭
               </button>
             </header>

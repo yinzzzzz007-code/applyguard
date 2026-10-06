@@ -1,0 +1,6 @@
+backend-unittest : PASS (exit=0)
+frontend-build : PASS (exit=0)
+frontend-lint : PASS (exit=0)
+frontend-smoke : PASS (exit=0)
+offline-benchmark : REVIEW_REQUIRED (exit=0)
+Evidence: E:\软件工程\applyguard-D-2\output\test-runs\20261006T004203591Z-816a246-21a1c5

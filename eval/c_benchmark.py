@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -13,7 +14,7 @@ from backend.services.model_client import HttpModelClient
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CASES = ROOT / "eval" / "c_cases.json"
+CASES = ROOT / "eval" / "c_cases_zh_v2.json"
 _ALIASES = {"automated tests": "automated testing", "data pipeline": "data pipelines"}
 
 
@@ -22,10 +23,10 @@ def _normalise(term: str) -> str:
     return _ALIASES.get(lowered, lowered)
 
 
-def run(use_model: bool = False) -> dict:
+def run(use_model: bool = False, cases_path: Path = CASES) -> dict:
     if use_model and not os.getenv("APPLYGUARD_AI_API_KEY"):
         raise RuntimeError("APPLYGUARD_AI_API_KEY is required for --model")
-    with CASES.open(encoding="utf-8") as stream:
+    with cases_path.open(encoding="utf-8") as stream:
         benchmark = json.load(stream)
     with (ROOT / "data" / "career-vault.seed.json").open(encoding="utf-8") as stream:
         experiences = json.load(stream)["experiences"]
@@ -64,7 +65,10 @@ def run(use_model: bool = False) -> dict:
     positive = [item for item in claim_results if item["expected"] == "VERIFIED"]
     nonblocked = [item for item in claim_results if item["expected"] != "BLOCKED"]
     true_accepted = sum(item["actual"] == "VERIFIED" for item in positive)
-    return {"model": "gpt-4o-mini" if use_model else None,
+    return {"dataset_id": benchmark["dataset_id"],
+            "dataset_sha256": hashlib.sha256(cases_path.read_bytes()).hexdigest(),
+            "seed_sha256": hashlib.sha256((ROOT / "data" / "career-vault.seed.json").read_bytes()).hexdigest(),
+            "model": "gpt-4o-mini" if use_model else None,
             "accepted_claim_precision": round(true_accepted / accepted, 4) if accepted else None,
             "supported_claim_acceptance_rate": round(true_accepted / len(positive), 4) if positive else None,
             "false_block_rate": round(sum(item["actual"] == "BLOCKED" for item in nonblocked) / len(nonblocked), 4),
@@ -89,5 +93,6 @@ def run(use_model: bool = False) -> dict:
 if __name__ == "__main__":
     argument_parser = argparse.ArgumentParser()
     argument_parser.add_argument("--model", action="store_true", help="Use configured model API; may incur cost")
+    argument_parser.add_argument("--cases", type=Path, default=CASES, help="Frozen benchmark JSON path")
     args = argument_parser.parse_args()
-    print(json.dumps(run(args.model), ensure_ascii=False, indent=2))
+    print(json.dumps(run(args.model, args.cases), ensure_ascii=False, indent=2))

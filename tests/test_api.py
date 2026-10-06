@@ -1,9 +1,12 @@
 import http.client
 import json
+import os
+import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 
-from backend.app import build_mock_workflow, create_server
+from backend.app import FRONTEND_DIR, build_mock_workflow, create_server
 
 
 class WorkflowUnitTests(unittest.TestCase):
@@ -77,6 +80,45 @@ class ApiTests(unittest.TestCase):
         status, data = self.request("GET", "/missing")
         self.assertEqual(status, 404)
         self.assertEqual(data["error"]["code"], "NOT_FOUND")
+
+    def test_draft_post_read_and_active_vault_are_consistent(self) -> None:
+        form = {"candidateId": "cand_demo_001", "basic": {"name": "测试候选人"}, "intention": {},
+                "education": [], "internships": [], "projects": [], "awards": [], "extras": {}, "dirty": True}
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"APPLYGUARD_LOCAL_DATA_DIR": directory}):
+            status, saved = self.request("POST", "/api/v1/vault/draft", {"candidate_id": "cand_demo_001", "form": form})
+            self.assertEqual(status, 200)
+            self.assertFalse(saved["form"]["dirty"])
+            status, read = self.request("GET", "/api/v1/vault/draft?candidate_id=cand_demo_001")
+            self.assertEqual(status, 200)
+            self.assertEqual(read["version"], saved["version"])
+            status, vault = self.request("GET", "/api/v1/vault?candidate_id=cand_demo_001")
+            self.assertEqual(status, 200)
+            self.assertEqual(vault["experiences"], [])
+            self.assertEqual(vault["profile"]["display_name"], "测试候选人")
+
+    def test_pdf_invalid_returns_explicit_error(self) -> None:
+        connection = http.client.HTTPConnection("127.0.0.1", self.port, timeout=3)
+        connection.request("POST", "/api/v1/vault/pdf-extract", body=b"%PDF-broken",
+                           headers={"Content-Type": "application/pdf"})
+        response = connection.getresponse()
+        data = json.loads(response.read().decode("utf-8"))
+        connection.close()
+        self.assertEqual(response.status, 422)
+        self.assertEqual(data["error"]["code"], "PDF_INVALID")
+
+    def test_built_spa_deep_link_and_seed_file(self) -> None:
+        routes = [("/data/career-vault.seed.json", "application/json")]
+        if (FRONTEND_DIR / "dist" / "index.html").exists():
+            routes.append(("/jd", "text/html"))
+        for route, content_type in routes:
+            connection = http.client.HTTPConnection("127.0.0.1", self.port, timeout=3)
+            connection.request("GET", route)
+            response = connection.getresponse()
+            body = response.read()
+            connection.close()
+            self.assertEqual(response.status, 200, route)
+            self.assertIn(content_type, response.getheader("Content-Type"))
+            self.assertTrue(body)
 
 
 if __name__ == "__main__":

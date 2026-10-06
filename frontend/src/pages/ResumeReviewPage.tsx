@@ -7,6 +7,7 @@ import type {
   ResumeClaim,
   VaultExperience,
 } from '../api/types'
+import { getApiClient } from '../api/client'
 import { EmptyState } from '../components/States'
 import { useDemo } from '../context/DemoContext'
 import { ZH_CLAIM_STATUS, zhLookup, zhText } from '../i18n'
@@ -41,9 +42,8 @@ export function ResumeReviewPage() {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   useEffect(() => {
-    void fetch(`${import.meta.env.BASE_URL}data/career-vault.seed.json`)
-      .then((r) => r.json())
-      .then((d: CareerVaultSeed) => setVault(d))
+    void getApiClient().getCareerVault()
+      .then((result) => setVault(result.data ?? null))
       .catch(() => setVault(null))
   }, [])
 
@@ -108,9 +108,9 @@ export function ResumeReviewPage() {
       }
       const verification: ClaimVerification = {
         claim_id: input.claim_id,
-        state: 'NEEDS_REVIEW',
+        state: 'BLOCKED',
         unsupported_fragments: [],
-        explanation: '在简历审查页手动加入。后端未将其标为可写入。',
+        explanation: '手动加入的陈述尚未由后端重新核验；可保留草稿，但不能确认或复制。',
         support_score: added.evidence_support_score,
         grounded: added.evidence_ids.length > 0,
       }
@@ -234,8 +234,13 @@ export function ResumeReviewPage() {
               <article
                 key={c.claim_id}
                 className={`rr-card rr-card-in${hoveredId === c.claim_id ? ' on' : ''}`}
+                tabIndex={0}
                 onMouseEnter={() => setHoveredId(c.claim_id)}
                 onMouseLeave={() => setHoveredId(null)}
+                onFocus={() => setHoveredId(c.claim_id)}
+                onBlur={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) setHoveredId(null)
+                }}
               >
                 <div className="rr-card-top">
                   <span className="em-chip strong compact">{zhLookup(ZH_CLAIM_STATUS, c.status)}</span>
@@ -295,9 +300,14 @@ export function ResumeReviewPage() {
             return (
               <article
                 key={`${r.claim_id}-${r.reason}`}
-                className={`rr-card rr-card-out${hoveredId === r.claim_id ? ' on' : ''}`}
-                onMouseEnter={() => setHoveredId(r.claim_id)}
-                onMouseLeave={() => setHoveredId(null)}
+                  className={`rr-card rr-card-out${hoveredId === r.claim_id ? ' on' : ''}`}
+                  tabIndex={0}
+                  onMouseEnter={() => setHoveredId(r.claim_id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  onFocus={() => setHoveredId(r.claim_id)}
+                  onBlur={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget)) setHoveredId(null)
+                  }}
               >
                 <div className="rr-card-top">
                   <span className="em-chip medium compact">{shortReason(r.reason)}</span>

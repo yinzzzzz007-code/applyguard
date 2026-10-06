@@ -1,0 +1,20 @@
+[
+  {
+    "pid": 520,
+    "name": "python",
+    "path": "D:\\jianglingtian\\miniconda3\\python.exe",
+    "stopped_utc": "2026-10-06T14:46:19.9949074Z"
+  },
+  {
+    "pid": 8696,
+    "name": "python",
+    "path": "D:\\jianglingtian\\miniconda3\\python.exe",
+    "stopped_utc": "2026-10-06T14:46:20.0051099Z"
+  },
+  {
+    "pid": 46884,
+    "name": "node",
+    "path": "D:\\Program Files\\nodejs\\node.exe",
+    "stopped_utc": "2026-10-06T14:46:20.0063468Z"
+  }
+]

@@ -15,6 +15,14 @@ export function JdInputPage() {
   const [backendHint, setBackendHint] = useState('')
   const [lastParseMode, setLastParseMode] = useState<WorkflowParseMode | null>(null)
   const requestId = useRef(0)
+  const editJd = (value: string) => {
+    if (value === jdRawInput) return
+    requestId.current += 1
+    setJdRawInput(value)
+    setStatus('idle')
+    setErrorMsg('')
+    setBackendHint('')
+  }
   const jdFallbackReason = workflow?.step_trace.find((step) => step.step === 'JD Parser')?.fallback_reason
   const requestedMode = workflow?.component_modes?.requested_parse_mode
   const ruleParsed = workflow?.component_modes?.jd_parser === 'RULE_FALLBACK'
@@ -87,15 +95,15 @@ export function JdInputPage() {
         className="jd-input"
         rows={10}
         value={jdRawInput}
-        onChange={(e) => setJdRawInput(e.target.value)}
+        onChange={(e) => editJd(e.target.value)}
         placeholder="至少 20 个字符…"
       />
 
       <div className="btn-row">
-        <button type="button" className="btn secondary" onClick={() => setJdRawInput(SAMPLE_JD)}>
+        <button type="button" className="btn secondary" onClick={() => editJd(SAMPLE_JD)}>
           填入示例岗位
         </button>
-        <button type="button" className="btn secondary" onClick={() => setJdRawInput('')}>
+        <button type="button" className="btn secondary" onClick={() => editJd('')}>
           清空（测空输入）
         </button>
         <button
@@ -134,7 +142,7 @@ export function JdInputPage() {
           title="岗位说明为空或无效"
           detail={errorMsg || '请输入有效岗位说明。不会显示假成功结果。'}
           actionLabel="填入示例"
-          onAction={() => setJdRawInput(SAMPLE_JD)}
+          onAction={() => editJd(SAMPLE_JD)}
         />
       )}
       {status === 'success' && workflow && (

@@ -1,0 +1,16 @@
+
+> applyguard-frontend@0.0.0 smoke
+> node scripts/smoke-mock.mjs && node --test scripts/copy-rules.test.mjs scripts/history.test.mjs
+
+SMOKE_MOCK_PASSED
+✔ verified claim is copyable, blocked and edited claims are not (0.6369ms)
+✔ blocked field cannot be copied, and confirmation is required for a normal field (0.2112ms)
+✔ local history stores only a simulation summary and can remove it (3.7829ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 371.5896

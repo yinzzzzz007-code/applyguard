@@ -7,15 +7,6 @@ import { copyableClaim, copyableField } from '../copyRules'
 import { saveApplicationHistory, type HistoryOutcome } from '../history'
 import { ZH_ACTION, ZH_DECISION, ZH_FRESHNESS, ZH_MAPPER, ZH_PARSER, ZH_STATUS, ZH_STEP, zhLookup, zhText } from '../i18n'
 
-function storedResumeForm(): EditableResumeForm | null {
-  try {
-    const raw = sessionStorage.getItem('applyguard.resumeForm')
-    return raw ? (JSON.parse(raw) as EditableResumeForm) : null
-  } catch {
-    return null
-  }
-}
-
 function copyToClipboard(text: string): Promise<void> {
   return navigator.clipboard.writeText(text)
 }
@@ -135,7 +126,7 @@ export function HumanConfirmationPage() {
   const [packCopied, setPackCopied] = useState(false)
   const [historyError, setHistoryError] = useState('')
 
-  const form = resumeForm ?? storedResumeForm()
+  const form = resumeForm
   const copyReady = canProceedFromClaims() && canSubmitAts()
   const copyPack = useMemo(
     () => (workflow ? buildCopyPack(form, workflow, claimDecisions, fieldDecisions, copyReady) : ''),

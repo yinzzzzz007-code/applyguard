@@ -1,0 +1,82 @@
+{
+  "browser": "Chrome",
+  "results": [
+    {
+      "id": "B01",
+      "expected": "保存应写入后端且匹配使用该版本",
+      "actual": {
+        "saveMessage": "已保存到本机会话。后端暂无经历库写入接口，刷新标签页前有效。",
+        "background": "rgb(255, 255, 255)",
+        "storage": "仅掌握 Rust，尚未使用 Python，也没有接口项目。"
+      },
+      "time": "2026-10-06T00:21:49.893Z"
+    },
+    {
+      "id": "B02",
+      "expected": "编辑后不得继续依赖旧种子匹配",
+      "actual": {
+        "matchText": "证据匹配\n\n岗位原文按匹配结果着色；点击彩色片段查看经历与证据明细。\n\n强匹配 2\n弱匹配 0\n有冲突 0\n未覆盖 0\n输入的岗位说明\n\n未知岗位 @ 未知公司 · 2 条要求\n\n后端开发实习生。岗位职责：使用 Python 编写接口服务、补充自动化测试，并使用版本协作。加分项：有数据处理相关项目经验。\n\n彩色片段可点击；未高亮的段落暂无对应解析要求。\n\n强匹配\n要求 1\n99% · 强\n后端开发实习生\n强匹配\n要求 2\n99% · 强\n岗位职责：使用 Python 编写接口服务、补充自动化测试，并使用版本协作\n下一步：简历审查",
+        "request": {
+          "type": "api-request",
+          "url": "http://127.0.0.1:5173/api/v1/workflow/mock",
+          "body": "{\"candidate_id\":\"cand_demo_001\",\"jd_text\":\"后端开发实习生。岗位职责：使用 Python 编写接口服务、补充自动化测试，并使用版本协作。加分项：有数据处理相关项目经验。\",\"parse_mode\":\"offline\",\"application_id\":\"app_demo_001\"}"
+        }
+      },
+      "time": "2026-10-06T00:21:50.480Z"
+    },
+    {
+      "id": "B03",
+      "expected": "Escape关闭详情弹窗",
+      "actual": {
+        "dialogRemains": 1,
+        "focus": "<button type=\"button\" class=\"em-req em-req-strong\"><span class=\"em-req-top\"><span class=\"em-chip compact\">强匹配</span><span class=\"em-req-id\">要求 1</span><span class=\"em-req-score\">99% · 强</span></span><span class=\"em-req-text\">后端开发实习生</span></button>"
+      },
+      "time": "2026-10-06T00:21:50.513Z"
+    },
+    {
+      "id": "SCRIPT_ERROR",
+      "expected": "脚本成功执行",
+      "actual": {
+        "message": "locator.click: Error: strict mode violation: getByRole('button', { name: '加入草稿', exact: true }) resolved to 3 elements:\n    1) <button type=\"button\" class=\"btn primary\">加入草稿</button> aka getByRole('button', { name: '加入草稿' }).first()\n    2) <button type=\"button\" class=\"btn primary\">加入草稿</button> aka getByRole('button', { name: '加入草稿' }).nth(1)\n    3) <button type=\"button\" class=\"btn primary\">加入草稿</button> aka getByRole('button', { name: '加入草稿' }).nth(2)\n\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '加入草稿', exact: true })\u001b[22m\n\n    at E:\\软件工程\\applyguard-D-2\\output\\d2-audit\\browser-audit.cjs:34:59"
+      },
+      "time": "2026-10-06T00:21:51.373Z"
+    },
+    {
+      "id": "B08",
+      "expected": "存储失败必须提示失败并保留未保存状态",
+      "actual": {
+        "notice": "已保存到本机会话。后端暂无经历库写入接口，刷新标签页前有效。",
+        "state": "cand_demo_001 · 已保存 2026/10/6 08:21:52",
+        "stored": null
+      },
+      "time": "2026-10-06T00:21:52.595Z"
+    }
+  ],
+  "events": [
+    {
+      "type": "api-request",
+      "url": "http://127.0.0.1:5173/src/api/client.ts",
+      "body": null
+    },
+    {
+      "type": "console",
+      "level": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "console",
+      "level": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "console",
+      "level": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "api-request",
+      "url": "http://127.0.0.1:5173/api/v1/workflow/mock",
+      "body": "{\"candidate_id\":\"cand_demo_001\",\"jd_text\":\"后端开发实习生。岗位职责：使用 Python 编写接口服务、补充自动化测试，并使用版本协作。加分项：有数据处理相关项目经验。\",\"parse_mode\":\"offline\",\"application_id\":\"app_demo_001\"}"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+﻿{
+    "captured_utc":  "2026-10-06T10:40:15.0399144Z",
+    "timezone":  "China Standard Time",
+    "git_head":  "816a24601385481b7261aba893c4c950503d7880",
+    "git_status":  " M .gitignore\n M backend/app.py\n M backend/services/evidence_matcher.py\n M backend/services/jd_parser.py\n M backend/services/skill_router.py\n M data/career-vault.seed.json\n M data/form-mapping.example.json\n M eval/c_benchmark.py\n M frontend/public/data/career-vault.seed.json\n M frontend/scripts/copy-rules.test.mjs\n M frontend/src/api/client.ts\n M frontend/src/api/types.ts\n M frontend/src/context/DemoContext.tsx\n M frontend/src/copyRules.ts\n M frontend/src/i18n.ts\n M frontend/src/index.css\n M frontend/src/pages/AtsSimulatorPage.tsx\n M frontend/src/pages/CareerVaultPage.tsx\n M frontend/src/pages/ClaimVerificationPage.tsx\n M frontend/src/pages/EvidenceMatchPage.tsx\n M frontend/src/pages/HumanConfirmationPage.tsx\n M frontend/src/pages/JdInputPage.tsx\n M frontend/src/pages/ResumeReviewPage.tsx\n M frontend/src/resume/formModel.ts\n M requirements.txt\n M tests/test_api.py\n M tests/test_c_audit.py\n M tests/test_contracts.py\n M tests/test_jd_chinese_offline.py\n M tests/test_member_b.py\n M tests/test_member_c.py\n?? backend/services/draft_store.py\n?? backend/services/pdf_extract.py\n?? contracts/award.schema.json\n?? docs/testing-D2.zip\n?? docs/testing-D2/\n?? eval/build_c_cases_zh.py\n?? eval/c_cases_zh_v2.json\n?? presentation/applyguard-opening-proposal-one-slide-script.md\n?? presentation/build-opening-proposal-one-slide.mjs\n?? presentation/build-opening-proposal.mjs\n?? tests/test_benchmark_alignment.py\n?? tests/test_d2_repairs.py\n?? tests/test_pdf_import.py\n?? \"\\350\\257\\276\\344\\273\\266\\344\\273\\245\\345\\217\\212\\350\\257\\276\\347\\250\\213\\350\\246\\201\\346\\261\\202/\"",
+    "os":  "Microsoft Windows NT 10.0.26200.0",
+    "python":  "Python 3.13.11",
+    "node":  "v24.13.0",
+    "npm":  "11.6.2",
+    "hashes":  {
+                   "data/career-vault.seed.json":  "e05fc0dd93f3fa32ccdfd187fdae09738b192f1e2f5f4ff4e9cadcde3c3cc4c9",
+                   "eval/c_cases_zh_v2.json":  "a8fe555833eace48e5b1b8263585011b701993ac1f62276a24270a01471e89de",
+                   "requirements.txt":  "9c889cc2aefa29d4226f606a837b5745420ef14fd9576aaa3c34fc2034172dd2",
+                   "frontend/package-lock.json":  "1d1f52b436a86b21aa3ff66d412a9a398a5221881fc608cfcc8249b618205d71"
+               }
+}

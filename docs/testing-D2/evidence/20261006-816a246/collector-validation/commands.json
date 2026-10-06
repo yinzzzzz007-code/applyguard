@@ -1,0 +1,85 @@
+[
+  {
+    "id": "backend-unittest",
+    "program": "python",
+    "args": [
+      "-X",
+      "utf8",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-v"
+    ],
+    "cwd": "E:\\软件工程\\applyguard-D-2",
+    "started_at": "2026-10-06T00:42:04.4197222+00:00",
+    "finished_at": "2026-10-06T00:42:06.1712857+00:00",
+    "elapsed_ms": 1750,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "logs/backend-unittest.log"
+  },
+  {
+    "id": "frontend-build",
+    "program": "npm.cmd",
+    "args": [
+      "run",
+      "build"
+    ],
+    "cwd": "E:\\软件工程\\applyguard-D-2\\frontend",
+    "started_at": "2026-10-06T00:42:06.1787336+00:00",
+    "finished_at": "2026-10-06T00:42:08.8739164+00:00",
+    "elapsed_ms": 2695,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "logs/frontend-build.log"
+  },
+  {
+    "id": "frontend-lint",
+    "program": "npm.cmd",
+    "args": [
+      "run",
+      "lint"
+    ],
+    "cwd": "E:\\软件工程\\applyguard-D-2\\frontend",
+    "started_at": "2026-10-06T00:42:08.8767745+00:00",
+    "finished_at": "2026-10-06T00:42:09.8103699+00:00",
+    "elapsed_ms": 933,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "logs/frontend-lint.log"
+  },
+  {
+    "id": "frontend-smoke",
+    "program": "npm.cmd",
+    "args": [
+      "run",
+      "smoke"
+    ],
+    "cwd": "E:\\软件工程\\applyguard-D-2\\frontend",
+    "started_at": "2026-10-06T00:42:09.8123575+00:00",
+    "finished_at": "2026-10-06T00:42:11.1047904+00:00",
+    "elapsed_ms": 1292,
+    "exit_code": 0,
+    "status": "PASS",
+    "log": "logs/frontend-smoke.log"
+  },
+  {
+    "id": "offline-benchmark",
+    "program": "python",
+    "args": [
+      "-X",
+      "utf8",
+      "-m",
+      "eval.c_benchmark"
+    ],
+    "cwd": "E:\\软件工程\\applyguard-D-2",
+    "started_at": "2026-10-06T00:42:11.1065248+00:00",
+    "finished_at": "2026-10-06T00:42:12.1946660+00:00",
+    "elapsed_ms": 1088,
+    "exit_code": 0,
+    "status": "REVIEW_REQUIRED",
+    "log": "logs/offline-benchmark.log"
+  }
+]

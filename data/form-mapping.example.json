@@ -4,8 +4,8 @@
   "fields": [
     {
       "field_id": "field_candidate_summary",
-      "label": "Candidate summary",
-      "value": "Built a Python HTTP API and added automated tests for core routes.",
+      "label": "候选人摘要",
+      "value": "已完成使用 Python 实现 HTTP API，并为核心路由补充自动化测试。",
       "source_claim_ids": ["claim_python_api"],
       "action": "SAFE_TO_FILL"
     }

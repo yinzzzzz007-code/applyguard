@@ -1,0 +1,22 @@
+2026-10-06 18:11:38,226 INFO ApplyGuard foundation listening at http://127.0.0.1:8000
+2026-10-06 18:11:38,226 INFO AI config: key=missing base= model=
+2026-10-06 18:12:06,235 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:12:06,246 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:12:06,247 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 404 -
+2026-10-06 18:12:06,336 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 404 -
+2026-10-06 18:12:07,678 INFO request client=127.0.0.1 message="POST /api/v1/vault/draft HTTP/1.1" 200 -
+2026-10-06 18:12:07,690 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:12:07,733 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:12:08,075 INFO request client=127.0.0.1 message="POST /api/v1/vault/draft HTTP/1.1" 200 -
+2026-10-06 18:12:08,091 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:12:08,127 INFO request client=127.0.0.1 message="GET /api/v1/vault HTTP/1.1" 200 -
+2026-10-06 18:12:08,301 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:12:08,313 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:12:08,314 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:12:08,326 INFO request client=127.0.0.1 message="GET /api/v1/vault/draft?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:12:08,960 INFO request client=127.0.0.1 message="GET /health HTTP/1.1" 200 -
+2026-10-06 18:12:09,022 INFO request client=127.0.0.1 message="POST /api/v1/workflow/mock HTTP/1.1" 200 -
+2026-10-06 18:12:09,147 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:12:09,158 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:12:09,240 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -
+2026-10-06 18:12:09,250 INFO request client=127.0.0.1 message="GET /api/v1/vault?candidate_id=cand_demo_001 HTTP/1.1" 200 -

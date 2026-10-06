@@ -1,0 +1,66 @@
+{
+  "generated_at": "2026-10-06T00:46:49.8866801+00:00",
+  "algorithm": "SHA256",
+  "files": [
+    {
+      "path": "Collect-TestEvidence.ps1",
+      "bytes": 6467,
+      "sha256": "ec59dd6ef51d3ae16d68082054ca6005953b2f479f7db26a2601e7555f932f9b"
+    },
+    {
+      "path": "commands.json",
+      "bytes": 2140,
+      "sha256": "ad506f8fb2a55db357da0c6f244f1ad3f037ac9062277d53cc40d6498e0b175a"
+    },
+    {
+      "path": "git-status.txt",
+      "bytes": 125,
+      "sha256": "174934866b5dabde84525e0e54ee264ae7de6a33a4eff87e3c834b48cc73b48c"
+    },
+    {
+      "path": "hashes-input.json",
+      "bytes": 682,
+      "sha256": "dfcc96dc2dbc2471ed12677506269d34bcf85c7f00613941b61489f7c59cb513"
+    },
+    {
+      "path": "logs/backend-unittest.log",
+      "bytes": 499,
+      "sha256": "f310b9068d30ca1af6aabee08a431f08fd1d3556fd0845c2e581f9afd42260e6"
+    },
+    {
+      "path": "logs/frontend-build.log",
+      "bytes": 424,
+      "sha256": "86bf03da44dad9caaafd9a0853a6f83333c88c51033370d8229fa855fce718e4"
+    },
+    {
+      "path": "logs/frontend-lint.log",
+      "bytes": 739,
+      "sha256": "6356d022d975a4a9fe22dd5332883abe9b2a13d94f9726aef4615cf6683f0742"
+    },
+    {
+      "path": "logs/frontend-smoke.log",
+      "bytes": 533,
+      "sha256": "d2678d1a13f3f43ed0ade03a475a4526c0ac6e43ecdf2687dec4f1a038d50fe5"
+    },
+    {
+      "path": "logs/offline-benchmark.log",
+      "bytes": 499,
+      "sha256": "f310b9068d30ca1af6aabee08a431f08fd1d3556fd0845c2e581f9afd42260e6"
+    },
+    {
+      "path": "run.json",
+      "bytes": 645,
+      "sha256": "d38e197e1e9b084852ad9af538a0b9b39f2e3167620a60c2592a1e94ddc992e6"
+    },
+    {
+      "path": "summary.md",
+      "bytes": 577,
+      "sha256": "b984ec4d56ff3028847ef48f1609283890402d3a72ef0ca3d148d4defda457d9"
+    },
+    {
+      "path": "tracked-diff.patch",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+﻿command: npm.cmd run smoke
+cwd: E:\软件工程\applyguard-D-2\frontend
+started_utc: 2026-10-06T10:28:01.4633635Z
+ended_utc: 2026-10-06T10:28:02.6636721Z
+exit_code: 0
+
+
+> applyguard-frontend@0.0.0 smoke
+> node scripts/smoke-mock.mjs && node --test scripts/copy-rules.test.mjs scripts/history.test.mjs
+
+SMOKE_MOCK_PASSED
+✔ verified claim is copyable, blocked and edited claims are not (0.5087ms)
+✔ blocked field cannot be copied, and confirmation is required for a normal field (0.1634ms)
+✔ manual claim without evidence cannot be copied after confirmation (0.0865ms)
+✔ linked review needs explicit confirmation and no unsupported fragment (0.0942ms)
+✔ local history stores only a simulation summary and can remove it (3.6005ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 356.0576
+

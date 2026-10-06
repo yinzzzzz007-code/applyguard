@@ -33,6 +33,7 @@ interface DemoState {
   dataSourceLabel: string
   claimDecisions: Record<string, LocalClaimDecision>
   fieldDecisions: Record<string, LocalFieldDecision>
+  atsDraftValues: Record<string, string>
   confirmationNote: string
   simulatedConfirmed: boolean
   setScenario: (s: DemoScenario) => void
@@ -43,6 +44,7 @@ interface DemoState {
   setResumeForm: Dispatch<SetStateAction<EditableResumeForm | null>>
   setClaimDecision: (claimId: string, patch: Partial<LocalClaimDecision>) => void
   setFieldDecision: (fieldId: string, patch: Partial<LocalFieldDecision>) => void
+  setAtsDraftValue: (fieldId: string, value: string) => void
   setConfirmationNote: (v: string) => void
   setSimulatedConfirmed: (v: boolean) => void
   resetFlow: () => void
@@ -74,11 +76,12 @@ function sourceLabel(scenario: DemoScenario, workflow: WorkflowResponse | null):
 export function DemoProvider({ children }: { children: ReactNode }) {
   const [scenario, setScenarioState] = useState<DemoScenario>(getActiveScenario())
   const [step, setStep] = useState<FlowStep>('vault')
-  const [jdRawInput, setJdRawInput] = useState(SAMPLE_JD)
+  const [jdRawInput, setJdRawInputState] = useState(SAMPLE_JD)
   const [workflow, setWorkflowState] = useState<WorkflowResponse | null>(null)
   const [resumeForm, setResumeForm] = useState<EditableResumeForm | null>(null)
   const [claimDecisions, setClaimDecisions] = useState<Record<string, LocalClaimDecision>>({})
   const [fieldDecisions, setFieldDecisions] = useState<Record<string, LocalFieldDecision>>({})
+  const [atsDraftValues, setAtsDraftValues] = useState<Record<string, string>>({})
   const [confirmationNote, setConfirmationNote] = useState('')
   const [simulatedConfirmed, setSimulatedConfirmed] = useState(false)
 
@@ -86,6 +89,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     setWorkflowState(w)
     setClaimDecisions({})
     setFieldDecisions({})
+    setAtsDraftValues({})
     setSimulatedConfirmed(false)
     setConfirmationNote('')
   }, [])
@@ -96,16 +100,30 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         if (!prev) return prev
         return typeof patch === 'function' ? patch(prev) : { ...prev, ...patch }
       })
+      setClaimDecisions({})
+      setFieldDecisions({})
+      setAtsDraftValues({})
+      setSimulatedConfirmed(false)
     },
     [],
   )
+
+  const setJdRawInput = useCallback((value: string) => {
+    if (value === jdRawInput) return
+    setJdRawInputState(value)
+    setWorkflowState(null)
+    setClaimDecisions({})
+    setFieldDecisions({})
+    setAtsDraftValues({})
+    setSimulatedConfirmed(false)
+  }, [jdRawInput])
 
   const setScenario = useCallback(
     (s: DemoScenario) => {
       setScenarioInClient(s)
       setScenarioState(s)
       setStep('vault')
-      setJdRawInput(SAMPLE_JD)
+      setJdRawInputState(SAMPLE_JD)
       setWorkflow(null)
       setResumeForm(null)
     },
@@ -151,6 +169,14 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     [],
   )
 
+  const setAtsDraftValue = useCallback((fieldId: string, value: string) => {
+    setAtsDraftValues((prev) => ({ ...prev, [fieldId]: value }))
+    setFieldDecisions((prev) => ({ ...prev, [fieldId]: {
+      field_id: fieldId, confirmed: false, acknowledgedBlocked: false,
+    } }))
+    setSimulatedConfirmed(false)
+  }, [])
+
   const verificationOf = useCallback(
     (claimId: string) => workflow?.claim_verification.find((v) => v.claim_id === claimId)?.state,
     [workflow],
@@ -166,6 +192,11 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         if (d?.decision !== 'reject') return false
       }
       if (v.state === 'NEEDS_REVIEW') {
+        const claim = workflow.resume_claims.find((item) => item.claim_id === v.claim_id)
+        if (!claim?.evidence_ids.length || v.unsupported_fragments.length) {
+          if (d?.decision !== 'reject') return false
+          continue
+        }
         if (!d?.decision) return false
         if (d.decision === 'edit' || d.freshness === 'edited_pending_reverify') {
           // Edited → pending re-verify; cannot treat as passed
@@ -178,7 +209,10 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       const d = claimDecisions[v.claim_id]
       if (d?.decision === 'reject' || d?.freshness === 'rejected') return false
       if (d?.freshness === 'edited_pending_reverify') return false
-      return v.state === 'VERIFIED' || (v.state === 'NEEDS_REVIEW' && d?.decision === 'confirm')
+      const claim = workflow.resume_claims.find((item) => item.claim_id === v.claim_id)
+      return Boolean(claim?.evidence_ids.length) &&
+        ((v.state === 'VERIFIED' && v.grounded) ||
+          (v.state === 'NEEDS_REVIEW' && !v.unsupported_fragments.length && d?.decision === 'confirm'))
     })
     // All-BLOCKED demo: after every BLOCKED is rejected, allow ATS inspection
     const onlyBlocked =
@@ -188,6 +222,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   }, [workflow, claimDecisions])
   const atsFieldAcksComplete = useCallback(() => {
     if (!workflow) return false
+    if (workflow.ats_form_mapping.fields.some((field) =>
+      atsDraftValues[field.field_id] != null && atsDraftValues[field.field_id] !== field.value)) return false
     const controls = workflow.field_controls ?? []
     for (const control of controls) {
       const d = fieldDecisions[control.field_id]
@@ -201,7 +237,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       }
     }
     return true
-  }, [workflow, fieldDecisions])
+  }, [workflow, fieldDecisions, atsDraftValues])
 
   const canSubmitAts = useCallback(() => {
     if (!workflow) return false
@@ -223,6 +259,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       dataSourceLabel,
       claimDecisions,
       fieldDecisions,
+      atsDraftValues,
       confirmationNote,
       simulatedConfirmed,
       setScenario,
@@ -233,6 +270,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       setResumeForm,
       setClaimDecision,
       setFieldDecision,
+      setAtsDraftValue,
       setConfirmationNote,
       setSimulatedConfirmed,
       resetFlow,
@@ -250,13 +288,16 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       dataSourceLabel,
       claimDecisions,
       fieldDecisions,
+      atsDraftValues,
       confirmationNote,
       simulatedConfirmed,
       setScenario,
+      setJdRawInput,
       setWorkflow,
       patchWorkflow,
       setClaimDecision,
       setFieldDecision,
+      setAtsDraftValue,
       resetFlow,
       verificationOf,
       canProceedFromClaims,

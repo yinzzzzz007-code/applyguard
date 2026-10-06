@@ -1,0 +1,74 @@
+const {chromium}=require('C:/Users/16X/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const fs=require('node:fs');
+const out=require('node:path').join(__dirname,process.argv[2]||'browser-run-02');
+fs.mkdirSync(out,{recursive:true});
+fs.copyFileSync(__filename,require('node:path').join(out,'browser-audit.cjs'));
+const results=[],events=[];
+const record=(id,expected,actual)=>results.push({id,expected,actual,time:new Date().toISOString()});
+(async()=>{
+ const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
+ const ctx=await browser.newContext({viewport:{width:1440,height:1000},locale:'zh-CN'});
+ await ctx.tracing.start({screenshots:true,snapshots:true,sources:true});
+ const page=await ctx.newPage();
+ page.on('pageerror',e=>events.push({type:'pageerror',message:e.message}));
+ page.on('console',m=>events.push({type:'console',level:m.type(),text:m.text()}));
+ page.on('request',r=>{if(r.url().includes('/api/'))events.push({type:'api-request',url:r.url(),body:r.postData()});});
+ try {
+  await page.goto('http://127.0.0.1:5173/');
+  await page.getByRole('button',{name:'保存简历',exact:true}).waitFor();
+  await page.locator('#resume-basic input').first().fill('测试用户甲（虚构）');
+  await page.locator('#resume-project textarea').first().fill('仅掌握 Rust，尚未使用 Python，也没有接口项目。');
+  await page.getByRole('button',{name:'保存简历',exact:true}).click();
+  record('B01','保存应写入后端且匹配使用该版本',{saveMessage:await page.locator('.ok-text.tip-inline').innerText(),background:await page.locator('#resume-basic').evaluate(el=>getComputedStyle(el).backgroundColor),storage:JSON.parse(await page.evaluate(()=>sessionStorage.getItem('applyguard.resumeForm'))).projects[0].description});
+  await page.getByRole('button',{name:'下一步：输入 JD',exact:true}).click();
+  await page.getByRole('button',{name:'运行离线工作流',exact:true}).click();
+  await page.getByRole('heading',{name:'工作流已返回',exact:true}).waitFor();
+  await page.getByRole('button',{name:'下一步：证据匹配',exact:true}).click();
+  await page.screenshot({path:out+'/ui-match.png',fullPage:true});
+  record('B02','编辑后不得继续依赖旧种子匹配',{matchText:await page.locator('main').innerText(),request:events.filter(e=>e.type==='api-request').at(-1)});
+  await page.locator('.em-req').first().click();
+  await page.keyboard.press('Escape');
+  record('B03','Escape关闭详情弹窗',{dialogRemains:await page.getByRole('dialog').count(),focus:await page.evaluate(()=>document.activeElement?.outerHTML)});
+  await page.getByRole('button',{name:'关闭',exact:true}).click();
+  await page.getByRole('button',{name:'下一步：简历审查',exact:true}).click();
+  const unsafe='我独立负责千万用户推荐系统，获得全国竞赛一等奖。';
+  await page.getByLabel('手动添加句子').fill(unsafe);
+  await page.locator('.rr-add').getByRole('button',{name:'加入草稿',exact:true}).click();
+  await page.getByRole('button',{name:'下一步：陈述核验',exact:true}).click();
+  const review=page.locator('article').filter({hasText:unsafe});
+  record('B04','无证据新增陈述应被后端核验并阻断',{text:await review.innerText()});
+  await review.getByRole('button',{name:'确认保留原文',exact:true}).click();
+  await page.getByRole('button',{name:'下一步：网申模拟',exact:true}).click();
+  await page.screenshot({path:out+'/ui-ats.png',fullPage:true});
+  for(const box of await page.getByRole('checkbox').all()) await box.check();
+  console.log('ATS_BUTTONS',await page.getByRole('button').allTextContents());
+  await page.getByRole('button',{name:/人工确认/}).click();
+  const pack=await page.locator('.copy-pack').inputValue();
+  record('B05','无证据的虚构陈述不得进入可复制稿',{containsUnsafe:pack.includes(unsafe),copyEnabled:await page.getByRole('button',{name:'一键复制全部',exact:true}).isEnabled(),pack});
+  await page.screenshot({path:out+'/ui-unsafe-copy.png',fullPage:true});
+  await page.getByRole('link',{name:'岗位说明',exact:true}).click();
+  const changed='全新财务岗位。任职要求：熟悉财务核算、报表合并与审计。';
+  await page.getByLabel('岗位说明',{exact:true}).fill(changed);
+  await page.getByRole('button',{name:'下一步：证据匹配',exact:true}).click();
+  record('B06','JD编辑后失效旧结果，或展示旧结果对应的原文',{text:await page.locator('main').innerText()});
+  await page.screenshot({path:out+'/ui-stale-jd.png',fullPage:true});
+  await page.setViewportSize({width:375,height:812});
+  record('B07','375px页面无横向溢出',{width:await page.evaluate(()=>innerWidth),scrollWidth:await page.evaluate(()=>document.documentElement.scrollWidth)});
+  await page.screenshot({path:out+'/ui-mobile.png',fullPage:true});
+ } catch(e){record('SCRIPT_ERROR','脚本成功执行',{message:e.stack});}
+ finally{await ctx.tracing.stop({path:out+'/browser-audit-trace.zip'});await ctx.close();}
+ const quota=await browser.newContext({viewport:{width:1280,height:900}});
+ await quota.addInitScript(()=>{const orig=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='applyguard.resumeForm')throw new DOMException('Synthetic quota failure','QuotaExceededError');return orig.call(this,k,v);};});
+ const qp=await quota.newPage();
+ try{
+  await qp.goto('http://127.0.0.1:5173/');
+  await qp.getByRole('button',{name:'保存简历',exact:true}).waitFor();
+  await qp.locator('#resume-basic input').first().fill('配额失败测试（虚构）');
+  await qp.getByRole('button',{name:'保存简历',exact:true}).click();
+  record('B08','存储失败必须提示失败并保留未保存状态',{notice:await qp.locator('.ok-text.tip-inline').innerText(),state:await qp.locator('.resume-tip').innerText(),stored:await qp.evaluate(()=>sessionStorage.getItem('applyguard.resumeForm'))});
+  await qp.screenshot({path:out+'/ui-save-failure.png',fullPage:true});
+ }catch(e){record('QUOTA_SCRIPT_ERROR','脚本成功执行',{message:e.stack});}
+ await quota.close();await browser.close();
+ fs.writeFileSync(out+'/browser-audit-results.json',JSON.stringify({browser:'Chrome',results,events},null,2));
+ console.log(JSON.stringify(results,null,2));
+})();

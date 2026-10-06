@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://applyguard.local/contracts/award.schema.json",
+  "title": "Award / competition draft entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "category", "organizer", "level", "rank", "date", "role"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^award_[a-zA-Z0-9_]+$"},
+    "name": {"type": "string", "minLength": 1, "maxLength": 160},
+    "category": {"type": "string", "enum": ["竞赛", "奖学金", "荣誉", "其他"]},
+    "organizer": {"type": "string", "maxLength": 160},
+    "level": {"type": "string", "enum": ["", "国际级", "国家级", "省级", "市级", "校级", "其他"]},
+    "rank": {"type": "string", "maxLength": 80},
+    "date": {"type": "string", "pattern": "^$|^[0-9]{4}-(0[1-9]|1[0-2])$"},
+    "role": {"type": "string", "maxLength": 160},
+    "sourcePage": {"type": "integer", "minimum": 1},
+    "sourceLine": {"type": "string", "maxLength": 300}
+  }
+}

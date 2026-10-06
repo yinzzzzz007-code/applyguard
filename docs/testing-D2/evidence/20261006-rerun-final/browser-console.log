@@ -1,0 +1,10 @@
+locator.waitFor: Error: strict mode violation: getByText('尚未运行工作流') resolved to 2 elements:
+    1) <p class="muted data-source">数据来源：尚未运行工作流</p> aka getByText('数据来源：尚未运行工作流')
+    2) <h3>尚未运行工作流</h3> aka getByRole('heading', { name: '尚未运行工作流' })
+
+Call log:
+  - waiting for getByText('尚未运行工作流') to be visible
+
+    at main (E:\软件工程\applyguard-D-2\docs\testing-D2\scripts\Browser-Repair-Regression.cjs:72:37) {
+  log: [ "  - waiting for getByText('尚未运行工作流') to be visible" ]
+}

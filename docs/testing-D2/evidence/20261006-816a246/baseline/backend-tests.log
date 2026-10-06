@@ -1,0 +1,427 @@
+test_health (test_api.ApiTests.test_health) ... ok
+test_mock_endpoint (test_api.ApiTests.test_mock_endpoint) ... ok
+test_not_found (test_api.ApiTests.test_not_found) ... ok
+test_validation_error_uses_unified_envelope (test_api.ApiTests.test_validation_error_uses_unified_envelope) ... ok
+test_mock_workflow_requires_human_confirmation (test_api.WorkflowUnitTests.test_mock_workflow_requires_human_confirmation) ... ok
+test_short_jd_is_rejected (test_api.WorkflowUnitTests.test_short_jd_is_rejected) ... ok
+test_asu_failure_cases_have_fragments_risk_and_blocked_stop (test_c_audit.AuditTests.test_asu_failure_cases_have_fragments_risk_and_blocked_stop) ... ERROR
+test_auth_failure_never_retries_and_rate_limit_is_bounded (test_c_audit.AuditTests.test_auth_failure_never_retries_and_rate_limit_is_bounded) ... ERROR
+test_blocked_sensitive_field_cannot_be_confirmed (test_c_audit.AuditTests.test_blocked_sensitive_field_cannot_be_confirmed) ... ERROR
+test_categories_and_inherited_preferred (test_c_audit.AuditTests.test_categories_and_inherited_preferred) ... ERROR
+test_chinese_and_single_letter_hallucination_block (test_c_audit.AuditTests.test_chinese_and_single_letter_hallucination_block) ... ERROR
+test_cross_candidate_and_low_confidence (test_c_audit.AuditTests.test_cross_candidate_and_low_confidence) ... ERROR
+test_default_budget_and_configurable_model_and_output_limit (test_c_audit.AuditTests.test_default_budget_and_configurable_model_and_output_limit) ... ERROR
+test_downstream_failure_is_audited_and_stops (test_c_audit.AuditTests.test_downstream_failure_is_audited_and_stops) ... ERROR
+test_empty_and_oversized_jd_stop (test_c_audit.AuditTests.test_empty_and_oversized_jd_stop) ... ERROR
+test_invalid_transport_and_truncation (test_c_audit.AuditTests.test_invalid_transport_and_truncation) ... ERROR
+test_l0_l1_l2_l3_controls (test_c_audit.AuditTests.test_l0_l1_l2_l3_controls) ... ERROR
+test_mapped_value_mismatch_requires_review (test_c_audit.AuditTests.test_mapped_value_mismatch_requires_review) ... ERROR
+test_missing_verification_blocks_field (test_c_audit.AuditTests.test_missing_verification_blocks_field) ... ERROR
+test_model_keyword_quote_cannot_upgrade_preferred (test_c_audit.AuditTests.test_model_keyword_quote_cannot_upgrade_preferred) ... ERROR
+test_negation_and_injection_keyword_quote_cannot_pass (test_c_audit.AuditTests.test_negation_and_injection_keyword_quote_cannot_pass) ... ERROR
+test_no_partial_word_canonical_expansion (test_c_audit.AuditTests.test_no_partial_word_canonical_expansion) ... ERROR
+test_nonfinite_schema_rejected (test_c_audit.AuditTests.test_nonfinite_schema_rejected) ... ERROR
+test_offline_mode_ignores_present_api_key (test_c_audit.AuditTests.test_offline_mode_ignores_present_api_key) ... ERROR
+test_planned_team_and_participation (test_c_audit.AuditTests.test_planned_team_and_participation) ... ERROR
+test_too_many_requirements_stop (test_c_audit.AuditTests.test_too_many_requirements_stop) ... ERROR
+test_unchanged_claim_still_checks_metric (test_c_audit.AuditTests.test_unchanged_claim_still_checks_metric) ... ERROR
+test_unsupported_selected_claim_blocks_ats (test_c_audit.AuditTests.test_unsupported_selected_claim_blocks_ats) ... ERROR
+test_wrong_denominator_and_one_is_not_twelve (test_c_audit.AuditTests.test_wrong_denominator_and_one_is_not_twelve) ... ERROR
+test_all_contract_and_fixture_files_parse (test_contracts.ContractFixtureTests.test_all_contract_and_fixture_files_parse) ... ok
+test_mapping_and_risk_require_confirmation (test_contracts.ContractFixtureTests.test_mapping_and_risk_require_confirmation) ... ok
+test_requirement_keeps_source_text_and_confidence (test_contracts.ContractFixtureTests.test_requirement_keeps_source_text_and_confidence) ... ok
+test_selected_claim_is_traceable_to_evidence (test_contracts.ContractFixtureTests.test_selected_claim_is_traceable_to_evidence) ... ok
+test_model_paraphrase_uses_exact_quote_without_accepting_invented_skill (test_jd_chinese_offline.ChineseOfflineJDTests.test_model_paraphrase_uses_exact_quote_without_accepting_invented_skill) ... ok
+test_offline_result_preserves_title_and_grounded_requirements (test_jd_chinese_offline.ChineseOfflineJDTests.test_offline_result_preserves_title_and_grounded_requirements) ... ok
+test_offline_workflow_reports_requested_mode_without_model_failure (test_jd_chinese_offline.ChineseOfflineJDTests.test_offline_workflow_reports_requested_mode_without_model_failure) ... ok
+test_all_five_fixed_benchmark_cases_run (test_member_b.MemberBTests.test_all_five_fixed_benchmark_cases_run) ... ok
+test_b_outputs_follow_frozen_schemas_with_compatible_extensions (test_member_b.MemberBTests.test_b_outputs_follow_frozen_schemas_with_compatible_extensions) ... ok
+test_career_vault_reads_structured_fictional_experiences (test_member_b.MemberBTests.test_career_vault_reads_structured_fictional_experiences) ... ok
+test_career_vault_rejects_broken_evidence_links (test_member_b.MemberBTests.test_career_vault_rejects_broken_evidence_links) ... ok
+test_claim_count_and_length_budgets_apply (test_member_b.MemberBTests.test_claim_count_and_length_budgets_apply) ... ok
+test_conflicting_evidence_reduces_score_and_requires_review (test_member_b.MemberBTests.test_conflicting_evidence_reduces_score_and_requires_review) ... ok
+test_duplicate_claim_is_removed (test_member_b.MemberBTests.test_duplicate_claim_is_removed) ... ok
+test_generic_api_or_fine_tuning_does_not_imply_specialized_skill (test_member_b.MemberBTests.test_generic_api_or_fine_tuning_does_not_imply_specialized_skill) ... ok
+test_insufficient_evidence_is_not_selected_as_high_confidence_claim (test_member_b.MemberBTests.test_insufficient_evidence_is_not_selected_as_high_confidence_claim) ... ok
+test_mock_fixture_claim_references_follow_computed_selection (test_member_b.MemberBTests.test_mock_fixture_claim_references_follow_computed_selection) ... ok
+test_partial_requirement_stays_uncovered (test_member_b.MemberBTests.test_partial_requirement_stays_uncovered) ... ok
+test_same_input_produces_same_output (test_member_b.MemberBTests.test_same_input_produces_same_output) ... ok
+test_selected_claim_keeps_evidence_ids (test_member_b.MemberBTests.test_selected_claim_keeps_evidence_ids) ... ok
+test_selector_refills_after_duplicate_and_length_rejection (test_member_b.MemberBTests.test_selector_refills_after_duplicate_and_length_rejection) ... ok
+test_strong_experience_ranks_before_weaker_overlap (test_member_b.MemberBTests.test_strong_experience_ranks_before_weaker_overlap) ... ok
+test_unrelated_claim_does_not_cover_a_skill_only_in_experience (test_member_b.MemberBTests.test_unrelated_claim_does_not_cover_a_skill_only_in_experience) ... ok
+test_vault_accepts_complete_structured_metric_arithmetic (test_member_b.MemberBTests.test_vault_accepts_complete_structured_metric_arithmetic) ... ok
+test_vault_rejects_inconsistent_or_incomplete_metric_arithmetic (test_member_b.MemberBTests.test_vault_rejects_inconsistent_or_incomplete_metric_arithmetic) ... ok
+test_verified_claim_without_metric_can_still_be_selected (test_member_b.MemberBTests.test_verified_claim_without_metric_can_still_be_selected) ... ok
+setUpClass (test_member_c.CClaimAndRiskTests) ... ERROR
+test_fabricated_skill_retries_then_falls_back (test_member_c.CParserTests.test_fabricated_skill_retries_then_falls_back) ... ok
+test_inexact_model_quote_is_repaired_from_original_source (test_member_c.CParserTests.test_inexact_model_quote_is_repaired_from_original_source) ... ok
+test_injection_is_data_and_not_a_requirement (test_member_c.CParserTests.test_injection_is_data_and_not_a_requirement) ... ok
+test_invalid_schema_and_fabricated_company_fallback (test_member_c.CParserTests.test_invalid_schema_and_fabricated_company_fallback) ... ok
+test_model_cannot_promote_injected_instruction_to_requirement (test_member_c.CParserTests.test_model_cannot_promote_injected_instruction_to_requirement) ... ok
+test_model_split_terms_are_canonical_for_b_matcher (test_member_c.CParserTests.test_model_split_terms_are_canonical_for_b_matcher) ... ok
+test_model_timeout_and_bad_shape_fallback (test_member_c.CParserTests.test_model_timeout_and_bad_shape_fallback) ... ok
+test_unparseable_jd_stops (test_member_c.CParserTests.test_unparseable_jd_stops) ... ok
+test_valid_model_output_is_source_grounded_and_schema_valid (test_member_c.CParserTests.test_valid_model_output_is_source_grounded_and_schema_valid) ... ok
+
+======================================================================
+ERROR: test_asu_failure_cases_have_fragments_risk_and_blocked_stop (test_c_audit.AuditTests.test_asu_failure_cases_have_fragments_risk_and_blocked_stop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_auth_failure_never_retries_and_rate_limit_is_bounded (test_c_audit.AuditTests.test_auth_failure_never_retries_and_rate_limit_is_bounded)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_blocked_sensitive_field_cannot_be_confirmed (test_c_audit.AuditTests.test_blocked_sensitive_field_cannot_be_confirmed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_categories_and_inherited_preferred (test_c_audit.AuditTests.test_categories_and_inherited_preferred)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_chinese_and_single_letter_hallucination_block (test_c_audit.AuditTests.test_chinese_and_single_letter_hallucination_block)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_cross_candidate_and_low_confidence (test_c_audit.AuditTests.test_cross_candidate_and_low_confidence)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_default_budget_and_configurable_model_and_output_limit (test_c_audit.AuditTests.test_default_budget_and_configurable_model_and_output_limit)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_downstream_failure_is_audited_and_stops (test_c_audit.AuditTests.test_downstream_failure_is_audited_and_stops)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_empty_and_oversized_jd_stop (test_c_audit.AuditTests.test_empty_and_oversized_jd_stop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_invalid_transport_and_truncation (test_c_audit.AuditTests.test_invalid_transport_and_truncation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_l0_l1_l2_l3_controls (test_c_audit.AuditTests.test_l0_l1_l2_l3_controls)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_mapped_value_mismatch_requires_review (test_c_audit.AuditTests.test_mapped_value_mismatch_requires_review)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_missing_verification_blocks_field (test_c_audit.AuditTests.test_missing_verification_blocks_field)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_model_keyword_quote_cannot_upgrade_preferred (test_c_audit.AuditTests.test_model_keyword_quote_cannot_upgrade_preferred)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_negation_and_injection_keyword_quote_cannot_pass (test_c_audit.AuditTests.test_negation_and_injection_keyword_quote_cannot_pass)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_no_partial_word_canonical_expansion (test_c_audit.AuditTests.test_no_partial_word_canonical_expansion)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_nonfinite_schema_rejected (test_c_audit.AuditTests.test_nonfinite_schema_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_offline_mode_ignores_present_api_key (test_c_audit.AuditTests.test_offline_mode_ignores_present_api_key)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_planned_team_and_participation (test_c_audit.AuditTests.test_planned_team_and_participation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_too_many_requirements_stop (test_c_audit.AuditTests.test_too_many_requirements_stop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_unchanged_claim_still_checks_metric (test_c_audit.AuditTests.test_unchanged_claim_still_checks_metric)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_unsupported_selected_claim_blocks_ats (test_c_audit.AuditTests.test_unsupported_selected_claim_blocks_ats)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: test_wrong_denominator_and_one_is_not_twelve (test_c_audit.AuditTests.test_wrong_denominator_and_one_is_not_twelve)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_c_audit.py", line 30, in setUp
+    self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_local.py", line 546, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\pathlib\_abc.py", line 633, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+======================================================================
+ERROR: setUpClass (test_member_c.CClaimAndRiskTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\��������\applyguard-D-2\tests\test_member_c.py", line 117, in setUpClass
+    cls.experiences = json.load(stream)["experiences"]
+                      ~~~~~~~~~^^^^^^^^
+  File "D:\jianglingtian\miniconda3\Lib\json\__init__.py", line 298, in load
+    return loads(fp.read(),
+                 ~~~~~~~^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x89 in position 96: illegal multibyte sequence
+
+----------------------------------------------------------------------
+Ran 64 tests in 0.698s
+
+FAILED (errors=24)

@@ -1,0 +1,21 @@
+command: npm.cmd run build
+cwd: E:\软件工程\applyguard-D-2\frontend
+started_utc: 2026-10-06T10:53:34.6661603Z
+ended_utc: 2026-10-06T10:53:37.1664436Z
+exit_code: 0
+
+
+> applyguard-frontend@0.0.0 build
+> tsc -b && vite build
+
+vite v8.3.2 building client environment for production...
+transforming...
+✓ 42 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.80 kB │ gzip:   0.46 kB
+dist/assets/index-DJjtOpMt.css   19.15 kB │ gzip:   5.00 kB
+dist/assets/index-DAtp1Pp9.js   352.05 kB │ gzip: 110.33 kB
+
+✓ built in 144ms
+

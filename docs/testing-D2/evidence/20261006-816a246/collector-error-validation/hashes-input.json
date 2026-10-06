@@ -1,0 +1,22 @@
+[
+  {
+    "path": "frontend/package-lock.json",
+    "sha256": "1d1f52b436a86b21aa3ff66d412a9a398a5221881fc608cfcc8249b618205d71"
+  },
+  {
+    "path": "requirements.txt",
+    "sha256": "13cfe806b339850b4ea8e875169c9becff9b4ee570b41cf78ba505a88ce8a78e"
+  },
+  {
+    "path": "data/career-vault.seed.json",
+    "sha256": "09822c8f6b0e824f7f2ff76f91fa564dd92d68e54d863ae01cf121d0573cbf69"
+  },
+  {
+    "path": "frontend/public/data/career-vault.seed.json",
+    "sha256": "09822c8f6b0e824f7f2ff76f91fa564dd92d68e54d863ae01cf121d0573cbf69"
+  },
+  {
+    "path": "eval/c_cases.json",
+    "sha256": "43cdadcd466fabcc023b87b4877e0e2fee602fa8d2abeae8b920333f17ad7615"
+  }
+]

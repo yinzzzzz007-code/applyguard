@@ -1,0 +1,174 @@
+﻿command: python -m unittest discover -s tests -v
+cwd: E:\软件工程\applyguard-D-2
+started_utc: 2026-10-06T10:49:21.8084364Z
+ended_utc: 2026-10-06T10:49:23.7923001Z
+exit_code: 0
+
+python.exe : test_built_spa_deep_link_and_seed_file (test_api.ApiTests.test_built_spa_deep_link_and_seed_file) ... ok
+At E:\软件工程\applyguard-D-2\docs\testing-D2\scripts\Run-Repair-Gates.ps1:20 char:15
++     $output = & $Executable @Arguments 2>&1 | Out-String
++               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (test_built_spa_...ed_file) ... ok:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+test_draft_post_read_and_active_vault_are_consistent (test_api.ApiTests.test_draft_post_read_and_active_vault_are_consi
+stent) ... ok
+test_health (test_api.ApiTests.test_health) ... ok
+test_mock_endpoint (test_api.ApiTests.test_mock_endpoint) ... ok
+test_not_found (test_api.ApiTests.test_not_found) ... ok
+test_pdf_invalid_returns_explicit_error (test_api.ApiTests.test_pdf_invalid_returns_explicit_error) ... WARNING:pypdf._
+reader:EOF marker not found
+ok
+test_validation_error_uses_unified_envelope (test_api.ApiTests.test_validation_error_uses_unified_envelope) ... ok
+test_mock_workflow_requires_human_confirmation (test_api.WorkflowUnitTests.test_mock_workflow_requires_human_confirmati
+on) ... ok
+test_short_jd_is_rejected (test_api.WorkflowUnitTests.test_short_jd_is_rejected) ... ok
+test_frozen_chinese_claim_cases_match_current_seed_and_labels (test_benchmark_alignment.BenchmarkAlignmentTests.test_fr
+ozen_chinese_claim_cases_match_current_seed_and_labels) ... ok
+test_asu_failure_cases_have_fragments_risk_and_blocked_stop (test_c_audit.AuditTests.test_asu_failure_cases_have_fragme
+nts_risk_and_blocked_stop) ... ok
+test_auth_failure_never_retries_and_rate_limit_is_bounded (test_c_audit.AuditTests.test_auth_failure_never_retries_and_
+rate_limit_is_bounded) ... ok
+test_blocked_sensitive_field_cannot_be_confirmed (test_c_audit.AuditTests.test_blocked_sensitive_field_cannot_be_confir
+med) ... ok
+test_categories_and_inherited_preferred (test_c_audit.AuditTests.test_categories_and_inherited_preferred) ... ok
+test_chinese_and_single_letter_hallucination_block (test_c_audit.AuditTests.test_chinese_and_single_letter_hallucinatio
+n_block) ... ok
+test_cross_candidate_and_low_confidence (test_c_audit.AuditTests.test_cross_candidate_and_low_confidence) ... ok
+test_default_budget_and_configurable_model_and_output_limit (test_c_audit.AuditTests.test_default_budget_and_configurab
+le_model_and_output_limit) ... ok
+test_downstream_failure_is_audited_and_stops (test_c_audit.AuditTests.test_downstream_failure_is_audited_and_stops) ...
+ ok
+test_empty_and_oversized_jd_stop (test_c_audit.AuditTests.test_empty_and_oversized_jd_stop) ... ok
+test_invalid_transport_and_truncation (test_c_audit.AuditTests.test_invalid_transport_and_truncation) ... ok
+test_l0_l1_l2_l3_controls (test_c_audit.AuditTests.test_l0_l1_l2_l3_controls) ... ok
+test_mapped_value_mismatch_requires_review (test_c_audit.AuditTests.test_mapped_value_mismatch_requires_review) ... ok
+test_missing_verification_blocks_field (test_c_audit.AuditTests.test_missing_verification_blocks_field) ... ok
+test_model_keyword_quote_cannot_upgrade_preferred (test_c_audit.AuditTests.test_model_keyword_quote_cannot_upgrade_pref
+erred) ... ok
+test_negation_and_injection_keyword_quote_cannot_pass (test_c_audit.AuditTests.test_negation_and_injection_keyword_quot
+e_cannot_pass) ... ok
+test_no_partial_word_canonical_expansion (test_c_audit.AuditTests.test_no_partial_word_canonical_expansion) ... ok
+test_nonfinite_schema_rejected (test_c_audit.AuditTests.test_nonfinite_schema_rejected) ... ok
+test_offline_mode_ignores_present_api_key (test_c_audit.AuditTests.test_offline_mode_ignores_present_api_key) ... ok
+test_planned_team_and_participation (test_c_audit.AuditTests.test_planned_team_and_participation) ... ok
+test_too_many_requirements_stop (test_c_audit.AuditTests.test_too_many_requirements_stop) ... ok
+test_unchanged_claim_still_checks_metric (test_c_audit.AuditTests.test_unchanged_claim_still_checks_metric) ... ok
+test_unsupported_selected_claim_blocks_ats (test_c_audit.AuditTests.test_unsupported_selected_claim_blocks_ats) ... ok
+test_wrong_denominator_and_one_is_not_twelve (test_c_audit.AuditTests.test_wrong_denominator_and_one_is_not_twelve) ...
+ ok
+test_all_contract_and_fixture_files_parse (test_contracts.ContractFixtureTests.test_all_contract_and_fixture_files_pars
+e) ... ok
+test_mapping_and_risk_require_confirmation (test_contracts.ContractFixtureTests.test_mapping_and_risk_require_confirmat
+ion) ... ok
+test_requirement_keeps_source_text_and_confidence (test_contracts.ContractFixtureTests.test_requirement_keeps_source_te
+xt_and_confidence) ... ok
+test_selected_claim_is_traceable_to_evidence (test_contracts.ContractFixtureTests.test_selected_claim_is_traceable_to_e
+vidence) ... ok
+test_award_saves_as_unverified_structured_data (test_d2_repairs.DraftIsolationTests.test_award_saves_as_unverified_stru
+ctured_data) ... ok
+test_candidate_path_rejects_traversal (test_d2_repairs.DraftIsolationTests.test_candidate_path_rejects_traversal) ... o
+k
+test_failed_atomic_replace_keeps_last_good_draft (test_d2_repairs.DraftIsolationTests.test_failed_atomic_replace_keeps_
+last_good_draft) ... ok
+test_unchanged_seed_keeps_evidence_but_edited_entry_loses_it (test_d2_repairs.DraftIsolationTests.test_unchanged_seed_k
+eeps_evidence_but_edited_entry_loses_it) ... ok
+test_workflow_uses_saved_draft_not_old_seed_claim (test_d2_repairs.DraftIsolationTests.test_workflow_uses_saved_draft_n
+ot_old_seed_claim) ... ok
+test_generic_ml_cannot_claim_multimodal_or_reinforcement_learning (test_d2_repairs.SpecialtyMatchTests.test_generic_ml_
+cannot_claim_multimodal_or_reinforcement_learning) ... ok
+test_model_paraphrase_uses_exact_quote_without_accepting_invented_skill (test_jd_chinese_offline.ChineseOfflineJDTests.
+test_model_paraphrase_uses_exact_quote_without_accepting_invented_skill) ... ok
+test_offline_result_preserves_title_and_grounded_requirements (test_jd_chinese_offline.ChineseOfflineJDTests.test_offli
+ne_result_preserves_title_and_grounded_requirements) ... ok
+test_offline_workflow_reports_requested_mode_without_model_failure (test_jd_chinese_offline.ChineseOfflineJDTests.test_
+offline_workflow_reports_requested_mode_without_model_failure) ... ok
+test_single_line_demo_title_and_bonus_are_separate (test_jd_chinese_offline.ChineseOfflineJDTests.test_single_line_demo
+_title_and_bonus_are_separate) ... ok
+test_all_five_fixed_benchmark_cases_run (test_member_b.MemberBTests.test_all_five_fixed_benchmark_cases_run) ... ok
+test_b_outputs_follow_frozen_schemas_with_compatible_extensions (test_member_b.MemberBTests.test_b_outputs_follow_froze
+n_schemas_with_compatible_extensions) ... ok
+test_career_vault_reads_structured_fictional_experiences (test_member_b.MemberBTests.test_career_vault_reads_structured
+_fictional_experiences) ... ok
+test_career_vault_rejects_broken_evidence_links (test_member_b.MemberBTests.test_career_vault_rejects_broken_evidence_l
+inks) ... ok
+test_claim_count_and_length_budgets_apply (test_member_b.MemberBTests.test_claim_count_and_length_budgets_apply) ... ok
+test_conflicting_evidence_reduces_score_and_requires_review (test_member_b.MemberBTests.test_conflicting_evidence_reduc
+es_score_and_requires_review) ... ok
+test_duplicate_claim_is_removed (test_member_b.MemberBTests.test_duplicate_claim_is_removed) ... ok
+test_generic_api_or_fine_tuning_does_not_imply_specialized_skill (test_member_b.MemberBTests.test_generic_api_or_fine_t
+uning_does_not_imply_specialized_skill) ... ok
+test_insufficient_evidence_is_not_selected_as_high_confidence_claim (test_member_b.MemberBTests.test_insufficient_evide
+nce_is_not_selected_as_high_confidence_claim) ... ok
+test_mock_fixture_claim_references_follow_computed_selection (test_member_b.MemberBTests.test_mock_fixture_claim_refere
+nces_follow_computed_selection) ... ok
+test_partial_requirement_stays_uncovered (test_member_b.MemberBTests.test_partial_requirement_stays_uncovered) ... ok
+test_same_input_produces_same_output (test_member_b.MemberBTests.test_same_input_produces_same_output) ... ok
+test_selected_claim_keeps_evidence_ids (test_member_b.MemberBTests.test_selected_claim_keeps_evidence_ids) ... ok
+test_selector_refills_after_duplicate_and_length_rejection (test_member_b.MemberBTests.test_selector_refills_after_dupl
+icate_and_length_rejection) ... ok
+test_strong_experience_ranks_before_weaker_overlap (test_member_b.MemberBTests.test_strong_experience_ranks_before_weak
+er_overlap) ... ok
+test_unrelated_claim_does_not_cover_a_skill_only_in_experience (test_member_b.MemberBTests.test_unrelated_claim_does_no
+t_cover_a_skill_only_in_experience) ... ok
+test_vault_accepts_complete_structured_metric_arithmetic (test_member_b.MemberBTests.test_vault_accepts_complete_struct
+ured_metric_arithmetic) ... ok
+test_vault_rejects_inconsistent_or_incomplete_metric_arithmetic (test_member_b.MemberBTests.test_vault_rejects_inconsis
+tent_or_incomplete_metric_arithmetic) ... ok
+test_verified_claim_without_metric_can_still_be_selected (test_member_b.MemberBTests.test_verified_claim_without_metric
+_can_still_be_selected) ... ok
+test_b_match_not_ready_cannot_become_verified (test_member_c.CClaimAndRiskTests.test_b_match_not_ready_cannot_become_ve
+rified) ... ok
+test_dynamic_integration_has_nine_steps_and_never_submits (test_member_c.CClaimAndRiskTests.test_dynamic_integration_ha
+s_nine_steps_and_never_submits) ... ok
+test_low_risk_mapping_still_does_not_submit (test_member_c.CClaimAndRiskTests.test_low_risk_mapping_still_does_not_subm
+it) ... ok
+test_missing_or_foreign_evidence_blocks (test_member_c.CClaimAndRiskTests.test_missing_or_foreign_evidence_blocks) ... 
+ok
+test_model_parsed_jd_flows_into_b_matcher (test_member_c.CClaimAndRiskTests.test_model_parsed_jd_flows_into_b_matcher) 
+... ok
+test_partial_evidence_link_cannot_verify_full_claim (test_member_c.CClaimAndRiskTests.test_partial_evidence_link_cannot
+_verify_full_claim) ... ok
+test_retry_trace_records_each_step_once (test_member_c.CClaimAndRiskTests.test_retry_trace_records_each_step_once) ... 
+ok
+test_rewording_requires_review (test_member_c.CClaimAndRiskTests.test_rewording_requires_review) ... ok
+test_risk_blocks_unsupported_and_confirms_missing_auth (test_member_c.CClaimAndRiskTests.test_risk_blocks_unsupported_a
+nd_confirms_missing_auth) ... ok
+test_role_scope_delivery_skill_and_metric_inflations_block (test_member_c.CClaimAndRiskTests.test_role_scope_delivery_s
+kill_and_metric_inflations_block) ... ok
+test_sensitive_mapped_field_confirms (test_member_c.CClaimAndRiskTests.test_sensitive_mapped_field_confirms) ... ok
+test_unchanged_claim_is_verified (test_member_c.CClaimAndRiskTests.test_unchanged_claim_is_verified) ... ok
+test_uncovered_jd_requirement_requires_review_without_inventing_claim (test_member_c.CClaimAndRiskTests.test_uncovered_
+jd_requirement_requires_review_without_inventing_claim) ... ok
+test_unparseable_input_stops_at_parser_and_audits_failure (test_member_c.CClaimAndRiskTests.test_unparseable_input_stop
+s_at_parser_and_audits_failure) ... ok
+test_unverified_requires_review_and_conflict_blocks (test_member_c.CClaimAndRiskTests.test_unverified_requires_review_a
+nd_conflict_blocks) ... ok
+test_fabricated_skill_retries_then_falls_back (test_member_c.CParserTests.test_fabricated_skill_retries_then_falls_back
+) ... ok
+test_inexact_model_quote_is_repaired_from_original_source (test_member_c.CParserTests.test_inexact_model_quote_is_repai
+red_from_original_source) ... ok
+test_injection_is_data_and_not_a_requirement (test_member_c.CParserTests.test_injection_is_data_and_not_a_requirement) 
+... ok
+test_invalid_schema_and_fabricated_company_fallback (test_member_c.CParserTests.test_invalid_schema_and_fabricated_comp
+any_fallback) ... ok
+test_model_cannot_promote_injected_instruction_to_requirement (test_member_c.CParserTests.test_model_cannot_promote_inj
+ected_instruction_to_requirement) ... ok
+test_model_split_terms_are_canonical_for_b_matcher (test_member_c.CParserTests.test_model_split_terms_are_canonical_for
+_b_matcher) ... ok
+test_model_timeout_and_bad_shape_fallback (test_member_c.CParserTests.test_model_timeout_and_bad_shape_fallback) ... ok
+test_unparseable_jd_stops (test_member_c.CParserTests.test_unparseable_jd_stops) ... ok
+test_valid_model_output_is_source_grounded_and_schema_valid (test_member_c.CParserTests.test_valid_model_output_is_sour
+ce_grounded_and_schema_valid) ... ok
+test_actual_text_pdf_extracts_contact_and_page_count (test_pdf_import.PdfImportTests.test_actual_text_pdf_extracts_cont
+act_and_page_count) ... ok
+test_chinese_awards_keep_source_and_do_not_invent_rank (test_pdf_import.PdfImportTests.test_chinese_awards_keep_source_
+and_do_not_invent_rank) ... ok
+test_corrupt_scanned_and_oversize_are_explicit_failures (test_pdf_import.PdfImportTests.test_corrupt_scanned_and_oversi
+ze_are_explicit_failures) ... ok
+
+----------------------------------------------------------------------
+Ran 93 tests in 0.842s
+
+OK
+

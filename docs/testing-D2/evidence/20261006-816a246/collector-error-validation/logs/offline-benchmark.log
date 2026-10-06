@@ -1,0 +1,8 @@
+Get-Command: E:\软件工程\applyguard-D-2\docs\testing-D2\scripts\Collect-TestEvidence.ps1:57
+Line |
+  57 |          $null = Get-Command -Name $Program -ErrorAction Stop
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The term '__missing_test_python__' is not recognized as a name of a cmdlet, function, script file, or executable
+     | program. Check the spelling of the name, or if a path was included, verify that the path is correct and try
+     | again.
+

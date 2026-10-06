@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { CareerVaultSeed } from '../api/types'
+import { getApiClient } from '../api/client'
 import { ClaimBadge, EmptyState } from '../components/States'
 import { useDemo } from '../context/DemoContext'
 import { zhText } from '../i18n'
@@ -16,9 +17,8 @@ export function ClaimVerificationPage() {
   const [vault, setVault] = useState<CareerVaultSeed | null>(null)
 
   useEffect(() => {
-    void fetch(`${import.meta.env.BASE_URL}data/career-vault.seed.json`)
-      .then((r) => r.json())
-      .then((d: CareerVaultSeed) => setVault(d))
+    void getApiClient().getCareerVault()
+      .then((result) => setVault(result.data ?? null))
       .catch(() => setVault(null))
   }, [])
 

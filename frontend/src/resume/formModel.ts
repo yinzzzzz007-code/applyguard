@@ -1,4 +1,4 @@
-import type { CareerVaultSeed, EditableResumeForm } from '../api/types'
+import type { CareerVaultSeed, EditableResumeForm, PdfResumePreview } from '../api/types'
 
 export function buildResumeFormFromVault(vault: CareerVaultSeed): EditableResumeForm {
   const internships = vault.experiences
@@ -64,12 +64,29 @@ export function buildResumeFormFromVault(vault: CareerVaultSeed): EditableResume
     ],
     internships,
     projects,
+    awards: vault.awards ?? [],
     extras: {
       skills,
       awards: '',
       summary: vault.profile.consent,
     },
     dirty: false,
+  }
+}
+
+export function buildResumeFormFromPdf(preview: PdfResumePreview, candidateId: string): EditableResumeForm {
+  return {
+    candidateId,
+    basic: { name: preview.basic.name ?? '', gender: '', birthday: '', ethnicity: '', politics: '',
+      phone: preview.basic.phone ?? '', email: preview.basic.email ?? '', idType: '', idNo: '',
+      city: preview.basic.city ?? '', hukou: '' },
+    intention: { projectType: '', expectRole: '', expectCity: '', availability: '' },
+    education: preview.education,
+    internships: preview.internships,
+    projects: preview.projects,
+    awards: preview.awards,
+    extras: { skills: '', awards: '', summary: '' },
+    dirty: true,
   }
 }
 

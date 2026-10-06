@@ -10,4 +10,5 @@ output/
 frontend/node_modules/
 frontend/dist/
 demo/c_cases_output.json
+data/local/
 

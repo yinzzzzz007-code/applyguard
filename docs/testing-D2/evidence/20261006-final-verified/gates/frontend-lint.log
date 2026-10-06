@@ -1,0 +1,15 @@
+﻿command: npm.cmd run lint
+cwd: E:\软件工程\applyguard-D-2\frontend
+started_utc: 2026-10-06T10:49:27.2636251Z
+ended_utc: 2026-10-06T10:49:27.9881187Z
+exit_code: 0
+
+
+> applyguard-frontend@0.0.0 lint
+> oxlint
+
+src/pages/EvidenceMatchPage.tsx:241:54: warning react(refs): Cannot access refs during render help: React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected
+src/context/DemoContext.tsx:312:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/pages/CareerVaultPage.tsx:373:16: warning react(refs): Cannot access refs during render help: React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected
+src/pages/CareerVaultPage.tsx:410:10: warning react(set-state-in-effect): Calling setState synchronously within an effect can trigger cascading renders help: Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system.
+

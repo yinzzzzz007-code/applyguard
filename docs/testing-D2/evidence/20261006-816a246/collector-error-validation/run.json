@@ -1,0 +1,16 @@
+{
+  "run_id": "20261006T004644522Z-816a246-8c34d3",
+  "commit": "816a24601385481b7261aba893c4c950503d7880",
+  "executor": "留档工具缺失解释器故障注入",
+  "started_at": "2026-10-06T00:46:44.5446991+00:00",
+  "project": "E:\\软件工程\\applyguard-D-2",
+  "os": "Microsoft Windows NT 10.0.26200.0",
+  "powershell": "7.6.5",
+  "timezone": "China Standard Time",
+  "python": "UNAVAILABLE: __missing_test_python__",
+  "node": "v24.13.0",
+  "npm": "11.6.2",
+  "mode": "OFFLINE",
+  "note": "No browser, PDF or real-model tests are implied by this command collector.",
+  "finished_at": "2026-10-06T00:46:49.8621994+00:00"
+}

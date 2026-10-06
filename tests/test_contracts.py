@@ -15,7 +15,7 @@ def load(directory: Path, name: str) -> dict:
 
 class ContractFixtureTests(unittest.TestCase):
     def test_all_contract_and_fixture_files_parse(self) -> None:
-        self.assertEqual(len(list(CONTRACTS.glob("*.schema.json"))), 9)
+        self.assertEqual(len(list(CONTRACTS.glob("*.schema.json"))), 10)
         self.assertEqual(len(list(DATA.glob("*.example.json"))), 8)
         for path in [*CONTRACTS.glob("*.json"), *DATA.glob("*.json")]:
             with self.subTest(path=path.name):

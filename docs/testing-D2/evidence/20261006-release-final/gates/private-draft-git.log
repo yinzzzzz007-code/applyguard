@@ -1,0 +1,3 @@
+check-ignore: data/local/cand_demo_001.json
+tracked data/local/: 
+result: True

@@ -1,0 +1,42 @@
+{
+  "events": [
+    {
+      "id": "E2E-01",
+      "result": "PASS",
+      "detail": "经历库可加载",
+      "at": "2026-10-06T10:02:56.175Z"
+    },
+    {
+      "id": "E2E-02",
+      "result": "PASS",
+      "detail": "保存成功后才显示已保存，后端可读回",
+      "at": "2026-10-06T10:02:56.279Z"
+    },
+    {
+      "id": "E2E-03",
+      "result": "PASS",
+      "detail": "编辑保存后旧种子证据不再出现在活动经历",
+      "at": "2026-10-06T10:02:56.674Z"
+    },
+    {
+      "id": "E2E-04",
+      "result": "PASS",
+      "detail": "刷新后从后端恢复草稿",
+      "at": "2026-10-06T10:02:57.435Z"
+    },
+    {
+      "id": "E2E-05",
+      "result": "PASS",
+      "detail": "无证据手填陈述不能确认通过",
+      "at": "2026-10-06T10:02:57.889Z"
+    },
+    {
+      "id": "E2E-FAIL",
+      "result": "FAIL",
+      "detail": "locator.waitFor: Error: strict mode violation: getByText('尚未运行工作流') resolved to 2 elements:\n    1) <p class=\"muted data-source\">数据来源：尚未运行工作流</p> aka getByText('数据来源：尚未运行工作流')\n    2) <h3>尚未运行工作流</h3> aka getByRole('heading', { name: '尚未运行工作流' })\n\nCall log:\n\u001b[2m  - waiting for getByText('尚未运行工作流') to be visible\u001b[22m\n\n    at main (E:\\软件工程\\applyguard-D-2\\docs\\testing-D2\\scripts\\Browser-Repair-Regression.cjs:92:37)",
+      "at": "2026-10-06T10:02:58.171Z"
+    }
+  ],
+  "pageErrors": [],
+  "browserVersion": "155.0.8059.27"
+}

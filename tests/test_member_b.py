@@ -161,7 +161,7 @@ class MemberBTests(unittest.TestCase):
         for field in response["ats_form_mapping"]["fields"]:
             self.assertTrue(set(field["source_claim_ids"]).issubset(selected_ids))
         self.assertEqual(response["execution_mode"], "DETERMINISTIC_FIXTURE")
-        self.assertIn("not dynamically parsed", response["mock_notice"])
+        self.assertIn("不会重新解析", response["mock_notice"])
 
     def test_insufficient_evidence_is_not_selected_as_high_confidence_claim(self) -> None:
         insufficient = copy.deepcopy(self.experiences[0])

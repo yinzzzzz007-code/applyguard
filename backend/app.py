@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import mimetypes
 import os
 import sys
 import uuid
@@ -10,17 +11,29 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs, unquote, urlsplit
 
 from backend.services.career_vault import CareerVault
+from backend.services.draft_store import DraftStore
 from backend.services.evidence_matcher import EvidenceMatcher
 from backend.services.resume_selector import ResumeSelector
 from backend.services.skill_router import SkillRouter, WorkflowStopped, validate_request_ids
 from backend.services.model_client import HttpModelClient
+from backend.services.pdf_extract import MAX_PDF_BYTES, extract_resume_pdf
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 FRONTEND_DIR = ROOT / "frontend"
 CAREER_VAULT_PATH = DATA_DIR / "career-vault.seed.json"
+
+
+def _draft_store() -> DraftStore:
+    return DraftStore(Path(os.getenv("APPLYGUARD_LOCAL_DATA_DIR", str(DATA_DIR / "local"))), CAREER_VAULT_PATH)
+
+
+def _active_vault_path(candidate_id: str) -> Path:
+    saved = _draft_store().load(candidate_id)
+    return _draft_store()._path(candidate_id) if saved else CAREER_VAULT_PATH
 
 
 def _load_dotenv(path: Path) -> None:
@@ -86,12 +99,12 @@ def build_mock_workflow(request: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("parse_mode must be fixture, dynamic or offline")
     if request.get("parse_mode") in ("dynamic", "offline") or (request.get("parse_mode") is None and os.getenv("APPLYGUARD_AI_API_KEY")):
         model = HttpModelClient() if request.get("parse_mode") != "offline" and os.getenv("APPLYGUARD_AI_API_KEY") else None
-        return SkillRouter(CAREER_VAULT_PATH, _load_json("form-mapping.example.json"), model=model).run({**request, "trace_id": trace_id})
+        return SkillRouter(_active_vault_path(candidate_id), _load_json("form-mapping.example.json"), model=model).run({**request, "trace_id": trace_id})
 
     application_id = request.get("application_id") or "app_demo_001"
     # JD Parser belongs to C. B deliberately uses this frozen parsed-JD fixture.
     parsed_jd = _load_json("parsed-jd.example.json")
-    career_vault = CareerVault.from_json(CAREER_VAULT_PATH)
+    career_vault = CareerVault.from_json(_active_vault_path(candidate_id))
     experiences = career_vault.list_experiences(candidate_id)
     evidence_match = EvidenceMatcher().match(parsed_jd, experiences)
     selection = ResumeSelector().select(evidence_match, experiences, application_id, max_claims=1)
@@ -120,7 +133,7 @@ def build_mock_workflow(request: dict[str, Any]) -> dict[str, Any]:
         "application_id": application_id,
         "candidate_id": candidate_id,
         "execution_mode": "DETERMINISTIC_FIXTURE",
-        "mock_notice": "Career Vault, Evidence Matcher, and Resume Selector use deterministic B baseline logic. JD Parser remains a fixed parsed-jd.example.json fixture; the submitted JD is not dynamically parsed.",
+        "mock_notice": "经历、证据匹配和简历选择使用确定性规则；此固定样例不会重新解析本次输入的岗位说明。",
         "workflow_status": "AWAITING_HUMAN_CONFIRMATION",
         "parsed_jd": parsed_jd,
         "evidence_match": evidence_match,
@@ -185,6 +198,14 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _send_file(self, path: Path) -> None:
+        body = path.read_bytes()
+        self.send_response(HTTPStatus.OK.value)
+        self.send_header("Content-Type", mimetypes.guess_type(path.name)[0] or "application/octet-stream")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_OPTIONS(self) -> None:  # noqa: N802
         self.send_response(HTTPStatus.NO_CONTENT.value)
         self._cors_headers()
@@ -192,7 +213,37 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802
         trace_id = f"trace_{uuid.uuid4().hex[:12]}"
-        if self.path == "/":
+        parsed = urlsplit(self.path)
+        path = parsed.path
+        if path in ("/api/v1/vault", "/api/v1/vault/draft"):
+            candidate_id = parse_qs(parsed.query).get("candidate_id", ["cand_demo_001"])[0]
+            try:
+                saved = _draft_store().load(candidate_id)
+                if path.endswith("/draft"):
+                    if not saved:
+                        self._send_json(HTTPStatus.NOT_FOUND, _error("DRAFT_NOT_FOUND", "没有已保存草稿", trace_id))
+                    else:
+                        self._send_json(HTTPStatus.OK, {"form": saved["form"], "version": saved["version"], "saved_at": saved["saved_at"]})
+                else:
+                    if saved:
+                        self._send_json(HTTPStatus.OK, saved["vault"])
+                    else:
+                        self._send_json(HTTPStatus.OK, _load_json("career-vault.seed.json"))
+            except ValueError as exc:
+                self._send_json(HTTPStatus.UNPROCESSABLE_ENTITY, _error("VALIDATION_ERROR", str(exc), trace_id))
+            except (OSError, json.JSONDecodeError):
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, _error("DRAFT_READ_FAILED", "无法读取本地草稿", trace_id))
+            return
+        if path.startswith(("/assets/", "/data/", "/prerecorded/")):
+            relative = unquote(path).lstrip("/")
+            base = FRONTEND_DIR / "dist" if (FRONTEND_DIR / "dist" / "index.html").exists() else FRONTEND_DIR / "public"
+            asset = (base / relative).resolve()
+            if asset.is_file() and asset.is_relative_to(base.resolve()):
+                self._send_file(asset)
+            else:
+                self._send_json(HTTPStatus.NOT_FOUND, _error("NOT_FOUND", "Route not found", trace_id))
+            return
+        if path == "/":
             # Prefer Vite production build when present; otherwise legacy static demo.
             dist_index = FRONTEND_DIR / "dist" / "index.html"
             legacy = FRONTEND_DIR / "legacy-demo.html"
@@ -203,11 +254,11 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             else:
                 self._send_html(FRONTEND_DIR / "index.html")
             return
-        if self.path == "/legacy-demo.html":
+        if path == "/legacy-demo.html":
             self._send_html(FRONTEND_DIR / "legacy-demo.html")
             return
-        if self.path.startswith("/assets/") and (FRONTEND_DIR / "dist" / self.path.lstrip("/")).exists():
-            asset = FRONTEND_DIR / "dist" / self.path.lstrip("/")
+        if path.startswith("/assets/") and (FRONTEND_DIR / "dist" / path.lstrip("/")).exists():
+            asset = FRONTEND_DIR / "dist" / path.lstrip("/")
             data = asset.read_bytes()
             ctype = "application/javascript" if asset.suffix == ".js" else "text/css" if asset.suffix == ".css" else "application/octet-stream"
             self.send_response(HTTPStatus.OK.value)
@@ -216,7 +267,7 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(data)
             return
-        if self.path == "/health":
+        if path == "/health":
             self._send_json(
                 HTTPStatus.OK,
                 {
@@ -227,11 +278,28 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
                 },
             )
             return
+        if path in ("/jd", "/match", "/resume", "/claims", "/ats", "/confirm", "/history") and (FRONTEND_DIR / "dist" / "index.html").exists():
+            self._send_html(FRONTEND_DIR / "dist" / "index.html")
+            return
         self._send_json(HTTPStatus.NOT_FOUND, _error("NOT_FOUND", "Route not found", trace_id))
 
     def do_POST(self) -> None:  # noqa: N802
         trace_id = f"trace_{uuid.uuid4().hex[:12]}"
-        if self.path != "/api/v1/workflow/mock":
+        if self.path == "/api/v1/vault/pdf-extract":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                if not 0 < length <= MAX_PDF_BYTES:
+                    self._send_json(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, _error("PDF_SIZE_INVALID", "PDF 文件大小须在 1 字节至 8 MB 之间", trace_id))
+                    return
+                if self.headers.get("Content-Type", "").split(";")[0].strip() != "application/pdf":
+                    raise ValueError("请上传 PDF 文件")
+                response = extract_resume_pdf(self.rfile.read(length))
+            except ValueError as exc:
+                self._send_json(HTTPStatus.UNPROCESSABLE_ENTITY, _error("PDF_INVALID", str(exc), trace_id))
+                return
+            self._send_json(HTTPStatus.OK, response)
+            return
+        if self.path not in ("/api/v1/workflow/mock", "/api/v1/vault/draft"):
             self._send_json(HTTPStatus.NOT_FOUND, _error("NOT_FOUND", "Route not found", trace_id))
             return
 
@@ -243,7 +311,13 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             request = json.loads(raw.decode("utf-8"))
             if not isinstance(request, dict):
                 raise ValueError("request body must be a JSON object")
-            response = build_mock_workflow(request)
+            if self.path == "/api/v1/vault/draft":
+                if not isinstance(request.get("form"), dict):
+                    raise ValueError("form must be an object")
+                saved = _draft_store().save(request.get("candidate_id", ""), request["form"])
+                response = {"form": saved["form"], "version": saved["version"], "saved_at": saved["saved_at"]}
+            else:
+                response = build_mock_workflow(request)
         except (UnicodeDecodeError, json.JSONDecodeError):
             self._send_json(HTTPStatus.BAD_REQUEST, _error("INVALID_JSON", "Request body is not valid JSON", trace_id))
             return
@@ -253,6 +327,10 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
                 HTTPStatus.INTERNAL_SERVER_ERROR if isinstance(exc, WorkflowStopped) and exc.code == "INTERNAL_ERROR" else HTTPStatus.UNPROCESSABLE_ENTITY,
                 _error(exc.code if isinstance(exc, WorkflowStopped) else "VALIDATION_ERROR", str(exc), exc.trace_id if isinstance(exc, WorkflowStopped) else trace_id, details),
             )
+            return
+        except OSError:
+            logging.exception("Draft write failed, trace_id=%s", trace_id)
+            self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, _error("DRAFT_WRITE_FAILED", "草稿写入失败，旧版本未更改", trace_id))
             return
         except Exception:
             logging.exception("Unexpected workflow error, trace_id=%s", trace_id)

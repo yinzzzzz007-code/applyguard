@@ -1,0 +1,819 @@
+{
+  "model": null,
+  "accepted_claim_precision": null,
+  "supported_claim_acceptance_rate": 0.0,
+  "false_block_rate": 1.0,
+  "review_rate": 0.0,
+  "claim_confusion_matrix": {
+    "VERIFIED": {
+      "VERIFIED": 0,
+      "NEEDS_REVIEW": 0,
+      "BLOCKED": 4
+    },
+    "NEEDS_REVIEW": {
+      "VERIFIED": 0,
+      "NEEDS_REVIEW": 0,
+      "BLOCKED": 8
+    },
+    "BLOCKED": {
+      "VERIFIED": 0,
+      "NEEDS_REVIEW": 0,
+      "BLOCKED": 28
+    }
+  },
+  "dataset": "Fictional, hand-labelled C cases; not a user study",
+  "mode": "RULE_FALLBACK_ONLY",
+  "model_parsed_jds": 0,
+  "model_span_repaired_jds": 0,
+  "fallback_jds": 10,
+  "safe_stopped_jds": 0,
+  "jd_count": 10,
+  "claim_count": 40,
+  "jd_precision": 0.973,
+  "jd_recall": 0.973,
+  "claim_state_accuracy": 0.7,
+  "grounded_claim_rate": 0.0,
+  "unsupported_claim_block_rate": 1.0,
+  "jd_cases": [
+    {
+      "id": "jd_benchmark_python_backend",
+      "mode": "RULE_FALLBACK",
+      "expected": [
+        "automated testing",
+        "git",
+        "http api",
+        "python"
+      ],
+      "actual": [
+        "automated testing",
+        "git",
+        "http api",
+        "python"
+      ],
+      "true_positive": 4,
+      "false_positive": 0,
+      "false_negative": 0,
+      "failure": null
+    },
+    {
+      "id": "jd_benchmark_fullstack",
+      "mode": "RULE_FALLBACK",
+      "expected": [
+        "node.js",
+        "postgresql",
+        "react",
+        "typescript"
+      ],
+      "actual": [
+        "node.js",
+        "postgresql",
+        "react",
+        "typescript"
+      ],
+      "true_positive": 4,
+      "false_positive": 0,
+      "false_negative": 0,
+      "failure": null
+    },
+    {
+      "id": "jd_benchmark_ml",
+      "mode": "RULE_FALLBACK",
+      "expected": [
+        "llm fine-tuning",
+        "lora",
+        "model evaluation",
+        "pytorch"
+      ],
+      "actual": [
+        "lora",
+        "model evaluation",
+        "python",
+        "pytorch"
+      ],
+      "true_positive": 3,
+      "false_positive": 1,
+      "false_negative": 1,
+      "failure": null
+    },
+    {
+      "id": "jd_benchmark_data",
+      "mode": "RULE_FALLBACK",
+      "expected": [
+        "data pipelines",
+        "data quality",
+        "etl",
+        "python",
+        "sql"
+      ],
+      "actual": [
+        "data pipelines",
+        "data quality",
+        "etl",
+        "python",
+        "sql"
+      ],
+      "true_positive": 5,
+      "false_positive": 0,
+      "false_negative": 0,
+      "failure": null
+    },
+    {
+      "id": "jd_benchmark_embedded_mismatch",
+      "mode": "RULE_FALLBACK",
+      "expected": [
+        "c++",
+        "firmware",
+        "microcontrollers",
+        "pcb design"
+      ],
+      "actual": [
+        "c++",
+        "firmware",
+        "microcontrollers",
+        "pcb design"
+      ],
+      "true_positive": 4,
+      "false_positive": 0,
+      "false_negative": 0,
+      "failure": null
+    },
+    {
+      "id": "c_api",
+      "mode": "RULE_FALLBACK",
+      "expected": [
+        "automated testing",
+        "git",
+        "http api",
+        "python"
+      ],
+      "actual": [
+        "automated testing",
+        "git",
+        "http api",
+        "python"
+      ],
+      "true_positive": 4,
+      "false_positive": 0,
+      "false_negative": 0,
+      "failure": null
+    },
+    {
+      "id": "c_ml",
+      "mode": "RULE_FALLBACK",
+      "expected": [
+        "llm",
+        "lora",
+        "pytorch"
+      ],
+      "actual": [
+        "llm",
+        "lora",
+        "pytorch"
+      ],
+      "true_positive": 3,
+      "false_positive": 0,
+      "false_negative": 0,
+      "failure": null
+    },
+    {
+      "id": "c_data",
+      "mode": "RULE_FALLBACK",
+      "expected": [
+        "etl",
+        "python",
+        "sql"
+      ],
+      "actual": [
+        "etl",
+        "python",
+        "sql"
+      ],
+      "true_positive": 3,
+      "false_positive": 0,
+      "false_negative": 0,
+      "failure": null
+    },
+    {
+      "id": "c_web",
+      "mode": "RULE_FALLBACK",
+      "expected": [
+        "node.js",
+        "postgresql",
+        "react",
+        "typescript"
+      ],
+      "actual": [
+        "node.js",
+        "postgresql",
+        "react",
+        "typescript"
+      ],
+      "true_positive": 4,
+      "false_positive": 0,
+      "false_negative": 0,
+      "failure": null
+    },
+    {
+      "id": "c_gap",
+      "mode": "RULE_FALLBACK",
+      "expected": [
+        "cuda",
+        "kubernetes"
+      ],
+      "actual": [
+        "cuda",
+        "kubernetes"
+      ],
+      "true_positive": 2,
+      "false_positive": 0,
+      "false_negative": 0,
+      "failure": null
+    }
+  ],
+  "claim_cases": [
+    {
+      "id": "python_api_verified",
+      "expected": "VERIFIED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "added",
+        "automated",
+        "routes",
+        "tests"
+      ]
+    },
+    {
+      "id": "python_api_review_contributed",
+      "expected": "NEEDS_REVIEW",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "added",
+        "automated",
+        "routes",
+        "tests"
+      ]
+    },
+    {
+      "id": "python_api_review_helped",
+      "expected": "NEEDS_REVIEW",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "added",
+        "automated",
+        "routes",
+        "tests"
+      ]
+    },
+    {
+      "id": "python_api_owner",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Owned",
+        "entire",
+        "added",
+        "automated",
+        "owned",
+        "project",
+        "routes",
+        "tests"
+      ]
+    },
+    {
+      "id": "python_api_production",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Deployed",
+        "production",
+        "added",
+        "automated",
+        "deployed",
+        "routes",
+        "tests"
+      ]
+    },
+    {
+      "id": "python_api_cuda",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "CUDA",
+        "added",
+        "automated",
+        "cuda",
+        "routes",
+        "tests",
+        "used"
+      ]
+    },
+    {
+      "id": "python_api_kubernetes",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Kubernetes",
+        "added",
+        "automated",
+        "kubernetes",
+        "routes",
+        "tests",
+        "used"
+      ]
+    },
+    {
+      "id": "python_api_docker",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Docker",
+        "added",
+        "automated",
+        "docker",
+        "routes",
+        "tests",
+        "used"
+      ]
+    },
+    {
+      "id": "python_api_metric",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "75%",
+        "Delivered",
+        "75",
+        "added",
+        "automated",
+        "delivered",
+        "improvement",
+        "routes",
+        "tests"
+      ]
+    },
+    {
+      "id": "python_api_date",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "2027-01",
+        "Completed",
+        "01",
+        "2027",
+        "added",
+        "automated",
+        "completed",
+        "routes",
+        "tests"
+      ]
+    },
+    {
+      "id": "fullstack_portal_verified",
+      "expected": "VERIFIED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "api",
+        "backed",
+        "portal"
+      ]
+    },
+    {
+      "id": "fullstack_portal_review_contributed",
+      "expected": "NEEDS_REVIEW",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "api",
+        "backed",
+        "portal"
+      ]
+    },
+    {
+      "id": "fullstack_portal_review_helped",
+      "expected": "NEEDS_REVIEW",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "api",
+        "backed",
+        "portal"
+      ]
+    },
+    {
+      "id": "fullstack_portal_owner",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Owned",
+        "entire",
+        "api",
+        "backed",
+        "owned",
+        "portal",
+        "project"
+      ]
+    },
+    {
+      "id": "fullstack_portal_production",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Deployed",
+        "production",
+        "api",
+        "backed",
+        "deployed",
+        "portal"
+      ]
+    },
+    {
+      "id": "fullstack_portal_cuda",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "CUDA",
+        "api",
+        "backed",
+        "cuda",
+        "portal",
+        "used"
+      ]
+    },
+    {
+      "id": "fullstack_portal_kubernetes",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Kubernetes",
+        "api",
+        "backed",
+        "kubernetes",
+        "portal",
+        "used"
+      ]
+    },
+    {
+      "id": "fullstack_portal_docker",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Docker",
+        "api",
+        "backed",
+        "docker",
+        "portal",
+        "used"
+      ]
+    },
+    {
+      "id": "fullstack_portal_metric",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Delivered",
+        "75%",
+        "75",
+        "api",
+        "backed",
+        "delivered",
+        "improvement",
+        "portal"
+      ]
+    },
+    {
+      "id": "fullstack_portal_date",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "2027-01",
+        "Completed",
+        "01",
+        "2027",
+        "api",
+        "backed",
+        "completed",
+        "portal"
+      ]
+    },
+    {
+      "id": "ml_lora_evaluation_verified",
+      "expected": "VERIFIED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "documented",
+        "evaluation",
+        "fine",
+        "language",
+        "model",
+        "prototype",
+        "results",
+        "tuned"
+      ]
+    },
+    {
+      "id": "ml_lora_evaluation_review_contributed",
+      "expected": "NEEDS_REVIEW",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "documented",
+        "evaluation",
+        "fine",
+        "language",
+        "model",
+        "prototype",
+        "results",
+        "tuned"
+      ]
+    },
+    {
+      "id": "ml_lora_evaluation_review_helped",
+      "expected": "NEEDS_REVIEW",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "documented",
+        "evaluation",
+        "fine",
+        "language",
+        "model",
+        "prototype",
+        "results",
+        "tuned"
+      ]
+    },
+    {
+      "id": "ml_lora_evaluation_owner",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Owned",
+        "entire",
+        "documented",
+        "evaluation",
+        "fine",
+        "language",
+        "model",
+        "owned",
+        "project",
+        "prototype",
+        "results",
+        "tuned"
+      ]
+    },
+    {
+      "id": "ml_lora_evaluation_production",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Deployed",
+        "production",
+        "deployed",
+        "documented",
+        "evaluation",
+        "fine",
+        "language",
+        "model",
+        "prototype",
+        "results",
+        "tuned"
+      ]
+    },
+    {
+      "id": "ml_lora_evaluation_cuda",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "CUDA",
+        "cuda",
+        "documented",
+        "evaluation",
+        "fine",
+        "language",
+        "model",
+        "prototype",
+        "results",
+        "tuned",
+        "used"
+      ]
+    },
+    {
+      "id": "ml_lora_evaluation_kubernetes",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Kubernetes",
+        "documented",
+        "evaluation",
+        "fine",
+        "kubernetes",
+        "language",
+        "model",
+        "prototype",
+        "results",
+        "tuned",
+        "used"
+      ]
+    },
+    {
+      "id": "ml_lora_evaluation_docker",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Docker",
+        "docker",
+        "documented",
+        "evaluation",
+        "fine",
+        "language",
+        "model",
+        "prototype",
+        "results",
+        "tuned",
+        "used"
+      ]
+    },
+    {
+      "id": "ml_lora_evaluation_metric",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Delivered",
+        "75%",
+        "75",
+        "delivered",
+        "documented",
+        "evaluation",
+        "fine",
+        "improvement",
+        "language",
+        "model",
+        "prototype",
+        "results",
+        "tuned"
+      ]
+    },
+    {
+      "id": "ml_lora_evaluation_date",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "2027-01",
+        "Completed",
+        "01",
+        "2027",
+        "completed",
+        "documented",
+        "evaluation",
+        "fine",
+        "language",
+        "model",
+        "prototype",
+        "results",
+        "tuned"
+      ]
+    },
+    {
+      "id": "data_pipeline_verified",
+      "expected": "VERIFIED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "checks",
+        "data",
+        "documented",
+        "pipeline",
+        "quality"
+      ]
+    },
+    {
+      "id": "data_pipeline_review_contributed",
+      "expected": "NEEDS_REVIEW",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "checks",
+        "data",
+        "documented",
+        "pipeline",
+        "quality"
+      ]
+    },
+    {
+      "id": "data_pipeline_review_helped",
+      "expected": "NEEDS_REVIEW",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "checks",
+        "data",
+        "documented",
+        "pipeline",
+        "quality"
+      ]
+    },
+    {
+      "id": "data_pipeline_owner",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Owned",
+        "entire",
+        "checks",
+        "data",
+        "documented",
+        "owned",
+        "pipeline",
+        "project",
+        "quality"
+      ]
+    },
+    {
+      "id": "data_pipeline_production",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Deployed",
+        "production",
+        "checks",
+        "data",
+        "deployed",
+        "documented",
+        "pipeline",
+        "quality"
+      ]
+    },
+    {
+      "id": "data_pipeline_cuda",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "CUDA",
+        "checks",
+        "cuda",
+        "data",
+        "documented",
+        "pipeline",
+        "quality",
+        "used"
+      ]
+    },
+    {
+      "id": "data_pipeline_kubernetes",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Kubernetes",
+        "checks",
+        "data",
+        "documented",
+        "kubernetes",
+        "pipeline",
+        "quality",
+        "used"
+      ]
+    },
+    {
+      "id": "data_pipeline_docker",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Docker",
+        "checks",
+        "data",
+        "docker",
+        "documented",
+        "pipeline",
+        "quality",
+        "used"
+      ]
+    },
+    {
+      "id": "data_pipeline_metric",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "Delivered",
+        "75%",
+        "75",
+        "checks",
+        "data",
+        "delivered",
+        "documented",
+        "improvement",
+        "pipeline",
+        "quality"
+      ]
+    },
+    {
+      "id": "data_pipeline_date",
+      "expected": "BLOCKED",
+      "actual": "BLOCKED",
+      "unsupported_fragments": [
+        "2027-01",
+        "Completed",
+        "01",
+        "2027",
+        "checks",
+        "completed",
+        "data",
+        "documented",
+        "pipeline",
+        "quality"
+      ]
+    }
+  ]
+}

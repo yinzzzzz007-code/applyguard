@@ -40,3 +40,35 @@ test('blocked field cannot be copied, and confirmation is required for a normal 
     [normalField.field_id]: { field_id: normalField.field_id, confirmed: true, acknowledgedBlocked: false },
   }, normalField), true)
 })
+
+test('manual claim without evidence cannot be copied after confirmation', () => {
+  const manual = {
+    ...normal,
+    resume_claims: [...normal.resume_claims, {
+      claim_id: 'claim_manual_test', text: '虚构一等奖', evidence_ids: [],
+      requirement_ids: [], evidence_support_score: 0, status: 'DRAFT',
+    }],
+    claim_verification: [...normal.claim_verification, {
+      claim_id: 'claim_manual_test', state: 'NEEDS_REVIEW', grounded: false,
+      support_score: 0, explanation: '无来源', unsupported_fragments: [],
+    }],
+  }
+  assert.equal(copyableClaim(manual, {
+    claim_manual_test: { claim_id: 'claim_manual_test', decision: 'confirm', freshness: 'as_returned' },
+  }, 'claim_manual_test'), false)
+})
+
+test('linked review needs explicit confirmation and no unsupported fragment', () => {
+  const original = normal.resume_claims[0]
+  const reviewed = {
+    ...normal,
+    claim_verification: normal.claim_verification.map(item => item.claim_id === original.claim_id
+      ? { ...item, state: 'NEEDS_REVIEW', grounded: false, unsupported_fragments: [] }
+      : item),
+  }
+  const confirmed = { [original.claim_id]: { claim_id: original.claim_id, decision: 'confirm', freshness: 'as_returned' } }
+  assert.equal(copyableClaim(reviewed, {}, original.claim_id), false)
+  assert.equal(copyableClaim(reviewed, confirmed, original.claim_id), true)
+  reviewed.claim_verification.find(item => item.claim_id === original.claim_id).unsupported_fragments = ['未证实内容']
+  assert.equal(copyableClaim(reviewed, confirmed, original.claim_id), false)
+})

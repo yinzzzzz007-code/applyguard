@@ -2,6 +2,8 @@ import type {
   ApiResult,
   CareerVaultSeed,
   DemoScenario,
+  EditableResumeForm,
+  PdfResumePreview,
   WorkflowResponse,
 } from './types'
 
@@ -60,6 +62,9 @@ export type WorkflowParseMode = 'offline' | 'dynamic'
 export interface ApiClient {
   getHealth(): Promise<ApiResult<{ status: string; service: string; version: string }>>
   getCareerVault(): Promise<ApiResult<CareerVaultSeed>>
+  getResumeDraft(): Promise<ApiResult<{ form: EditableResumeForm; version: string; saved_at: string }>>
+  saveResumeDraft(form: EditableResumeForm): Promise<ApiResult<{ form: EditableResumeForm; version: string; saved_at: string }>>
+  extractResumePdf(file: File): Promise<ApiResult<PdfResumePreview>>
   runWorkflow(
     jdText: string,
     options?: { parseMode?: WorkflowParseMode },
@@ -80,13 +85,12 @@ export class ApplyGuardApiClient implements ApiClient {
 
   async getCareerVault(): Promise<ApiResult<CareerVaultSeed>> {
     try {
-      // Same fictional seed as backend data/career-vault.seed.json (no vault HTTP API yet)
-      const res = await fetch(`${import.meta.env.BASE_URL}data/career-vault.seed.json`)
+      const res = await fetch(`${apiBase()}/api/v1/vault?candidate_id=${DEFAULT_CANDIDATE}`)
       if (!res.ok) {
         return {
           error: {
             code: 'VAULT_LOAD_FAILED',
-            message: '无法加载经历库种子数据。',
+            message: '无法加载当前经历库。',
             retryable: true,
           },
         }
@@ -98,10 +102,53 @@ export class ApplyGuardApiClient implements ApiClient {
       return {
         error: {
           code: 'VAULT_LOAD_FAILED',
-          message: '经历库种子加载失败。',
+          message: '经历库加载失败，请检查后端。',
           retryable: true,
         },
       }
+    }
+  }
+
+  async getResumeDraft(): Promise<ApiResult<{ form: EditableResumeForm; version: string; saved_at: string }>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/vault/draft?candidate_id=${DEFAULT_CANDIDATE}`)
+      if (res.status === 404) return { empty: true }
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: body as { form: EditableResumeForm; version: string; saved_at: string } }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async saveResumeDraft(form: EditableResumeForm): Promise<ApiResult<{ form: EditableResumeForm; version: string; saved_at: string }>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/vault/draft`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidate_id: form.candidateId, form }),
+      })
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: body as { form: EditableResumeForm; version: string; saved_at: string } }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async extractResumePdf(file: File): Promise<ApiResult<PdfResumePreview>> {
+    if (file.size < 1 || file.size > 8 * 1024 * 1024 || !file.name.toLowerCase().endsWith('.pdf')) {
+      return { error: { code: 'PDF_INVALID', message: '请选择 1 字节至 8 MB 的 PDF 文件。', retryable: false } }
+    }
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/vault/pdf-extract`, {
+        method: 'POST', headers: { 'Content-Type': 'application/pdf' }, body: file,
+      })
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: body as PdfResumePreview }
+    } catch {
+      return { error: toApiError(null, 0) }
     }
   }
 

@@ -19,7 +19,8 @@ _TERMS = ("Python", "PyTorch", "LoRA", "React", "TypeScript", "Node.js", "Postgr
           "distributed training", "C++", "PCB design", "firmware", "microcontrollers",
           "Benchmark", "LLM Harness", "Eval Workflow", "Checkpoint", "vLLM", "AI Infra",
           "预训练", "多模态", "模型评测", "评测数据", "数据清洗", "质量检查", "数据集",
-          "模型能力分析", "评测框架", "推理引擎", "并发", "网络编程", "后端开发")
+          "模型能力分析", "评测框架", "推理引擎", "并发", "网络编程", "后端开发",
+          "接口服务", "自动化测试", "版本协作", "数据处理")
 _TERM_ALIASES = {"HTTP API": ("HTTP API", "HTTP APIs", "Python APIs"),
                  "automated testing": ("automated testing", "automated tests", "unit tests"),
                  "data pipelines": ("data pipeline", "data pipelines"),
@@ -268,12 +269,13 @@ class JDParser:
         section_preferred = False
         section_category = None
         first_line = source.splitlines()[0].strip()
+        first_span = _spans(source)[0]
         seen_text: set[str] = set()
         candidate_count = 0
         for line in _spans(source):
             if _injection(line) or _NEGATIVE.search(line):
                 continue
-            if line == first_line and re.search(
+            if line == first_span and re.search(
                 r"(?:实习生|工程师|研究员|分析师|设计师|产品经理|开发|研发)(?:实习)?$", line
             ):
                 continue
@@ -299,7 +301,7 @@ class JDParser:
                 section_preferred, section_category = False, "RESPONSIBILITY"
                 continue
             line_preferred = section_preferred or bool(_PREFERRED.search(line))
-            for fragment in re.split(r",|\band\b", line, flags=re.I):
+            for fragment in re.split(r"[,、，]|\band\b", line, flags=re.I):
                 fragment = fragment.strip()
                 terms = [term for term in _TERMS if any(
                     re.search(r"(?<![a-z0-9])" + re.escape(alias) + r"(?![a-z0-9])", fragment, re.I)
@@ -323,10 +325,10 @@ class JDParser:
             r"^(.{3,60}?(?:Engineer|Developer|Intern|Analyst|Scientist))(?=\.|\s+(?:requires|needs|seeks)\b|$)",
             first_line, re.I)
         title = title_match.group(1) if title_match else "UNKNOWN"
-        if title == "UNKNOWN" and len(first_line) <= 60 and re.search(
-            r"(?:实习生|工程师|研究员|分析师|设计师|产品经理|开发|研发)(?:实习)?$", first_line
+        if title == "UNKNOWN" and len(first_span) <= 60 and re.search(
+            r"(?:实习生|工程师|研究员|分析师|设计师|产品经理|开发|研发)(?:实习)?$", first_span
         ):
-            title = re.sub(r"(?<=实习生)实习$", "", first_line)
+            title = re.sub(r"(?<=实习生)实习$", "", first_span)
         result = {"jd_id": "jd_" + hashlib.sha256(source.encode()).hexdigest()[:12],
                   "title": title, "company": "UNKNOWN", "source_text": source,
                   "requirements": requirements}

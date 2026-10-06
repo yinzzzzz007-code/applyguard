@@ -1,0 +1,6 @@
+backend-unittest : ERROR (exit=)
+frontend-build : PASS (exit=0)
+frontend-lint : PASS (exit=0)
+frontend-smoke : PASS (exit=0)
+offline-benchmark : ERROR (exit=)
+Evidence: E:\软件工程\applyguard-D-2\output\test-runs\20261006T004644522Z-816a246-8c34d3
