@@ -1,0 +1,10 @@
+{
+  "notice": "PRE-RECORDED offline outputs from python -m demo.run_c_cases. Not live API results.",
+  "generated_by": "demo.run_c_cases",
+  "candidate_id": "cand_demo_001",
+  "cases": [
+    "normal",
+    "unsupported_block",
+    "timeout_fallback"
+  ]
+}

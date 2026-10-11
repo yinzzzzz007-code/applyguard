@@ -1,8 +1,8 @@
-# A-to-B handoff
+# Project handoff — C implementation ready for review
 
 ## Version
 
-`proposal-v0.1-foundation`
+C delivery branch based on B `64cae15`; release label: `proposal-v0.3-ai-core`. A foundation history: `proposal-v0.1-foundation`
 
 ## What is frozen
 
@@ -18,22 +18,18 @@ Any breaking change requires a short architecture decision note and updates to c
 
 ## What works now
 
-- A dependency-free local HTTP service.
+- A standard-library HTTP service; C contract validation additionally requires `jsonschema`.
 - A browser demo page.
 - A deterministic mock workflow that returns evidence matches, selected claims, verification results, a risk result, a human-confirmation gate, and an audit record.
 - Health, happy-path, invalid-request, and not-found tests.
 - Frozen JSON Schemas and fixed seed data.
 - Proposal scope, complete user journey, target architecture, internal workflow, sequence, module responsibilities, and presentation skeleton.
 
-## B's next work package
+## B implementation status
 
-1. Replace file-backed fictional data with the simplified Career Evidence Graph and Career Vault.
-2. Keep `experience.schema.json` compatible while adding storage and retrieval.
-3. Replace fixed evidence matches with a baseline scoring implementation.
-4. Add unit tests for matching scores, evidence strength, conflicts, and insufficient evidence.
-5. Prepare five fixed JDs and the matching benchmark dataset.
-6. Run the formative user study defined in the team plan and provide the traceability matrix.
-7. Implement the constrained-selection baseline and record why each claim was selected or removed.
+B completed the deterministic Career Vault, Evidence Matcher, constrained Resume Selector, five-case fictional Benchmark, and unit tests without breaking the frozen endpoint, step trace, confirmation gate, or audit record. `B_TO_C_HANDOFF.md` records the service interfaces, compatibility extensions, and C integration checklist.
+
+The formative user-study package is ready in `docs/user-study/`, but no participants, results, statistics, quotes, or conclusions have been fabricated. Collection and the resulting traceability matrix remain a real-world team activity.
 
 ## Run and verify before handoff
 
@@ -49,12 +45,18 @@ Then verify:
 - Every resume claim has at least one `evidence_id`.
 - The risk result identifies unsupported claims and requests confirmation when needed.
 
-## Known limitations
+## C implementation status
 
-- JD parsing and evidence matching are deterministic proposal mocks.
-- Data is fictional and stored as JSON.
-- The ATS page is simulated rather than connected to a real job portal.
-- No application is submitted automatically.
-- The AI provider boundary exists only in the architecture and interface plan.
-- The current standard-library server is disposable scaffolding. A must record the Resume Matcher compatibility decision before the team adopts a final framework.
-- The final project still requires the Skill Router, semantic validator, retry/fallback behavior, Career Evidence Graph storage, and one limited ATS target.
+JD Parser, model transport, prompt, schema/source checks, bounded retry, fallback/safe stop, Claim Validator, Risk Engine and nine-step Router are implemented. Three offline demos and the 10-JD/40-claim benchmark are runnable. See `docs/C-requirements-audit.md` for the itemized audit, test evidence, and known limits; `C_TO_D_HANDOFF.md` specifies D integration.
+
+Install `requirements.txt` before running the commands above. Use `parse_mode: "offline"` to exercise C without spending API credits; the no-key/no-mode request retains the old A/B fixture for compatibility. The current low-cost demo defaults to `gpt-4o-mini` and 2048 maximum output tokens; both can be changed through `APPLYGUARD_AI_MODEL` and `APPLYGUARD_AI_MAX_TOKENS` after checking provider compatibility and cost.
+
+## Known limitations and ownership
+
+- B Vault and evidence are fictional read-only JSON, not external truth verification.
+- D ATS mapping remains a simulator fixture; final review UI, actual fill, and task-based usability study belong to D.
+- A/B application version and audit persistence remain future integration; C returns an in-memory audit record.
+- Rule fallback is conservative and dictionary-limited; semantic checks do not cover every natural-language paraphrase or mixed negation. Ambiguous rewording requires review.
+- Real formative-study failure cases await B's collection, then A requirement confirmation and C regression additions.
+- The server remains proposal scaffolding. No application is automatically submitted.
+- C is prepared on a separate branch from main/B; A can review and merge it for final integration after GitHub publication.

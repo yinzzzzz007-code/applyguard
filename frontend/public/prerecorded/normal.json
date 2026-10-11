@@ -1,0 +1,347 @@
+{
+  "trace_id": "trace_be168ae9682f",
+  "application_id": "app_demo_001",
+  "candidate_id": "cand_demo_001",
+  "execution_mode": "DETERMINISTIC_FALLBACK",
+  "mock_notice": "C results are computed; ATS mapping is a simulator fixture and audit storage is in-memory.",
+  "workflow_status": "AWAITING_HUMAN_CONFIRMATION",
+  "parsed_jd": {
+    "jd_id": "jd_50e3772dfd0a",
+    "title": "Backend Developer",
+    "company": "UNKNOWN",
+    "source_text": "Backend Developer requires Python and automated tests.",
+    "requirements": [
+      {
+        "requirement_id": "req_001",
+        "type": "HARD",
+        "category": "SKILL",
+        "text": "Backend Developer requires Python",
+        "normalized_terms": [
+          "Python"
+        ],
+        "evidence_text": "Backend Developer requires Python",
+        "confidence": 0.45
+      },
+      {
+        "requirement_id": "req_002",
+        "type": "HARD",
+        "category": "SKILL",
+        "text": "automated tests.",
+        "normalized_terms": [
+          "automated testing"
+        ],
+        "evidence_text": "automated tests.",
+        "confidence": 0.45
+      }
+    ]
+  },
+  "evidence_match": {
+    "match_id": "match_50e3772dfd0a_demo_001",
+    "jd_id": "jd_50e3772dfd0a",
+    "candidate_id": "cand_demo_001",
+    "matches": [
+      {
+        "requirement_id": "req_001",
+        "experience_id": "exp_api_course_project",
+        "claim_ids": [
+          "claim_python_api"
+        ],
+        "relevance_score": 0.991,
+        "evidence_strength": "STRONG",
+        "confidence": 0.97,
+        "rationale": "Skill overlap: python. Responsibility overlap: python. Linked evidence: ev_repo_api, ev_test_report.",
+        "conflicts": [],
+        "evidence_ids": [
+          "ev_repo_api",
+          "ev_test_report"
+        ],
+        "missing_evidence": [],
+        "ready_for_selection": true,
+        "score_breakdown": {
+          "keyword_overlap": 1.0,
+          "responsibility_overlap": 1.0,
+          "verification_score": 1.0,
+          "confidence_score": 0.94,
+          "metric_bonus": 0.1,
+          "conflict_penalty": 0.0,
+          "missing_evidence_penalty": 0.0
+        }
+      },
+      {
+        "requirement_id": "req_001",
+        "experience_id": "exp_data_pipeline",
+        "claim_ids": [
+          "claim_data_pipeline"
+        ],
+        "relevance_score": 0.985,
+        "evidence_strength": "STRONG",
+        "confidence": 0.95,
+        "rationale": "Skill overlap: python. Responsibility overlap: python. Linked evidence: ev_pipeline_repo, ev_pipeline_report.",
+        "conflicts": [],
+        "evidence_ids": [
+          "ev_pipeline_repo",
+          "ev_pipeline_report"
+        ],
+        "missing_evidence": [],
+        "ready_for_selection": true,
+        "score_breakdown": {
+          "keyword_overlap": 1.0,
+          "responsibility_overlap": 1.0,
+          "verification_score": 1.0,
+          "confidence_score": 0.9,
+          "metric_bonus": 0.1,
+          "conflict_penalty": 0.0,
+          "missing_evidence_penalty": 0.0
+        }
+      },
+      {
+        "requirement_id": "req_002",
+        "experience_id": "exp_api_course_project",
+        "claim_ids": [
+          "claim_python_api"
+        ],
+        "relevance_score": 0.991,
+        "evidence_strength": "STRONG",
+        "confidence": 0.97,
+        "rationale": "Skill overlap: automated testing. Responsibility overlap: automated testing. Linked evidence: ev_repo_api, ev_test_report.",
+        "conflicts": [],
+        "evidence_ids": [
+          "ev_repo_api",
+          "ev_test_report"
+        ],
+        "missing_evidence": [],
+        "ready_for_selection": true,
+        "score_breakdown": {
+          "keyword_overlap": 1.0,
+          "responsibility_overlap": 1.0,
+          "verification_score": 1.0,
+          "confidence_score": 0.94,
+          "metric_bonus": 0.1,
+          "conflict_penalty": 0.0,
+          "missing_evidence_penalty": 0.0
+        }
+      }
+    ],
+    "uncovered_requirements": []
+  },
+  "resume_claims": [
+    {
+      "claim_id": "claim_python_api",
+      "application_id": "app_demo_001",
+      "text": "Built a Python HTTP API and added automated tests for core routes.",
+      "evidence_ids": [
+        "ev_repo_api",
+        "ev_test_report"
+      ],
+      "requirement_ids": [
+        "req_001",
+        "req_002"
+      ],
+      "evidence_support_score": 0.95,
+      "selection_reason": "Selected for requirements req_001, req_002: high relevance and verified evidence (ev_repo_api, ev_test_report). A documented metric contributed to ranking.",
+      "removed_alternatives": [
+        {
+          "claim_id": "claim_fullstack_portal",
+          "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+        },
+        {
+          "claim_id": "claim_ml_lora_evaluation",
+          "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+        }
+      ],
+      "status": "SELECTED"
+    },
+    {
+      "claim_id": "claim_data_pipeline",
+      "application_id": "app_demo_001",
+      "text": "Built a Python and SQL ETL pipeline with documented data-quality checks.",
+      "evidence_ids": [
+        "ev_pipeline_repo",
+        "ev_pipeline_report"
+      ],
+      "requirement_ids": [
+        "req_001"
+      ],
+      "evidence_support_score": 0.92,
+      "selection_reason": "Selected for requirements req_001: high relevance and verified evidence (ev_pipeline_repo, ev_pipeline_report). A documented metric contributed to ranking.",
+      "removed_alternatives": [
+        {
+          "claim_id": "claim_fullstack_portal",
+          "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+        },
+        {
+          "claim_id": "claim_ml_lora_evaluation",
+          "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+        }
+      ],
+      "status": "SELECTED"
+    }
+  ],
+  "resume_selection": {
+    "mode": "DETERMINISTIC_EVIDENCE_CONSTRAINED",
+    "removed_claims": [
+      {
+        "claim_id": "claim_fullstack_portal",
+        "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+      },
+      {
+        "claim_id": "claim_ml_lora_evaluation",
+        "reason": "LOW_RELEVANCE: no JD requirement had sufficient term overlap."
+      }
+    ],
+    "max_claims": 3,
+    "max_characters": 420
+  },
+  "claim_verification": [
+    {
+      "claim_id": "claim_python_api",
+      "state": "VERIFIED",
+      "grounded": true,
+      "support_score": 0.94,
+      "unsupported_fragments": [],
+      "explanation": "Candidate-owned verified evidence supports the unchanged Vault claim."
+    },
+    {
+      "claim_id": "claim_data_pipeline",
+      "state": "VERIFIED",
+      "grounded": true,
+      "support_score": 0.9,
+      "unsupported_fragments": [],
+      "explanation": "Candidate-owned verified evidence supports the unchanged Vault claim."
+    }
+  ],
+  "ats_form_mapping": {
+    "application_id": "app_demo_001",
+    "target": "ATS_SIMULATOR",
+    "fields": [
+      {
+        "field_id": "field_candidate_summary",
+        "label": "Candidate summary",
+        "value": "Built a Python HTTP API and added automated tests for core routes.",
+        "source_claim_ids": [
+          "claim_python_api"
+        ],
+        "action": "SAFE_TO_FILL"
+      }
+    ],
+    "unmapped_fields": [
+      "work_authorization"
+    ],
+    "consistency_state": "NEEDS_REVIEW"
+  },
+  "risk_result": {
+    "application_id": "app_demo_001",
+    "risk_level": "HIGH",
+    "action": "REQUIRES_CONFIRMATION",
+    "risks": [
+      {
+        "risk_id": "risk_001",
+        "type": "MISSING_FIELD",
+        "severity": "WARNING",
+        "message": "ATS field work_authorization is missing; its value must not be guessed.",
+        "related_claim_ids": [],
+        "mitigation": "Ask the user to supply and confirm the value.",
+        "recommended_action": "CONFIRM"
+      },
+      {
+        "risk_id": "risk_002",
+        "type": "PRIVACY",
+        "severity": "WARNING",
+        "message": "Missing sensitive field work_authorization needs the user's own answer.",
+        "related_claim_ids": [],
+        "mitigation": "Do not infer sensitive values.",
+        "recommended_action": "CONFIRM"
+      }
+    ],
+    "requires_human_confirmation": true
+  },
+  "field_controls": [
+    {
+      "field_id": "field_candidate_summary",
+      "level": "L1",
+      "action": "SAFE_TO_FILL",
+      "show_sources": true,
+      "source_claim_ids": [
+        "claim_python_api"
+      ]
+    },
+    {
+      "field_id": "work_authorization",
+      "level": "L3",
+      "action": "REQUIRES_CONFIRMATION",
+      "show_sources": false,
+      "source_claim_ids": []
+    }
+  ],
+  "human_confirmation": {
+    "required": true,
+    "reason": "User must review the application before submission.",
+    "allowed_actions": [
+      "CONFIRM",
+      "EDIT",
+      "CANCEL"
+    ]
+  },
+  "audit_record": {
+    "audit_id": "audit_a7a1bc58e5e8",
+    "application_id": "app_demo_001",
+    "version": 1,
+    "created_at": "2026-10-04T04:33:10.249062Z",
+    "event": "APPLICATION_DRAFT_PREPARED",
+    "actor": "applyguard.mock-workflow",
+    "trace_id": "trace_be168ae9682f",
+    "decision": "PENDING"
+  },
+  "step_trace": [
+    {
+      "step": "Career Vault",
+      "status": "COMPLETED"
+    },
+    {
+      "step": "JD Parser",
+      "status": "COMPLETED",
+      "mode": "RULE_FALLBACK"
+    },
+    {
+      "step": "Evidence Matcher",
+      "status": "COMPLETED"
+    },
+    {
+      "step": "Resume Selector",
+      "status": "COMPLETED"
+    },
+    {
+      "step": "Claim Validator",
+      "status": "COMPLETED"
+    },
+    {
+      "step": "ATS Form Mapper",
+      "status": "COMPLETED",
+      "mode": "FIXTURE"
+    },
+    {
+      "step": "Risk Check",
+      "status": "COMPLETED"
+    },
+    {
+      "step": "Human Confirmation",
+      "status": "PENDING"
+    },
+    {
+      "step": "Audit Record",
+      "status": "CREATED"
+    }
+  ],
+  "component_modes": {
+    "career_vault": "DETERMINISTIC_SEED",
+    "evidence_matcher": "DETERMINISTIC",
+    "resume_selector": "DETERMINISTIC",
+    "claim_validator": "DETERMINISTIC",
+    "ats_form_mapper": "FIXTURE",
+    "risk_check": "DETERMINISTIC",
+    "human_confirmation": "STOP_ONLY",
+    "audit_record": "IN_MEMORY",
+    "jd_prompt_version": "jd-parse-v1",
+    "jd_parser": "RULE_FALLBACK"
+  }
+}

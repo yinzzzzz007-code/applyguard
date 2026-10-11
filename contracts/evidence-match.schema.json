@@ -9,6 +9,19 @@
     "match_id": {"type": "string", "pattern": "^match_[a-zA-Z0-9_]+$"},
     "jd_id": {"type": "string"},
     "candidate_id": {"type": "string"},
+    "uncovered_requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["requirement_id", "missing_evidence", "reason"],
+        "properties": {
+          "requirement_id": {"type": "string"},
+          "missing_evidence": {"type": "array", "items": {"type": "string"}},
+          "reason": {"type": "string", "minLength": 1}
+        }
+      }
+    },
     "matches": {
       "type": "array",
       "items": {
@@ -23,7 +36,24 @@
           "evidence_strength": {"type": "string", "enum": ["WEAK", "MEDIUM", "STRONG"]},
           "confidence": {"type": "number", "minimum": 0, "maximum": 1},
           "rationale": {"type": "string", "minLength": 1},
-          "conflicts": {"type": "array", "items": {"type": "string"}}
+          "conflicts": {"type": "array", "items": {"type": "string"}},
+          "evidence_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "missing_evidence": {"type": "array", "items": {"type": "string"}},
+          "ready_for_selection": {"type": "boolean"},
+          "score_breakdown": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["keyword_overlap", "responsibility_overlap", "verification_score", "confidence_score", "metric_bonus", "conflict_penalty", "missing_evidence_penalty"],
+            "properties": {
+              "keyword_overlap": {"type": "number", "minimum": 0, "maximum": 1},
+              "responsibility_overlap": {"type": "number", "minimum": 0, "maximum": 1},
+              "verification_score": {"type": "number", "minimum": 0, "maximum": 1},
+              "confidence_score": {"type": "number", "minimum": 0, "maximum": 1},
+              "metric_bonus": {"type": "number", "minimum": 0, "maximum": 1},
+              "conflict_penalty": {"type": "number", "minimum": 0, "maximum": 1},
+              "missing_evidence_penalty": {"type": "number", "minimum": 0, "maximum": 1}
+            }
+          }
         }
       }
     }

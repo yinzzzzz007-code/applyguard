@@ -1,0 +1,112 @@
+{
+  "dataset_id": "benchmark_fictional_v1",
+  "purpose": "Fixed fictional proposal test cases. Expected behavior is not an experimental result or accuracy claim.",
+  "cases": [
+    {
+      "jd_id": "jd_benchmark_python_backend",
+      "title": "Python Backend Developer",
+      "raw_jd_text": "Fictional company seeks a developer who can build Python HTTP APIs, write automated tests, and collaborate with Git.",
+      "key_requirements": ["Python", "HTTP API", "automated testing", "Git"],
+      "parsed_jd": {
+        "jd_id": "jd_benchmark_python_backend",
+        "title": "Python Backend Developer",
+        "company": "Fictional Harbor Systems",
+        "source_text": "Fictional company seeks a developer who can build Python HTTP APIs, write automated tests, and collaborate with Git.",
+        "requirements": [
+          {"requirement_id": "req_backend_python_api", "type": "HARD", "category": "SKILL", "text": "Build Python HTTP APIs", "normalized_terms": ["Python", "HTTP API"], "evidence_text": "build Python HTTP APIs", "confidence": 1.0},
+          {"requirement_id": "req_backend_tests", "type": "HARD", "category": "RESPONSIBILITY", "text": "Write automated tests", "normalized_terms": ["automated testing"], "evidence_text": "write automated tests", "confidence": 1.0},
+          {"requirement_id": "req_backend_git", "type": "PREFERRED", "category": "SKILL", "text": "Collaborate with Git", "normalized_terms": ["Git"], "evidence_text": "collaborate with Git", "confidence": 1.0}
+        ]
+      },
+      "expected_strong_experience_ids": ["exp_api_course_project"],
+      "expected_weak_or_unmatched_experience_ids": ["exp_fullstack_portal", "exp_ml_evaluation", "exp_data_pipeline"],
+      "expected_insufficient_requirements": ["req_backend_git"],
+      "expected_explanation_focus": "Verified repository and test-report evidence should explain backend selection; Git remains uncovered because no linked claim states it."
+    },
+    {
+      "jd_id": "jd_benchmark_fullstack",
+      "title": "Full-stack Web Developer",
+      "raw_jd_text": "Fictional company needs a full-stack developer with React, TypeScript, Node.js, and PostgreSQL experience.",
+      "key_requirements": ["React", "TypeScript", "Node.js", "PostgreSQL"],
+      "parsed_jd": {
+        "jd_id": "jd_benchmark_fullstack",
+        "title": "Full-stack Web Developer",
+        "company": "Fictional Harbor Systems",
+        "source_text": "Fictional company needs a full-stack developer with React, TypeScript, Node.js, and PostgreSQL experience.",
+        "requirements": [
+          {"requirement_id": "req_fullstack_react", "type": "HARD", "category": "SKILL", "text": "React development", "normalized_terms": ["React"], "evidence_text": "with React", "confidence": 1.0},
+          {"requirement_id": "req_fullstack_typescript", "type": "HARD", "category": "SKILL", "text": "TypeScript development", "normalized_terms": ["TypeScript"], "evidence_text": "TypeScript", "confidence": 1.0},
+          {"requirement_id": "req_fullstack_node", "type": "HARD", "category": "SKILL", "text": "Node.js API work", "normalized_terms": ["Node.js"], "evidence_text": "Node.js", "confidence": 1.0},
+          {"requirement_id": "req_fullstack_postgres", "type": "PREFERRED", "category": "SKILL", "text": "PostgreSQL data storage", "normalized_terms": ["PostgreSQL"], "evidence_text": "PostgreSQL", "confidence": 1.0}
+        ]
+      },
+      "expected_strong_experience_ids": ["exp_fullstack_portal"],
+      "expected_weak_or_unmatched_experience_ids": ["exp_api_course_project", "exp_ml_evaluation", "exp_data_pipeline"],
+      "expected_insufficient_requirements": [],
+      "expected_explanation_focus": "Selection should name the verified portal repository and requirements it covers."
+    },
+    {
+      "jd_id": "jd_benchmark_ml",
+      "title": "Machine Learning Engineer",
+      "raw_jd_text": "Fictional company needs Python, PyTorch, LoRA fine-tuning, and model evaluation experience for machine learning work.",
+      "key_requirements": ["Python", "PyTorch", "LoRA", "LLM fine-tuning", "model evaluation"],
+      "parsed_jd": {
+        "jd_id": "jd_benchmark_ml",
+        "title": "Machine Learning Engineer",
+        "company": "Fictional Cedar Intelligence",
+        "source_text": "Fictional company needs Python, PyTorch, LoRA fine-tuning, and model evaluation experience for machine learning work.",
+        "requirements": [
+          {"requirement_id": "req_ml_pytorch", "type": "HARD", "category": "SKILL", "text": "PyTorch experience", "normalized_terms": ["PyTorch"], "evidence_text": "PyTorch", "confidence": 1.0},
+          {"requirement_id": "req_ml_lora", "type": "HARD", "category": "SKILL", "text": "LoRA fine-tuning", "normalized_terms": ["LoRA", "LLM fine-tuning"], "evidence_text": "LoRA fine-tuning", "confidence": 1.0},
+          {"requirement_id": "req_ml_evaluation", "type": "PREFERRED", "category": "RESPONSIBILITY", "text": "Model evaluation", "normalized_terms": ["model evaluation"], "evidence_text": "model evaluation", "confidence": 1.0}
+        ]
+      },
+      "expected_strong_experience_ids": ["exp_ml_evaluation"],
+      "expected_weak_or_unmatched_experience_ids": ["exp_api_course_project", "exp_fullstack_portal", "exp_data_pipeline"],
+      "expected_insufficient_requirements": [],
+      "expected_explanation_focus": "PyTorch, LoRA, evaluation, and evidence IDs should make the match explainable."
+    },
+    {
+      "jd_id": "jd_benchmark_data",
+      "title": "Data Engineer",
+      "raw_jd_text": "Fictional company seeks Python and SQL experience building ETL data pipelines with data-quality checks.",
+      "key_requirements": ["Python", "SQL", "ETL", "data pipelines", "data quality"],
+      "parsed_jd": {
+        "jd_id": "jd_benchmark_data",
+        "title": "Data Engineer",
+        "company": "Fictional Maple Data",
+        "source_text": "Fictional company seeks Python and SQL experience building ETL data pipelines with data-quality checks.",
+        "requirements": [
+          {"requirement_id": "req_data_sql_etl", "type": "HARD", "category": "SKILL", "text": "Python and SQL ETL", "normalized_terms": ["Python", "SQL", "ETL"], "evidence_text": "Python and SQL experience building ETL", "confidence": 1.0},
+          {"requirement_id": "req_data_pipeline", "type": "HARD", "category": "RESPONSIBILITY", "text": "Build data pipelines", "normalized_terms": ["data pipelines"], "evidence_text": "data pipelines", "confidence": 1.0},
+          {"requirement_id": "req_data_quality", "type": "PREFERRED", "category": "RESPONSIBILITY", "text": "Data-quality checks", "normalized_terms": ["data quality"], "evidence_text": "data-quality checks", "confidence": 1.0}
+        ]
+      },
+      "expected_strong_experience_ids": ["exp_data_pipeline"],
+      "expected_weak_or_unmatched_experience_ids": ["exp_api_course_project", "exp_fullstack_portal", "exp_ml_evaluation"],
+      "expected_insufficient_requirements": [],
+      "expected_explanation_focus": "The selector should retain the quantified ETL claim and linked sources."
+    },
+    {
+      "jd_id": "jd_benchmark_embedded_mismatch",
+      "title": "Embedded Systems Engineer",
+      "raw_jd_text": "Fictional company needs C++ firmware, microcontroller debugging, and PCB design experience for embedded systems.",
+      "key_requirements": ["C++", "firmware", "microcontrollers", "PCB design"],
+      "parsed_jd": {
+        "jd_id": "jd_benchmark_embedded_mismatch",
+        "title": "Embedded Systems Engineer",
+        "company": "Fictional Orion Devices",
+        "source_text": "Fictional company needs C++ firmware, microcontroller debugging, and PCB design experience for embedded systems.",
+        "requirements": [
+          {"requirement_id": "req_embedded_cpp", "type": "HARD", "category": "SKILL", "text": "C++ firmware", "normalized_terms": ["C++", "firmware"], "evidence_text": "C++ firmware", "confidence": 1.0},
+          {"requirement_id": "req_embedded_microcontrollers", "type": "HARD", "category": "SKILL", "text": "Microcontroller debugging", "normalized_terms": ["microcontrollers"], "evidence_text": "microcontroller debugging", "confidence": 1.0},
+          {"requirement_id": "req_embedded_pcb", "type": "PREFERRED", "category": "SKILL", "text": "PCB design", "normalized_terms": ["PCB design"], "evidence_text": "PCB design", "confidence": 1.0}
+        ]
+      },
+      "expected_strong_experience_ids": [],
+      "expected_weak_or_unmatched_experience_ids": ["exp_api_course_project", "exp_fullstack_portal", "exp_ml_evaluation", "exp_data_pipeline"],
+      "expected_insufficient_requirements": ["req_embedded_cpp", "req_embedded_microcontrollers", "req_embedded_pcb"],
+      "expected_explanation_focus": "No claim may be selected; uncovered requirements must identify absent evidence."
+    }
+  ]
+}
