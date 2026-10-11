@@ -61,6 +61,10 @@ function sourceLabel(scenario: DemoScenario, workflow: WorkflowResponse | null):
   if (scenario === 'live' && workflow) {
     const parser = workflow.component_modes?.jd_parser
     if (parser === 'MODEL' || parser === 'MODEL_SPAN_REPAIRED') return '在线 · 模型解析'
+    if (workflow.component_modes?.requested_parse_mode === 'DYNAMIC' ||
+        workflow.step_trace.some((step) => step.step === 'JD Parser' && step.fallback_reason)) {
+      return '在线 · 模型路径转规则'
+    }
     return '在线 · 离线规则'
   }
   if (scenario === 'error') return '错误演示（无成功响应）'
@@ -69,7 +73,7 @@ function sourceLabel(scenario: DemoScenario, workflow: WorkflowResponse | null):
 
 export function DemoProvider({ children }: { children: ReactNode }) {
   const [scenario, setScenarioState] = useState<DemoScenario>(getActiveScenario())
-  const [step, setStep] = useState<FlowStep>('vault')
+  const [step, setStep] = useState<FlowStep>('import')
   const [jdRawInput, setJdRawInput] = useState(SAMPLE_JD)
   const [workflow, setWorkflowState] = useState<WorkflowResponse | null>(null)
   const [resumeForm, setResumeForm] = useState<EditableResumeForm | null>(null)
@@ -100,7 +104,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     (s: DemoScenario) => {
       setScenarioInClient(s)
       setScenarioState(s)
-      setStep('vault')
+      setStep('import')
       setJdRawInput(SAMPLE_JD)
       setWorkflow(null)
       setResumeForm(null)

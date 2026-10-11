@@ -61,11 +61,20 @@ class AuditTests(unittest.TestCase):
                 self.assertEqual(call.call_count,count)
                 self.assertEqual(mode,'RULE_FALLBACK')
     def test_invalid_transport_and_truncation(self):
-        for payload in (b'invalid', b'{}', json.dumps({'choices':[{'finish_reason':'length','message':{'content':'{}'}}]}).encode()):
+        for payload in (
+            b'invalid',
+            b'{}',
+            json.dumps({'choices':[{'finish_reason':'length','message':{'content':'{"title":'}}]}).encode(),
+        ):
             response = MagicMock()
             response.__enter__.return_value.read.return_value = payload
             with patch('urllib.request.urlopen', return_value=response), self.assertRaises(ModelFailure):
                 HttpModelClient(api_key='dummy').complete_json('system','fictional')
+        complete = json.dumps({'choices':[{'finish_reason':'length','message':{'content':'{"ok":true}'}}]}).encode()
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = complete
+        with patch('urllib.request.urlopen', return_value=response):
+            self.assertEqual(HttpModelClient(api_key='dummy').complete_json('system','fictional'), {'ok': True})
     def test_offline_mode_ignores_present_api_key(self):
         with patch.dict('os.environ', {'APPLYGUARD_AI_API_KEY':'dummy'}), patch('urllib.request.urlopen', side_effect=AssertionError('network forbidden')):
             result=build_mock_workflow({'candidate_id':'cand_demo_001','jd_text':SOURCE,'parse_mode':'offline'})

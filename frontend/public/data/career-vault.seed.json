@@ -85,5 +85,21 @@
       ],
       "verification_state": "VERIFIED"
     }
+  ],
+  "awards": [
+    {
+      "award_id": "award_campus_programming",
+      "name": "校级程序设计竞赛二等奖（虚构）",
+      "issuer": "示例理工大学学生会（虚构）",
+      "date": "2025-11",
+      "description": "虚构个人赛，题目覆盖数据结构与基础算法。"
+    },
+    {
+      "award_id": "award_scholarship",
+      "name": "校级学习优秀奖学金（虚构）",
+      "issuer": "示例理工大学（虚构）",
+      "date": "2025-10",
+      "description": "虚构学年综合测评奖学金。"
+    }
   ]
 }

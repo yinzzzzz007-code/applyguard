@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ClaimBadge, RiskBadge } from '../components/States'
 import { useDemo } from '../context/DemoContext'
 import type { EditableResumeForm, LocalClaimDecision, LocalFieldDecision, WorkflowResponse } from '../api/types'
+import { normalizeResumeForm } from '../resume/formModel'
 import { copyableClaim, copyableField } from '../copyRules'
 import { saveApplicationHistory, type HistoryOutcome } from '../history'
 import { ZH_ACTION, ZH_DECISION, ZH_FRESHNESS, ZH_MAPPER, ZH_PARSER, ZH_STATUS, ZH_STEP, zhLookup, zhText } from '../i18n'
@@ -10,7 +11,7 @@ import { ZH_ACTION, ZH_DECISION, ZH_FRESHNESS, ZH_MAPPER, ZH_PARSER, ZH_STATUS, 
 function storedResumeForm(): EditableResumeForm | null {
   try {
     const raw = sessionStorage.getItem('applyguard.resumeForm')
-    return raw ? (JSON.parse(raw) as EditableResumeForm) : null
+    return raw ? normalizeResumeForm(JSON.parse(raw) as EditableResumeForm) : null
   } catch {
     return null
   }
@@ -84,6 +85,14 @@ function buildCopyPack(
       })
       lines.push('')
     }
+    if (form.awards?.length) {
+      lines.push('【获奖 / 竞赛】')
+      form.awards.forEach((award, index) => {
+        lines.push(`${index + 1}. ${award.name}${award.issuer ? ` · ${award.issuer}` : ''}${award.date ? ` · ${award.date}` : ''}`)
+        if (award.description) lines.push(`说明：${award.description}`)
+      })
+      lines.push('')
+    }
     lines.push('【经历与技能】请仅使用下方核验通过的陈述；本地编辑的经历描述和技能未重新核验。', '')
   } else {
     lines.push('【个人信息】未从经历库读到表单，请先回到经历库保存。', '')
@@ -135,7 +144,7 @@ export function HumanConfirmationPage() {
   const [packCopied, setPackCopied] = useState(false)
   const [historyError, setHistoryError] = useState('')
 
-  const form = resumeForm ?? storedResumeForm()
+  const form = resumeForm ? normalizeResumeForm(resumeForm) : storedResumeForm()
   const copyReady = canProceedFromClaims() && canSubmitAts()
   const copyPack = useMemo(
     () => (workflow ? buildCopyPack(form, workflow, claimDecisions, fieldDecisions, copyReady) : ''),
@@ -149,7 +158,7 @@ export function HumanConfirmationPage() {
           <h2>人工确认</h2>
           <p>尚未完成网申模拟。</p>
         </header>
-        <button type="button" className="btn primary" onClick={() => navigate('/')}>
+        <button type="button" className="btn primary" onClick={() => navigate('/vault')}>
           回到经历库
         </button>
       </section>
@@ -266,11 +275,19 @@ export function HumanConfirmationPage() {
               <CopyRow label="描述" value={entry.description} allowed={false} />
             </div>
           ))}
+          {(form.awards ?? []).map((award, index) => (
+            <div key={award.id} className="item-block">
+              <h3>获奖 / 竞赛 {index + 1}</h3>
+              <CopyRow label="奖项名称" value={award.name} />
+              <CopyRow label="颁发单位" value={award.issuer} />
+              <CopyRow label="获奖时间" value={award.date} />
+              <CopyRow label="说明" value={award.description} />
+            </div>
+          ))}
           <div className="item-block">
             <h3>技能与补充</h3>
             <p className="muted">这些本地文字尚未重新核验，暂不可复制。</p>
             <CopyRow label="技能" value={form.extras.skills} allowed={false} />
-            <CopyRow label="奖项" value={form.extras.awards} allowed={false} />
             <CopyRow label="自我说明" value={form.extras.summary} allowed={false} />
           </div>
         </>
@@ -278,7 +295,7 @@ export function HumanConfirmationPage() {
         <div className="callout warn">
           未读到经历库表单。请先到经历库填写并保存，再回到本页复制。
           <div className="btn-row">
-            <button type="button" className="btn secondary" onClick={() => navigate('/')}>
+            <button type="button" className="btn secondary" onClick={() => navigate('/vault')}>
               去经历库
             </button>
           </div>

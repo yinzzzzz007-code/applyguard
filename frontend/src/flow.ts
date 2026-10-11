@@ -1,6 +1,7 @@
 import type { DemoScenario } from './api/types'
 
 export type FlowStep =
+  | 'import'
   | 'vault'
   | 'jd'
   | 'match'
@@ -10,7 +11,8 @@ export type FlowStep =
   | 'confirm'
 
 export const STEP_META: Record<FlowStep, { label: string; path: string }> = {
-  vault: { label: '经历库', path: '/' },
+  import: { label: '简历识别', path: '/' },
+  vault: { label: '经历库', path: '/vault' },
   jd: { label: '岗位说明', path: '/jd' },
   match: { label: '证据匹配', path: '/match' },
   resume: { label: '简历审查', path: '/resume' },
@@ -20,6 +22,7 @@ export const STEP_META: Record<FlowStep, { label: string; path: string }> = {
 }
 
 export const STEP_ORDER: FlowStep[] = [
+  'import',
   'vault',
   'jd',
   'match',
@@ -35,7 +38,7 @@ export function stepIndex(step: FlowStep): number {
 
 export function stepFromPath(pathname: string): FlowStep {
   const found = STEP_ORDER.find((s) => STEP_META[s].path === pathname)
-  return found ?? 'vault'
+  return found ?? 'import'
 }
 
 export type { DemoScenario }

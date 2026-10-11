@@ -29,6 +29,9 @@ export function AtsSimulatorPage() {
   )
   const claimsById = Object.fromEntries(workflow.resume_claims.map((c) => [c.claim_id, c]))
   const blockedWorkflow = workflow.workflow_status === 'BLOCKED' || workflow.risk_result.action === 'BLOCKED'
+  const jdFallbackReason = workflow.step_trace.find((step) => step.step === 'JD Parser')?.fallback_reason
+  const offlineRules = !jdFallbackReason && (workflow.component_modes?.requested_parse_mode === 'OFFLINE' ||
+    !workflow.component_modes?.requested_parse_mode)
 
   return (
     <section className="panel">
@@ -58,10 +61,10 @@ export function AtsSimulatorPage() {
 
       {workflow.component_modes?.jd_parser === 'RULE_FALLBACK' && (
         <div className="callout warn">
-          <strong>回退提示：</strong>岗位解析为规则回退。
-          {workflow.step_trace.find((s) => s.fallback_reason)?.fallback_reason
-            ? ` ${zhText(workflow.step_trace.find((s) => s.fallback_reason)!.fallback_reason!)}`
-            : ''}
+          <strong>{offlineRules ? '离线解析：' : '回退提示：'}</strong>
+          {offlineRules ? '岗位要求由规则提取，请与原文核对。' : jdFallbackReason
+            ? '模型解析未通过，已用规则结果继续。' : '模型未启用，已用规则结果继续。'}
+          {jdFallbackReason && !offlineRules ? ` ${zhText(jdFallbackReason)}` : ''}
         </div>
       )}
 

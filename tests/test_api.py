@@ -78,6 +78,101 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(status, 404)
         self.assertEqual(data["error"]["code"], "NOT_FOUND")
 
+    def test_resume_parse_rejects_non_pdf(self) -> None:
+        status, data = self.request(
+            "POST",
+            "/api/v1/resume/parse",
+            {"filename": "resume.txt", "pdf_base64": "AAAA"},
+        )
+        self.assertEqual(status, 422)
+        self.assertEqual(data["error"]["code"], "VALIDATION_ERROR")
+
+    def test_resume_draft_roundtrip_stays_local(self) -> None:
+        import os
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as folder:
+            os.environ["APPLYGUARD_LOCAL_DIR"] = folder
+            missing_status, missing = self.request("GET", "/api/v1/resume/draft")
+            self.assertEqual(missing_status, 200)
+            self.assertFalse(missing["exists"])
+            form = {
+                "candidateId": "cand_demo_001",
+                "basic": {"name": "林晓舟（演示）"},
+                "intention": {},
+                "education": [],
+                "internships": [],
+                "projects": [],
+                "awards": [],
+                "extras": {"skills": "", "awards": "", "summary": ""},
+            }
+            save_status, saved = self.request("POST", "/api/v1/resume/draft", form)
+            self.assertEqual(save_status, 200)
+            self.assertTrue(saved["saved"])
+            loaded_status, loaded = self.request("GET", "/api/v1/resume/draft")
+            self.assertEqual(loaded_status, 200)
+            self.assertTrue(loaded["exists"])
+            self.assertEqual(loaded["form"]["basic"]["name"], "林晓舟（演示）")
+            self.assertTrue((Path(folder) / "resume-draft.json").is_file())
+            os.environ.pop("APPLYGUARD_LOCAL_DIR", None)
+
+
+class ResumeExtractTests(unittest.TestCase):
+    def test_rule_extract_reads_labeled_chinese_fields(self) -> None:
+        from backend.services.resume_parser import extract_resume_from_text
+
+        text = """
+姓名：林晓舟
+性别：男
+手机：13800000001
+邮箱：lin@example.com
+出生年月：2004年05月
+现居住地：广东省深圳市
+求职意向：后端开发
+教育经历
+示例理工大学
+专业：软件工程
+本科
+实习经历
+北桥课程实验组
+使用 Python 完成接口开发
+项目经历
+学生服务门户
+获奖情况
+校级程序设计竞赛二等奖
+技能
+Python、Git
+"""
+        result = extract_resume_from_text(text)
+        self.assertEqual(result["basic"]["name"], "林晓舟")
+        self.assertEqual(result["basic"]["phone"], "13800000001")
+        self.assertEqual(result["basic"]["email"], "lin@example.com")
+        self.assertEqual(result["intention"]["expectRole"], "后端开发")
+        self.assertTrue(result["education"])
+        self.assertIn("软件工程", result["education"][0]["major"])
+        self.assertTrue(result["awards"])
+        self.assertIn("程序设计", result["awards"][0]["name"])
+
+    def test_rule_extract_reads_contest_section(self) -> None:
+        from backend.services.resume_parser import extract_resume_from_text
+
+        text = """
+项目经历
+学生服务门户
+竞赛经历
+2024.05 全国大学生数学建模竞赛省级二等奖
+2023.11 校级程序设计大赛一等奖
+技能
+Python
+"""
+        result = extract_resume_from_text(text)
+        names = " ".join(item["name"] for item in result["awards"])
+        self.assertIn("数学建模", names)
+        self.assertIn("程序设计", names)
+        self.assertEqual(len(result["awards"]), 2)
+        self.assertNotIn("数学建模", result["projects"][0]["description"] if result["projects"] else "")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -53,7 +53,8 @@ class SkillRouter:
                  "resume_selector": "DETERMINISTIC", "claim_validator": "DETERMINISTIC",
                  "ats_form_mapper": "FIXTURE", "risk_check": "DETERMINISTIC",
                  "human_confirmation": "STOP_ONLY", "audit_record": "IN_MEMORY",
-                 "jd_prompt_version": JD_PARSE_PROMPT_VERSION}
+                 "jd_prompt_version": JD_PARSE_PROMPT_VERSION,
+                 "requested_parse_mode": str(request.get("parse_mode") or "dynamic").upper()}
 
         def audit(event: str) -> dict[str, Any]:
             record = {"audit_id": f"audit_{uuid.uuid4().hex[:12]}", "application_id": application_id,

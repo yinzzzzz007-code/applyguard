@@ -2,6 +2,8 @@ import type {
   ApiResult,
   CareerVaultSeed,
   DemoScenario,
+  EditableResumeForm,
+  ResumeParseResult,
   WorkflowResponse,
 } from './types'
 
@@ -60,6 +62,9 @@ export type WorkflowParseMode = 'offline' | 'dynamic'
 export interface ApiClient {
   getHealth(): Promise<ApiResult<{ status: string; service: string; version: string }>>
   getCareerVault(): Promise<ApiResult<CareerVaultSeed>>
+  parseResumePdf(file: File): Promise<ApiResult<ResumeParseResult>>
+  getResumeDraft(): Promise<ApiResult<EditableResumeForm>>
+  saveResumeDraft(form: EditableResumeForm): Promise<ApiResult<{ saved: boolean; saved_at?: string; notice?: string }>>
   runWorkflow(
     jdText: string,
     options?: { parseMode?: WorkflowParseMode },
@@ -102,6 +107,71 @@ export class ApplyGuardApiClient implements ApiClient {
           retryable: true,
         },
       }
+    }
+  }
+
+  async parseResumePdf(file: File): Promise<ApiResult<ResumeParseResult>> {
+    if (file.size > 5 * 1024 * 1024) {
+      return {
+        error: { code: 'VALIDATION_ERROR', message: 'PDF 不能超过 5MB。', retryable: false },
+      }
+    }
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      return {
+        error: { code: 'VALIDATION_ERROR', message: '请上传 .pdf 文件。', retryable: false },
+      }
+    }
+    try {
+      const pdf_base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const raw = String(reader.result ?? '')
+          const comma = raw.indexOf(',')
+          resolve(comma >= 0 ? raw.slice(comma + 1) : raw)
+        }
+        reader.onerror = () => reject(reader.error ?? new Error('read failed'))
+        reader.readAsDataURL(file)
+      })
+      const res = await fetch(`${apiBase()}/api/v1/resume/parse`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, pdf_base64 }),
+      })
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: body as ResumeParseResult }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async getResumeDraft(): Promise<ApiResult<EditableResumeForm>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/resume/draft`)
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      const payload = body as { exists?: boolean; form?: EditableResumeForm | null }
+      if (!payload.exists || !payload.form) return { empty: true }
+      return { data: payload.form }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async saveResumeDraft(
+    form: EditableResumeForm,
+  ): Promise<ApiResult<{ saved: boolean; saved_at?: string; notice?: string }>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/resume/draft`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: body as { saved: boolean; saved_at?: string; notice?: string } }
+    } catch {
+      return { error: toApiError(null, 0) }
     }
   }
 

@@ -118,6 +118,20 @@ class JsonCareerVaultRepository:
                 if not claim_evidence_ids or not set(claim_evidence_ids).issubset(source_ids):
                     raise ValueError("Career Vault claims must reference evidence in their experience")
 
+        awards = payload.get("awards", [])
+        if awards:
+            if not isinstance(awards, list):
+                raise ValueError("Career Vault awards must be a list")
+            award_ids: set[str] = set()
+            for award in awards:
+                award_id = award.get("award_id") if isinstance(award, dict) else None
+                name = award.get("name") if isinstance(award, dict) else None
+                if not isinstance(award_id, str) or award_id in award_ids:
+                    raise ValueError("Career Vault award_id values must be unique")
+                if not isinstance(name, str) or not name.strip():
+                    raise ValueError("Career Vault awards require a name")
+                award_ids.add(award_id)
+
 
 class CareerVault:
     """Domain facade used by the matcher and selector, independent from HTTP."""

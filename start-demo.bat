@@ -57,9 +57,9 @@ if exist "%ROOT%.env" (
   echo [ApplyGuard] No .env found. Offline demo still works. For model path, copy .env.example to .env and set APPLYGUARD_AI_API_KEY.
 )
 
-echo [ApplyGuard] Freeing ports 8000 / 5173 if stale backends are holding them...
+echo [ApplyGuard] Freeing ports 8000 / 5173 / 5174 if stale backends are holding them...
 powershell -NoProfile -Command ^
-  "foreach ($p in 8000,5173) { Get-NetTCPConnection -LocalPort $p -ErrorAction SilentlyContinue | ForEach-Object { if ($_.OwningProcess -gt 0) { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } } }; Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -like '*backend.app*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+  "foreach ($p in 8000,5173,5174) { Get-NetTCPConnection -LocalPort $p -ErrorAction SilentlyContinue | ForEach-Object { if ($_.OwningProcess -gt 0) { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } } }; Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -like '*backend.app*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
 
 echo [ApplyGuard] Starting backend on http://127.0.0.1:8000 ...
 start "ApplyGuard-Backend" /D "%ROOT%" cmd /k ".\.venv\Scripts\python.exe -m backend.app"
@@ -74,7 +74,7 @@ powershell -NoProfile -Command ^
 echo.
 echo [ApplyGuard] Backend window: ApplyGuard-Backend
 echo [ApplyGuard] Frontend window: ApplyGuard-Frontend
-echo [ApplyGuard] Close those two windows to stop the servers.
+echo [ApplyGuard] To stop all listeners in one click, run stop-demo.bat
 echo.
 pause
 endlocal

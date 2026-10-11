@@ -69,7 +69,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <ol>
           {STEP_ORDER.map((key, idx) => {
             const meta = STEP_META[key]
-            const reachable = idx <= current
+            const reachable = idx <= Math.max(current, stepIndex('vault'))
             return (
               <li key={key} className={idx === current ? 'current' : reachable ? 'done' : ''}>
                 {reachable ? (

@@ -79,6 +79,15 @@ export interface CareerVaultSeed {
     consent: string
   }
   experiences: VaultExperience[]
+  awards?: VaultAward[]
+}
+
+export interface VaultAward {
+  award_id: string
+  name: string
+  issuer: string
+  date: string
+  description: string
 }
 
 /** Editable campus-resume form held in the frontend (no vault save API yet). */
@@ -125,10 +134,37 @@ export interface ResumeExperienceEntry {
   sourceExperienceId?: string
 }
 
+export interface ResumeAward {
+  id: string
+  name: string
+  issuer: string
+  date: string
+  description: string
+}
+
 export interface ResumeExtras {
   skills: string
   awards: string
   summary: string
+}
+
+export interface ExtractedResumeForm {
+  basic: ResumeBasicInfo
+  intention: ResumeIntention
+  education: Array<Omit<ResumeEducation, 'id'>>
+  internships: Array<Omit<ResumeExperienceEntry, 'id' | 'sourceExperienceId'>>
+  projects: Array<Omit<ResumeExperienceEntry, 'id' | 'sourceExperienceId'>>
+  awards: Array<Omit<ResumeAward, 'id'>>
+  extras: ResumeExtras
+}
+
+export interface ResumeParseResult {
+  filename: string
+  extractor: string
+  notice: string
+  char_count: number
+  preview: string
+  form: ExtractedResumeForm
 }
 
 export interface EditableResumeForm {
@@ -138,6 +174,7 @@ export interface EditableResumeForm {
   education: ResumeEducation[]
   internships: ResumeExperienceEntry[]
   projects: ResumeExperienceEntry[]
+  awards: ResumeAward[]
   extras: ResumeExtras
   savedAt?: string
   dirty: boolean

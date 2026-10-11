@@ -13,6 +13,8 @@ from typing import Any
 
 from backend.services.career_vault import CareerVault
 from backend.services.evidence_matcher import EvidenceMatcher
+from backend.services.local_store import load_resume_draft, save_resume_draft
+from backend.services.resume_parser import parse_resume_pdf
 from backend.services.resume_selector import ResumeSelector
 from backend.services.skill_router import SkillRouter, WorkflowStopped, validate_request_ids
 from backend.services.model_client import HttpModelClient
@@ -227,23 +229,45 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
                 },
             )
             return
+        if self.path == "/api/v1/resume/draft":
+            try:
+                form = load_resume_draft()
+            except ValueError as exc:
+                self._send_json(HTTPStatus.UNPROCESSABLE_ENTITY, _error("VALIDATION_ERROR", str(exc), trace_id))
+                return
+            if form is None:
+                self._send_json(HTTPStatus.OK, {"exists": False, "form": None})
+                return
+            self._send_json(HTTPStatus.OK, {"exists": True, "form": form})
+            return
         self._send_json(HTTPStatus.NOT_FOUND, _error("NOT_FOUND", "Route not found", trace_id))
 
     def do_POST(self) -> None:  # noqa: N802
         trace_id = f"trace_{uuid.uuid4().hex[:12]}"
-        if self.path != "/api/v1/workflow/mock":
+        if self.path == "/api/v1/resume/parse":
+            max_bytes = 8_000_000
+        elif self.path == "/api/v1/resume/draft":
+            max_bytes = 400_000
+        elif self.path == "/api/v1/workflow/mock":
+            max_bytes = 262144
+        else:
             self._send_json(HTTPStatus.NOT_FOUND, _error("NOT_FOUND", "Route not found", trace_id))
             return
 
         try:
             content_length = int(self.headers.get("Content-Length", "0"))
-            if not 0 < content_length <= 262144:
-                raise ValueError("request body must be between 1 and 262144 bytes")
+            if not 0 < content_length <= max_bytes:
+                raise ValueError(f"request body must be between 1 and {max_bytes} bytes")
             raw = self.rfile.read(content_length)
             request = json.loads(raw.decode("utf-8"))
             if not isinstance(request, dict):
                 raise ValueError("request body must be a JSON object")
-            response = build_mock_workflow(request)
+            if self.path == "/api/v1/resume/parse":
+                response = parse_resume_pdf(request.get("pdf_base64", ""), request.get("filename", "resume.pdf"))
+            elif self.path == "/api/v1/resume/draft":
+                response = save_resume_draft(request)
+            else:
+                response = build_mock_workflow(request)
         except (UnicodeDecodeError, json.JSONDecodeError):
             self._send_json(HTTPStatus.BAD_REQUEST, _error("INVALID_JSON", "Request body is not valid JSON", trace_id))
             return

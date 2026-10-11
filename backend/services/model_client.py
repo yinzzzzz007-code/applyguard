@@ -19,6 +19,42 @@ class ModelFailure(RuntimeError):
         self.retryable = retryable
 
 
+_OK_FINISH = {None, "stop", "eos", "end_turn"}
+_REFUSED_FINISH = {"content_filter", "content_policy", "refusal", "refuse", "safety"}
+
+
+def _is_refused_finish(finish_reason: Any) -> bool:
+    if not isinstance(finish_reason, str):
+        return False
+    return finish_reason.casefold() in _REFUSED_FINISH or "filter" in finish_reason.casefold()
+
+
+def _message_text(message: dict[str, Any]) -> str:
+    content = message.get("content")
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        chunks: list[str] = []
+        for part in content:
+            if isinstance(part, str):
+                chunks.append(part)
+            elif isinstance(part, dict) and isinstance(part.get("text"), str):
+                chunks.append(part["text"])
+        if chunks:
+            return "".join(chunks)
+    return ""
+
+
+def _json_object(content: str) -> dict[str, Any] | None:
+    if not isinstance(content, str) or not content.strip():
+        return None
+    try:
+        parsed = json.loads(content)
+    except json.JSONDecodeError:
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
 class HttpModelClient:
     def __init__(self, *, api_key: str | None = None, base_url: str | None = None,
                  model: str | None = None, max_tokens: int | None = None, timeout: float | None = None) -> None:
@@ -85,16 +121,23 @@ class HttpModelClient:
         try:
             response_payload = json.loads(raw)
             choice = response_payload["choices"][0]
-            if choice.get("finish_reason") not in (None, "stop"):
-                raise ModelFailure("Model response was truncated or refused")
-            content = choice["message"]["content"]
-            if not isinstance(content, str) or not content.strip():
-                raise ModelFailure("Model returned empty content")
-            result = json.loads(content)
+            finish_reason = choice.get("finish_reason")
+            message = choice.get("message") if isinstance(choice.get("message"), dict) else {}
+            content = _message_text(message)
+            result = _json_object(content)
         except ModelFailure:
             raise
         except (ValueError, KeyError, IndexError, TypeError) as exc:
             raise ModelFailure("Model returned invalid JSON") from exc
-        if not isinstance(result, dict):
-            raise ModelFailure("Model JSON must be an object")
-        return result
+        if result is not None:
+            if _is_refused_finish(finish_reason):
+                raise ModelFailure(f"Model response was truncated or refused (finish_reason={finish_reason})", retryable=False)
+            return result
+        if not isinstance(content, str) or not content.strip():
+            raise ModelFailure("Model returned empty content")
+        if finish_reason not in _OK_FINISH and finish_reason is not None:
+            raise ModelFailure(
+                f"Model response was truncated or refused (finish_reason={finish_reason})",
+                retryable=finish_reason == "length",
+            )
+        raise ModelFailure("Model JSON must be an object")

@@ -16,7 +16,10 @@ from backend.services.third_party.resume_matcher_keywords import _sanitize_user_
 _TERMS = ("Python", "PyTorch", "LoRA", "React", "TypeScript", "Node.js", "PostgreSQL",
           "SQL", "Git", "CUDA", "ETL", "LLM", "Java", "Docker", "Kubernetes",
           "automated testing", "data pipelines", "data quality", "model evaluation", "HTTP API",
-          "distributed training", "C++", "PCB design", "firmware", "microcontrollers")
+          "distributed training", "C++", "PCB design", "firmware", "microcontrollers",
+          "Benchmark", "LLM Harness", "Eval Workflow", "Checkpoint", "vLLM", "AI Infra",
+          "预训练", "多模态", "模型评测", "评测数据", "数据清洗", "质量检查", "数据集",
+          "模型能力分析", "评测框架", "推理引擎", "并发", "网络编程", "后端开发")
 _TERM_ALIASES = {"HTTP API": ("HTTP API", "HTTP APIs", "Python APIs"),
                  "automated testing": ("automated testing", "automated tests", "unit tests"),
                  "data pipelines": ("data pipeline", "data pipelines"),
@@ -27,8 +30,8 @@ _STOP = {"a", "an", "and", "the", "for", "with", "of", "to", "in", "on", "or", "
 _INSTRUCTION = re.compile(r"ignore\s+(?:all\s+)?previous|disregard|new instructions|system\s*:|忽略.{0,8}(指令|要求)|系统指令", re.I)
 _NEGATIVE = re.compile(r"\bnot\s+(?:a\s+)?required\b|\bno\b.{0,60}\brequired\b|\bwithout\b.{0,40}\bexperience\b|不要求|无需|不需要|不必", re.I)
 _PREFERRED = re.compile(r"\bpreferred\b|nice.to.have|\bbonus\b|优先|加分", re.I)
-_EDUCATION = re.compile(r"bachelor(?:'s)?|master(?:'s)?|ph\.?d\.?|degree|本科|硕士|博士|学历", re.I)
-_EXPERIENCE = re.compile(r"\d+\+?\s*(?:years?|年)|工作经验|工作经历", re.I)
+_EDUCATION = re.compile(r"bachelor(?:'s)?|master(?:'s)?|ph\.?d\.?|degree|本科|硕士|博士|学历|毕业|在校生", re.I)
+_EXPERIENCE = re.compile(r"\d+\+?\s*(?:years?|年|个月)|工作经验|工作经历|实习时间", re.I)
 _RESPONSIBILITY = re.compile(r"\b(?:build|develop|design|write|implement|maintain)\b|负责|开发|设计|维护", re.I)
 
 
@@ -230,6 +233,16 @@ class JDParser:
             if coerced.get("normalized_terms") != item.get("normalized_terms"):
                 repaired_any = True
             item = coerced
+            evidence = item.get("evidence_text")
+            text = item.get("text")
+            if isinstance(evidence, str) and evidence in source and isinstance(text, str) and not _grounded_text(text, evidence):
+                # Keep the exact source quote instead of rejecting a model paraphrase.
+                # Source and term safety still go through _source_supported below.
+                confidence = item.get("confidence")
+                if isinstance(confidence, bool) or not isinstance(confidence, (int, float)) or not math.isfinite(confidence):
+                    raise JDParseError("Invalid confidence")
+                item = {**item, "text": evidence, "confidence": min(confidence, 0.7)}
+                repaired_any = True
             if not _source_supported(item, source):
                 repaired = _repair_quote(item, source)
                 if repaired is not None:
@@ -254,8 +267,19 @@ class JDParser:
         requirements = []
         section_preferred = False
         section_category = None
+        first_line = source.splitlines()[0].strip()
+        seen_text: set[str] = set()
+        candidate_count = 0
         for line in _spans(source):
             if _injection(line) or _NEGATIVE.search(line):
+                continue
+            if line == first_line and re.search(
+                r"(?:实习生|工程师|研究员|分析师|设计师|产品经理|开发|研发)(?:实习)?$", line
+            ):
+                continue
+            if re.match(r"^(?:职位描述\s*[:：]\s*)?我们正在招聘", line) or re.fullmatch(
+                r"[一二三四五六七八九十]+[、.．].{2,60}", line
+            ) or line == "面向对象":
                 continue
             if re.fullmatch(
                 r"(?:preferred(?: qualifications| requirements| skills)?|nice.to.have|优先条件|加分项(?:或注意事项)?)\s*[:：]?",
@@ -271,7 +295,7 @@ class JDParser:
             ):
                 section_preferred, section_category = False, None
                 continue
-            if re.fullmatch(r"(?:responsibilities|职责|岗位职责|岗位描述)\s*[:：]?", line, re.I):
+            if re.fullmatch(r"(?:responsibilities|职责|工作职责|岗位职责|岗位描述)\s*[:：]?", line, re.I):
                 section_preferred, section_category = False, "RESPONSIBILITY"
                 continue
             line_preferred = section_preferred or bool(_PREFERRED.search(line))
@@ -285,17 +309,24 @@ class JDParser:
                     terms = [fragment]
                 if not terms:
                     continue
+                candidate_count += 1
+                if fragment in seen_text:
+                    continue
+                seen_text.add(fragment)
                 requirements.append({"requirement_id": f"req_{len(requirements)+1:03d}",
                                      "type": "PREFERRED" if line_preferred else "HARD", "category": category,
                                      "text": fragment, "normalized_terms": terms, "evidence_text": fragment,
                                      "confidence": 0.45})
-        if not requirements or len(requirements) > 40:
+        if not requirements or candidate_count > 40 or len(requirements) > 40:
             raise JDParseError("No reliable requirements found")
-        first_line = source.splitlines()[0].strip()
         title_match = None if re.search(r"company\s+(seeks|needs|requires)", first_line, re.I) else re.match(
             r"^(.{3,60}?(?:Engineer|Developer|Intern|Analyst|Scientist))(?=\.|\s+(?:requires|needs|seeks)\b|$)",
             first_line, re.I)
         title = title_match.group(1) if title_match else "UNKNOWN"
+        if title == "UNKNOWN" and len(first_line) <= 60 and re.search(
+            r"(?:实习生|工程师|研究员|分析师|设计师|产品经理|开发|研发)(?:实习)?$", first_line
+        ):
+            title = re.sub(r"(?<=实习生)实习$", "", first_line)
         result = {"jd_id": "jd_" + hashlib.sha256(source.encode()).hexdigest()[:12],
                   "title": title, "company": "UNKNOWN", "source_text": source,
                   "requirements": requirements}

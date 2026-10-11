@@ -4,6 +4,7 @@ import { getApiClient } from '../api/client'
 import type {
   CareerVaultSeed,
   EditableResumeForm,
+  ResumeAward,
   ResumeEducation,
   ResumeExperienceEntry,
 } from '../api/types'
@@ -12,7 +13,9 @@ import { useDemo } from '../context/DemoContext'
 import {
   buildResumeFormFromVault,
   newExperienceId,
+  normalizeResumeForm,
   resumeCompleteness,
+  syncAwardText,
 } from '../resume/formModel'
 import {
   DEGREE_OPTIONS,
@@ -39,8 +42,8 @@ const SECTIONS = [
   { id: 'education', label: '教育经历' },
   { id: 'internship', label: '实习经历' },
   { id: 'project', label: '项目经历' },
+  { id: 'awards', label: '获奖 / 竞赛' },
   { id: 'skills', label: '技能 / 其他' },
-  { id: 'evidence', label: '证据溯源' },
 ] as const
 
 function FieldShell({
@@ -326,6 +329,41 @@ function ExperienceEditor({
   )
 }
 
+function AwardEditor({
+  entry,
+  onChange,
+  onRemove,
+}: {
+  entry: ResumeAward
+  onChange: (next: ResumeAward) => void
+  onRemove: () => void
+}) {
+  const set = (key: keyof ResumeAward, value: string) => onChange({ ...entry, [key]: value })
+  return (
+    <div className="resume-entry">
+      <div className="resume-entry-bar">
+        <span className="muted">获奖条目</span>
+        <button type="button" className="btn ghost-danger" onClick={onRemove}>
+          删除
+        </button>
+      </div>
+      <div className="resume-fields">
+        <FieldInput label="奖项名称" value={entry.name} required onChange={(v) => set('name', v)} />
+        <FieldInput label="颁发单位" value={entry.issuer} onChange={(v) => set('issuer', v)} />
+        <FieldInput label="获奖时间" value={entry.date} onChange={(v) => set('date', v)} />
+        <FieldInput
+          label="说明"
+          value={entry.description}
+          wide
+          multiline
+          placeholder="级别、名次、参赛形式等"
+          onChange={(v) => set('description', v)}
+        />
+      </div>
+    </div>
+  )
+}
+
 export function CareerVaultPage() {
   const navigate = useNavigate()
   const { scenario, resumeForm, setResumeForm } = useDemo()
@@ -334,12 +372,15 @@ export function CareerVaultPage() {
   const [errorMsg, setErrorMsg] = useState('')
   const [activeSection, setActiveSection] = useState<string>('basic')
   const [saveMsg, setSaveMsg] = useState('')
+  const [saveKind, setSaveKind] = useState<'ok' | 'warn' | ''>('')
 
   const load = useCallback(async () => {
     setStatus('loading')
     setErrorMsg('')
-    setSaveMsg('')
-    const res = await getApiClient().getCareerVault()
+    const [res, draft] = await Promise.all([
+      getApiClient().getCareerVault(),
+      getApiClient().getResumeDraft(),
+    ])
     if (res.error) {
       setErrorMsg(res.error.message)
       setStatus('error')
@@ -352,18 +393,33 @@ export function CareerVaultPage() {
     }
     setVault(res.data)
     setResumeForm((prev) => {
-      if (prev && prev.candidateId === res.data!.candidate_id) return prev
+      if (prev && prev.candidateId === res.data!.candidate_id) return normalizeResumeForm(prev)
+      if (draft.data && draft.data.candidateId === res.data!.candidate_id) {
+        const fromDisk = normalizeResumeForm(draft.data)
+        return {
+          ...fromDisk,
+          dirty: !fromDisk.savedAt,
+        }
+      }
       try {
         const raw = sessionStorage.getItem('applyguard.resumeForm')
         if (raw) {
           const parsed = JSON.parse(raw) as EditableResumeForm
-          if (parsed.candidateId === res.data!.candidate_id) return { ...parsed, dirty: false }
+          if (parsed.candidateId === res.data!.candidate_id) {
+            return normalizeResumeForm({ ...parsed, dirty: !parsed.savedAt })
+          }
         }
       } catch {
         /* ignore */
       }
-      return buildResumeFormFromVault(res.data!)
+      return { ...buildResumeFormFromVault(res.data!), dirty: true, savedAt: undefined }
     })
+    const notice = sessionStorage.getItem('applyguard.importNotice')
+    if (notice) {
+      sessionStorage.removeItem('applyguard.importNotice')
+      setSaveKind('warn')
+      setSaveMsg(notice)
+    }
     setStatus('success')
   }, [setResumeForm])
 
@@ -376,6 +432,7 @@ export function CareerVaultPage() {
   const patchForm = (updater: (prev: EditableResumeForm) => EditableResumeForm) => {
     if (!resumeForm) return
     setResumeForm({ ...updater(resumeForm), dirty: true })
+    setSaveKind('')
     setSaveMsg('')
   }
 
@@ -393,28 +450,39 @@ export function CareerVaultPage() {
       dirty: false,
       savedAt: new Date().toLocaleString(),
     }
-    setResumeForm(saved)
-    try {
-      sessionStorage.setItem('applyguard.resumeForm', JSON.stringify(saved))
-    } catch {
-      /* ignore quota */
-    }
-    setSaveMsg('已保存到本机会话。后端暂无经历库写入接口，刷新标签页前有效。')
+    void getApiClient()
+      .saveResumeDraft(saved)
+      .then((res) => {
+        if (res.error) {
+          setSaveKind('warn')
+          setSaveMsg(`未保存到后端：${res.error.message}`)
+          return
+        }
+        setResumeForm(saved)
+        try {
+          sessionStorage.setItem('applyguard.resumeForm', JSON.stringify(saved))
+        } catch {
+          /* ignore quota */
+        }
+        setSaveKind('ok')
+        setSaveMsg('保存成功')
+      })
   }
 
   const resetFromSeed = () => {
     if (!vault) return
     if (!window.confirm('用种子数据覆盖当前编辑？未保存修改将丢失。')) return
-    setResumeForm(buildResumeFormFromVault(vault))
-    setSaveMsg('已从种子数据重新载入。')
+    setResumeForm({ ...buildResumeFormFromVault(vault), dirty: true, savedAt: undefined })
+    setSaveKind('warn')
+    setSaveMsg('已从种子数据重新载入，尚未保存。')
   }
 
   return (
-    <section className="panel resume-panel">
+    <section className={`panel resume-panel ${form && !form.dirty && form.savedAt ? 'is-saved' : 'is-unsaved'}`}>
       <header className="panel-head">
         <h2>经历库 · 简历编辑</h2>
         <p>
-          可编辑表单，布局参考腾讯校招简历页。可改字段、增删实习/项目；「保存」写入浏览器会话，不上传招聘网站，也不写后端（尚无经历库保存接口）。
+          可从本页直接开始，不必先识别 PDF。可编辑表单，布局参考腾讯校招简历页。可改字段、增删实习 / 项目 / 获奖；「保存」写入本机后端草稿（git 已忽略，push 不会带上），不上传招聘网站。
         </p>
       </header>
 
@@ -433,7 +501,7 @@ export function CareerVaultPage() {
 
       {status === 'success' && vault && form && (
         <>
-          <div className="resume-toolbar">
+          <div className={form.dirty || !form.savedAt ? 'resume-toolbar is-unsaved' : 'resume-toolbar is-saved'}>
             <div>
               <strong>简历完整度 {completeness}%</strong>
               <div className="resume-progress">
@@ -441,11 +509,12 @@ export function CareerVaultPage() {
               </div>
             </div>
             <span className="resume-tip">
-              {vault.candidate_id}
-              {form.dirty ? ' · 有未保存修改' : form.savedAt ? ` · 已保存 ${form.savedAt}` : ''}
+              {form.dirty || !form.savedAt ? '未保存' : `已保存${form.savedAt ? ` · ${form.savedAt}` : ''}`}
             </span>
           </div>
-          {saveMsg ? <p className="ok-text tip-inline">{saveMsg}</p> : null}
+          {saveMsg ? (
+            <div className={saveKind === 'ok' ? 'callout ok' : 'callout warn'}>{saveMsg}</div>
+          ) : null}
 
           <div className="resume-layout">
             <aside className="resume-side">
@@ -851,6 +920,47 @@ export function CareerVaultPage() {
                 </button>
               </section>
 
+              <section id="resume-awards" className="resume-section">
+                <h3>
+                  <i />
+                  获奖 / 竞赛
+                </h3>
+                <p className="resume-hint">竞赛、比赛、奖学金、荣誉称号等，可增删条目</p>
+                {(form.awards ?? []).map((entry) => (
+                  <AwardEditor
+                    key={entry.id}
+                    entry={entry}
+                    onChange={(next) =>
+                      patchForm((p) => {
+                        const awards = (p.awards ?? []).map((row) => (row.id === entry.id ? next : row))
+                        return { ...p, awards, extras: { ...p.extras, awards: syncAwardText(awards) } }
+                      })
+                    }
+                    onRemove={() =>
+                      patchForm((p) => {
+                        const awards = (p.awards ?? []).filter((row) => row.id !== entry.id)
+                        return { ...p, awards, extras: { ...p.extras, awards: syncAwardText(awards) } }
+                      })
+                    }
+                  />
+                ))}
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={() =>
+                    patchForm((p) => {
+                      const awards = [
+                        ...(p.awards ?? []),
+                        { id: newExperienceId('award'), name: '', issuer: '', date: '', description: '' },
+                      ]
+                      return { ...p, awards, extras: { ...p.extras, awards: syncAwardText(awards) } }
+                    })
+                  }
+                >
+                  + 添加获奖
+                </button>
+              </section>
+
               <section id="resume-skills" className="resume-section">
                 <h3>
                   <i />
@@ -867,15 +977,6 @@ export function CareerVaultPage() {
                     }
                   />
                   <FieldInput
-                    label="获奖 / 补充"
-                    wide
-                    multiline
-                    value={form.extras.awards}
-                    onChange={(v) =>
-                      patchForm((p) => ({ ...p, extras: { ...p.extras, awards: v } }))
-                    }
-                  />
-                  <FieldInput
                     label="自我评价"
                     wide
                     multiline
@@ -887,37 +988,13 @@ export function CareerVaultPage() {
                 </div>
               </section>
 
-              <section id="resume-evidence" className="resume-section">
-                <h3>
-                  <i />
-                  证据溯源（申请护栏）
-                </h3>
-                <p className="resume-hint">
-                  来自种子经历库的陈述与证据（供后续核验）。编辑上方简历不会自动改后端证据图。
-                </p>
-                <div className="stack">
-                  {vault.experiences.map((exp) => (
-                    <article key={exp.experience_id} className="item-block">
-                      <div className="item-head">
-                        <h3>{exp.title ?? exp.role}</h3>
-                        <span className="muted">{exp.experience_id}</span>
-                      </div>
-                      <ul>
-                        {exp.claims.map((c) => (
-                          <li key={c.claim_id}>
-                            <strong>{c.claim_id}</strong>：{c.text}
-                            <p className="muted">证据编号：{c.evidence_ids.join(', ')}</p>
-                          </li>
-                        ))}
-                      </ul>
-                    </article>
-                  ))}
-                </div>
-              </section>
             </div>
           </div>
 
           <div className="btn-row end">
+            <button type="button" className="btn secondary" onClick={() => navigate('/')}>
+              可选：简历识别
+            </button>
             <button type="button" className="btn secondary" onClick={resetFromSeed}>
               从种子重载
             </button>
@@ -925,7 +1002,7 @@ export function CareerVaultPage() {
               保存简历
             </button>
             <button type="button" className="btn primary" onClick={() => navigate('/jd')}>
-              下一步：输入 JD
+              下一步：岗位说明
             </button>
           </div>
         </>
