@@ -1,53 +1,92 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import type {
-  CareerVaultSeed,
   ClaimVerification,
+  EditableResumeForm,
   RemovedClaim,
   ResumeClaim,
-  VaultExperience,
 } from '../api/types'
 import { EmptyState } from '../components/States'
 import { useDemo } from '../context/DemoContext'
 import { ZH_CLAIM_STATUS, zhLookup, zhText } from '../i18n'
 
+type DraftClaim = {
+  claim_id: string
+  text: string
+  evidence_ids: string[]
+  experienceTitle: string
+  kind: string
+}
+
 function shortReason(reason: string): string {
   return zhText(reason.split(':')[0]?.trim() || reason)
 }
 
-function vaultClaimLookup(vault: CareerVaultSeed | null) {
-  const map = new Map<
-    string,
-    { text: string; evidence_ids: string[]; experience: VaultExperience; confidence: number }
-  >()
-  vault?.experiences.forEach((exp) => {
-    exp.claims.forEach((c) => {
-      map.set(c.claim_id, {
-        text: c.text,
-        evidence_ids: c.evidence_ids,
-        experience: exp,
-        confidence: c.confidence ?? 0,
-      })
+function safeClaimId(raw: string): string {
+  const body = raw.replace(/[^a-zA-Z0-9_]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase()
+  const id = body.startsWith('claim_') ? body : `claim_${body || 'item'}`
+  return id.slice(0, 96)
+}
+
+/** Build selectable resume sentences from the user's saved 经历库 form. */
+function claimsFromResumeForm(form: EditableResumeForm | null): DraftClaim[] {
+  if (!form) return []
+  const out: DraftClaim[] = []
+
+  const push = (
+    id: string,
+    kind: string,
+    organization: string,
+    title: string,
+    role: string,
+    description: string,
+  ) => {
+    const org = organization.trim()
+    const label = (title || role).trim()
+    const lines = description
+      .split(/\r?\n/)
+      .map((l) => l.trim().replace(/^[-*•·、]\s*/, ''))
+      .filter(Boolean)
+    const text = (lines.find((l) => l.length >= 8) || lines[0] || [org, label].filter(Boolean).join(' · ')).trim()
+    if (!text) return
+    out.push({
+      claim_id: safeClaimId(id.replace(/^exp_/, '')),
+      text: text.slice(0, 420),
+      evidence_ids: [],
+      experienceTitle: [label, org].filter(Boolean).join(' · ') || kind,
+      kind,
+    })
+  }
+
+  form.internships.forEach((e) =>
+    push(e.id, '实习', e.organization, e.title, e.role, e.description),
+  )
+  form.projects.forEach((e) =>
+    push(e.id, '项目', e.organization, e.title, e.role, e.description),
+  )
+  ;(form.awards ?? []).forEach((a) => {
+    const name = a.name.trim()
+    if (!name) return
+    const text = (a.description || '').trim() || `${name}${a.issuer ? `（${a.issuer}）` : ''}`
+    out.push({
+      claim_id: safeClaimId(a.id),
+      text: text.slice(0, 420),
+      evidence_ids: [],
+      experienceTitle: [name, a.issuer].filter(Boolean).join(' · ') || '获奖 / 竞赛',
+      kind: '获奖',
     })
   })
-  return map
+  return out
 }
 
 export function ResumeReviewPage() {
   const navigate = useNavigate()
-  const { workflow, patchWorkflow } = useDemo()
-  const [vault, setVault] = useState<CareerVaultSeed | null>(null)
+  const { workflow, patchWorkflow, resumeForm } = useDemo()
   const [draftText, setDraftText] = useState('')
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
-  useEffect(() => {
-    void fetch(`${import.meta.env.BASE_URL}data/career-vault.seed.json`)
-      .then((r) => r.json())
-      .then((d: CareerVaultSeed) => setVault(d))
-      .catch(() => setVault(null))
-  }, [])
-
-  const vaultClaims = useMemo(() => vaultClaimLookup(vault), [vault])
+  const draftClaims = useMemo(() => claimsFromResumeForm(resumeForm), [resumeForm])
+  const draftById = useMemo(() => new Map(draftClaims.map((c) => [c.claim_id, c])), [draftClaims])
 
   if (!workflow) {
     return (
@@ -69,6 +108,34 @@ export function ResumeReviewPage() {
   const reqText = Object.fromEntries(
     workflow.parsed_jd.requirements.map((r) => [r.requirement_id, r.text]),
   )
+  const usingDraftVault = workflow.component_modes?.career_vault === 'LOCAL_RESUME_DRAFT'
+  const selectedIds = new Set(claims.map((c) => c.claim_id))
+
+  // Prefer 经历库草稿 as the pool; fall back to workflow removed_claims when no draft.
+  const available: Array<DraftClaim & { reason: string }> = draftClaims.length
+    ? draftClaims
+        .filter((c) => !selectedIds.has(c.claim_id))
+        .map((c) => {
+          const removed = selection.removed_claims?.find((r) => r.claim_id === c.claim_id)
+          return {
+            ...c,
+            reason: removed?.reason || '来自经历库草稿，可手动加入（加入后仍需核验）',
+          }
+        })
+    : (selection.removed_claims ?? []).map((r) => ({
+        claim_id: r.claim_id,
+        text: r.text || r.claim_id,
+        evidence_ids: [] as string[],
+        experienceTitle: '工作流未选入',
+        kind: '陈述',
+        reason: r.reason,
+      }))
+
+  const seedLike =
+    !usingDraftVault &&
+    draftClaims.length > 0 &&
+    claims.some((c) => !draftById.has(c.claim_id)) &&
+    /lora|pipeline|fullstack|python_api/i.test(claims.map((c) => c.claim_id).join(' '))
 
   function requirementIdsFor(claimId: string): string[] {
     return [
@@ -103,7 +170,7 @@ export function ResumeReviewPage() {
         evidence_ids: input.evidence_ids,
         requirement_ids: input.requirement_ids ?? requirementIdsFor(input.claim_id),
         evidence_support_score: input.support ?? supportFor(input.claim_id),
-        selection_reason: '手动加入：用户在简历审查页选入（非自动挑选）。',
+        selection_reason: '手动加入：用户在简历审查页从经历库选入（非自动挑选）。',
         status: 'DRAFT',
       }
       const verification: ClaimVerification = {
@@ -142,7 +209,7 @@ export function ResumeReviewPage() {
             claim_id: claim.claim_id,
             reason: '手动移出：用户从简历草稿中拿掉。',
             text: claim.text,
-          },
+          } as RemovedClaim,
         ],
       },
       claim_verification: prev.claim_verification.filter((v) => v.claim_id !== claim.claim_id),
@@ -162,13 +229,16 @@ export function ResumeReviewPage() {
     setDraftText('')
   }
 
-  function addRemoved(r: RemovedClaim) {
-    const vaultHit = vaultClaims.get(r.claim_id)
-    addClaim({
-      claim_id: r.claim_id,
-      text: r.text || vaultHit?.text || r.claim_id,
-      evidence_ids: vaultHit?.evidence_ids ?? [],
-    })
+  function clearSeedDraft() {
+    patchWorkflow((prev) => ({
+      ...prev,
+      resume_claims: [],
+      resume_selection: {
+        ...prev.resume_selection,
+        removed_claims: [],
+      },
+      claim_verification: [],
+    }))
   }
 
   function cardDetail(opts: {
@@ -216,6 +286,35 @@ export function ResumeReviewPage() {
         </p>
       </header>
 
+      {seedLike ? (
+        <div className="callout warn">
+          <p>
+            当前草稿里仍是演示种子陈述（如 LoRA / 数据管道），不是你在经历库保存的内容。请
+            <Link to="/jd"> 回岗位说明重新运行工作流</Link>
+            ，或点下方清空后从经历库重新加入。
+          </p>
+          <div className="btn-row">
+            <button type="button" className="btn secondary" onClick={clearSeedDraft}>
+              清空种子草稿
+            </button>
+            <Link className="btn primary" to="/jd">
+              去重新运行
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
+      {!draftClaims.length ? (
+        <div className="callout warn">
+          经历库里还没有可引用的实习 / 项目 / 获奖。请先到 <Link to="/vault">经历库</Link> 填写并保存。
+        </div>
+      ) : (
+        <p className="muted">
+          可加入来源：本机经历库 {draftClaims.length} 条
+          {usingDraftVault ? ' · 本次工作流已按草稿匹配' : ' · 建议重新运行工作流以按草稿自动筛选'}
+        </p>
+      )}
+
       <div className="profile-card">
         <p>
           选择方式：确定性、受证据约束 · 最多 {selection.max_claims} 条 · 最多{' '}
@@ -229,7 +328,7 @@ export function ResumeReviewPage() {
       ) : (
         <div className="rr-grid">
           {claims.map((c) => {
-            const vaultHit = vaultClaims.get(c.claim_id)
+            const draftHit = draftById.get(c.claim_id)
             return (
               <article
                 key={c.claim_id}
@@ -242,6 +341,7 @@ export function ResumeReviewPage() {
                   <span className="em-req-id">{c.claim_id.replace(/^claim_/, '陈述·')}</span>
                 </div>
                 <p className="rr-card-text">{c.text}</p>
+                {draftHit ? <p className="muted rr-card-org">{draftHit.experienceTitle}</p> : null}
                 <div className="rr-card-actions">
                   <button type="button" className="btn secondary" onClick={() => removeClaim(c)}>
                     移出
@@ -254,9 +354,7 @@ export function ResumeReviewPage() {
                   evidenceIds: c.evidence_ids,
                   requirementIds: c.requirement_ids,
                   support: c.evidence_support_score,
-                  experienceTitle: vaultHit
-                    ? `${vaultHit.experience.title ?? vaultHit.experience.role} · ${vaultHit.experience.organization}`
-                    : undefined,
+                  experienceTitle: draftHit?.experienceTitle,
                 })}
               </article>
             )
@@ -283,14 +381,12 @@ export function ResumeReviewPage() {
         </div>
       </div>
 
-      <h3 className="em-section-title">未选入 / 可加入</h3>
-      {(selection.removed_claims?.length ?? 0) === 0 ? (
-        <p className="muted">没有被挡下的陈述。</p>
+      <h3 className="em-section-title">未选入 / 可加入（经历库）</h3>
+      {!available.length ? (
+        <p className="muted">没有可加入的经历库句子。</p>
       ) : (
         <div className="rr-grid">
-          {selection.removed_claims.map((r) => {
-            const vaultHit = vaultClaims.get(r.claim_id)
-            const text = r.text || vaultHit?.text || '（无正文）'
+          {available.map((r) => {
             const reqIds = requirementIdsFor(r.claim_id)
             return (
               <article
@@ -301,29 +397,33 @@ export function ResumeReviewPage() {
               >
                 <div className="rr-card-top">
                   <span className="em-chip medium compact">{shortReason(r.reason)}</span>
-                  <span className="em-req-id">{r.claim_id.replace(/^claim_/, '陈述·')}</span>
+                  <span className="chip">{r.kind}</span>
                 </div>
-                <p className="rr-card-text">{text}</p>
-                <p className="muted rr-card-org">
-                  {vaultHit
-                    ? `${vaultHit.experience.title ?? vaultHit.experience.role}`
-                    : '自定义 / 已移出'}
-                </p>
+                <p className="rr-card-text">{r.text}</p>
+                <p className="muted rr-card-org">{r.experienceTitle}</p>
                 <div className="rr-card-actions">
-                  <button type="button" className="btn primary" onClick={() => addRemoved(r)}>
+                  <button
+                    type="button"
+                    className="btn primary"
+                    onClick={() =>
+                      addClaim({
+                        claim_id: r.claim_id,
+                        text: r.text,
+                        evidence_ids: r.evidence_ids,
+                      })
+                    }
+                  >
                     加入草稿
                   </button>
                 </div>
                 {cardDetail({
                   claimId: r.claim_id,
-                  text,
+                  text: r.text,
                   reason: r.reason,
-                  evidenceIds: vaultHit?.evidence_ids,
+                  evidenceIds: r.evidence_ids,
                   requirementIds: reqIds,
                   support: supportFor(r.claim_id),
-                  experienceTitle: vaultHit
-                    ? `${vaultHit.experience.title ?? vaultHit.experience.role} · ${vaultHit.experience.organization}`
-                    : undefined,
+                  experienceTitle: r.experienceTitle,
                 })}
               </article>
             )

@@ -1,12 +1,10 @@
-# ApplyGuard Frontend（D · Proposal）
+# ApplyGuard Frontend
 
-七步 React/Vite/TypeScript UI，另有申请历史页；接入 C 的 `POST /api/v1/workflow/mock`（默认 `parse_mode: "offline"`）。
+React/Vite/TypeScript 界面，包含简历识别、经历库、本地证据工作区、岗位说明、证据匹配、简历审查、陈述核验、网申模拟、人工确认和申请历史；岗位工作流接入 `POST /api/v1/workflow/mock`（默认 `parse_mode: "offline"`）。完整启动与资料保护说明见仓库根目录 [README](../README.md)。
 
 视觉系统来自 [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) 的 **Mintlify** `DESIGN.md`（本地副本：`frontend/design/DESIGN.md`）：天蓝/奶油 hero 渐变、Inter + Geist Mono、黑底主按钮与 `#00d4a4` 强调色。
 
-独立原型原件仍保留在：
-
-`D:\桌面\大三上\计算机与软件工程综合设计\ApplyGuard-frontend-prototype`
+本目录即当前前端源码；本机其他原型目录不属于仓库，也不影响运行。
 
 ## 联调启动
 
@@ -23,7 +21,7 @@ start-demo.bat
 终端 1 — 后端（隔离 venv，勿用未装 `jsonschema` 的系统 Python）：
 
 ```powershell
-cd "D:\桌面\大三上\计算机与软件工程综合设计\ApplyGuard\code\applyguard"
+# 已位于仓库根目录
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m backend.app
@@ -67,6 +65,7 @@ npm run smoke
 - Live 结果来自后端离线规则链路，不是旧 mock 固定表。
 - 预录 JSON **明确标注**为 `demo.run_c_cases` 产物，不是本次 Live 响应。
 - Career Vault 读取 `public/data/career-vault.seed.json`（与后端种子相同）；仓库尚无 Vault HTTP API。
+- 本地证据工作区通过后端接口导入、核对和关联材料；原件与索引保存在被 Git 忽略的本机目录。当前简历草稿与公开种子数据仍是两条不同来源。
 - 模拟 ATS = fixture 映射 + C 的 field_controls/risk；**不是**真实招聘网站扫描。
 - 人工确认仅为前端本地模拟；`audit_record` **未在后端持久化**；最终投递由用户本人完成。
 - 申请历史只把模拟结果摘要保存在本浏览器 `localStorage`，不保存个人资料、JD 原文或简历正文。它不是后端申请历史，也不代表已投递。

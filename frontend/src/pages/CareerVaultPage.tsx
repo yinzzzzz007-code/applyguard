@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { getApiClient } from '../api/client'
 import type {
   CareerVaultSeed,
   EditableResumeForm,
+  EvidenceLink,
   ResumeAward,
   ResumeEducation,
   ResumeExperienceEntry,
@@ -339,6 +340,14 @@ function AwardEditor({
   onRemove: () => void
 }) {
   const set = (key: keyof ResumeAward, value: string) => onChange({ ...entry, [key]: value })
+  const [links, setLinks] = useState<EvidenceLink[]>([])
+
+  useEffect(() => {
+    void getApiClient()
+      .listEvidenceLinks({ target_type: 'award', target_id: entry.id })
+      .then((res) => setLinks(res.data ?? []))
+  }, [entry.id])
+
   return (
     <div className="resume-entry">
       <div className="resume-entry-bar">
@@ -360,6 +369,32 @@ function AwardEditor({
           onChange={(v) => set('description', v)}
         />
       </div>
+      <div className="evidence-award-links">
+        {links.length ? (
+          <ul>
+            {links.map((link) => (
+              <li key={link.link_id}>
+                <Link to={`/evidence?evidence_id=${link.evidence_id}&target_type=award&target_id=${entry.id}`}>
+                  {link.evidence_id}
+                </Link>
+                <span className={link.link_state === 'STALE' ? 'danger-text' : 'muted'}>
+                  {' '}
+                  · {link.link_state}
+                  {link.relative_path ? ` · ${link.relative_path} v${link.version}` : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="muted">尚未关联本地证据原件。</p>
+        )}
+        <Link
+          className="btn secondary"
+          to={`/evidence?target_type=award&target_id=${encodeURIComponent(entry.id)}`}
+        >
+          导入 / 关联证据
+        </Link>
+      </div>
     </div>
   )
 }
@@ -374,13 +409,36 @@ export function CareerVaultPage() {
   const [saveMsg, setSaveMsg] = useState('')
   const [saveKind, setSaveKind] = useState<'ok' | 'warn' | ''>('')
 
+  const hasFormRef = useRef(false)
+  hasFormRef.current = !!resumeForm
+
   const load = useCallback(async () => {
-    setStatus('loading')
+    // Avoid full-page flash back to「加载中」when form is already on screen
+    if (!hasFormRef.current) setStatus('loading')
     setErrorMsg('')
     const [res, draft] = await Promise.all([
       getApiClient().getCareerVault(),
       getApiClient().getResumeDraft(),
     ])
+    // 已保存草稿优先：种子失败也不要整页报错退回首页
+    if (draft.data) {
+      setVault(res.data ?? null)
+      setResumeForm((prev) => {
+        if (prev?.dirty && prev.savedAt && prev.candidateId === draft.data!.candidateId) {
+          return normalizeResumeForm(prev)
+        }
+        const fromDisk = normalizeResumeForm(draft.data!)
+        return { ...fromDisk, dirty: false }
+      })
+      const notice = sessionStorage.getItem('applyguard.importNotice')
+      if (notice) {
+        sessionStorage.removeItem('applyguard.importNotice')
+        setSaveKind('warn')
+        setSaveMsg(notice)
+      }
+      setStatus('success')
+      return
+    }
     if (res.error) {
       setErrorMsg(res.error.message)
       setStatus('error')
@@ -393,20 +451,23 @@ export function CareerVaultPage() {
     }
     setVault(res.data)
     setResumeForm((prev) => {
-      if (prev && prev.candidateId === res.data!.candidate_id) return normalizeResumeForm(prev)
-      if (draft.data && draft.data.candidateId === res.data!.candidate_id) {
-        const fromDisk = normalizeResumeForm(draft.data)
-        return {
-          ...fromDisk,
-          dirty: !fromDisk.savedAt,
-        }
+      if (
+        prev &&
+        prev.candidateId === res.data!.candidate_id &&
+        prev.dirty &&
+        prev.savedAt
+      ) {
+        return normalizeResumeForm(prev)
+      }
+      if (prev && prev.candidateId === res.data!.candidate_id && prev.savedAt) {
+        return normalizeResumeForm(prev)
       }
       try {
         const raw = sessionStorage.getItem('applyguard.resumeForm')
         if (raw) {
           const parsed = JSON.parse(raw) as EditableResumeForm
-          if (parsed.candidateId === res.data!.candidate_id) {
-            return normalizeResumeForm({ ...parsed, dirty: !parsed.savedAt })
+          if (parsed.candidateId === res.data!.candidate_id && parsed.savedAt) {
+            return normalizeResumeForm({ ...parsed, dirty: false })
           }
         }
       } catch {
@@ -483,6 +544,9 @@ export function CareerVaultPage() {
         <h2>经历库 · 简历编辑</h2>
         <p>
           可从本页直接开始，不必先识别 PDF。可编辑表单，布局参考腾讯校招简历页。可改字段、增删实习 / 项目 / 获奖；「保存」写入本机后端草稿（git 已忽略，push 不会带上），不上传招聘网站。
+          奖项可关联{' '}
+          <Link to="/evidence">本地证据工作区</Link>
+          中的原件位置（文件版本 + 页码/区域）。
         </p>
       </header>
 
@@ -499,7 +563,7 @@ export function CareerVaultPage() {
         />
       )}
 
-      {status === 'success' && vault && form && (
+      {status === 'success' && form && (
         <>
           <div className={form.dirty || !form.savedAt ? 'resume-toolbar is-unsaved' : 'resume-toolbar is-saved'}>
             <div>
@@ -995,13 +1059,21 @@ export function CareerVaultPage() {
             <button type="button" className="btn secondary" onClick={() => navigate('/')}>
               可选：简历识别
             </button>
-            <button type="button" className="btn secondary" onClick={resetFromSeed}>
+            <button type="button" className="btn secondary" onClick={resetFromSeed} disabled={!vault}>
               从种子重载
             </button>
             <button type="button" className="btn secondary" onClick={saveLocal}>
               保存简历
             </button>
-            <button type="button" className="btn primary" onClick={() => navigate('/jd')}>
+            <button
+              type="button"
+              className="btn primary"
+              onClick={() => {
+                // Persist before leaving so returning from later steps doesn't look「被清空」
+                if (form.dirty || !form.savedAt) saveLocal()
+                navigate('/jd')
+              }}
+            >
               下一步：岗位说明
             </button>
           </div>

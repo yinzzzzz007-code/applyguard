@@ -7,6 +7,7 @@ import { ResumeImportPage } from './pages/ResumeImportPage'
 import { CareerVaultPage } from './pages/CareerVaultPage'
 import { ClaimVerificationPage } from './pages/ClaimVerificationPage'
 import { EvidenceMatchPage } from './pages/EvidenceMatchPage'
+import { EvidenceWorkspacePage } from './pages/EvidenceWorkspacePage'
 import { HumanConfirmationPage } from './pages/HumanConfirmationPage'
 import { JdInputPage } from './pages/JdInputPage'
 import { ResumeReviewPage } from './pages/ResumeReviewPage'
@@ -19,6 +20,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<ResumeImportPage />} />
             <Route path="/vault" element={<CareerVaultPage />} />
+            <Route path="/evidence" element={<EvidenceWorkspacePage />} />
             <Route path="/jd" element={<JdInputPage />} />
             <Route path="/match" element={<EvidenceMatchPage />} />
             <Route path="/resume" element={<ResumeReviewPage />} />

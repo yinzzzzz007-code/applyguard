@@ -1,9 +1,17 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import type { DemoScenario } from '../api/types'
 import { useDemo } from '../context/DemoContext'
 import { zhText } from '../i18n'
-import { STEP_META, STEP_ORDER, stepFromPath, stepIndex } from '../flow'
+import {
+  STEP_META,
+  STEP_ORDER,
+  loadMaxStep,
+  rememberMaxStep,
+  stepFromPath,
+  stepIndex,
+  type FlowStep,
+} from '../flow'
 
 const SCENARIOS: { id: DemoScenario; label: string; hint: string }[] = [
   { id: 'live', label: '正常·在线', hint: '调用运行中的后端，默认离线规则解析' },
@@ -20,10 +28,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { scenario, setScenario, step, setStep, dataSourceLabel, workflow } = useDemo()
   const location = useLocation()
   const navigate = useNavigate()
+  const [maxStep, setMaxStep] = useState<FlowStep>(() => loadMaxStep())
   const current = stepIndex(step)
+  const unlocked = Math.max(current, stepIndex(maxStep), stepIndex('vault'))
 
   useEffect(() => {
-    setStep(stepFromPath(location.pathname))
+    const fromPath = stepFromPath(location.pathname)
+    if (fromPath) {
+      setStep(fromPath)
+      setMaxStep(rememberMaxStep(fromPath))
+    }
+    // Keep scroll at top when entering a wizard step (not when only query changes)
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
   }, [location.pathname, setStep])
 
   return (
@@ -62,18 +78,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ))}
           </div>
         </div>
-        <NavLink to="/history" className="btn secondary">申请历史</NavLink>
+        <div className="topbar-actions">
+          <NavLink to="/evidence" className="btn secondary">
+            证据工作区
+          </NavLink>
+          <NavLink to="/history" className="btn secondary">
+            申请历史
+          </NavLink>
+        </div>
       </header>
 
       <nav className="step-nav" aria-label="流程步骤">
         <ol>
           {STEP_ORDER.map((key, idx) => {
             const meta = STEP_META[key]
-            const reachable = idx <= Math.max(current, stepIndex('vault'))
+            const reachable = idx <= unlocked
+            const isCurrent = stepFromPath(location.pathname) === key
             return (
-              <li key={key} className={idx === current ? 'current' : reachable ? 'done' : ''}>
+              <li key={key} className={isCurrent ? 'current' : reachable ? 'done' : ''}>
                 {reachable ? (
-                  <NavLink to={meta.path}>{meta.label}</NavLink>
+                  <NavLink to={meta.path} end={meta.path === '/'}>
+                    {meta.label}
+                  </NavLink>
                 ) : (
                   <span>{meta.label}</span>
                 )}

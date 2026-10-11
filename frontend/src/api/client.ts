@@ -1,8 +1,16 @@
 import type {
   ApiResult,
+  AwardEvidenceFields,
   CareerVaultSeed,
+  ClaimEvidenceCheck,
   DemoScenario,
   EditableResumeForm,
+  EvidenceLink,
+  EvidenceRecord,
+  EvidenceSearchMatch,
+  EvidenceSourceFile,
+  EvidenceWorkspace,
+  ResumeMatchReport,
   ResumeParseResult,
   WorkflowResponse,
 } from './types'
@@ -67,9 +75,94 @@ export interface ApiClient {
   saveResumeDraft(form: EditableResumeForm): Promise<ApiResult<{ saved: boolean; saved_at?: string; notice?: string }>>
   runWorkflow(
     jdText: string,
-    options?: { parseMode?: WorkflowParseMode },
+    options?: { parseMode?: WorkflowParseMode; resumeDraft?: EditableResumeForm | null },
   ): Promise<ApiResult<WorkflowResponse>>
+  createEvidenceWorkspace(name: string): Promise<ApiResult<EvidenceWorkspace>>
+  listEvidenceWorkspaces(): Promise<ApiResult<EvidenceWorkspace[]>>
+  importEvidenceFiles(
+    workspaceId: string,
+    files: Array<{ relative_path: string; content_base64: string; force_reparse?: boolean }>,
+  ): Promise<ApiResult<{ workspace_id: string; files: EvidenceSourceFile[] }>>
+  reparseEvidenceFile(fileId: string): Promise<ApiResult<EvidenceSourceFile>>
+  listEvidenceFiles(workspaceId: string): Promise<ApiResult<EvidenceSourceFile[]>>
+  listWorkspaceEvidence(workspaceId: string): Promise<ApiResult<EvidenceRecord[]>>
+  getEvidenceFile(fileId: string): Promise<ApiResult<EvidenceSourceFile>>
+  evidencePreviewUrl(fileId: string): string
+  searchEvidence(q: string, workspaceId?: string): Promise<ApiResult<EvidenceSearchMatch[]>>
+  getEvidence(evidenceId: string): Promise<ApiResult<EvidenceRecord>>
+  reviewEvidence(
+    evidenceId: string,
+    body: { normalized_fields: AwardEvidenceFields; review_state?: string; span_ids?: string[] },
+  ): Promise<ApiResult<EvidenceRecord>>
+  createEvidenceLink(body: {
+    target_type: string
+    target_id: string
+    evidence_id: string
+    link_state?: 'ACTIVE' | 'REJECTED' | string
+  }): Promise<ApiResult<EvidenceLink>>
+  removeEvidenceLink(body: {
+    link_id?: string
+    target_type?: string
+    target_id?: string
+    evidence_id?: string
+  }): Promise<ApiResult<{ deleted: boolean; removed?: number }>>
+  listEvidenceLinks(params: {
+    target_type?: string
+    target_id?: string
+    evidence_id?: string
+  }): Promise<ApiResult<EvidenceLink[]>>
+  checkClaimEvidence(claimText: string, evidenceId: string): Promise<ApiResult<ClaimEvidenceCheck>>
+  matchResumeEvidence(
+    workspaceId: string,
+    body: {
+      awards?: Array<{
+        award_id?: string
+        id?: string
+        name: string
+        issuer?: string
+        date?: string
+        description?: string
+      }>
+      internships?: Array<{
+        id?: string
+        experience_id?: string
+        organization?: string
+        title?: string
+        role?: string
+        description?: string
+        start?: string
+        end?: string
+      }>
+      projects?: Array<{
+        id?: string
+        experience_id?: string
+        organization?: string
+        title?: string
+        role?: string
+        description?: string
+        start?: string
+        end?: string
+      }>
+      claims?: Array<{ claim_id?: string; id?: string; text: string }>
+    },
+  ): Promise<ApiResult<ResumeMatchReport>>
+  deleteEvidenceWorkspace(workspaceId: string): Promise<ApiResult<{ deleted: boolean; notice?: string }>>
 }
+
+async function fileToBase64(file: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const raw = String(reader.result ?? '')
+      const comma = raw.indexOf(',')
+      resolve(comma >= 0 ? raw.slice(comma + 1) : raw)
+    }
+    reader.onerror = () => reject(reader.error ?? new Error('read failed'))
+    reader.readAsDataURL(file)
+  })
+}
+
+export { fileToBase64 }
 
 export class ApplyGuardApiClient implements ApiClient {
   async getHealth(): Promise<ApiResult<{ status: string; service: string; version: string }>> {
@@ -177,10 +270,15 @@ export class ApplyGuardApiClient implements ApiClient {
 
   async runWorkflow(
     jdText: string,
-    options?: { parseMode?: WorkflowParseMode },
+    options?: { parseMode?: WorkflowParseMode; resumeDraft?: EditableResumeForm | null },
   ): Promise<ApiResult<WorkflowResponse>> {
     const scenario = activeScenario
     const parseMode: WorkflowParseMode = options?.parseMode ?? 'offline'
+    let resumeDraft = options?.resumeDraft ?? null
+    if (!resumeDraft) {
+      const draftRes = await this.getResumeDraft()
+      resumeDraft = draftRes.data ?? null
+    }
 
     if (scenario === 'error') {
       return {
@@ -254,10 +352,11 @@ export class ApplyGuardApiClient implements ApiClient {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          candidate_id: DEFAULT_CANDIDATE,
+          candidate_id: resumeDraft?.candidateId || DEFAULT_CANDIDATE,
           jd_text: trimmed,
           parse_mode: parseMode,
           application_id: 'app_demo_001',
+          resume_draft: resumeDraft ?? undefined,
         }),
       })
       const body = await readJson(res)
@@ -265,6 +364,285 @@ export class ApplyGuardApiClient implements ApiClient {
         return { error: toApiError(body, res.status) }
       }
       return { data: body as WorkflowResponse }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async createEvidenceWorkspace(name: string): Promise<ApiResult<EvidenceWorkspace>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/evidence/workspaces`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      })
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: body as EvidenceWorkspace }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async listEvidenceWorkspaces(): Promise<ApiResult<EvidenceWorkspace[]>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/evidence/workspaces`)
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      const list = (body as { workspaces?: EvidenceWorkspace[] }).workspaces ?? []
+      return list.length ? { data: list } : { empty: true, data: list }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async importEvidenceFiles(
+    workspaceId: string,
+    files: Array<{ relative_path: string; content_base64: string; force_reparse?: boolean }>,
+  ): Promise<ApiResult<{ workspace_id: string; files: EvidenceSourceFile[] }>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/evidence/workspaces/${workspaceId}/files`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files }),
+      })
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: body as { workspace_id: string; files: EvidenceSourceFile[] } }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async reparseEvidenceFile(fileId: string): Promise<ApiResult<EvidenceSourceFile>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/evidence/files/${fileId}/reparse`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: body as EvidenceSourceFile }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async listEvidenceFiles(workspaceId: string): Promise<ApiResult<EvidenceSourceFile[]>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/evidence/workspaces/${workspaceId}/files`)
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: (body as { files?: EvidenceSourceFile[] }).files ?? [] }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async listWorkspaceEvidence(workspaceId: string): Promise<ApiResult<EvidenceRecord[]>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/evidence/workspaces/${workspaceId}/evidence`)
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: (body as { evidence?: EvidenceRecord[] }).evidence ?? [] }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async getEvidenceFile(fileId: string): Promise<ApiResult<EvidenceSourceFile>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/evidence/files/${fileId}`)
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: body as EvidenceSourceFile }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  evidencePreviewUrl(fileId: string): string {
+    return `${apiBase()}/api/v1/evidence/files/${fileId}/preview`
+  }
+
+  async searchEvidence(q: string, workspaceId?: string): Promise<ApiResult<EvidenceSearchMatch[]>> {
+    try {
+      const params = new URLSearchParams({ q })
+      if (workspaceId) params.set('workspace_id', workspaceId)
+      const res = await fetch(`${apiBase()}/api/v1/evidence/search?${params}`)
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: (body as { matches?: EvidenceSearchMatch[] }).matches ?? [] }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async getEvidence(evidenceId: string): Promise<ApiResult<EvidenceRecord>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/evidence/${evidenceId}`)
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: body as EvidenceRecord }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async reviewEvidence(
+    evidenceId: string,
+    body: { normalized_fields: AwardEvidenceFields; review_state?: string; span_ids?: string[] },
+  ): Promise<ApiResult<EvidenceRecord>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/evidence/${evidenceId}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const payload = await readJson(res)
+      if (!res.ok) return { error: toApiError(payload, res.status) }
+      return { data: payload as EvidenceRecord }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async createEvidenceLink(body: {
+    target_type: string
+    target_id: string
+    evidence_id: string
+    link_state?: 'ACTIVE' | 'REJECTED' | string
+  }): Promise<ApiResult<EvidenceLink>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/evidence/links`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const payload = await readJson(res)
+      if (!res.ok) return { error: toApiError(payload, res.status) }
+      return { data: payload as EvidenceLink }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async removeEvidenceLink(body: {
+    link_id?: string
+    target_type?: string
+    target_id?: string
+    evidence_id?: string
+  }): Promise<ApiResult<{ deleted: boolean; removed?: number }>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/evidence/links/remove`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const payload = await readJson(res)
+      if (!res.ok) return { error: toApiError(payload, res.status) }
+      return { data: payload as { deleted: boolean; removed?: number } }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async listEvidenceLinks(params: {
+    target_type?: string
+    target_id?: string
+    evidence_id?: string
+  }): Promise<ApiResult<EvidenceLink[]>> {
+    try {
+      const qs = new URLSearchParams()
+      if (params.target_type) qs.set('target_type', params.target_type)
+      if (params.target_id) qs.set('target_id', params.target_id)
+      if (params.evidence_id) qs.set('evidence_id', params.evidence_id)
+      const res = await fetch(`${apiBase()}/api/v1/evidence/links?${qs}`)
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: (body as { links?: EvidenceLink[] }).links ?? [] }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async checkClaimEvidence(
+    claimText: string,
+    evidenceId: string,
+  ): Promise<ApiResult<ClaimEvidenceCheck>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/evidence/check-claim`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ claim_text: claimText, evidence_id: evidenceId }),
+      })
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: body as ClaimEvidenceCheck }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async deleteEvidenceWorkspace(
+    workspaceId: string,
+  ): Promise<ApiResult<{ deleted: boolean; notice?: string }>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/evidence/workspaces/${workspaceId}`, {
+        method: 'DELETE',
+      })
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: body as { deleted: boolean; notice?: string } }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async matchResumeEvidence(
+    workspaceId: string,
+    body: {
+      awards?: Array<{
+        award_id?: string
+        id?: string
+        name: string
+        issuer?: string
+        date?: string
+        description?: string
+      }>
+      internships?: Array<{
+        id?: string
+        experience_id?: string
+        organization?: string
+        title?: string
+        role?: string
+        description?: string
+        start?: string
+        end?: string
+      }>
+      projects?: Array<{
+        id?: string
+        experience_id?: string
+        organization?: string
+        title?: string
+        role?: string
+        description?: string
+        start?: string
+        end?: string
+      }>
+      claims?: Array<{ claim_id?: string; id?: string; text: string }>
+    },
+  ): Promise<ApiResult<ResumeMatchReport>> {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/evidence/workspaces/${workspaceId}/match-resume`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const payload = await readJson(res)
+      if (!res.ok) return { error: toApiError(payload, res.status) }
+      return { data: payload as ResumeMatchReport }
     } catch {
       return { error: toApiError(null, 0) }
     }

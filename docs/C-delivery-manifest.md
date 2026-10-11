@@ -36,7 +36,7 @@
 本机实际验证命令：
 
 ```sh
-PYTHONPATH=/private/tmp/applyguard-pydeps /Users/shaqimahehuluobo/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -B -m unittest discover -s tests -q
+python -B -m unittest discover -s tests -q
 ```
 
 其他环境用 Python 3.11+ 安装 `requirements.txt` 后执行 README 的标准命令，不依赖此机器路径。测试里的本机 HTTP 服务器使用临时端口；模型调用全部离线或模拟。

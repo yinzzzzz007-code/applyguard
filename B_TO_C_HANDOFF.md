@@ -39,4 +39,4 @@ The mock endpoint runs B's Vault, matcher, and selector. It deliberately reads `
 
 ## Authorized Plan-Then-Execute option
 
-The team reports author permission to copy `RichardHGL/CHI2025_Plan-then-Execute_LLMAgent`. Its checked-out reference is outside this repository at `E:\软件工程\upstream-references\Plan-Then-Execute`. The reusable `Plan` / `Step` schema and Planner/Executor code depend on LangChain and Flask, so B deliberately does not vendor it into the standard-library Career Vault, Matcher, or Selector. C/D may reuse it for the Plan → Human Review → Execute path after recording the permission and exact upstream commit with their implementation.
+The team reports author permission to copy `RichardHGL/CHI2025_Plan-then-Execute_LLMAgent`. Its checked-out reference is outside this repository. The reusable `Plan` / `Step` schema and Planner/Executor code depend on LangChain and Flask, so B deliberately does not vendor it into the standard-library Career Vault, Matcher, or Selector. C/D may reuse it for the Plan → Human Review → Execute path after recording the permission and exact upstream commit with their implementation.

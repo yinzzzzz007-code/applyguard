@@ -1,6 +1,6 @@
 # ApplyGuard 本地证据工作区技术设计
 
-> 状态：设计稿，尚未实现。日期：2026-10-10。适用范围：课程项目在用户电脑上运行的 ApplyGuard。
+> 状态：已实现第一版原型（导入 / 核对 / 关联 / 版本失效）。日期：2026-10-11。适用范围：课程项目在用户电脑上运行的 ApplyGuard。
 
 ## 1. 目标与边界
 
@@ -10,11 +10,11 @@
 
 已确认的需求：所有资料和识别处理留在本机；第一版支持图片、PDF、`.doc`、`.docx`、`.md`。工作区只处理用户明确选中的目录，不扫描整台电脑，不向云端视觉模型发送文件。
 
-## 2. 现有程序与需要扩展的部分
+## 2. 原有基线与第一版实现
 
-当前 `backend/services/career_vault.py` 从 `data/career-vault.seed.json` 读取虚构经历，`evidence_sources` 已有 `evidence_id`、类型、描述和引用字段，Claim Validator 可以按证据编号检查关联。但它是只读演示数据：没有资料文件的导入、OCR、原件预览、文件版本记录和持久化的证据库。`frontend/src/pages/ClaimVerificationPage.tsx` 目前显示证据编号及描述，不能跳到原图或原文片段。奖项数据只有名称、颁发方、日期和描述，还没有与证据关联的字段。
+原有 `backend/services/career_vault.py` 从 `data/career-vault.seed.json` 读取虚构经历，`evidence_sources` 已有 `evidence_id`、类型、描述和引用字段，Claim Validator 可以按证据编号检查关联。第一版又增加了 `backend/services/evidence_workspace.py` 的本机 SQLite 索引和文件快照、`backend/services/evidence_parsers.py` 的多格式解析、`frontend/src/pages/EvidenceWorkspacePage.tsx` 的导入与核对界面，以及核验页的来源查看。简历草稿保存在本机，原有种子 Vault 仍是独立的演示基线。
 
-`contracts/experience.schema.json` 设置了 `additionalProperties: false`。第一版应在**独立的本地证据表及关联表**保存文件、定位和审核记录，沿用现有 `evidence_id`；不要直接向冻结的 Experience 对象随意添加字段。若之后要让证据关联进入正式 API 契约，由 A/B/C/D 共同确定新版本契约。
+`contracts/experience.schema.json` 设置了 `additionalProperties: false`。第一版已在**独立的本地证据表及关联表**保存文件、定位和审核记录，沿用现有 `evidence_id`，没有直接向冻结的 Experience 对象添加字段。若之后要让证据关联进入正式 API 契约，由 A/B/C/D 共同确定新版本契约。
 
 ## 3. 推荐架构
 
@@ -45,10 +45,10 @@ Career Vault / Claim Review：搜索候选证据 → 人工核对 → 回看原�
 | JPG/PNG/WebP 等图片 | 本地 OCR，保存识别行、置信度和坐标；用户可纠错 | 原图上的矩形区域 |
 | 文本型 PDF | 先提取原有文本；按块保留页码与坐标 | 页码、文字块和矩形区域 |
 | 扫描型 PDF | 无可用文字的页面渲染成图片后 OCR | 页码、OCR 行和矩形区域 |
-| `.doc` / `.docx` | 本地 LibreOffice 转为临时 PDF，保留原件；再按 PDF 流程解析 | 转换后 PDF 的页码与区域，同时标明“预览为转换件” |
+| `.doc` / `.docx` | `.doc` 用本地 LibreOffice 转成 PDF；`.docx` 优先读取正文、表格和文本框，必要时再识别内嵌图片或转换预览 | 原件与提取文字；转换预览的页码需单独标明 |
 | `.md` | 按文本读取，保留原始行号；不执行其中的 HTML/脚本 | 起止行号和原文 |
 
-图片 OCR 可选 PaddleOCR 的**本地推理**能力；安装模型文件后要验证断网状态也能导入和识别。PDF 文本提取及页面坐标可使用 PyMuPDF，只有文字缺失或不可用时才逐页 OCR。Word 的 `.doc` 和 `.docx` 用本机 LibreOffice 转换，转换失败则显示可纠正的导入错误，不假装已经完成索引。[PaddleOCR 文档](https://www.paddleocr.ai/main/en/version3.x/algorithm/PP-OCRv5/PP-OCRv5.html)；[PyMuPDF 文本提取](https://pymupdf.readthedocs.io/en/latest/recipes-text.html)与[OCR 说明](https://pymupdf.readthedocs.io/en/latest/recipes-ocr.html)；[LibreOffice 命令行转换](https://help.libreoffice.org/latest/en-US/text/shared/guide/start_parameters.html)。
+当前实现使用 `pypdf` 提取 PDF 文字及页码，扫描件与图片通过可选的本地 PaddleOCR 识别；没有安装 OCR 时明确提示失败或待人工处理。`.docx` 由 `python-docx` 与 OOXML 文本读取，`.doc` 需要本机 LibreOffice。未来若需要更精确的 PDF 文字坐标，可评估 PyMuPDF；它不是本版已安装的依赖。[PaddleOCR 文档](https://www.paddleocr.ai/main/en/version3.x/algorithm/PP-OCRv5/PP-OCRv5.html)；[PyMuPDF 文本提取](https://pymupdf.readthedocs.io/en/latest/recipes-text.html)；[LibreOffice 命令行转换](https://help.libreoffice.org/latest/en-US/text/shared/guide/start_parameters.html)。
 
 对于 Word 转换件，页码是转换结果的页码，可能与用户在其他软件中看到的分页不同。因此界面必须同时保留并提供原始 Word 文件，不把转换页码描述成原件的固定页码。
 

@@ -4,10 +4,14 @@ import { pathToFileURL } from "node:url";
 import { Presentation, PresentationFile } from "@oai/artifact-tool";
 
 const workspaceDir = path.resolve(process.cwd());
-const SKILL_DIR = "C:/Users/84032/.codex/plugins/cache/openai-primary-runtime/presentations/26.905.11957/skills/presentations";
+const SKILL_DIR = process.env.APPLYGUARD_PRESENTATIONS_SKILL_DIR;
 const TMP_DIR = path.join(workspaceDir, ".build", "presentation");
 const FINAL_PPTX = path.join(workspaceDir, "presentation", "applyguard-proposal-foundation-v1.1.1-final.pptx");
-const RUNTIME_PYTHON = "C:/Users/84032/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe";
+const RUNTIME_PYTHON = process.env.APPLYGUARD_PRESENTATIONS_PYTHON;
+
+if (!SKILL_DIR || !RUNTIME_PYTHON) {
+  throw new Error("Set APPLYGUARD_PRESENTATIONS_SKILL_DIR and APPLYGUARD_PRESENTATIONS_PYTHON to rebuild the optional slide deck.");
+}
 
 const {
   resolvePresentationFont,

@@ -14,6 +14,7 @@ from backend.services.evidence_matcher import EvidenceMatcher
 from backend.services.jd_parser import JDParser, JDParseError
 from backend.services.model_client import ModelClient
 from backend.services.prompts import JD_PARSE_PROMPT_VERSION
+from backend.services.resume_draft_vault import experiences_from_resume_draft
 from backend.services.resume_selector import ResumeSelector
 from backend.services.risk_engine import RiskEngine
 from backend.services.schema_validation import validate_contract
@@ -78,6 +79,17 @@ class SkillRouter:
             return result
 
         def load_vault():
+            # Use a local draft only when the request explicitly supplies it.
+            # Implicit disk reads would make fixture/API results depend on whoever
+            # last used this computer and could expose their private draft.
+            draft = request.get("resume_draft")
+            if isinstance(draft, dict):
+                items = experiences_from_resume_draft(draft)
+                if items:
+                    modes["career_vault"] = "LOCAL_RESUME_DRAFT"
+                    for item in items:
+                        validate_contract("experience", item)
+                    return items
             items = CareerVault.from_json(self.vault_path).list_experiences(candidate_id)
             if not items:
                 raise ValueError("Empty Career Vault")
@@ -152,12 +164,26 @@ class SkillRouter:
         trace.append({"step": "Human Confirmation", "status": "BLOCKED" if risk["action"] == "BLOCKED" else "PENDING"})
         record = audit("APPLICATION_DRAFT_BLOCKED" if risk["action"] == "BLOCKED" else "APPLICATION_DRAFT_PREPARED")
         trace.append({"step": "Audit Record", "status": "CREATED"})
+        claim_text = {
+            claim["claim_id"]: claim["text"]
+            for exp in experiences
+            for claim in exp.get("claims", [])
+        }
+        removed = [
+            {**row, "text": claim_text.get(row["claim_id"], row.get("text") or "")}
+            for row in selection.removed_claims
+        ]
+        notice = (
+            "已使用本机经历库草稿作为陈述来源；ATS 映射仍为模拟夹具。"
+            if modes.get("career_vault") == "LOCAL_RESUME_DRAFT"
+            else "C results are computed; ATS mapping is a simulator fixture and audit storage is in-memory."
+        )
         return {"trace_id": trace_id, "application_id": application_id, "candidate_id": candidate_id,
                 "execution_mode": "DYNAMIC_MODEL" if parser_mode.startswith("MODEL") else "DETERMINISTIC_FALLBACK",
-                "mock_notice": "C results are computed; ATS mapping is a simulator fixture and audit storage is in-memory.",
+                "mock_notice": notice,
                 "workflow_status": "BLOCKED" if risk["action"] == "BLOCKED" else "AWAITING_HUMAN_CONFIRMATION",
                 "parsed_jd": parsed, "evidence_match": matched, "resume_claims": selection.claims,
-                "resume_selection": {"mode": "DETERMINISTIC_EVIDENCE_CONSTRAINED", "removed_claims": selection.removed_claims,
+                "resume_selection": {"mode": "DETERMINISTIC_EVIDENCE_CONSTRAINED", "removed_claims": removed,
                                      "max_claims": 3, "max_characters": 420},
                 "claim_verification": verified, "ats_form_mapping": mapping, "risk_result": risk,
                 "field_controls": risk_engine.field_controls(mapping, verified),

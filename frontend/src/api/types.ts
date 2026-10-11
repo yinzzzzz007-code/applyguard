@@ -370,3 +370,158 @@ export interface LocalFieldDecision {
   confirmed: boolean
   acknowledgedBlocked: boolean
 }
+
+/** Local evidence workspace (file snapshots + human review). */
+export type EvidenceFileState =
+  | 'PENDING'
+  | 'PARSING'
+  | 'NEEDS_REVIEW'
+  | 'INDEXED'
+  | 'FAILED'
+
+export type EvidenceReviewState = 'UNREVIEWED' | 'REVIEWED' | 'CONFLICT' | 'STALE'
+
+export type EvidenceLinkState = 'ACTIVE' | 'STALE' | 'CONFLICT'
+
+export interface EvidenceWorkspace {
+  workspace_id: string
+  name: string
+  created_at: string
+}
+
+export interface EvidenceSpan {
+  span_id: string
+  file_id: string
+  page?: number | null
+  bbox?: number[] | null
+  line_start?: number | null
+  line_end?: number | null
+  raw_text: string
+  extractor: string
+  extractor_version?: string
+}
+
+export interface EvidenceSourceFile {
+  file_id: string
+  workspace_id: string
+  relative_path: string
+  media_type: string
+  size: number
+  sha256: string
+  imported_at: string
+  version: number
+  state: EvidenceFileState | string
+  parse_error?: string | null
+  is_conversion?: boolean
+  conversion_note?: string | null
+  span_count?: number
+  spans?: EvidenceSpan[]
+  evidence_id?: string
+  evidence_review_state?: string | null
+  normalized_fields?: AwardEvidenceFields
+  ocr_fields?: AwardEvidenceFields
+  ocr_text_preview?: string
+  recognition_saved?: boolean
+  suggested_fields?: AwardEvidenceFields
+  deduplicated?: boolean
+  skipped_reparse?: boolean
+  reparsed?: boolean
+  stale_previous?: boolean
+  notice?: string
+  sidecar?: boolean
+}
+
+export interface AwardEvidenceFields {
+  recipient?: string
+  award_name?: string
+  grade?: string
+  issuer?: string
+  date?: string
+}
+
+export interface EvidenceRecord {
+  evidence_id: string
+  workspace_id: string
+  kind: string
+  normalized_fields: AwardEvidenceFields
+  ocr_fields?: AwardEvidenceFields
+  review_state: EvidenceReviewState | string
+  reviewed_at?: string | null
+  primary_file_id?: string | null
+  file?: EvidenceSourceFile | null
+  spans?: EvidenceSpan[]
+  links?: EvidenceLink[]
+}
+
+export interface EvidenceLink {
+  link_id: string
+  target_type: string
+  target_id: string
+  evidence_id: string
+  file_sha256: string
+  linked_at: string
+  link_state: EvidenceLinkState | string
+  review_state?: string
+  normalized_fields?: AwardEvidenceFields
+  relative_path?: string
+  version?: number
+  file_state?: string
+  current_sha?: string
+  primary_file_id?: string
+}
+
+export interface EvidenceSearchMatch {
+  span: EvidenceSpan
+  file_id: string
+  relative_path: string
+  sha256: string
+  version: number
+  media_type: string
+  workspace_id: string
+  evidence_id?: string | null
+  review_state?: string | null
+  normalized_fields?: AwardEvidenceFields
+  relevance_note?: string
+}
+
+export interface ClaimEvidenceCheck {
+  evidence_id: string
+  status: 'VERIFIED' | 'CONFLICT' | 'STALE' | 'NEEDS_REVIEW' | string
+  supported: boolean
+  reasons: string[]
+  evidence?: EvidenceRecord
+  notice?: string
+}
+
+/** Resume ↔ local evidence auto-match row */
+export type ResumeMatchStatus =
+  | 'LINKED'
+  | 'MATCHED'
+  | 'NEEDS_CONFIRM'
+  | 'CONFLICT'
+  | 'MISSING'
+  | 'REJECTED'
+  | 'UNCHECKED'
+
+export interface ResumeMatchItem {
+  target_type: 'award' | 'claim' | 'project' | 'internship' | 'experience' | string
+  target_id: string
+  kind?: string
+  label: string
+  status: ResumeMatchStatus | string
+  score: number
+  evidence_id?: string | null
+  relative_path?: string | null
+  review_state?: string | null
+  notes: string[]
+  action: string
+  gap_hint?: string
+  candidate_fields?: AwardEvidenceFields
+}
+
+export interface ResumeMatchReport {
+  workspace_id: string
+  summary: Record<string, number>
+  results: ResumeMatchItem[]
+  notice?: string
+}

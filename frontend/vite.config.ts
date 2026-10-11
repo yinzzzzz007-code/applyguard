@@ -10,6 +10,9 @@ export default defineConfig({
       '/api': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
+        // Evidence import can take a while (decode + parse); avoid premature proxy reset.
+        timeout: 180_000,
+        proxyTimeout: 180_000,
       },
       '/health': {
         target: 'http://127.0.0.1:8000',

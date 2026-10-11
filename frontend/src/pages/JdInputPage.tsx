@@ -7,7 +7,7 @@ import { ZH_EXEC, ZH_MAPPER, ZH_PARSER, ZH_WORKFLOW, zhLookup, zhText } from '..
 
 export function JdInputPage() {
   const navigate = useNavigate()
-  const { jdRawInput, setJdRawInput, setWorkflow, scenario, workflow } = useDemo()
+  const { jdRawInput, setJdRawInput, setWorkflow, scenario, workflow, resumeForm } = useDemo()
   const [status, setStatus] = useState<'idle' | 'loading' | 'empty' | 'error' | 'success'>(
     workflow ? 'success' : 'idle',
   )
@@ -45,7 +45,10 @@ export function JdInputPage() {
         setBackendHint(`${health.data?.service} ${health.data?.version} · ${health.data?.status}`)
       }
 
-      const res = await getApiClient().runWorkflow(jdRawInput, { parseMode })
+      const res = await getApiClient().runWorkflow(jdRawInput, {
+        parseMode,
+        resumeDraft: resumeForm,
+      })
       if (thisRequest !== requestId.current) return
       if (res.empty && res.error?.code === 'EMPTY_JD') {
         setErrorMsg(res.error.message)
@@ -67,7 +70,7 @@ export function JdInputPage() {
       setWorkflow(res.data)
       setStatus('success')
     },
-    [jdRawInput, scenario, setWorkflow],
+    [jdRawInput, resumeForm, scenario, setWorkflow],
   )
 
   return (

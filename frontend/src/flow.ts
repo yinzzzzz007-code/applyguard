@@ -32,13 +32,41 @@ export const STEP_ORDER: FlowStep[] = [
   'confirm',
 ]
 
+/** Routes outside the main wizard — must NOT collapse step highlight back to「简历识别」. */
+const NON_FLOW_PATHS = new Set(['/evidence', '/history'])
+
+const MAX_STEP_KEY = 'applyguard.flow.maxStep'
+
 export function stepIndex(step: FlowStep): number {
   return STEP_ORDER.indexOf(step)
 }
 
-export function stepFromPath(pathname: string): FlowStep {
-  const found = STEP_ORDER.find((s) => STEP_META[s].path === pathname)
-  return found ?? 'import'
+export function stepFromPath(pathname: string): FlowStep | null {
+  const clean = pathname.split('?')[0] || '/'
+  if (NON_FLOW_PATHS.has(clean)) return null
+  const found = STEP_ORDER.find((s) => STEP_META[s].path === clean)
+  return found ?? null
+}
+
+export function loadMaxStep(): FlowStep {
+  try {
+    const raw = sessionStorage.getItem(MAX_STEP_KEY) as FlowStep | null
+    if (raw && STEP_ORDER.includes(raw)) return raw
+  } catch {
+    /* ignore */
+  }
+  return 'vault'
+}
+
+export function rememberMaxStep(step: FlowStep): FlowStep {
+  const prev = loadMaxStep()
+  const next = stepIndex(step) > stepIndex(prev) ? step : prev
+  try {
+    sessionStorage.setItem(MAX_STEP_KEY, next)
+  } catch {
+    /* ignore */
+  }
+  return next
 }
 
 export type { DemoScenario }
