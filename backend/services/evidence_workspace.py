@@ -289,6 +289,39 @@ def _should_reuse_existing(state: str, span_count: int, force_reparse: bool) -> 
     return state in {"INDEXED", "NEEDS_REVIEW"}
 
 
+def _delete_source_file_row(conn: sqlite3.Connection, row: sqlite3.Row, ws_dir: Path) -> None:
+    """Remove one source_file row plus spans, evidence, links, and on-disk snapshots."""
+    file_id = row["file_id"]
+    span_ids = [
+        s["span_id"]
+        for s in conn.execute(
+            "SELECT span_id FROM source_span WHERE file_id = ?",
+            (file_id,),
+        ).fetchall()
+    ]
+    for span_id in span_ids:
+        conn.execute("DELETE FROM evidence_span WHERE span_id = ?", (span_id,))
+    conn.execute("DELETE FROM source_span WHERE file_id = ?", (file_id,))
+    ev_rows = conn.execute(
+        "SELECT evidence_id FROM evidence_record WHERE primary_file_id = ?",
+        (file_id,),
+    ).fetchall()
+    for ev in ev_rows:
+        conn.execute("DELETE FROM evidence_link WHERE evidence_id = ?", (ev["evidence_id"],))
+        conn.execute("DELETE FROM evidence_span WHERE evidence_id = ?", (ev["evidence_id"],))
+        conn.execute("DELETE FROM evidence_record WHERE evidence_id = ?", (ev["evidence_id"],))
+    conn.execute("DELETE FROM source_file WHERE file_id = ?", (file_id,))
+    for name in (row["storage_name"], row["preview_storage_name"]):
+        if not name:
+            continue
+        path = ws_dir / str(name)
+        if path.is_file():
+            try:
+                path.unlink()
+            except OSError:
+                pass
+
+
 def purge_hidden_path_files(workspace_id: str) -> int:
     """Remove previously imported files that live under `.`-prefixed path segments."""
     init_db()
@@ -302,38 +335,61 @@ def purge_hidden_path_files(workspace_id: str) -> int:
         for row in rows:
             if not is_hidden_path(str(row["relative_path"] or "")):
                 continue
-            file_id = row["file_id"]
-            # Drop dependent rows first (SQLite may not enforce FK cascade)
-            span_ids = [
-                s["span_id"]
-                for s in conn.execute(
-                    "SELECT span_id FROM source_span WHERE file_id = ?",
-                    (file_id,),
-                ).fetchall()
-            ]
-            for span_id in span_ids:
-                conn.execute("DELETE FROM evidence_span WHERE span_id = ?", (span_id,))
-            conn.execute("DELETE FROM source_span WHERE file_id = ?", (file_id,))
-            ev_rows = conn.execute(
-                "SELECT evidence_id FROM evidence_record WHERE primary_file_id = ?",
-                (file_id,),
-            ).fetchall()
-            for ev in ev_rows:
-                conn.execute("DELETE FROM evidence_link WHERE evidence_id = ?", (ev["evidence_id"],))
-                conn.execute("DELETE FROM evidence_span WHERE evidence_id = ?", (ev["evidence_id"],))
-                conn.execute("DELETE FROM evidence_record WHERE evidence_id = ?", (ev["evidence_id"],))
-            conn.execute("DELETE FROM source_file WHERE file_id = ?", (file_id,))
-            for name in (row["storage_name"], row["preview_storage_name"]):
-                if not name:
-                    continue
-                path = ws_dir / str(name)
-                if path.is_file():
-                    try:
-                        path.unlink()
-                    except OSError:
-                        pass
+            _delete_source_file_row(conn, row, ws_dir)
             removed += 1
     return removed
+
+
+def delete_files(file_ids: list[str], workspace_id: str | None = None) -> dict[str, Any]:
+    """Delete one or more materials. Removes every version sharing the same relative path."""
+    init_db()
+    if not isinstance(file_ids, list) or not file_ids:
+        raise ValueError("file_ids 必须为非空数组")
+    cleaned = [str(fid).strip() for fid in file_ids if str(fid).strip()]
+    if not cleaned:
+        raise ValueError("file_ids 必须为非空数组")
+
+    removed_ids: list[str] = []
+    removed_paths: list[str] = []
+    with _db() as conn:
+        targets: list[sqlite3.Row] = []
+        seen_keys: set[tuple[str, str]] = set()
+        for file_id in cleaned:
+            row = _file_row(conn, file_id)
+            if not row:
+                continue
+            ws = str(row["workspace_id"])
+            if workspace_id and ws != workspace_id:
+                raise ValueError(f"文件不属于当前工作区：{file_id}")
+            key = (ws, str(row["relative_path"] or ""))
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            siblings = conn.execute(
+                """
+                SELECT file_id, relative_path, storage_name, preview_storage_name, workspace_id
+                FROM source_file
+                WHERE workspace_id = ? AND relative_path = ?
+                """,
+                key,
+            ).fetchall()
+            targets.extend(siblings)
+
+        for row in targets:
+            ws_dir = _workspace_dir(str(row["workspace_id"]))
+            _delete_source_file_row(conn, row, ws_dir)
+            removed_ids.append(str(row["file_id"]))
+            path = str(row["relative_path"] or "")
+            if path and path not in removed_paths:
+                removed_paths.append(path)
+
+    return {
+        "deleted": True,
+        "removed": len(removed_ids),
+        "file_ids": removed_ids,
+        "relative_paths": removed_paths,
+        "notice": f"已删除 {len(removed_paths)} 份材料及其本机副本与关联。",
+    }
 
 
 def list_files(workspace_id: str) -> list[dict[str, Any]]:
@@ -647,16 +703,20 @@ def _import_one(
             )
         # Draft evidence record awaiting human review
         evidence_id = _new_id("evloc")
+        evidence_kind = _guess_evidence_kind(
+            "\n".join(s.raw_text for s in parsed.spans if s.raw_text)
+        )
         conn.execute(
             """
             INSERT INTO evidence_record(
               evidence_id, workspace_id, kind, normalized_fields_json, ocr_fields_json,
               review_state, reviewed_at, primary_file_id
-            ) VALUES (?, ?, 'AWARD_CERTIFICATE', ?, ?, 'UNREVIEWED', NULL, ?)
+            ) VALUES (?, ?, ?, ?, ?, 'UNREVIEWED', NULL, ?)
             """,
             (
                 evidence_id,
                 workspace_id,
+                evidence_kind,
                 json.dumps(parsed.suggested_fields, ensure_ascii=False),
                 json.dumps(parsed.suggested_fields, ensure_ascii=False),
                 file_id,
@@ -763,27 +823,36 @@ def reparse_file(file_id: str) -> dict[str, Any]:
                 ),
             )
         evidence_id = ev["evidence_id"] if ev else _new_id("evloc")
+        evidence_kind = _guess_evidence_kind(
+            "\n".join(s.raw_text for s in parsed.spans if s.raw_text)
+        )
         if ev:
             # Always refresh OCR fields; keep human-confirmed normalized fields if REVIEWED
             if str(ev["review_state"] or "") == "REVIEWED":
                 conn.execute(
                     """
                     UPDATE evidence_record
-                    SET ocr_fields_json = ?
+                    SET ocr_fields_json = ?, kind = ?
                     WHERE evidence_id = ?
                     """,
-                    (json.dumps(parsed.suggested_fields, ensure_ascii=False), evidence_id),
+                    (
+                        json.dumps(parsed.suggested_fields, ensure_ascii=False),
+                        evidence_kind,
+                        evidence_id,
+                    ),
                 )
             else:
                 conn.execute(
                     """
                     UPDATE evidence_record
-                    SET ocr_fields_json = ?, normalized_fields_json = ?, review_state = 'UNREVIEWED'
+                    SET ocr_fields_json = ?, normalized_fields_json = ?,
+                        review_state = 'UNREVIEWED', kind = ?
                     WHERE evidence_id = ?
                     """,
                     (
                         json.dumps(parsed.suggested_fields, ensure_ascii=False),
                         json.dumps(parsed.suggested_fields, ensure_ascii=False),
+                        evidence_kind,
                         evidence_id,
                     ),
                 )
@@ -793,11 +862,12 @@ def reparse_file(file_id: str) -> dict[str, Any]:
                 INSERT INTO evidence_record(
                   evidence_id, workspace_id, kind, normalized_fields_json, ocr_fields_json,
                   review_state, reviewed_at, primary_file_id
-                ) VALUES (?, ?, 'AWARD_CERTIFICATE', ?, ?, 'UNREVIEWED', NULL, ?)
+                ) VALUES (?, ?, ?, ?, ?, 'UNREVIEWED', NULL, ?)
                 """,
                 (
                     evidence_id,
                     workspace_id,
+                    evidence_kind,
                     json.dumps(parsed.suggested_fields, ensure_ascii=False),
                     json.dumps(parsed.suggested_fields, ensure_ascii=False),
                     file_id,
@@ -1263,6 +1333,13 @@ def _tokens(text: str) -> set[str]:
     return out
 
 
+def _contained_tokens(tokens: set[str], blob: str) -> set[str]:
+    """Tokens that appear inside blob even when OCR glued them to neighboring words."""
+    if not blob:
+        return set()
+    return {tok for tok in tokens if len(tok) >= 2 and tok in blob}
+
+
 def _award_blob(item: dict[str, Any]) -> str:
     return " ".join(
         str(item.get(k) or "")
@@ -1288,6 +1365,32 @@ def _experience_blob(item: dict[str, Any]) -> str:
     )
 
 
+def _experience_core(item: dict[str, Any]) -> str:
+    """Org/title/role/dates only — used so long job descriptions do not dilute matching."""
+    return " ".join(
+        str(item.get(k) or "")
+        for k in (
+            "organization",
+            "title",
+            "role",
+            "name",
+            "start",
+            "end",
+            "start_date",
+            "end_date",
+        )
+    )
+
+
+def _guess_evidence_kind(text: str) -> str:
+    blob = text or ""
+    if any(marker in blob for marker in ("实习证明", "实习期满", "安排至", "实习工作内容")):
+        return "INTERNSHIP_CERTIFICATE"
+    if any(marker in blob for marker in ("奖", "竞赛", "比赛", "奖学金")):
+        return "AWARD_CERTIFICATE"
+    return "DOCUMENT"
+
+
 def _collect_vault_items(body: dict[str, Any]) -> list[dict[str, Any]]:
     """Build match targets from 经历库：实习 / 项目 / 获奖."""
     items: list[dict[str, Any]] = []
@@ -1306,6 +1409,7 @@ def _collect_vault_items(body: dict[str, Any]) -> list[dict[str, Any]]:
                 "kind": kind_label,
                 "label": label,
                 "text": _experience_blob(raw),
+                "core_text": _experience_core(raw),
             }
         )
 
@@ -1334,6 +1438,7 @@ def _collect_vault_items(body: dict[str, Any]) -> list[dict[str, Any]]:
                 "kind": "获奖/竞赛",
                 "label": name,
                 "text": _award_blob(award),
+                "core_text": _award_blob({**award, "description": ""}),
             }
         )
     for claim in body.get("claims") or []:
@@ -1350,6 +1455,7 @@ def _collect_vault_items(body: dict[str, Any]) -> list[dict[str, Any]]:
                 "kind": "陈述",
                 "label": text[:40] + ("…" if len(text) > 40 else ""),
                 "text": text,
+                "core_text": text,
             }
         )
     return items
@@ -1360,6 +1466,9 @@ def _score_item_against_evidence(
     fields: dict[str, Any],
     corpus: str,
     review_state: str,
+    *,
+    core_text: str | None = None,
+    target_type: str | None = None,
 ) -> tuple[int, list[str], list[str]]:
     """Return (score 0-100, match notes, conflict reasons)."""
     from backend.services.evidence_parsers import _GRADE, conflict_between_claim_and_fields
@@ -1367,16 +1476,30 @@ def _score_item_against_evidence(
     notes: list[str] = []
     conflicts = conflict_between_claim_and_fields(item_text, fields)
 
-    item_tokens = _tokens(item_text)
     field_text = " ".join(str(v) for v in fields.values() if v)
-    evidence_tokens = _tokens(field_text + " " + corpus)
-    if not item_tokens:
+    evidence_blob = f"{field_text} {corpus}".strip()
+    evidence_tokens = _tokens(evidence_blob)
+    core_tokens = _tokens(core_text or "")
+    item_tokens = _tokens(item_text) or core_tokens
+    if not item_tokens and not core_tokens:
         return 0, notes, conflicts
 
-    overlap = item_tokens & evidence_tokens
-    score = min(70, int(100 * len(overlap) / max(3, len(item_tokens))))
-    if overlap:
-        notes.append("关键词重合：" + "、".join(sorted(overlap)[:6]))
+    # Prefer org/title/dates for experiences so long JD-style descriptions do not crush the score.
+    focus_tokens = core_tokens or item_tokens
+    exact = focus_tokens & evidence_tokens
+    contained = _contained_tokens(focus_tokens, evidence_blob)
+    hits = exact | contained
+    # Cap denominator: a few strong org hits should beat dozens of unmatched description tokens.
+    denom = max(2, min(6, len(focus_tokens)))
+    score = min(78, int(100 * len(hits) / denom)) if hits else 0
+    if hits:
+        notes.append("关键词命中：" + "、".join(sorted(hits)[:6]))
+
+    # Soft boost from remaining description tokens found as substrings (bounded).
+    extra_hits = _contained_tokens(item_tokens - focus_tokens, evidence_blob)
+    if extra_hits:
+        score = min(100, score + min(12, 2 * len(extra_hits)))
+        notes.append("描述相关：" + "、".join(sorted(extra_hits)[:4]))
 
     item_grade = _GRADE.search(item_text)
     ev_grade = str(fields.get("grade") or "")
@@ -1395,28 +1518,43 @@ def _score_item_against_evidence(
     if award_name and award_name in item_text:
         score += 15
         notes.append(f"奖项名命中：{award_name}")
-    # Soft name overlap: 程序设计 / 奖学金 etc.
-    for token in item_tokens:
-        if len(token) >= 2 and token in (field_text + corpus):
-            score += 3
-    score = min(100, score)
 
     issuer = str(fields.get("issuer") or "")
-    if issuer and any(tok in issuer for tok in item_tokens if len(tok) >= 2):
+    if issuer and any(tok in issuer for tok in focus_tokens if len(tok) >= 2):
         score += 8
         notes.append("颁发方相关")
 
-    evidence_blob = field_text + " " + corpus
-    # Type gate: 奖学金 vs 竞赛 must not cross-match on shared school tokens alone
-    for marker in ("奖学金", "竞赛", "比赛", "大赛"):
-        in_item = marker in item_text
-        in_ev = marker in evidence_blob
-        if in_item and in_ev:
-            score += 12
-            notes.append(f"类型一致：{marker}")
-        elif in_item and not in_ev:
-            score = max(0, score - 45)
-            notes.append(f"类型不符：简历含「{marker}」，证据未见")
+    # Type gate: awards vs internship proofs
+    if target_type == "internship":
+        if any(marker in evidence_blob for marker in ("实习证明", "实习", "安排至")):
+            score = min(100, score + 18)
+            notes.append("材料含实习证明用语")
+        elif any(marker in evidence_blob for marker in ("奖学金", "竞赛", "比赛", "大赛")) and "实习" not in evidence_blob:
+            score = max(0, score - 35)
+            notes.append("材料更像奖状，与实习经历类型不符")
+    elif target_type == "award":
+        for marker in ("奖学金", "竞赛", "比赛", "大赛"):
+            in_item = marker in item_text
+            in_ev = marker in evidence_blob
+            if in_item and in_ev:
+                score += 12
+                notes.append(f"类型一致：{marker}")
+            elif in_item and not in_ev:
+                score = max(0, score - 45)
+                notes.append(f"类型不符：简历含「{marker}」，证据未见")
+        if "实习证明" in evidence_blob and not any(m in item_text for m in ("实习",)):
+            score = max(0, score - 25)
+            notes.append("材料为实习证明，与获奖经历类型不符")
+    else:
+        for marker in ("奖学金", "竞赛", "比赛", "大赛"):
+            in_item = marker in item_text
+            in_ev = marker in evidence_blob
+            if in_item and in_ev:
+                score += 12
+                notes.append(f"类型一致：{marker}")
+            elif in_item and not in_ev:
+                score = max(0, score - 45)
+                notes.append(f"类型不符：简历含「{marker}」，证据未见")
 
     if review_state == "REVIEWED":
         score += 5
@@ -1548,7 +1686,12 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
             conflicts: list[str] = []
             if ev:
                 _, _, conflicts = _score_item_against_evidence(
-                    item["text"], ev["fields"], ev["corpus"], ev["review_state"]
+                    item["text"],
+                    ev["fields"],
+                    ev["corpus"],
+                    ev["review_state"],
+                    core_text=item.get("core_text"),
+                    target_type=item.get("target_type"),
                 )
             if conflicts:
                 status = "CONFLICT"
@@ -1576,7 +1719,12 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
             if ev["evidence_id"] in rejected_ids:
                 continue
             score, notes, conflicts = _score_item_against_evidence(
-                item["text"], ev["fields"], ev["corpus"], ev["review_state"]
+                item["text"],
+                ev["fields"],
+                ev["corpus"],
+                ev["review_state"],
+                core_text=item.get("core_text"),
+                target_type=item.get("target_type"),
             )
             ranked.append((score, ev, notes, conflicts))
         ranked.sort(key=lambda x: x[0], reverse=True)
@@ -1734,6 +1882,16 @@ def handle_evidence_post(path: str, body: dict[str, Any]) -> dict[str, Any]:
             raise ValueError("无效的 file_id")
         return reparse_file(file_id)
 
+    if pathname == "/api/v1/evidence/files/delete":
+        ids = body.get("file_ids") or []
+        if not isinstance(ids, list):
+            raise ValueError("file_ids 必须为数组")
+        workspace_id = body.get("workspace_id")
+        return delete_files(
+            [str(item) for item in ids],
+            workspace_id=str(workspace_id) if workspace_id else None,
+        )
+
     if pathname == "/api/v1/evidence/links":
         return create_link(body)
 
@@ -1758,6 +1916,11 @@ def handle_evidence_delete(path: str) -> dict[str, Any]:
     init_db()
     parsed = urlparse(path)
     pathname = parsed.path
+    if pathname.startswith("/api/v1/evidence/files/"):
+        file_id = pathname[len("/api/v1/evidence/files/") :]
+        if not file_id or "/" in file_id:
+            raise ValueError("Route not found")
+        return delete_files([file_id])
     if pathname.startswith("/api/v1/evidence/workspaces/"):
         workspace_id = pathname[len("/api/v1/evidence/workspaces/") :]
         if "/" in workspace_id or not workspace_id:

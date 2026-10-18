@@ -23,4 +23,9 @@ data/local/*
 *.sqlite3-shm
 *.sqlite3-wal
 *.json.tmp
+# Pip / local scratch (never push)
+pip-metadata-*/
+pip-unpack-*/
+tmp*/
+tmpk*/
 

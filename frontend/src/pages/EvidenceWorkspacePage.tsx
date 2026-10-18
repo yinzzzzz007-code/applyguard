@@ -63,7 +63,51 @@ function isHiddenPath(relativePath: string): boolean {
     .some((part) => part.startsWith('.') && part !== '.' && part !== '..')
 }
 
-type PendingFile = { relative_path: string; file: File; unsupported?: boolean }
+type PendingFile = {
+  relative_path: string
+  file: File
+  unsupported?: boolean
+  /** True when path came from a folder tree; keep path so re-scan can version. */
+  fromDirectory?: boolean
+}
+
+/**
+ * Flat file picks often share names (e.g. certificate.png). Give each a unique
+ * `added/…` path so new imports append instead of versioning over an existing row.
+ * Folder imports keep their tree paths (re-scan / versioning still applies).
+ */
+function allocateUniqueImportPaths(
+  items: PendingFile[],
+  existingPaths: Iterable<string>,
+): PendingFile[] {
+  const used = new Set(
+    [...existingPaths].map((path) => path.replace(/\\/g, '/').replace(/^\/+/, '')),
+  )
+  return items.map((item) => {
+    const raw = item.relative_path.replace(/\\/g, '/').replace(/^\/+/, '')
+    const fromFolder =
+      item.fromDirectory ||
+      Boolean(item.file.webkitRelativePath && item.file.webkitRelativePath.includes('/'))
+    if (fromFolder) {
+      used.add(raw)
+      return { ...item, relative_path: raw }
+    }
+    const name = raw.split('/').pop() || raw
+    let candidate = `added/${name}`
+    if (!used.has(candidate)) {
+      used.add(candidate)
+      return { ...item, relative_path: candidate }
+    }
+    const dot = name.lastIndexOf('.')
+    const stem = dot > 0 ? name.slice(0, dot) : name
+    const ext = dot > 0 ? name.slice(dot) : ''
+    let n = 2
+    while (used.has(`added/${stem}-${n}${ext}`)) n += 1
+    candidate = `added/${stem}-${n}${ext}`
+    used.add(candidate)
+    return { ...item, relative_path: candidate }
+  })
+}
 
 async function collectFromDirectoryHandle(
   handle: FileSystemDirectoryHandle,
@@ -82,7 +126,12 @@ async function collectFromDirectoryHandle(
     } else if (entry.kind === 'file') {
       if (isHiddenPath(rel)) continue
       const file = await (entry as FileSystemFileHandle).getFile()
-      out.push({ relative_path: rel.replace(/\\/g, '/'), file, unsupported: !isAllowed(rel) })
+      out.push({
+        relative_path: rel.replace(/\\/g, '/'),
+        file,
+        unsupported: !isAllowed(rel),
+        fromDirectory: true,
+      })
     }
   }
   return out
@@ -691,9 +740,9 @@ export function EvidenceWorkspacePage() {
         const handle = await w.showDirectoryPicker()
         const collected = await collectFromDirectoryHandle(handle)
         setPreviewContext('library')
-        setPending(collected)
+        setPending((prev) => [...prev, ...collected])
         setMessage(
-          `已枚举 ${collected.length} 个文件（已跳过 . 开头的隐藏文件夹），确认后开始导入。`,
+          `已追加 ${collected.length} 个文件夹文件（已跳过 . 开头的隐藏路径）；确认后导入，不会清空已有材料。`,
         )
         return
       } catch (error) {
@@ -708,18 +757,27 @@ export function EvidenceWorkspacePage() {
   const onMultiFiles = (list: FileList | null) => {
     if (!list?.length) return
     setPreviewContext('library')
-    const next: PendingFile[] = Array.from(list)
-      .map((file) => ({
-        relative_path: (file.webkitRelativePath || file.name).replace(/\\/g, '/'),
-        file,
-        unsupported: !isAllowed(file.name) && !isAllowed(file.webkitRelativePath || file.name),
-      }))
+    const mapped: PendingFile[] = Array.from(list)
+      .map((file) => {
+        const rel = (file.webkitRelativePath || file.name).replace(/\\/g, '/')
+        return {
+          relative_path: rel,
+          file,
+          unsupported: !isAllowed(file.name) && !isAllowed(rel),
+          fromDirectory: Boolean(file.webkitRelativePath && file.webkitRelativePath.includes('/')),
+        }
+      })
       .filter((item) => !isHiddenPath(item.relative_path))
-    const skippedHidden = list.length - next.length
-    setPending(next)
-    if (skippedHidden > 0) {
-      setMessage(`已跳过 ${skippedHidden} 个位于隐藏文件夹（.开头）下的文件。`)
-    }
+    const existing = [
+      ...files.map((file) => file.relative_path),
+      ...pending.map((item) => item.relative_path),
+    ]
+    const next = allocateUniqueImportPaths(mapped, existing)
+    const skippedHidden = list.length - mapped.length
+    setPending((prev) => [...prev, ...next])
+    const msgParts = [`已加入待导入 ${next.length} 个文件（追加到现有材料，不会清空列表）`]
+    if (skippedHidden > 0) msgParts.push(`已跳过 ${skippedHidden} 个隐藏路径文件`)
+    setMessage(msgParts.join('。') + '。')
   }
 
   const ensureWorkspace = async (): Promise<string | null> => {
@@ -740,7 +798,11 @@ export function EvidenceWorkspacePage() {
   const importPending = async () => {
     const ws = await ensureWorkspace()
     if (!ws) return
-    const batch = stats.supported
+    // Re-allocate against the latest indexed paths so concurrent list updates cannot collide.
+    const batch = allocateUniqueImportPaths(
+      stats.supported,
+      files.map((file) => file.relative_path),
+    )
     if (!batch.length) {
       setMessage('没有可导入的支持类型文件。')
       return
@@ -1251,12 +1313,23 @@ export function EvidenceWorkspacePage() {
     const ws = workspaceId || (await ensureWorkspace())
     if (!ws) return
     setBusy(`正在为「${row.label}」补充证据…`)
-    const payload = []
+    const mapped: PendingFile[] = []
     for (const file of Array.from(list)) {
       if (file.size > 6 * 1024 * 1024) continue
       const rel = (file.webkitRelativePath || file.name).replace(/\\/g, '/')
       if (isHiddenPath(rel) || !isAllowed(rel)) continue
-      payload.push({ relative_path: rel, content_base64: await fileToBase64(file) })
+      mapped.push({ relative_path: rel, file })
+    }
+    const unique = allocateUniqueImportPaths(
+      mapped,
+      files.map((file) => file.relative_path),
+    )
+    const payload = []
+    for (const item of unique) {
+      payload.push({
+        relative_path: item.relative_path,
+        content_base64: await fileToBase64(item.file),
+      })
     }
     if (!payload.length) {
       setBusy('')
@@ -1272,6 +1345,35 @@ export function EvidenceWorkspacePage() {
     await refreshLists(ws)
     setMessage(`已为「${row.label}」补充 ${res.data.files.filter((f) => !f.sidecar).length} 个文件，正在重新对照…`)
     await runMatchVault()
+  }
+
+  const deleteMaterialFiles = async (fileIds: string[]) => {
+    if (!fileIds.length) return
+    const ws = workspaceId
+    if (!ws) {
+      setMessage('请先创建或选择工作区。')
+      return
+    }
+    setBusy(fileIds.length > 1 ? `正在删除 ${fileIds.length} 份材料…` : '正在删除材料…')
+    setMessage('')
+    const res = await api.deleteEvidenceFiles(fileIds, ws)
+    setBusy('')
+    if (res.error || !res.data) {
+      setMessage(res.error?.message || '删除失败，请重试。')
+      return
+    }
+    const removed = new Set(res.data.file_ids || fileIds)
+    if (libraryFileId && removed.has(libraryFileId)) {
+      setLibraryFileId('')
+      setSelectedEvidenceId('')
+      setPreviewOpen(false)
+      setDetail(null)
+    }
+    await refreshLists(ws)
+    setMessage(res.data.notice || `已删除 ${res.data.removed ?? fileIds.length} 份材料。`)
+    if (vaultItemCount > 0) {
+      window.setTimeout(() => void runMatchVault(), 50)
+    }
   }
 
   const renderEvidenceEditor = (expanded = false) => (
@@ -1462,6 +1564,7 @@ export function EvidenceWorkspacePage() {
           const result = await api.searchEvidence(query, workspaceId)
           return { matches: result.data || [], error: result.error?.message }
         }}
+        onDeleteFiles={(ids) => deleteMaterialFiles(ids)}
         imports={<div className="btn-row">
           <button type="button" className="btn primary" disabled={!!busy} onClick={() => uploadInputRef.current?.click()}>＋ 添加文件</button>
           <button type="button" className="btn secondary" disabled={!!busy} onClick={() => void pickDirectory()}>导入文件夹</button>

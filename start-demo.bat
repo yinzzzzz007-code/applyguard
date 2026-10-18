@@ -28,6 +28,21 @@ if not exist "%ROOT%.venv\Scripts\python.exe" (
   )
 )
 
+REM Local OCR for scanned PDF / images (optional but needed for image-only materials)
+"%ROOT%.venv\Scripts\python.exe" -c "import paddleocr" >nul 2>&1
+if errorlevel 1 (
+  echo [ApplyGuard] Installing local OCR ^(paddlepaddle + paddleocr^). First time may take several minutes...
+  "%ROOT%.venv\Scripts\python.exe" -m pip install paddlepaddle paddleocr
+  if errorlevel 1 (
+    echo [ApplyGuard] WARNING: OCR install failed. Demo still runs; scanned PDF/image recognition will stay unavailable until you install manually:
+    echo   "%ROOT%.venv\Scripts\python.exe" -m pip install paddlepaddle paddleocr
+  ) else (
+    echo [ApplyGuard] OCR packages installed.
+  )
+) else (
+  echo [ApplyGuard] Local OCR already available in .venv.
+)
+
 if not exist "%ROOT%frontend\node_modules\" (
   echo [ApplyGuard] frontend/node_modules missing. Running npm install...
   where npm >nul 2>&1
