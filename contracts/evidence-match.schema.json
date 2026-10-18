@@ -9,6 +9,15 @@
     "match_id": {"type": "string", "pattern": "^match_[a-zA-Z0-9_]+$"},
     "jd_id": {"type": "string"},
     "candidate_id": {"type": "string"},
+    "sag_auxiliary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "source_id"],
+      "properties": {
+        "mode": {"type": "string", "enum": ["shadow", "rerank"]},
+        "source_id": {"type": "string", "minLength": 1}
+      }
+    },
     "uncovered_requirements": {
       "type": "array",
       "items": {
@@ -40,6 +49,20 @@
           "evidence_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
           "missing_evidence": {"type": "array", "items": {"type": "string"}},
           "ready_for_selection": {"type": "boolean"},
+          "sag_support": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["evidence_id", "source_id", "chunk_id", "retrieval_score"],
+              "properties": {
+                "evidence_id": {"type": "string"},
+                "source_id": {"type": "string"},
+                "chunk_id": {"type": "string"},
+                "retrieval_score": {"type": "number"}
+              }
+            }
+          },
           "score_breakdown": {
             "type": "object",
             "additionalProperties": false,
@@ -51,7 +74,8 @@
               "confidence_score": {"type": "number", "minimum": 0, "maximum": 1},
               "metric_bonus": {"type": "number", "minimum": 0, "maximum": 1},
               "conflict_penalty": {"type": "number", "minimum": 0, "maximum": 1},
-              "missing_evidence_penalty": {"type": "number", "minimum": 0, "maximum": 1}
+              "missing_evidence_penalty": {"type": "number", "minimum": 0, "maximum": 1},
+              "sag_bonus": {"type": "number", "minimum": 0, "maximum": 0.06}
             }
           }
         }

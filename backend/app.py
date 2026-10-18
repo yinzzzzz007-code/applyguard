@@ -13,6 +13,7 @@ from typing import Any
 
 from backend.services.career_vault import CareerVault
 from backend.services.evidence_matcher import EvidenceMatcher
+from backend.services.sag_auxiliary import augment_match_with_sag
 from backend.services.evidence_workspace import (
     handle_evidence_delete,
     handle_evidence_get,
@@ -112,6 +113,7 @@ def build_mock_workflow(request: dict[str, Any]) -> dict[str, Any]:
         career_vault = CareerVault.from_json(CAREER_VAULT_PATH)
         experiences = career_vault.list_experiences(candidate_id)
     evidence_match = EvidenceMatcher().match(parsed_jd, experiences)
+    evidence_match = augment_match_with_sag(parsed_jd, experiences, evidence_match)
     selection = ResumeSelector().select(evidence_match, experiences, application_id, max_claims=1)
     resume_claims = selection.claims
     verification_results = _load_json("claim-verification.example.json")["results"]
@@ -151,6 +153,9 @@ def build_mock_workflow(request: dict[str, Any]) -> dict[str, Any]:
         if vault_mode == "LOCAL_RESUME_DRAFT"
         else "Career Vault, Evidence Matcher, and Resume Selector use deterministic B baseline logic. JD Parser remains a fixed parsed-jd.example.json fixture; the submitted JD is not dynamically parsed."
     )
+
+    if "sag_auxiliary" in evidence_match:
+        notice += f" SAG auxiliary mode: {evidence_match['sag_auxiliary']['mode']}; retrieval does not verify claims."
 
     return {
         "trace_id": trace_id,

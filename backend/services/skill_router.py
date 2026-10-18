@@ -11,6 +11,7 @@ from typing import Any, Callable
 from backend.services.career_vault import CareerVault
 from backend.services.claim_validator import ClaimValidator
 from backend.services.evidence_matcher import EvidenceMatcher
+from backend.services.sag_auxiliary import augment_match_with_sag
 from backend.services.jd_parser import JDParser, JDParseError
 from backend.services.model_client import ModelClient
 from backend.services.prompts import JD_PARSE_PROMPT_VERSION
@@ -106,9 +107,12 @@ class SkillRouter:
 
         def match():
             result = EvidenceMatcher().match(parsed, experiences)
+            result = augment_match_with_sag(parsed, experiences, result)
             validate_contract("evidence-match", result)
             return result
         matched = execute("Evidence Matcher", match)
+        if "sag_auxiliary" in matched:
+            modes["evidence_matcher"] = f"DETERMINISTIC+SAG_{matched['sag_auxiliary']['mode'].upper()}"
 
         def select():
             result = self.selector.select(matched, experiences, application_id, max_claims=3)
