@@ -245,6 +245,81 @@ class EvidenceWorkspaceServiceTests(unittest.TestCase):
         self.assertNotEqual(row.get("evidence_id"), cand)
         self.assertEqual(row["status"], "MISSING")
 
+    def test_internship_certificate_matches_org_in_glued_ocr(self) -> None:
+        """Company names often sit mid-sentence with no separators after OCR."""
+        ws = self.ew.create_workspace("实习匹配")
+        ws_id = ws["workspace_id"]
+        text = (
+            "实习证明\n"
+            "兹有示例理工大学张三同学从2026年07月14日至2026年08月13日"
+            "由我单位安排至示例云网科技有限公司云网事业部（部门）实习，"
+            "实习工作内容为开源及其它开发。\n"
+            "示例人才服务有限公司\n"
+        )
+        md_name = "internship-proof.md"
+        imported = self.ew.import_files(
+            ws_id,
+            [
+                {
+                    "relative_path": md_name,
+                    "content_base64": base64.b64encode(text.encode("utf-8")).decode(),
+                }
+            ],
+        )
+        self.assertTrue(imported["files"][0].get("evidence_id"))
+        report = self.ew.match_resume(
+            ws_id,
+            {
+                "internships": [
+                    {
+                        "id": "intern_yx",
+                        "organization": "示例云网科技有限公司",
+                        "title": "云网事业部实习",
+                        "role": "",
+                        "start": "2026-07",
+                        "end": "2026-08",
+                        "description": "参与开源开发工作，结合 AI Agent 与 Python 构建复杂业务流水线。",
+                    }
+                ]
+            },
+        )
+        row = report["results"][0]
+        self.assertIn(row["status"], {"NEEDS_CONFIRM", "MATCHED"})
+        self.assertGreaterEqual(row["score"], 45)
+        self.assertEqual(row["evidence_id"], imported["files"][0]["evidence_id"])
+
+    def test_delete_files_keeps_siblings(self) -> None:
+        ws = self.ew.create_workspace("删除测试")
+        ws_id = ws["workspace_id"]
+        md = SAMPLES / "award-scholarship.md"
+        png = SAMPLES / "award-programming.png"
+        ocr = SAMPLES / "award-programming.png.ocr.json"
+        imported = self.ew.import_files(
+            ws_id,
+            [
+                {"relative_path": "keep/" + md.name, "content_base64": self._b64(md)},
+                {"relative_path": "drop/" + png.name, "content_base64": self._b64(png)},
+                {"relative_path": "drop/" + ocr.name, "content_base64": self._b64(ocr)},
+            ],
+        )
+        drop = next(f for f in imported["files"] if f.get("relative_path", "").startswith("drop/") and not f.get("sidecar"))
+        keep = next(f for f in imported["files"] if f.get("relative_path", "").startswith("keep/"))
+        deleted = self.ew.delete_files([drop["file_id"]], workspace_id=ws_id)
+        self.assertTrue(deleted["deleted"])
+        self.assertGreaterEqual(deleted["removed"], 1)
+        listed = self.ew.list_files(ws_id)
+        paths = {f["relative_path"] for f in listed}
+        self.assertIn(keep["relative_path"], paths)
+        self.assertNotIn(drop["relative_path"], paths)
+        # Second distinct path with same basename still appends
+        again = self.ew.import_files(
+            ws_id,
+            [{"relative_path": "added/" + md.name, "content_base64": self._b64(md)}],
+        )
+        self.assertEqual(again["files"][0]["state"] in {"INDEXED", "NEEDS_REVIEW"}, True)
+        listed2 = self.ew.list_files(ws_id)
+        self.assertEqual(len(listed2), 2)
+
 
 class EvidenceApiTests(unittest.TestCase):
     @classmethod
@@ -304,6 +379,18 @@ class EvidenceApiTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIsInstance(preview, (bytes, bytearray))
         self.assertGreater(len(preview), 10)
+        status, deleted = self.request(
+            "POST",
+            "/api/v1/evidence/files/delete",
+            {"file_ids": [file_id], "workspace_id": ws_id},
+        )
+        self.assertEqual(status, 200)
+        assert isinstance(deleted, dict)
+        self.assertTrue(deleted.get("deleted"))
+        status, listing = self.request("GET", f"/api/v1/evidence/workspaces/{ws_id}/files")
+        self.assertEqual(status, 200)
+        assert isinstance(listing, dict)
+        self.assertEqual(listing.get("files") or [], [])
 
 
 if __name__ == "__main__":

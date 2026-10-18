@@ -147,6 +147,18 @@ export interface ApiClient {
     },
   ): Promise<ApiResult<ResumeMatchReport>>
   deleteEvidenceWorkspace(workspaceId: string): Promise<ApiResult<{ deleted: boolean; notice?: string }>>
+  deleteEvidenceFiles(
+    fileIds: string[],
+    workspaceId?: string,
+  ): Promise<
+    ApiResult<{
+      deleted: boolean
+      removed?: number
+      file_ids?: string[]
+      relative_paths?: string[]
+      notice?: string
+    }>
+  >
 }
 
 async function fileToBase64(file: Blob): Promise<string> {
@@ -595,6 +607,40 @@ export class ApplyGuardApiClient implements ApiClient {
       const body = await readJson(res)
       if (!res.ok) return { error: toApiError(body, res.status) }
       return { data: body as { deleted: boolean; notice?: string } }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async deleteEvidenceFiles(
+    fileIds: string[],
+    workspaceId?: string,
+  ): Promise<
+    ApiResult<{
+      deleted: boolean
+      removed?: number
+      file_ids?: string[]
+      relative_paths?: string[]
+      notice?: string
+    }>
+  > {
+    try {
+      const res = await fetch(`${apiBase()}/api/v1/evidence/files/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_ids: fileIds, workspace_id: workspaceId }),
+      })
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return {
+        data: body as {
+          deleted: boolean
+          removed?: number
+          file_ids?: string[]
+          relative_paths?: string[]
+          notice?: string
+        },
+      }
     } catch {
       return { error: toApiError(null, 0) }
     }
