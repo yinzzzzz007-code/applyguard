@@ -21,7 +21,8 @@ function copyToClipboard(text: string): Promise<void> {
   return navigator.clipboard.writeText(text)
 }
 
-function CopyRow({ label, value, allowed = true }: { label: string; value: string; allowed?: boolean }) {
+function CopyRow({ label, value: rawValue, allowed = true }: { label: string; value?: string; allowed?: boolean }) {
+  const value = typeof rawValue === 'string' ? rawValue : ''
   const [copied, setCopied] = useState(false)
   const { canProceedFromClaims, canSubmitAts, validateExport } = useDemo()
   const [error, setError] = useState('')
@@ -107,6 +108,10 @@ function buildCopyPack(
   lines.push('【应聘岗位】')
   lines.push(`岗位：${jd.title === 'UNKNOWN' ? '未知岗位' : jd.title}`)
   lines.push(`公司：${jd.company === 'UNKNOWN' ? '未知公司' : jd.company}`)
+  if (workflow.target_job) {
+    lines.push(`收藏岗位版本：${workflow.target_job.id} · v${workflow.target_job.version}`)
+    if (workflow.target_job.url) lines.push(`岗位来源：${workflow.target_job.url}`)
+  }
   lines.push('')
 
   lines.push('【拟填网申字段】')
@@ -202,6 +207,7 @@ export function HumanConfirmationPage() {
         </p>
         <p>{zhText(workflow.human_confirmation.reason)}</p>
         <p className="muted">允许操作：{allowed.map((a) => zhLookup(ZH_ACTION, a)).join('、')}</p>
+        {workflow.target_job && <p className="muted">关联收藏岗位版本：v{workflow.target_job.version} · 修改后需重新核验。</p>}
       </div>
 
       <div className="item-block copy-sheet">

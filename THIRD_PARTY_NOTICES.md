@@ -1,5 +1,9 @@
 # Third-party notices
 
+## AI Career Radar API interoperability
+
+ApplyGuard's opportunity library and loopback HTTP adapter interoperate with [`Haoyu-Gu/ai-career-radar`](https://github.com/Haoyu-Gu/ai-career-radar), inspected at commit `0ca459b3f6975d93a08cc5eea7adfca7e2a89b5c`. Only its public `GET /api/jobs` and `GET /api/jobs/{id}` response shapes are used. No upstream source code, UI assets, configuration, personal profile, model scoring weights, or runtime database is redistributed. No license file was present in that inspected revision. See `docs/career-radar-integration.md` for the independently implemented integration and its limits.
+
 ## Resume Matcher bullet selector
 
 `backend/services/third_party/resume_matcher_bullet_selector.py` retains the unmodified implementation from [`srbhr/Resume-Matcher`](https://github.com/srbhr/Resume-Matcher), upstream commit `9c05e423dfde44a5b4bb398d2dc7507194252ded`, path `apps/backend/app/services/bullet_selector.py`.

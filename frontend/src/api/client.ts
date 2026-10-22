@@ -87,7 +87,7 @@ export interface ApiClient {
   saveResumeDraft(form: EditableResumeForm): Promise<ApiResult<{ saved: boolean; saved_at?: string; notice?: string }>>
   runWorkflow(
     jdText: string,
-    options?: { parseMode?: WorkflowParseMode; resumeDraft?: EditableResumeForm | null },
+    options?: { parseMode?: WorkflowParseMode; resumeDraft?: EditableResumeForm | null; targetJob?: { id: string; content_hash: string } },
   ): Promise<ApiResult<WorkflowResponse>>
   createEvidenceWorkspace(name: string): Promise<ApiResult<EvidenceWorkspace>>
   listEvidenceWorkspaces(): Promise<ApiResult<EvidenceWorkspace[]>>
@@ -194,7 +194,7 @@ export class ApplyGuardApiClient implements ApiClient {
       const response = await apiFetch(`${apiBase()}/api/v1/workflow/reverify`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({candidate_id: workflow.candidate_id, application_id: workflow.application_id,
-          jd_text: workflow.parsed_jd.source_text, resume_draft: draft ?? undefined, claims}),
+          jd_text: workflow.parsed_jd.source_text, target_job: workflow.target_job, resume_draft: draft ?? undefined, claims}),
       })
       const body = await readJson(response)
       if (!response.ok) return { error: toApiError(body, response.status) }
@@ -307,7 +307,7 @@ export class ApplyGuardApiClient implements ApiClient {
 
   async runWorkflow(
     jdText: string,
-    options?: { parseMode?: WorkflowParseMode; resumeDraft?: EditableResumeForm | null },
+    options?: { parseMode?: WorkflowParseMode; resumeDraft?: EditableResumeForm | null; targetJob?: { id: string; content_hash: string } },
   ): Promise<ApiResult<WorkflowResponse>> {
     const scenario = activeScenario
     const parseMode: WorkflowParseMode = options?.parseMode ?? 'offline'
@@ -391,8 +391,9 @@ export class ApplyGuardApiClient implements ApiClient {
         body: JSON.stringify({
           candidate_id: resumeDraft?.candidateId || DEFAULT_CANDIDATE,
           jd_text: trimmed,
+          target_job: options?.targetJob,
           parse_mode: parseMode,
-          application_id: 'app_demo_001',
+          application_id: options?.targetJob ? `app_${crypto.randomUUID().replaceAll('-', '').slice(0, 16)}` : 'app_demo_001',
           resume_draft: resumeDraft ?? undefined,
         }),
       })

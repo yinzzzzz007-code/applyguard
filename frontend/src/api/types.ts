@@ -333,6 +333,7 @@ export interface AuditRecord {
 
 /** Full POST /api/v1/workflow/mock success body (offline / dynamic / fixture). */
 export interface WorkflowResponse {
+  target_job?: import('./jobs').JobTarget
   requires_reverification?: boolean
   evidence_sources?: VaultEvidence[]
   trace_id: string

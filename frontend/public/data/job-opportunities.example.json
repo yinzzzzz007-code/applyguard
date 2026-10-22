@@ -1,0 +1,25 @@
+{
+  "jobs": [
+    {
+      "source_namespace": "applyguard-fictional-example",
+      "external_id": "python-intern-001",
+      "title": "后端开发实习生（虚构示例）",
+      "company": "示例软件工作室（虚构）",
+      "location": "上海",
+      "status": "unknown",
+      "source_kind": "fictional_example",
+      "url": "",
+      "description": "岗位职责：使用 Python 编写接口服务，补充自动化测试，并使用 Git 进行版本协作。\n任职要求：有 Python 项目经验，了解 HTTP API。\n加分项：有数据处理项目经验。\n本记录仅用于课程演示，并非真实招聘岗位。"
+    },
+    {
+      "source_namespace": "applyguard-fictional-example",
+      "external_id": "multimodal-reference-001",
+      "title": "多模态研究实习生（参考快照）",
+      "company": "示例研究团队（虚构）",
+      "location": "北京",
+      "status": "reference",
+      "source_kind": "fictional_example",
+      "description": "岗位职责：使用 PyTorch 完成多模态模型评测。\n任职要求：有 Python 与模型评测项目经验。\n加分项：有论文研究经历。\n这是一条参考快照，仅用于验证数据隔离，不代表当前在招。"
+    }
+  ]
+}

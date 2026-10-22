@@ -26,6 +26,8 @@ def simulator_mapping(application_id: str, claims: list[dict[str, Any]]) -> dict
 
 
 def reverify_workflow(vault_path: Path, request: dict[str, Any]) -> dict[str, Any]:
+    from backend.services.job_radar import validate_target
+    validate_target(request)
     from backend.services.skill_router import validate_request_ids
     validate_request_ids(request)
     candidate = request['candidate_id']

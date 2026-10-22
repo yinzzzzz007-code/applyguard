@@ -124,8 +124,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     const invalidate = () => setWorkflow(null)
     const storage = (event: StorageEvent) => { if (event.key === 'applyguard.evidence.version') invalidate() }
     window.addEventListener('applyguard:evidence-changed', invalidate)
+    window.addEventListener('applyguard:jobs-changed', invalidate)
     window.addEventListener('storage', storage)
-    return () => { window.removeEventListener('applyguard:evidence-changed', invalidate); window.removeEventListener('storage', storage) }
+    return () => { window.removeEventListener('applyguard:evidence-changed', invalidate); window.removeEventListener('applyguard:jobs-changed', invalidate); window.removeEventListener('storage', storage) }
   }, [setWorkflow])
 
   const setScenario = useCallback(

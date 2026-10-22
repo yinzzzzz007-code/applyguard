@@ -26,6 +26,7 @@ from backend.services.resume_parser import parse_resume_pdf
 from backend.services.resume_selector import ResumeSelector
 from backend.services.skill_router import SkillRouter, WorkflowStopped, validate_request_ids
 from backend.services.model_client import HttpModelClient
+from backend.services import job_radar
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
@@ -81,6 +82,9 @@ def _error(code: str, message: str, trace_id: str, details: list[dict[str, Any]]
 
 def build_mock_workflow(request: dict[str, Any]) -> dict[str, Any]:
     """Build one deterministic end-to-end proposal response."""
+    target_job = job_radar.validate_target(request)
+    if target_job and request.get("parse_mode") not in ("offline", "dynamic"):
+        raise ValueError("关联岗位必须使用 offline 或 dynamic 解析，不允许演示 fixture 替代原文")
     trace_id = request.get("trace_id") or f"trace_{uuid.uuid4().hex[:12]}"
     candidate_id = request.get("candidate_id")
     jd_text = request.get("jd_text")
@@ -96,7 +100,13 @@ def build_mock_workflow(request: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("parse_mode must be fixture, dynamic or offline")
     if request.get("parse_mode") in ("dynamic", "offline") or (request.get("parse_mode") is None and os.getenv("APPLYGUARD_AI_API_KEY")):
         model = HttpModelClient() if request.get("parse_mode") != "offline" and os.getenv("APPLYGUARD_AI_API_KEY") else None
-        return SkillRouter(CAREER_VAULT_PATH, _load_json("form-mapping.example.json"), model=model).run({**request, "trace_id": trace_id})
+        response = SkillRouter(CAREER_VAULT_PATH, _load_json("form-mapping.example.json"), model=model).run({**request, "trace_id": trace_id})
+        if target_job:
+            response["target_job"] = target_job
+            # These labels are exact metadata already included in the checked source text.
+            response["parsed_jd"]["title"] = target_job["title"]
+            response["parsed_jd"]["company"] = target_job["company"]
+        return response
 
     application_id = request.get("application_id") or "app_demo_001"
     # JD Parser belongs to C. B deliberately uses this frozen parsed-JD fixture.
@@ -329,6 +339,23 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
                 },
             )
             return
+        if path_only == "/api/v1/jobs" or path_only.startswith("/api/v1/jobs/"):
+            try:
+                payload = job_radar.handle_get(self.path)
+            except job_radar.RadarUnavailable as exc:
+                self._send_json(HTTPStatus.SERVICE_UNAVAILABLE, _error("RADAR_UNAVAILABLE", str(exc), trace_id))
+                return
+            except ValueError as exc:
+                missing = str(exc) == "Route not found"
+                self._send_json(HTTPStatus.NOT_FOUND if missing else HTTPStatus.UNPROCESSABLE_ENTITY,
+                                _error("NOT_FOUND" if missing else "VALIDATION_ERROR", str(exc), trace_id))
+                return
+            except Exception:
+                logging.exception("Job library GET failed, trace_id=%s", trace_id)
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, _error("INTERNAL_ERROR", "Job library request failed", trace_id))
+                return
+            self._send_json(HTTPStatus.OK, payload)
+            return
         if path_only == "/api/v1/resume/draft":
             try:
                 form = load_resume_draft()
@@ -362,7 +389,7 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             return
 
         # Serve only known client routes; unknown paths retain the JSON 404 API contract.
-        spa_routes = {"/vault", "/evidence", "/jd", "/match", "/resume", "/claims", "/ats", "/confirm", "/history"}
+        spa_routes = {"/vault", "/evidence", "/jobs", "/jd", "/match", "/resume", "/claims", "/ats", "/confirm", "/history"}
         if path_only in spa_routes:
             self._send_spa_index()
             return
@@ -396,6 +423,8 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             max_bytes = 262144
         elif self.path.startswith("/api/v1/evidence"):
             max_bytes = 12_000_000  # single-file import batches; keep under proxy limits
+        elif self.path == "/api/v1/jobs" or self.path.startswith("/api/v1/jobs/"):
+            max_bytes = 2_000_000
         else:
             self._send_json(HTTPStatus.NOT_FOUND, _error("NOT_FOUND", "Route not found", trace_id))
             return
@@ -417,6 +446,8 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
                 response = save_resume_draft(request)
             elif self.path.startswith("/api/v1/evidence"):
                 response = handle_evidence_post(self.path, request)
+            elif self.path == "/api/v1/jobs" or self.path.startswith("/api/v1/jobs/"):
+                response = job_radar.handle_post(self.path, request)
             elif self.path == "/api/v1/workflow/reverify":
                 from backend.services.reverification import reverify_workflow
                 response = reverify_workflow(CAREER_VAULT_PATH, request)
@@ -427,6 +458,9 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             return
         except (UnicodeDecodeError, json.JSONDecodeError):
             self._send_json(HTTPStatus.BAD_REQUEST, _error("INVALID_JSON", "Request body is not valid JSON", trace_id))
+            return
+        except job_radar.RadarUnavailable as exc:
+            self._send_json(HTTPStatus.SERVICE_UNAVAILABLE, _error("RADAR_UNAVAILABLE", str(exc), trace_id))
             return
         except ValueError as exc:
             if str(exc) == "Route not found":

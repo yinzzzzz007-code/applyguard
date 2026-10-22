@@ -33,7 +33,7 @@ export const STEP_ORDER: FlowStep[] = [
 ]
 
 /** Routes outside the main wizard — must NOT collapse step highlight back to「简历识别」. */
-const NON_FLOW_PATHS = new Set(['/evidence', '/history'])
+const NON_FLOW_PATHS = new Set(['/evidence', '/history', '/jobs'])
 
 const MAX_STEP_KEY = 'applyguard.flow.maxStep'
 

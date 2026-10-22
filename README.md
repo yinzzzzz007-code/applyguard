@@ -11,6 +11,7 @@ ApplyGuard 是在本机运行的求职申请辅助原型：整理个人经历与
 | 简历识别、Career Vault | 导入 PDF 简历并编辑本机草稿；演示经历数据仍以虚构 JSON 为基线 |
 | 本地证据工作区 | 用户选择文件或文件夹，导入图片、PDF、`.doc`、`.docx`、Markdown；保存本机文件快照、哈希与来源位置，核对奖项字段并关联经历 |
 | JD Input | 岗位文本可走离线规则解析；配置 API Key 后可选择模型解析，失败时显示回退状态 |
+| Job Radar | 本机岗位收藏、JSON/JSONL 导入、可选连接 AI Career Radar、需求标签与证据缺口预检查，再进入原申请流程 |
 | Evidence Match / Resume Review | 查看要求与经历的匹配结果，审查拟使用的简历内容 |
 | Claim Verification | 查看证据编号、原件来源和核验状态；有冲突或过期的材料提示复核 |
 | ATS Simulator / Human Confirmation | 固定映射的本地模拟表单；用户检查并手动复制内容，最终投递由用户本人完成 |
@@ -80,6 +81,8 @@ npm run smoke
 ```
 
 以上命令默认不调用付费模型。模型质量评测需要单独配置 Key；不要把测试生成的个人资料或本机数据库提交到仓库。
+
+岗位雷达入口在顶部导航（`/jobs`）。外部 AI Career Radar 可独立运行在本机 8787 端口；ApplyGuard 通过只读 API 导入选中的完整 JD，不会发送个人简历或证据。未运行外部雷达时，仍可手动录入或导入页面提供的虚构岗位模板。配置、数据口径、API 和 D 接手步骤见 [岗位雷达交接文档](docs/career-radar-integration.md)。
 
 ## 项目结构
 
