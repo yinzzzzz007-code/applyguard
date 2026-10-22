@@ -55,3 +55,7 @@ D 可直接运行 `demo/run_c_cases.py` 取得三份响应，再根据 `workflow
 ## 5. 尚待团队完成
 
 B 的 Vault 是虚构只读数据；真实匿名访谈 Failure Cases 尚待 B 提供。A 负责持久化 Audit/Application Version 与最终集成。D 负责前端、ATS 模拟、敏感字段确认、可用性研究与演示视频。C 现有词典 Fallback 和规则核验是 Proposal 阶段安全基线，无法覆盖所有自然语言改写或替代外部事实核查。C 的全部文件、测试及已知限制分别见 `docs/C-delivery-manifest.md`、`docs/C-requirements-audit.md`、`docs/ai-evaluation-C.md`。
+
+## 2026-10-22 后续修复
+
+当前 main 后续修复请同时阅读 [核验与证据修复交接](docs/fixes-2026-10-22.md)：新增后端重新核验接口，已把有效本地原件接入工作流；手动句子不能前端确认绕过；复制前检查最新证据状态。PDF 导入默认本地，模型调用须单独选择。本文前面的 C 阶段固定 ATS 引用说明属于历史版本；修复后本机草稿的模拟摘要引用本次已核验 Claim。

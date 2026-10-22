@@ -97,7 +97,10 @@ export function ClaimVerificationPage() {
     claimDecisions,
     setClaimDecision,
     canProceedFromClaims,
+    reverifyClaims,
   } = useDemo()
+  const [rechecking, setRechecking] = useState(false)
+  const [recheckError, setRecheckError] = useState('')
   const [vault, setVault] = useState<CareerVaultSeed | null>(null)
   const [localLinks, setLocalLinks] = useState<EvidenceLink[]>([])
 
@@ -124,8 +127,9 @@ export function ClaimVerificationPage() {
         })
       })
     })
+    workflow?.evidence_sources?.forEach((ev) => map.set(ev.evidence_id, {description: ev.description, experience_id: '本机证据'}))
     return map
-  }, [vault])
+  }, [vault, workflow])
 
   if (!workflow) {
     return (
@@ -153,6 +157,14 @@ export function ClaimVerificationPage() {
         <p>逐条查看简历陈述的证据与处理方式。</p>
       </header>
 
+      <div className="btn-row">
+        <button type="button" className="btn primary" disabled={rechecking} onClick={() => {
+          setRechecking(true)
+          void reverifyClaims().then((error) => setRecheckError(error ?? '')).finally(() => setRechecking(false))
+        }}>{rechecking ? '正在重新核验…' : '重新核验并更新风险'}</button>
+      </div>
+      {workflow.requires_reverification && <p className="warn-text">内容已改变，旧核验结果暂不可用于复制或确认。请重新核验。</p>}
+      {recheckError && <p className="danger-text">{recheckError}</p>}
       <div className="claim-status-guide" aria-label="核验状态说明">
         <div className="claim-status-guide-item">
           <ClaimBadge status="VERIFIED" />
@@ -219,9 +231,9 @@ export function ClaimVerificationPage() {
                       <li key={id}>
                         <strong>{id}</strong> —{' '}
                         {evidenceIndex.get(id)?.description ?? '（种子中未找到描述）'}
-                        {id.startsWith('evloc_') ? (
+                        {(id.startsWith('evloc_') || id.startsWith('ev_local_')) ? (
                           <LocalEvidencePeek
-                            evidenceId={id}
+                            evidenceId={id.startsWith('ev_local_') ? id.replace('ev_local_', 'evloc_') : id}
                             claimText={displayText ?? claim?.text ?? ''}
                           />
                         ) : null}
@@ -309,7 +321,7 @@ export function ClaimVerificationPage() {
                   </div>
                   {d?.freshness === 'edited_pending_reverify' && (
                     <p className="danger-text">
-                      内容已修改。后端暂无重新核验接口：保持「待重新核验」，不能作为已通过内容继续使用。
+                      内容已修改。请点击「重新核验并更新风险」，在后端检查完成前不可导出。
                     </p>
                   )}
                 </div>

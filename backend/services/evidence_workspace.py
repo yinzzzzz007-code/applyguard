@@ -10,6 +10,7 @@ import re
 import sqlite3
 import threading
 import uuid
+import unicodedata
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -509,7 +510,7 @@ def resolve_preview_path(file_id: str) -> tuple[Path, str]:
         # Path traversal guard: must stay inside workspace dir
         workspace_root = _workspace_dir(row["workspace_id"]).resolve()
         resolved = path.resolve()
-        if not str(resolved).startswith(str(workspace_root)) or not resolved.is_file():
+        if not resolved.is_relative_to(workspace_root) or not resolved.is_file():
             raise ValueError("预览文件不可用或路径非法")
         return resolved, media
 
@@ -1076,6 +1077,10 @@ def review_evidence(evidence_id: str, body: dict[str, Any]) -> dict[str, Any]:
             conn.execute("DELETE FROM evidence_span WHERE evidence_id = ?", (evidence_id,))
             for span_id in span_ids:
                 if isinstance(span_id, str) and span_id:
+                    owned = conn.execute("SELECT 1 FROM source_span WHERE span_id = ? AND file_id = ?",
+                                         (span_id, row["primary_file_id"])).fetchone()
+                    if not owned:
+                        raise ValueError("引用片段不属于当前原件")
                     conn.execute(
                         "INSERT OR IGNORE INTO evidence_span(evidence_id, span_id) VALUES (?, ?)",
                         (evidence_id, span_id),
@@ -1225,51 +1230,68 @@ def list_links(target_type: str | None = None, target_id: str | None = None, evi
     return {"links": out}
 
 
-def check_claim_support(claim_text: str, evidence_id: str) -> dict[str, Any]:
+def _support_text(value: str) -> str:
+    # Preserve words/numbers; only formatting and Unicode presentation are ignored.
+    return re.sub(r"[^\w%+./$€¥-]+", "", unicodedata.normalize("NFKC", value).casefold())
+
+
+def _positive_support(claim: str, evidence: dict[str, Any]) -> bool:
+    wanted = _support_text(claim)
+    spans = [span for span in evidence.get("spans", [])
+             if span.get("file_id") == evidence.get("primary_file_id") and span.get("raw_text", "").strip()]
+    corpus = _support_text("\n".join(span["raw_text"] for span in spans))
+    if len(wanted) < 4 or not corpus:
+        return False
+    # Exact source quotation is a deliberately conservative baseline.
+    sentences = [re.sub(r"^\s*(?:#{1,6}\s+|[-*•·]\s+)", "", part.strip()) for span in spans
+                 for part in re.split(r"\n|。|(?<=\.)\s+", span["raw_text"]) if part.strip()]
+    if any(wanted == _support_text(part) for part in sentences):
+        return True
+    fields = evidence.get("normalized_fields") or {}
+    name, grade = str(fields.get("award_name") or ""), str(fields.get("grade") or "")
+    # Support only this narrow award template, with both facts present in the original.
+    if name and grade and _support_text(name) in corpus and _support_text(grade) in corpus:
+        bare = re.sub(r"^(?:获得|荣获|取得|获)", "", claim.strip())
+        return _support_text(bare) == _support_text(name + grade)
+    return False
+
+
+def check_claim_support(claim_text: str, evidence_id: str, *,
+                        target_type: str | None = None, target_id: str | None = None) -> dict[str, Any]:
     init_db()
     evidence = get_evidence(evidence_id)
-    fields = evidence.get("normalized_fields") or {}
-    reasons = conflict_between_claim_and_fields(claim_text, fields)
-    link_state = "ACTIVE"
-    with _db() as conn:
-        link = conn.execute(
-            "SELECT link_state FROM evidence_link WHERE evidence_id = ? ORDER BY linked_at DESC LIMIT 1",
-            (evidence_id,),
-        ).fetchone()
-        if link:
-            link_state = link["link_state"]
-    if evidence["review_state"] == "STALE" or link_state == "STALE":
-        return {
-            "evidence_id": evidence_id,
-            "status": "STALE",
-            "supported": False,
-            "reasons": ["证据文件已变更或关联已过期，需重新核对"],
-            "evidence": evidence,
-        }
+    def result(status: str, reason: str = "") -> dict[str, Any]:
+        return {"evidence_id": evidence_id, "status": status, "supported": status == "VERIFIED",
+                "reasons": [reason] if reason else [], "evidence": evidence,
+                "notice": "只核对原文是否支持当前句子，不鉴定外部真伪。"}
+    if not isinstance(claim_text, str) or not claim_text.strip():
+        return result("NEEDS_REVIEW", "陈述为空")
+    links = list_links(target_type, target_id, evidence_id)["links"]
+    if target_type is not None or target_id is not None:
+        if not links:
+            return result("NEEDS_REVIEW", "当前条目没有对应证据关联")
+    if evidence["review_state"] == "STALE" or any(link["link_state"] == "STALE" for link in links):
+        return result("STALE", "证据或关联已过期，需重新核对")
+    if any(link["link_state"] == "REJECTED" for link in links):
+        return result("NEEDS_REVIEW", "该证据关联已被拒绝")
+    if evidence["review_state"] == "CONFLICT":
+        return result("CONFLICT", "证据记录存在冲突")
     if evidence["review_state"] != "REVIEWED":
-        return {
-            "evidence_id": evidence_id,
-            "status": "NEEDS_REVIEW",
-            "supported": False,
-            "reasons": ["证据尚未人工核对"],
-            "evidence": evidence,
-        }
-    if reasons:
-        return {
-            "evidence_id": evidence_id,
-            "status": "CONFLICT",
-            "supported": False,
-            "reasons": reasons,
-            "evidence": evidence,
-        }
-    return {
-        "evidence_id": evidence_id,
-        "status": "VERIFIED",
-        "supported": True,
-        "reasons": [],
-        "evidence": evidence,
-        "notice": "相对本地已核对证据可支持该表述；不等于外部真伪鉴定。",
-    }
+        return result("NEEDS_REVIEW", "证据尚未人工核对")
+    file = evidence.get("file")
+    if not file or file["state"] != "INDEXED":
+        return result("NEEDS_REVIEW", "证据原件未成功解析")
+    with _db() as conn:
+        row = _file_row(conn, file["file_id"])
+        original = _workspace_dir(row["workspace_id"]) / row["storage_name"]
+        if not original.is_file() or hashlib.sha256(original.read_bytes()).hexdigest() != row["sha256"]:
+            return result("STALE", "证据原件缺失或内容已改变")
+    conflicts = conflict_between_claim_and_fields(claim_text, evidence.get("normalized_fields") or {})
+    if conflicts:
+        return result("CONFLICT", "；".join(conflicts))
+    if not _positive_support(claim_text, evidence):
+        return result("NEEDS_REVIEW", "原文没有直接支持完整陈述，不能仅凭无冲突标为已核验")
+    return result("VERIFIED")
 
 
 def list_workspace_evidence(workspace_id: str) -> list[dict[str, Any]]:

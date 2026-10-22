@@ -349,7 +349,9 @@ def _sanitize_extracted(payload: dict[str, Any]) -> dict[str, Any]:
     return base
 
 
-def parse_resume_pdf(pdf_base64: str, filename: str) -> dict[str, Any]:
+def parse_resume_pdf(pdf_base64: str, filename: str, *, parse_mode: str = "offline") -> dict[str, Any]:
+    if parse_mode not in {"offline", "dynamic"}:
+        raise ValueError("parse_mode must be offline or dynamic")
     if not isinstance(pdf_base64, str) or not pdf_base64.strip():
         raise ValueError("请上传 PDF")
     if not isinstance(filename, str) or not filename.lower().endswith(".pdf"):
@@ -363,12 +365,26 @@ def parse_resume_pdf(pdf_base64: str, filename: str) -> dict[str, Any]:
     text = pdf_bytes_to_text(data)
     rules = extract_resume_from_text(text)
     extractor = "规则抽取"
-    notice = "未配置模型密钥，已用规则从正文抽字段；请在经历库核对。"
-    client = HttpModelClient()
-    if client.api_key:
+    notice = "本次使用本地规则抽取，没有向模型服务发送简历；请在经历库核对。"
+    client = HttpModelClient() if parse_mode == "dynamic" else None
+    if client is not None and not client.api_key:
+        notice = "未配置模型密钥，已使用本地规则抽取。"
+    if client is not None and client.api_key:
         try:
             modeled = client.complete_json(_EXTRACT_SYSTEM, f"简历文件名：{filename}\n\n简历原文：\n{text}")
-            rules = _sanitize_extracted(modeled)
+            sanitized = _sanitize_extracted(modeled)
+            def leaves(value):
+                if isinstance(value, dict):
+                    return [leaf for child in value.values() for leaf in leaves(child)]
+                if isinstance(value, list):
+                    return [leaf for child in value for leaf in leaves(child)]
+                return [value] if isinstance(value, str) and value.strip() else []
+            normalized = lambda value: re.sub(r"[^\w]", "", value.casefold())
+            source = normalized(text)
+            harvested = {normalized(value) for value in leaves(rules)}
+            if any(normalized(value) not in source and normalized(value) not in harvested for value in leaves(sanitized)):
+                raise ModelFailure("Model fields contain text not grounded in the PDF", retryable=False)
+            rules = sanitized
             extractor = "模型抽取"
             notice = "已用模型从 PDF 正文抽字段。请在经历库核对，未出现的信息不要补造。"
         except ModelFailure:

@@ -299,11 +299,6 @@ class EvidenceMatcher:
         experience: dict[str, Any], claims: list[dict[str, Any]], sources: list[dict[str, Any]]
     ) -> list[str]:
         conflicts: list[str] = []
-        if experience.get("verification_state") != "VERIFIED":
-            conflicts.append(f"Experience verification state is {experience.get('verification_state', 'UNVERIFIED')}.")
-        for claim in claims:
-            if claim.get("verification_state") != "VERIFIED":
-                conflicts.append(f"Claim {claim['claim_id']} verification state is {claim.get('verification_state', 'UNVERIFIED')}.")
         for source in sources:
             if source.get("verification_status") == "CONFLICTING":
                 conflicts.append(f"Evidence {source['evidence_id']} is marked CONFLICTING.")
@@ -314,6 +309,8 @@ class EvidenceMatcher:
         experience: dict[str, Any], claims: list[dict[str, Any]], sources: list[dict[str, Any]]
     ) -> list[str]:
         missing: list[str] = []
+        if experience.get("verification_state") != "VERIFIED" or any(claim.get("verification_state") != "VERIFIED" for claim in claims):
+            missing.append("Experience or claim still needs evidence review.")
         if not claims:
             missing.append("No claim is stored for this experience.")
         if not sources:

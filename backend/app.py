@@ -10,6 +10,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote, urlsplit
 
 from backend.services.career_vault import CareerVault
 from backend.services.evidence_matcher import EvidenceMatcher
@@ -211,7 +212,13 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
     def _cors_headers(self) -> None:
         # Proposal local UI (Vite :5173) may call the API directly when not using the proxy.
         origin = self.headers.get("Origin", "")
-        if origin.startswith("http://127.0.0.1:") or origin.startswith("http://localhost:"):
+        try:
+            parsed_origin = urlsplit(origin)
+        except ValueError:
+            return
+        if (parsed_origin.scheme == "http" and parsed_origin.hostname in {"127.0.0.1", "localhost"}
+                and not parsed_origin.username and not parsed_origin.password and not parsed_origin.path
+                and not parsed_origin.query and not parsed_origin.fragment):
             self.send_header("Access-Control-Allow-Origin", origin)
             self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
             self.send_header("Access-Control-Allow-Headers", "Content-Type")
@@ -298,13 +305,17 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             return
 
         # Vite build assets + public/ files (e.g. /data/career-vault.seed.json)
-        if path_only.startswith("/assets/") or path_only.startswith("/data/") or path_only in {
+        if path_only.startswith("/assets/") or path_only.startswith("/data/") or path_only.startswith("/prerecorded/") or path_only in {
             "/favicon.svg",
             "/favicon.ico",
         }:
             rel = path_only.lstrip("/")
             for root in (FRONTEND_DIR / "dist", FRONTEND_DIR / "public", FRONTEND_DIR):
-                if self._send_static_file(root / rel):
+                decoded = unquote(rel)
+                candidate = (root / decoded).resolve()
+                if ".." in Path(decoded).parts or not candidate.is_relative_to(root.resolve()):
+                    continue
+                if self._send_static_file(candidate):
                     return
 
         if path_only == "/health":
@@ -381,7 +392,7 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             max_bytes = 8_000_000
         elif self.path == "/api/v1/resume/draft":
             max_bytes = 400_000
-        elif self.path == "/api/v1/workflow/mock":
+        elif self.path in {"/api/v1/workflow/mock", "/api/v1/workflow/reverify"}:
             max_bytes = 262144
         elif self.path.startswith("/api/v1/evidence"):
             max_bytes = 12_000_000  # single-file import batches; keep under proxy limits
@@ -401,11 +412,14 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             if not isinstance(request, dict):
                 raise ValueError("request body must be a JSON object")
             if self.path == "/api/v1/resume/parse":
-                response = parse_resume_pdf(request.get("pdf_base64", ""), request.get("filename", "resume.pdf"))
+                response = parse_resume_pdf(request.get("pdf_base64", ""), request.get("filename", "resume.pdf"), parse_mode=request.get("parse_mode", "offline"))
             elif self.path == "/api/v1/resume/draft":
                 response = save_resume_draft(request)
             elif self.path.startswith("/api/v1/evidence"):
                 response = handle_evidence_post(self.path, request)
+            elif self.path == "/api/v1/workflow/reverify":
+                from backend.services.reverification import reverify_workflow
+                response = reverify_workflow(CAREER_VAULT_PATH, request)
             else:
                 response = build_mock_workflow(request)
         except (ConnectionResetError, BrokenPipeError, ConnectionAbortedError) as exc:

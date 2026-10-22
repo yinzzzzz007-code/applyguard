@@ -23,7 +23,8 @@ function copyToClipboard(text: string): Promise<void> {
 
 function CopyRow({ label, value, allowed = true }: { label: string; value: string; allowed?: boolean }) {
   const [copied, setCopied] = useState(false)
-  const { canProceedFromClaims, canSubmitAts } = useDemo()
+  const { canProceedFromClaims, canSubmitAts, validateExport } = useDemo()
+  const [error, setError] = useState('')
   const empty = !value.trim()
   return (
     <div className="copy-row">
@@ -34,14 +35,18 @@ function CopyRow({ label, value, allowed = true }: { label: string; value: strin
         className="btn secondary copy-btn"
         disabled={empty || !allowed || !canProceedFromClaims() || !canSubmitAts()}
         onClick={() => {
-          void copyToClipboard(value).then(() => {
+          void validateExport().then(async (valid) => {
+            if (!valid) { setError('证据状态已改变或无法连接后端，请返回重新核验和确认。'); return }
+            await copyToClipboard(value)
             setCopied(true)
+            setError('')
             window.setTimeout(() => setCopied(false), 1200)
-          })
+          }).catch(() => setError('复制失败，请检查浏览器剪贴板权限。'))
         }}
       >
         {copied ? '已复制' : '复制'}
       </button>
+      {error && <span className="danger-text" role="alert">{error}</span>}
     </div>
   )
 }
@@ -134,6 +139,7 @@ export function HumanConfirmationPage() {
     fieldDecisions,
     canProceedFromClaims,
     canSubmitAts,
+    validateExport,
     confirmationNote,
     setConfirmationNote,
     simulatedConfirmed,
@@ -206,10 +212,12 @@ export function HumanConfirmationPage() {
             className="btn primary"
             disabled={!copyReady}
             onClick={() => {
-              void copyToClipboard(copyPack).then(() => {
+              void validateExport().then(async (valid) => {
+                if (!valid) { setHistoryError('证据状态已改变或无法连接后端，请重新核验。'); return }
+                await copyToClipboard(copyPack)
                 setPackCopied(true)
                 window.setTimeout(() => setPackCopied(false), 1500)
-              })
+              }).catch(() => setHistoryError('复制失败，请检查浏览器剪贴板权限。'))
             }}
           >
             {packCopied ? '已复制全部' : '一键复制全部'}
@@ -420,7 +428,7 @@ export function HumanConfirmationPage() {
             className="btn primary"
             disabled={!canConfirm || simulatedConfirmed}
             onClick={() => {
-              finishSimulation('SIMULATED_CONFIRMED')
+              void validateExport().then((valid) => { if (valid) finishSimulation('SIMULATED_CONFIRMED'); else setHistoryError('证据状态已改变或无法连接后端，请重新核验。') })
             }}
           >
             模拟确认（非投递）
