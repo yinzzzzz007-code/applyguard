@@ -48,10 +48,16 @@ D 可直接运行 `demo/run_c_cases.py` 取得三份响应，再根据 `workflow
 
 ## 4. 模型配置：当前只是低成本测试默认值
 
+岗位雷达接入的最新交接见 [岗位雷达接入与交接](docs/career-radar-integration.md)，含启动、文件格式、只读连接和证据门槛。它扩展了岗位入口，不替代现有九模块工作流。
+
 默认 `APPLYGUARD_AI_MODEL=gpt-4o-mini`、`APPLYGUARD_AI_MAX_TOKENS=2048` 是目前为了控制课程测试费用采用的设置，**并非永久限制**。如需更好的解析效果，可在服务启动前改用当前服务商支持的更强模型，并适当调高最大输出 token；代码支持 1–16384，模型自身及服务商可能有更低或不同的限制。比如在 shell 中设置 `APPLYGUARD_AI_MODEL=<服务商支持的模型名>` 和 `APPLYGUARD_AI_MAX_TOKENS=4096`。实际成本会随模型、输入输出量和最多两次尝试而变化；更换模型后应重跑离线回归，并用独立 JD 数据检查质量，不能沿用旧模型的测量值。
 
-模型请求使用 OpenAI 兼容的 `/chat/completions`、`response_format: json_object` 和 `max_tokens` 字段。换模型或服务商时先确认这些参数受支持；不兼容时需要调整 `backend/services/model_client.py` 的适配。无论使用哪个模型，解析结果都继续经过源文片段和 JSON Schema 校验，失败时最多重试一次，然后进入规则 Fallback 或安全停止。`APPLYGUARD_AI_API_KEY` 只放在本地 shell 环境或未跟踪的 `.env`；服务不会自动加载 `.env`，不要提交或在前端暴露密钥。
+模型请求使用 OpenAI 兼容的 `/chat/completions`、`response_format: json_object` 和 `max_tokens` 字段。换模型或服务商时先确认这些参数受支持；不兼容时需要调整 `backend/services/model_client.py` 的适配。无论使用哪个模型，解析结果都继续经过源文片段和 JSON Schema 校验，失败时最多重试一次，然后进入规则 Fallback 或安全停止。`APPLYGUARD_AI_API_KEY` 只放在本地 shell 环境或未跟踪的 `.env`；当前服务会加载仓库根目录的 `.env`（不覆盖非空 shell 配置），不要提交或在前端暴露密钥。
 
 ## 5. 尚待团队完成
 
 B 的 Vault 是虚构只读数据；真实匿名访谈 Failure Cases 尚待 B 提供。A 负责持久化 Audit/Application Version 与最终集成。D 负责前端、ATS 模拟、敏感字段确认、可用性研究与演示视频。C 现有词典 Fallback 和规则核验是 Proposal 阶段安全基线，无法覆盖所有自然语言改写或替代外部事实核查。C 的全部文件、测试及已知限制分别见 `docs/C-delivery-manifest.md`、`docs/C-requirements-audit.md`、`docs/ai-evaluation-C.md`。
+
+## 2026-10-22 后续修复
+
+当前 main 后续修复请同时阅读 [核验与证据修复交接](docs/fixes-2026-10-22.md)：新增后端重新核验接口，已把有效本地原件接入工作流；手动句子不能前端确认绕过；复制前检查最新证据状态。PDF 导入默认本地，模型调用须单独选择。本文前面的 C 阶段固定 ATS 引用说明属于历史版本；修复后本机草稿的模拟摘要引用本次已核验 Claim。

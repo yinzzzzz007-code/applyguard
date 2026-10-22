@@ -59,8 +59,8 @@ class HttpModelClient:
     def __init__(self, *, api_key: str | None = None, base_url: str | None = None,
                  model: str | None = None, max_tokens: int | None = None, timeout: float | None = None) -> None:
         self.api_key = api_key if api_key is not None else os.getenv("APPLYGUARD_AI_API_KEY", "")
-        self.base_url = (base_url or os.getenv("APPLYGUARD_AI_BASE_URL", "https://api.deepseek.com")).rstrip("/")
-        self.model = model if model is not None else os.getenv("APPLYGUARD_AI_MODEL", "deepseek-flash")
+        self.base_url = (base_url or os.getenv("APPLYGUARD_AI_BASE_URL", "https://api.chatanywhere.tech/v1")).rstrip("/")
+        self.model = model if model is not None else os.getenv("APPLYGUARD_AI_MODEL", "gpt-4o-mini")
         if not isinstance(self.model, str) or not self.model.strip():
             raise ValueError("APPLYGUARD_AI_MODEL must be a non-empty model name")
         configured_tokens = max_tokens if max_tokens is not None else os.getenv("APPLYGUARD_AI_MAX_TOKENS", "2048")

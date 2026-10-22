@@ -40,3 +40,28 @@ test('blocked field cannot be copied, and confirmation is required for a normal 
     [normalField.field_id]: { field_id: normalField.field_id, confirmed: true, acknowledgedBlocked: false },
   }, normalField), true)
 })
+
+test('unsupported manual claims remain uncopyable even after confirmation', () => {
+  const id = 'claim_manual_unknown'
+  const value = structuredClone(normal)
+  value.resume_claims.push({claim_id: id, text: 'Invented 900% result', evidence_ids: []})
+  value.claim_verification.push({claim_id: id, state: 'NEEDS_REVIEW', grounded: false, support_score: 0})
+  assert.equal(copyableClaim(value, {[id]: {decision: 'confirm', freshness: 'as_returned'}}, id), false)
+})
+
+test('draft placeholders and pending revalidation never unlock copying', () => {
+  const value = structuredClone(normal)
+  const claim = value.resume_claims[0]
+  value.requires_reverification = true
+  assert.equal(copyableClaim(value, {}, claim.claim_id), false)
+  value.requires_reverification = false
+  claim.evidence_ids = ['ev_draft_unverified']
+  assert.equal(copyableClaim(value, {[claim.claim_id]: {decision: 'confirm'}}, claim.claim_id), false)
+})
+
+test('legacy drafts with missing basic fields remain editable', async () => {
+  const { normalizeResumeForm, resumeCompleteness } = await import('../src/resume/formModel.ts')
+  const draft = normalizeResumeForm({candidateId:'cand_demo_001', basic:{name:'Fictional'}, intention:{}, extras:{}, awards:[], internships:[], projects:[], education:[]})
+  assert.equal(draft.basic.phone, '')
+  assert.doesNotThrow(() => resumeCompleteness(draft))
+})

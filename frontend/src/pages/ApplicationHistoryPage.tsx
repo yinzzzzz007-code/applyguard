@@ -42,6 +42,7 @@ export function ApplicationHistoryPage() {
               <p><strong>结果：</strong>{record.outcome === 'BLOCKED_REVIEWED' ? '已知悉阻断，未投递' : '本地模拟确认，未投递'}</p>
               <p className="muted">记录时间：{new Date(record.recordedAt).toLocaleString()} · 来源：{record.source}</p>
               <p className="muted">申请编号：{record.applicationId} · 追踪编号：{record.traceId}</p>
+              {record.targetJobId && <p className="muted">关联收藏岗位：{record.targetJobId} · 当次版本 v{record.targetJobVersion}</p>}
               <button type="button" className="btn secondary" onClick={() => remove(record.id)}>删除本地记录</button>
             </article>
           ))}

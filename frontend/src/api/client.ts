@@ -36,6 +36,17 @@ function apiBase(): string {
   return (import.meta.env.VITE_API_BASE as string | undefined) ?? ''
 }
 
+async function apiFetch(url: string, options?: RequestInit): Promise<Response> {
+  const response = await fetch(url, options)
+  const path = new URL(url, window.location.origin).pathname
+  if (response.ok && ['POST', 'DELETE'].includes(options?.method ?? 'GET') && path.startsWith('/api/v1/evidence')
+      && !path.endsWith('/check-claim') && !path.endsWith('/match-resume')) {
+    window.dispatchEvent(new Event('applyguard:evidence-changed'))
+    try { localStorage.setItem('applyguard.evidence.version', crypto.randomUUID()) } catch { /* optional cross-tab notice */ }
+  }
+  return response
+}
+
 async function readJson(res: Response): Promise<unknown> {
   const text = await res.text()
   try {
@@ -68,14 +79,15 @@ function toApiError(payload: unknown, httpStatus: number): ApiResult<never>['err
 export type WorkflowParseMode = 'offline' | 'dynamic'
 
 export interface ApiClient {
+  reverifyWorkflow(workflow: WorkflowResponse, claims: Array<{ claim_id: string; text: string }>, draft?: EditableResumeForm | null): Promise<ApiResult<Partial<WorkflowResponse>>>
   getHealth(): Promise<ApiResult<{ status: string; service: string; version: string }>>
   getCareerVault(): Promise<ApiResult<CareerVaultSeed>>
-  parseResumePdf(file: File): Promise<ApiResult<ResumeParseResult>>
+  parseResumePdf(file: File, parseMode?: WorkflowParseMode): Promise<ApiResult<ResumeParseResult>>
   getResumeDraft(): Promise<ApiResult<EditableResumeForm>>
   saveResumeDraft(form: EditableResumeForm): Promise<ApiResult<{ saved: boolean; saved_at?: string; notice?: string }>>
   runWorkflow(
     jdText: string,
-    options?: { parseMode?: WorkflowParseMode; resumeDraft?: EditableResumeForm | null },
+    options?: { parseMode?: WorkflowParseMode; resumeDraft?: EditableResumeForm | null; targetJob?: { id: string; content_hash: string } },
   ): Promise<ApiResult<WorkflowResponse>>
   createEvidenceWorkspace(name: string): Promise<ApiResult<EvidenceWorkspace>>
   listEvidenceWorkspaces(): Promise<ApiResult<EvidenceWorkspace[]>>
@@ -177,9 +189,22 @@ async function fileToBase64(file: Blob): Promise<string> {
 export { fileToBase64 }
 
 export class ApplyGuardApiClient implements ApiClient {
+  async reverifyWorkflow(workflow: WorkflowResponse, claims: Array<{ claim_id: string; text: string }>, draft?: EditableResumeForm | null): Promise<ApiResult<Partial<WorkflowResponse>>> {
+    try {
+      const response = await apiFetch(`${apiBase()}/api/v1/workflow/reverify`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({candidate_id: workflow.candidate_id, application_id: workflow.application_id,
+          jd_text: workflow.parsed_jd.source_text, target_job: workflow.target_job, resume_draft: draft ?? undefined, claims}),
+      })
+      const body = await readJson(response)
+      if (!response.ok) return { error: toApiError(body, response.status) }
+      return { data: body as Partial<WorkflowResponse> }
+    } catch { return { error: toApiError(null, 0) } }
+  }
+
   async getHealth(): Promise<ApiResult<{ status: string; service: string; version: string }>> {
     try {
-      const res = await fetch(`${apiBase()}/health`)
+      const res = await apiFetch(`${apiBase()}/health`)
       const body = await readJson(res)
       if (!res.ok) return { error: toApiError(body, res.status) }
       return { data: body as { status: string; service: string; version: string } }
@@ -191,7 +216,7 @@ export class ApplyGuardApiClient implements ApiClient {
   async getCareerVault(): Promise<ApiResult<CareerVaultSeed>> {
     try {
       // Same fictional seed as backend data/career-vault.seed.json (no vault HTTP API yet)
-      const res = await fetch(`${import.meta.env.BASE_URL}data/career-vault.seed.json`)
+      const res = await apiFetch(`${import.meta.env.BASE_URL}data/career-vault.seed.json`)
       if (!res.ok) {
         return {
           error: {
@@ -215,7 +240,7 @@ export class ApplyGuardApiClient implements ApiClient {
     }
   }
 
-  async parseResumePdf(file: File): Promise<ApiResult<ResumeParseResult>> {
+  async parseResumePdf(file: File, parseMode?: WorkflowParseMode): Promise<ApiResult<ResumeParseResult>> {
     if (file.size > 5 * 1024 * 1024) {
       return {
         error: { code: 'VALIDATION_ERROR', message: 'PDF 不能超过 5MB。', retryable: false },
@@ -237,10 +262,10 @@ export class ApplyGuardApiClient implements ApiClient {
         reader.onerror = () => reject(reader.error ?? new Error('read failed'))
         reader.readAsDataURL(file)
       })
-      const res = await fetch(`${apiBase()}/api/v1/resume/parse`, {
+      const res = await apiFetch(`${apiBase()}/api/v1/resume/parse`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: file.name, pdf_base64 }),
+        body: JSON.stringify({ filename: file.name, pdf_base64, parse_mode: parseMode }),
       })
       const body = await readJson(res)
       if (!res.ok) return { error: toApiError(body, res.status) }
@@ -252,7 +277,7 @@ export class ApplyGuardApiClient implements ApiClient {
 
   async getResumeDraft(): Promise<ApiResult<EditableResumeForm>> {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/resume/draft`)
+      const res = await apiFetch(`${apiBase()}/api/v1/resume/draft`)
       const body = await readJson(res)
       if (!res.ok) return { error: toApiError(body, res.status) }
       const payload = body as { exists?: boolean; form?: EditableResumeForm | null }
@@ -267,7 +292,7 @@ export class ApplyGuardApiClient implements ApiClient {
     form: EditableResumeForm,
   ): Promise<ApiResult<{ saved: boolean; saved_at?: string; notice?: string }>> {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/resume/draft`, {
+      const res = await apiFetch(`${apiBase()}/api/v1/resume/draft`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -282,7 +307,7 @@ export class ApplyGuardApiClient implements ApiClient {
 
   async runWorkflow(
     jdText: string,
-    options?: { parseMode?: WorkflowParseMode; resumeDraft?: EditableResumeForm | null },
+    options?: { parseMode?: WorkflowParseMode; resumeDraft?: EditableResumeForm | null; targetJob?: { id: string; content_hash: string } },
   ): Promise<ApiResult<WorkflowResponse>> {
     const scenario = activeScenario
     const parseMode: WorkflowParseMode = options?.parseMode ?? 'offline'
@@ -309,7 +334,7 @@ export class ApplyGuardApiClient implements ApiClient {
           ? 'prerecorded/unsupported_block.json'
           : 'prerecorded/timeout_fallback.json'
       try {
-        const res = await fetch(`${import.meta.env.BASE_URL}${file}`)
+        const res = await apiFetch(`${import.meta.env.BASE_URL}${file}`)
         if (!res.ok) {
           return {
             error: {
@@ -360,14 +385,15 @@ export class ApplyGuardApiClient implements ApiClient {
     }
 
     try {
-      const res = await fetch(`${apiBase()}/api/v1/workflow/mock`, {
+      const res = await apiFetch(`${apiBase()}/api/v1/workflow/mock`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           candidate_id: resumeDraft?.candidateId || DEFAULT_CANDIDATE,
           jd_text: trimmed,
+          target_job: options?.targetJob,
           parse_mode: parseMode,
-          application_id: 'app_demo_001',
+          application_id: options?.targetJob ? `app_${crypto.randomUUID().replaceAll('-', '').slice(0, 16)}` : 'app_demo_001',
           resume_draft: resumeDraft ?? undefined,
         }),
       })
@@ -383,7 +409,7 @@ export class ApplyGuardApiClient implements ApiClient {
 
   async createEvidenceWorkspace(name: string): Promise<ApiResult<EvidenceWorkspace>> {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/evidence/workspaces`, {
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/workspaces`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
@@ -398,7 +424,7 @@ export class ApplyGuardApiClient implements ApiClient {
 
   async listEvidenceWorkspaces(): Promise<ApiResult<EvidenceWorkspace[]>> {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/evidence/workspaces`)
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/workspaces`)
       const body = await readJson(res)
       if (!res.ok) return { error: toApiError(body, res.status) }
       const list = (body as { workspaces?: EvidenceWorkspace[] }).workspaces ?? []
@@ -413,7 +439,7 @@ export class ApplyGuardApiClient implements ApiClient {
     files: Array<{ relative_path: string; content_base64: string; force_reparse?: boolean }>,
   ): Promise<ApiResult<{ workspace_id: string; files: EvidenceSourceFile[] }>> {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/evidence/workspaces/${workspaceId}/files`, {
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/workspaces/${workspaceId}/files`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ files }),
@@ -428,7 +454,7 @@ export class ApplyGuardApiClient implements ApiClient {
 
   async reparseEvidenceFile(fileId: string): Promise<ApiResult<EvidenceSourceFile>> {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/evidence/files/${fileId}/reparse`, {
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/files/${fileId}/reparse`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
@@ -443,7 +469,7 @@ export class ApplyGuardApiClient implements ApiClient {
 
   async listEvidenceFiles(workspaceId: string): Promise<ApiResult<EvidenceSourceFile[]>> {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/evidence/workspaces/${workspaceId}/files`)
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/workspaces/${workspaceId}/files`)
       const body = await readJson(res)
       if (!res.ok) return { error: toApiError(body, res.status) }
       return { data: (body as { files?: EvidenceSourceFile[] }).files ?? [] }
@@ -454,7 +480,7 @@ export class ApplyGuardApiClient implements ApiClient {
 
   async listWorkspaceEvidence(workspaceId: string): Promise<ApiResult<EvidenceRecord[]>> {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/evidence/workspaces/${workspaceId}/evidence`)
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/workspaces/${workspaceId}/evidence`)
       const body = await readJson(res)
       if (!res.ok) return { error: toApiError(body, res.status) }
       return { data: (body as { evidence?: EvidenceRecord[] }).evidence ?? [] }
@@ -465,7 +491,7 @@ export class ApplyGuardApiClient implements ApiClient {
 
   async getEvidenceFile(fileId: string): Promise<ApiResult<EvidenceSourceFile>> {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/evidence/files/${fileId}`)
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/files/${fileId}`)
       const body = await readJson(res)
       if (!res.ok) return { error: toApiError(body, res.status) }
       return { data: body as EvidenceSourceFile }
@@ -482,7 +508,7 @@ export class ApplyGuardApiClient implements ApiClient {
     try {
       const params = new URLSearchParams({ q })
       if (workspaceId) params.set('workspace_id', workspaceId)
-      const res = await fetch(`${apiBase()}/api/v1/evidence/search?${params}`)
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/search?${params}`)
       const body = await readJson(res)
       if (!res.ok) return { error: toApiError(body, res.status) }
       return { data: (body as { matches?: EvidenceSearchMatch[] }).matches ?? [] }
@@ -493,7 +519,7 @@ export class ApplyGuardApiClient implements ApiClient {
 
   async getEvidence(evidenceId: string): Promise<ApiResult<EvidenceRecord>> {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/evidence/${evidenceId}`)
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/${evidenceId}`)
       const body = await readJson(res)
       if (!res.ok) return { error: toApiError(body, res.status) }
       return { data: body as EvidenceRecord }
@@ -507,7 +533,7 @@ export class ApplyGuardApiClient implements ApiClient {
     body: { normalized_fields: AwardEvidenceFields; review_state?: string; span_ids?: string[] },
   ): Promise<ApiResult<EvidenceRecord>> {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/evidence/${evidenceId}/review`, {
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/${evidenceId}/review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -527,7 +553,7 @@ export class ApplyGuardApiClient implements ApiClient {
     link_state?: 'ACTIVE' | 'REJECTED' | string
   }): Promise<ApiResult<EvidenceLink>> {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/evidence/links`, {
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/links`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -547,7 +573,7 @@ export class ApplyGuardApiClient implements ApiClient {
     evidence_id?: string
   }): Promise<ApiResult<{ deleted: boolean; removed?: number }>> {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/evidence/links/remove`, {
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/links/remove`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -570,7 +596,7 @@ export class ApplyGuardApiClient implements ApiClient {
       if (params.target_type) qs.set('target_type', params.target_type)
       if (params.target_id) qs.set('target_id', params.target_id)
       if (params.evidence_id) qs.set('evidence_id', params.evidence_id)
-      const res = await fetch(`${apiBase()}/api/v1/evidence/links?${qs}`)
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/links?${qs}`)
       const body = await readJson(res)
       if (!res.ok) return { error: toApiError(body, res.status) }
       return { data: (body as { links?: EvidenceLink[] }).links ?? [] }
@@ -584,7 +610,7 @@ export class ApplyGuardApiClient implements ApiClient {
     evidenceId: string,
   ): Promise<ApiResult<ClaimEvidenceCheck>> {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/evidence/check-claim`, {
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/check-claim`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ claim_text: claimText, evidence_id: evidenceId }),
@@ -601,7 +627,7 @@ export class ApplyGuardApiClient implements ApiClient {
     workspaceId: string,
   ): Promise<ApiResult<{ deleted: boolean; notice?: string }>> {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/evidence/workspaces/${workspaceId}`, {
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/workspaces/${workspaceId}`, {
         method: 'DELETE',
       })
       const body = await readJson(res)
@@ -625,7 +651,7 @@ export class ApplyGuardApiClient implements ApiClient {
     }>
   > {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/evidence/files/delete`, {
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/files/delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ file_ids: fileIds, workspace_id: workspaceId }),
@@ -681,7 +707,7 @@ export class ApplyGuardApiClient implements ApiClient {
     },
   ): Promise<ApiResult<ResumeMatchReport>> {
     try {
-      const res = await fetch(`${apiBase()}/api/v1/evidence/workspaces/${workspaceId}/match-resume`, {
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/workspaces/${workspaceId}/match-resume`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

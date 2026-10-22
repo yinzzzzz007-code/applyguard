@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from backend.services.career_vault import CareerVault
+from backend.services.local_evidence import attach_local_evidence
 from backend.services.claim_validator import ClaimValidator
 from backend.services.evidence_matcher import EvidenceMatcher
 from backend.services.sag_auxiliary import augment_match_with_sag
@@ -86,7 +87,12 @@ class SkillRouter:
             draft = request.get("resume_draft")
             if isinstance(draft, dict):
                 items = experiences_from_resume_draft(draft)
+                if not items:
+                    raise ValueError("Resume draft has no experiences; add one before matching")
                 if items:
+                    if any(item["candidate_id"] != candidate_id for item in items):
+                        raise ValueError("Draft candidate does not match request candidate")
+                    items = attach_local_evidence(items, draft)
                     modes["career_vault"] = "LOCAL_RESUME_DRAFT"
                     for item in items:
                         validate_contract("experience", item)
@@ -140,6 +146,9 @@ class SkillRouter:
         def map_fixture():
             mapping = copy.deepcopy(self.form_mapping)
             mapping["application_id"] = application_id
+            if modes["career_vault"] == "LOCAL_RESUME_DRAFT":
+                from backend.services.reverification import simulator_mapping
+                mapping = simulator_mapping(application_id, selection.claims)
             validate_contract("form-mapping", mapping)
             for field in mapping["fields"]:
                 refs = field["source_claim_ids"]
@@ -191,6 +200,8 @@ class SkillRouter:
                                      "max_claims": 3, "max_characters": 420},
                 "claim_verification": verified, "ats_form_mapping": mapping, "risk_result": risk,
                 "field_controls": risk_engine.field_controls(mapping, verified),
+                "requires_reverification": False,
+                "evidence_sources": [source for item in experiences for source in item["evidence_sources"]],
                 "human_confirmation": {"required": True,
                                        "reason": "Blocked content must be corrected before review." if risk["action"] == "BLOCKED" else "User must review the application before submission.",
                                        "allowed_actions": ["EDIT", "CANCEL"] if risk["action"] == "BLOCKED" else ["CONFIRM", "EDIT", "CANCEL"]},

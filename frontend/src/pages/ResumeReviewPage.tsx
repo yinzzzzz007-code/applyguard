@@ -175,11 +175,11 @@ export function ResumeReviewPage() {
       }
       const verification: ClaimVerification = {
         claim_id: input.claim_id,
-        state: 'NEEDS_REVIEW',
+        state: 'BLOCKED',
         unsupported_fragments: [],
-        explanation: '在简历审查页手动加入。后端未将其标为可写入。',
+        explanation: '手动内容尚未经过后端核验；请点击重新核验，缺少证据的内容会保持阻断。',
         support_score: added.evidence_support_score,
-        grounded: added.evidence_ids.length > 0,
+        grounded: false,
       }
       return {
         ...prev,

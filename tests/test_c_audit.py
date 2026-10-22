@@ -38,11 +38,13 @@ class AuditTests(unittest.TestCase):
     def test_default_budget_and_configurable_model_and_output_limit(self):
         response = MagicMock()
         response.__enter__.return_value.read.return_value = json.dumps({'choices':[{'finish_reason':'stop','message':{'content':'{}'}}]}).encode()
-        with patch('urllib.request.urlopen', return_value=response) as transport:
+        with patch.dict('os.environ', {}, clear=True), patch('urllib.request.urlopen', return_value=response) as transport:
             HttpModelClient(api_key='dummy').complete_json('system', 'fictional')
         body = json.loads(transport.call_args.args[0].data)
-        self.assertEqual(body['model'], 'deepseek-flash')
+        self.assertEqual(body['model'], 'gpt-4o-mini')
         self.assertEqual(body['max_tokens'], 2048)
+        self.assertEqual(transport.call_args.args[0].full_url, 'https://api.chatanywhere.tech/v1/chat/completions')
+        self.assertNotIn('thinking', body)
         with patch('urllib.request.urlopen', return_value=response) as transport:
             HttpModelClient(api_key='dummy', model='provider-better-model', max_tokens=4096).complete_json('system', 'fictional')
         body = json.loads(transport.call_args.args[0].data)

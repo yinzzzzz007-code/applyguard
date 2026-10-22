@@ -15,6 +15,8 @@ export interface ApplicationHistoryEntry {
   riskLevel: AggregateRiskLevel
   outcome: HistoryOutcome
   source: string
+  targetJobId?: string
+  targetJobVersion?: number
 }
 
 export function loadApplicationHistory(storage?: Pick<Storage, 'getItem'>): ApplicationHistoryEntry[] {
@@ -41,11 +43,13 @@ export function saveApplicationHistory(
     recordedAt: new Date().toISOString(),
     applicationId: workflow.application_id,
     traceId: workflow.trace_id,
-    title: workflow.parsed_jd.title,
-    company: workflow.parsed_jd.company,
+    title: workflow.target_job?.title ?? workflow.parsed_jd.title,
+    company: workflow.target_job?.company ?? workflow.parsed_jd.company,
     riskLevel: workflow.risk_result.risk_level,
     outcome,
     source: workflow._prerecorded ? `预录：${workflow._prerecorded.case}` : '本机后端',
+    targetJobId: workflow.target_job?.id,
+    targetJobVersion: workflow.target_job?.version,
   }
   try {
     const target = storage ?? localStorage

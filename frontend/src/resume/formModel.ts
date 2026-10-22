@@ -127,6 +127,9 @@ export function syncAwardText(awards: EditableResumeForm['awards']): string {
 }
 
 export function normalizeResumeForm(form: EditableResumeForm): EditableResumeForm {
+  const blank = emptyResumeForm(form.candidateId)
+  form = { ...blank, ...form, basic: { ...blank.basic, ...form.basic },
+    intention: { ...blank.intention, ...form.intention }, extras: { ...blank.extras, ...form.extras } }
   if (Array.isArray(form.awards)) {
     return {
       ...form,

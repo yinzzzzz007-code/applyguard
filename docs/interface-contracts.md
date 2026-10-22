@@ -97,3 +97,9 @@ These extensions expose B's deterministic baseline. They do not implement C's JD
 
 
 C audit additions: `offline` disables model creation even when an API key exists. `field_controls` provides per-field `level` (L0–L3), `action`, `show_sources`, and `source_claim_ids` outside the frozen core contracts. Aggregate risk and per-field controls are different axes. Evidence can be joined through `claim_id` → `resume_claims.evidence_ids` → Vault evidence sources without modifying the frozen verification schema. Source confidence is a conservative support bound, not calibrated truth probability. Every module failure has a skipped remainder and audit event; HTTP 500 is reserved for execution failure, 422 for validation failure. Requests are limited to 262144 bytes, JD text to 20000 characters, parsed requirements to 40; oversized results are rejected rather than silently truncated.
+
+### 2026-10-22 compatible repair extensions
+
+`POST /api/v1/workflow/reverify` takes candidate/application IDs, raw JD, optional explicit local resume draft, and an array of Claim ID/text pairs. It reloads evidence rather than trusting client statuses, recalculates verification, simulated mapping and risk, and returns replacement workflow fields. `requires_reverification` and `evidence_sources` are optional response metadata. Unsupported editable drafts are always blocked and are not frozen contract-valid selected Resume Claims. Existing JSON Schemas remain unchanged. See [repair handoff](fixes-2026-10-22.md) for limits and source-ID mapping.
+
+`POST /api/v1/resume/parse` accepts `parse_mode` (offline default, dynamic opt-in); presence of an API key alone never opts the document into model processing. Final UI export rechecks current backend evidence and fails closed on revocation or connectivity failure.

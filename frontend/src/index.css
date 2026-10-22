@@ -57,6 +57,40 @@
   box-sizing: border-box;
 }
 
+/* Opportunity library uses the existing ApplyGuard tokens and stays outside the wizard. */
+.radar-page { display: grid; gap: 1.2rem; }
+.radar-import { border: 1px solid var(--hairline); border-radius: var(--radius-md); padding: 1rem; }
+.radar-import summary { cursor: pointer; font-weight: 600; margin-bottom: .6rem; }
+.radar-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+.radar-form label { display: grid; gap: .35rem; }
+.radar-wide { grid-column: 1 / -1; }
+.radar-page input:not([type="checkbox"]):not([type="file"]), .radar-page select, .radar-page textarea {
+  font: inherit; padding: .6rem .75rem; border: 1px solid var(--hairline); border-radius: var(--radius-sm); min-width: 0; max-width: 100%; background: var(--canvas);
+}
+.radar-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; }
+.radar-metrics > span { background: var(--surface); border-radius: var(--radius-md); padding: .8rem; font-size: .85rem; }
+.radar-metrics strong { display: block; font-size: 1.6rem; }
+.radar-layout { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: 1.2rem; align-items: start; }
+.radar-job-list { display: grid; gap: .6rem; max-height: 1000px; overflow: auto; }
+.radar-job { display: grid; gap: .4rem; text-align: left; font: inherit; padding: 1rem; cursor: pointer; background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--radius-md); overflow-wrap: anywhere; }
+.radar-job.selected { border-color: var(--brand-green-deep); background: var(--ok-bg); }
+.radar-job small, .radar-upstream small { display: block; color: var(--steel); }
+.radar-detail { display: grid; gap: .9rem; min-width: 0; overflow-wrap: anywhere; }
+.radar-tags { display: flex; flex-wrap: wrap; gap: .5rem; }
+.radar-jd { font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 450px; overflow: auto; }
+.radar-source, .radar-analysis a { text-decoration: underline; text-underline-offset: 3px; }
+.radar-factor { border-top: 1px solid var(--hairline); padding: .6rem 0; }
+.radar-factor blockquote { margin: .4rem 0 .4rem .6rem; border-left: 3px solid var(--hairline); padding-left: .6rem; color: var(--steel); white-space: pre-wrap; }
+.radar-analysis { display: grid; gap: .7rem; }
+.radar-upstream { list-style: none; padding: 0; max-height: 400px; overflow: auto; }
+.radar-upstream li { padding: .6rem 0; border-bottom: 1px solid var(--hairline); }
+.radar-upstream label { display: flex; gap: .6rem; align-items: baseline; }
+@media (max-width: 760px) {
+  .radar-layout, .radar-form { grid-template-columns: minmax(0, 1fr); }
+  .radar-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .radar-job-list { max-height: 320px; }
+}
+
 html,
 body,
 #root {

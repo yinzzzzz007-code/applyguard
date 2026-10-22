@@ -12,6 +12,7 @@ __pycache__/
 credentials*.json
 .DS_Store
 output/
+.playwright-cli/
 .codex-finalizer/
 .build/
 frontend/node_modules/

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getApiClient } from '../api/client'
+import { getApiClient, type WorkflowParseMode } from '../api/client'
 import type { ResumeParseResult } from '../api/types'
 import { EmptyState, ErrorState, LoadingState } from '../components/States'
 import { useDemo } from '../context/DemoContext'
@@ -14,12 +14,13 @@ export function ResumeImportPage() {
   const [errorMsg, setErrorMsg] = useState('')
   const [parsed, setParsed] = useState<ResumeParseResult | null>(null)
   const [dragOver, setDragOver] = useState(false)
+  const [parseMode, setParseMode] = useState<WorkflowParseMode>('offline')
 
   async function runParse(target: File) {
     setStatus('loading')
     setErrorMsg('')
     setParsed(null)
-    const res = await getApiClient().parseResumePdf(target)
+    const res = await getApiClient().parseResumePdf(target, parseMode)
     if (res.error) {
       setErrorMsg(res.error.message)
       setStatus('error')
@@ -73,6 +74,13 @@ export function ResumeImportPage() {
         </p>
       </header>
 
+      <label className="field-label" htmlFor="resume-parse-mode">识别方式</label>
+      <select id="resume-parse-mode" value={parseMode} disabled={status === 'loading'}
+        onChange={(event) => { setParseMode(event.target.value as WorkflowParseMode); setParsed(null); setStatus('idle') }}>
+        <option value="offline">本地规则（默认，不调用模型）</option>
+        <option value="dynamic">模型抽取（发送简历正文，可能产生费用）</option>
+      </select>
+      <p className="muted">仅选择模型抽取时，才会将 PDF 正文和文件名发送给后端配置的服务商。可先脱敏；模型结果仍需人工核对。</p>
       <label
         className={dragOver ? 'resume-dropzone is-over' : 'resume-dropzone'}
         onDragOver={(event) => {

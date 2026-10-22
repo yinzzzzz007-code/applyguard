@@ -1,5 +1,7 @@
 import {
   createContext,
+  useEffect,
+  useRef,
   useCallback,
   useContext,
   useMemo,
@@ -10,6 +12,7 @@ import {
 } from 'react'
 import {
   getActiveScenario,
+  getApiClient,
   SAMPLE_JD,
   setActiveScenario as setScenarioInClient,
 } from '../api/client'
@@ -39,6 +42,8 @@ interface DemoState {
   setStep: (s: FlowStep) => void
   setJdRawInput: (v: string) => void
   setWorkflow: (w: WorkflowResponse | null) => void
+  reverifyClaims: () => Promise<string | null>
+  validateExport: () => Promise<boolean>
   patchWorkflow: (patch: Partial<WorkflowResponse> | ((w: WorkflowResponse) => WorkflowResponse)) => void
   setResumeForm: Dispatch<SetStateAction<EditableResumeForm | null>>
   setClaimDecision: (claimId: string, patch: Partial<LocalClaimDecision>) => void
@@ -81,8 +86,10 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const [fieldDecisions, setFieldDecisions] = useState<Record<string, LocalFieldDecision>>({})
   const [confirmationNote, setConfirmationNote] = useState('')
   const [simulatedConfirmed, setSimulatedConfirmed] = useState(false)
+  const revision = useRef(0)
 
   const setWorkflow = useCallback((w: WorkflowResponse | null) => {
+    revision.current += 1
     setWorkflowState(w)
     setClaimDecisions({})
     setFieldDecisions({})
@@ -92,13 +99,35 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   const patchWorkflow = useCallback(
     (patch: Partial<WorkflowResponse> | ((w: WorkflowResponse) => WorkflowResponse)) => {
+      revision.current += 1
       setWorkflowState((prev) => {
         if (!prev) return prev
-        return typeof patch === 'function' ? patch(prev) : { ...prev, ...patch }
+        const next = typeof patch === 'function' ? patch(prev) : { ...prev, ...patch }
+        return { ...next, requires_reverification: true }
       })
+      setClaimDecisions({})
+      setFieldDecisions({})
+      setSimulatedConfirmed(false)
     },
     [],
   )
+
+  const previousInput = useRef<string | null>(null)
+  useEffect(() => {
+    const { dirty: _dirty, savedAt: _savedAt, ...content } = resumeForm ?? {}
+    const signature = JSON.stringify([jdRawInput, content])
+    if (previousInput.current !== null && previousInput.current !== signature) setWorkflow(null)
+    previousInput.current = signature
+  }, [jdRawInput, resumeForm, setWorkflow])
+
+  useEffect(() => {
+    const invalidate = () => setWorkflow(null)
+    const storage = (event: StorageEvent) => { if (event.key === 'applyguard.evidence.version') invalidate() }
+    window.addEventListener('applyguard:evidence-changed', invalidate)
+    window.addEventListener('applyguard:jobs-changed', invalidate)
+    window.addEventListener('storage', storage)
+    return () => { window.removeEventListener('applyguard:evidence-changed', invalidate); window.removeEventListener('applyguard:jobs-changed', invalidate); window.removeEventListener('storage', storage) }
+  }, [setWorkflow])
 
   const setScenario = useCallback(
     (s: DemoScenario) => {
@@ -118,6 +147,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   const setClaimDecision = useCallback(
     (claimId: string, patch: Partial<LocalClaimDecision>) => {
+      revision.current += 1
       setClaimDecisions((prev) => {
         const current = prev[claimId] ?? {
           claim_id: claimId,
@@ -139,6 +169,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   const setFieldDecision = useCallback(
     (fieldId: string, patch: Partial<LocalFieldDecision>) => {
+      revision.current += 1
       setFieldDecisions((prev) => {
         const current = prev[fieldId] ?? {
           field_id: fieldId,
@@ -157,7 +188,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   )
 
   const canProceedFromClaims = useCallback(() => {
-    if (!workflow?.claim_verification.length) return false
+    if (!workflow?.claim_verification.length || workflow.requires_reverification) return false
     for (const v of workflow.claim_verification) {
       const d = claimDecisions[v.claim_id]
       if (v.state === 'BLOCKED') {
@@ -165,6 +196,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         if (d?.decision === 'confirm') return false
         if (d?.decision !== 'reject') return false
       }
+      const claim = workflow.resume_claims.find((item) => item.claim_id === v.claim_id)
+      if ((!claim?.evidence_ids.length || claim.evidence_ids.some((id) => id.startsWith('ev_draft_'))) && d?.decision !== 'reject') return false
       if (v.state === 'NEEDS_REVIEW') {
         if (!d?.decision) return false
         if (d.decision === 'edit' || d.freshness === 'edited_pending_reverify') {
@@ -204,12 +237,45 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   }, [workflow, fieldDecisions])
 
   const canSubmitAts = useCallback(() => {
-    if (!workflow) return false
+    if (!workflow || workflow.requires_reverification || !canProceedFromClaims()) return false
     if (workflow.workflow_status === 'BLOCKED') return false
     if (workflow.risk_result.action === 'BLOCKED') return false
     if (!workflow.human_confirmation.allowed_actions.includes('CONFIRM')) return false
     return atsFieldAcksComplete()
-  }, [workflow, atsFieldAcksComplete])
+  }, [workflow, atsFieldAcksComplete, canProceedFromClaims])
+
+  const reverifyClaims = useCallback(async () => {
+    if (!workflow) return '请先运行工作流。'
+    const version = revision.current
+    const claims = workflow.resume_claims
+      .filter((claim) => claimDecisions[claim.claim_id]?.decision !== 'reject')
+      .map((claim) => ({claim_id: claim.claim_id, text: claimDecisions[claim.claim_id]?.editedText ?? claim.text}))
+    const res = await getApiClient().reverifyWorkflow(workflow, claims, workflow._prerecorded ? null : resumeForm)
+    if (version !== revision.current) return '输入已改变，请重新核验最新内容。'
+    if (res.error || !res.data) return res.error?.message ?? '重新核验失败'
+    setWorkflow({...workflow, ...res.data})
+    return null
+  }, [workflow, claimDecisions, resumeForm, setWorkflow])
+
+  const validateExport = useCallback(async () => {
+    if (!workflow || !canSubmitAts()) return false
+    const version = revision.current
+    const claims = workflow.resume_claims.filter((claim) => claimDecisions[claim.claim_id]?.decision !== 'reject')
+      .map((claim) => ({claim_id: claim.claim_id, text: claim.text}))
+    const res = await getApiClient().reverifyWorkflow(workflow, claims, workflow._prerecorded ? null : resumeForm)
+    if (version !== revision.current || res.error || !res.data) return false
+    const next = res.data
+    const signature = (value: Partial<WorkflowResponse>) => JSON.stringify([
+      value.resume_claims?.map((c) => [c.claim_id, c.text, c.evidence_ids]),
+      value.claim_verification?.map((v) => [v.claim_id, v.state]),
+      value.ats_form_mapping?.fields, value.field_controls,
+    ])
+    if (next.workflow_status === 'BLOCKED' || signature(next) !== signature(workflow)) {
+      setWorkflow({...workflow, ...next})
+      return false
+    }
+    return true
+  }, [workflow, claimDecisions, resumeForm, canSubmitAts, setWorkflow])
 
   const dataSourceLabel = sourceLabel(scenario, workflow)
 
@@ -230,6 +296,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       setJdRawInput,
       setWorkflow,
       patchWorkflow,
+      reverifyClaims,
+      validateExport,
       setResumeForm,
       setClaimDecision,
       setFieldDecision,
@@ -255,6 +323,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       setScenario,
       setWorkflow,
       patchWorkflow,
+      reverifyClaims,
+      validateExport,
       setClaimDecision,
       setFieldDecision,
       resetFlow,

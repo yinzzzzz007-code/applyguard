@@ -11,6 +11,7 @@ import { EvidenceWorkspacePage } from './pages/EvidenceWorkspacePage'
 import { HumanConfirmationPage } from './pages/HumanConfirmationPage'
 import { JdInputPage } from './pages/JdInputPage'
 import { ResumeReviewPage } from './pages/ResumeReviewPage'
+import { JobRadarPage } from './pages/JobRadarPage'
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
             <Route path="/vault" element={<CareerVaultPage />} />
             <Route path="/evidence" element={<EvidenceWorkspacePage />} />
             <Route path="/jd" element={<JdInputPage />} />
+            <Route path="/jobs" element={<JobRadarPage />} />
             <Route path="/match" element={<EvidenceMatchPage />} />
             <Route path="/resume" element={<ResumeReviewPage />} />
             <Route path="/claims" element={<ClaimVerificationPage />} />

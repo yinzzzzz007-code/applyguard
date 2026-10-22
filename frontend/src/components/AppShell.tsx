@@ -79,6 +79,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div className="topbar-actions">
+          <NavLink to="/jobs" className="btn secondary">
+            岗位雷达
+          </NavLink>
           <NavLink to="/evidence" className="btn secondary">
             证据工作区
           </NavLink>
