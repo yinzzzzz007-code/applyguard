@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import threading
 import urllib.error
 import urllib.request
 from typing import Any, Protocol
@@ -57,7 +58,11 @@ def _json_object(content: str) -> dict[str, Any] | None:
 
 class HttpModelClient:
     def __init__(self, *, api_key: str | None = None, base_url: str | None = None,
-                 model: str | None = None, max_tokens: int | None = None, timeout: float | None = None) -> None:
+                 model: str | None = None, max_tokens: int | None = None, timeout: float | None = None,
+                 require_complete: bool = False) -> None:
+        self.require_complete = require_complete
+        self._usage_lock = threading.Lock()
+        self.usage = {'calls':0, 'prompt_tokens':0, 'completion_tokens':0, 'total_tokens':0}
         self.api_key = api_key if api_key is not None else os.getenv("APPLYGUARD_AI_API_KEY", "")
         self.base_url = (base_url or os.getenv("APPLYGUARD_AI_BASE_URL", "https://api.chatanywhere.tech/v1")).rstrip("/")
         self.model = model if model is not None else os.getenv("APPLYGUARD_AI_MODEL", "gpt-4o-mini")
@@ -87,6 +92,18 @@ class HttpModelClient:
             self.disable_thinking = "deepseek" in self.base_url.casefold() or "deepseek" in self.model.casefold()
 
     def complete_json(self, system_prompt: str, user_prompt: str) -> dict[str, Any]:
+        return self._complete(system_prompt, user_prompt)
+
+    def complete_structured(self, system_prompt: str, user_prompt: str, schema: dict) -> dict[str, Any]:
+        result = self._complete(system_prompt, user_prompt, schema=schema)
+        from jsonschema import validate, ValidationError
+        try:
+            validate(result, schema)
+        except ValidationError:
+            raise ModelFailure('Model output did not match the required schema') from None
+        return result
+
+    def _complete(self, system_prompt: str, user_prompt: str, *, schema: dict | None = None) -> dict[str, Any]:
         if not self.api_key:
             raise ModelFailure("Model API key is not configured", retryable=False)
         if not self.base_url.startswith("https://"):
@@ -103,12 +120,17 @@ class HttpModelClient:
         }
         if self.disable_thinking:
             payload["thinking"] = {"type": "disabled"}
+        if schema is not None:
+            payload['response_format'] = {'type':'json_schema','json_schema':{
+                'name':'applyguard_checked_output','strict':True,'schema':schema}}
         body = json.dumps(payload).encode()
         request = urllib.request.Request(
             self.base_url + "/chat/completions", data=body,
             headers={"Authorization": "Bearer " + self.api_key, "Content-Type": "application/json"},
         )
         try:
+            with self._usage_lock:
+                self.usage['calls'] += 1
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 raw = response.read(262145)
         except urllib.error.HTTPError as exc:
@@ -120,6 +142,10 @@ class HttpModelClient:
             raise ModelFailure("Model response exceeded size limit")
         try:
             response_payload = json.loads(raw)
+            usage = response_payload.get('usage', {})
+            with self._usage_lock:
+                for field in ('prompt_tokens','completion_tokens','total_tokens'):
+                    if isinstance(usage.get(field),int):self.usage[field] += usage[field]
             choice = response_payload["choices"][0]
             finish_reason = choice.get("finish_reason")
             message = choice.get("message") if isinstance(choice.get("message"), dict) else {}
@@ -130,8 +156,8 @@ class HttpModelClient:
         except (ValueError, KeyError, IndexError, TypeError) as exc:
             raise ModelFailure("Model returned invalid JSON") from exc
         if result is not None:
-            if _is_refused_finish(finish_reason):
-                raise ModelFailure(f"Model response was truncated or refused (finish_reason={finish_reason})", retryable=False)
+            if message.get('refusal') or _is_refused_finish(finish_reason) or ((self.require_complete or schema is not None) and finish_reason not in _OK_FINISH):
+                raise ModelFailure(f"Model response was truncated or refused (finish_reason={finish_reason})", retryable=finish_reason == 'length')
             return result
         if not isinstance(content, str) or not content.strip():
             raise ModelFailure("Model returned empty content")

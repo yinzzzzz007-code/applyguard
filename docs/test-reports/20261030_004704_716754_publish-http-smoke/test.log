@@ -1,0 +1,8 @@
+{"case": "object_mode", "status": "PASS", "http_status": 422, "expected": 422}
+{"case": "array_mode", "status": "PASS", "http_status": 422, "expected": 422}
+{"case": "broken_base64", "status": "PASS", "http_status": 422, "expected": 422}
+{"case": "encrypted_pdf", "status": "PASS", "http_status": 422, "expected": 422}
+{"case": "damaged_pdf", "status": "PASS", "http_status": 422, "expected": 422}
+{"case": "unreadable_drawing", "status": "PASS", "http_status": 422, "expected": 422}
+{"case": "healthy_after_errors", "status": "PASS", "http_status": 200, "expected": 200}
+{"cases": 7, "failed": 0, "scope": "localhost offline smoke; no browser or real model"}

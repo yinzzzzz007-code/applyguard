@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import re
+from datetime import date
 from io import BytesIO
 from typing import Any
 
@@ -13,10 +14,12 @@ from backend.services.model_client import HttpModelClient, ModelFailure
 
 MAX_PDF_BYTES = 5 * 1024 * 1024
 MAX_TEXT_CHARS = 20000
+MAX_PDF_PAGES = 20
+MAX_BASE64_CHARS = 4 * ((MAX_PDF_BYTES + 2) // 3)
 
 _EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 _PHONE = re.compile(r"(?<!\d)(1[3-9]\d{9})(?!\d)")
-_BIRTH = re.compile(r"(?:出生(?:日期|年月)?|生日)[:：\s]*(\d{4})\s*[.\-年/]\s*(\d{1,2})")
+_BIRTH = re.compile(r"(?:出生(?:日期|年月)?|生日)[:：\s]*(\d{4})\s*[.\-年/]\s*(\d{1,2})(?!\d)(?:\s*[.\-月/]\s*(\d{1,2})(?!\d)日?)?")
 _NAME = re.compile(r"(?:姓名|名字)[:：\s]*([\u4e00-\u9fff·]{2,8})")
 _GENDER = re.compile(r"(?:性别)[:：\s]*(男|女)")
 _ETHNICITY = re.compile(r"(?:民族)[:：\s]*([\u4e00-\u9fff]{1,8})")
@@ -26,7 +29,7 @@ _CITY = re.compile(r"(?:现居(?:住地)?|居住地|所在地)[:：\s]*([^\n]{2,
 _HUKOU = re.compile(r"(?:户口(?:所在地)?)[:：\s]*([^\n]{2,30})")
 _SCHOOL = re.compile(r"([\u4e00-\u9fff]{2,20}(?:大学|学院|职业技术学院))")
 _DEGREE = re.compile(r"(博士|硕士|本科|专科|高中)")
-_MAJOR = re.compile(r"(?:专业)[:：\s]*([^\n，,]{2,30})")
+_MAJOR = re.compile(r"(?:专业)(?!排名|方向|课程)[:：\s]+([^\n，,；;]{2,30})")
 _EXPECT_ROLE = re.compile(r"(?:求职意向|期望职位|应聘岗位)[:：\s]*([^\n]{2,40})")
 _EXPECT_CITY = re.compile(r"(?:期望城市|意向城市)[:：\s]*([^\n]{2,40})")
 _DATE = re.compile(r"(20\d{2})\s*[.\-年/]\s*(\d{1,2})")
@@ -55,7 +58,7 @@ _STOP = [
 ]
 
 _EXTRACT_SYSTEM = """你是简历信息抽取器。只根据用户给出的简历原文填写 JSON，不要编造。
-原文没有的字段用空字符串或空数组。日期统一为 YYYY-MM（缺月则 YYYY-01）。
+原文没有的字段用空字符串或空数组。日期保留原文精度：缺月只保留年份，不补01月。生日只有完整、有效的年月日才能填写；缺日留空并在summary保留原文。
 只输出一个 JSON 对象，字段如下：
 {
   "basic": {"name":"","gender":"","birthday":"","ethnicity":"","politics":"","phone":"","email":"","idType":"","idNo":"","city":"","hukou":""},
@@ -202,8 +205,11 @@ def extract_resume_from_text(text: str) -> dict[str, Any]:
     basic["email"] = email.group(0) if email else ""
     basic["phone"] = _first(_PHONE, compact)
     birth = _BIRTH.search(compact)
-    if birth:
-        basic["birthday"] = f"{birth.group(1)}-{int(birth.group(2)):02d}-01"
+    if birth and birth.group(3):
+        try:
+            basic["birthday"] = date(*(int(birth.group(i)) for i in (1,2,3))).isoformat()
+        except ValueError:
+            pass
     basic["name"] = _first(_NAME, compact)
     basic["gender"] = _first(_GENDER, compact)
     basic["ethnicity"] = _first(_ETHNICITY, compact)
@@ -284,6 +290,10 @@ def extract_resume_from_text(text: str) -> dict[str, Any]:
     skills = _section(compact, r"专业技能|技能特长|(?<![\u3400-\u9fff])技能", _STOP)
     if skills:
         result["extras"]["skills"] = re.sub(r"\s+", "、", skills)[:300].strip("、")
+    from backend.services.resume_sections import enrich_sections
+    result = enrich_sections(result, compact)
+    if birth and not basic['birthday']:
+        result['extras']['summary'] = '\n'.join(filter(None, (result['extras']['summary'], birth.group(0))))
     return result
 
 
@@ -292,21 +302,41 @@ def pdf_bytes_to_text(data: bytes) -> str:
         raise ValueError("PDF 不能超过 5MB")
     try:
         reader = PdfReader(BytesIO(data))
+        if reader.is_encrypted:
+            raise ValueError('PDF 已加密，请先在本地解除密码保护再上传。')
+        count = len(reader.pages)
+        if not 1 <= count <= MAX_PDF_PAGES:
+            raise ValueError(f'PDF 页数须为1至{MAX_PDF_PAGES}页，请拆分后上传。')
+    except ValueError:
+        raise
     except Exception as exc:
         raise ValueError("无法读取该 PDF，请确认文件未损坏且为标准 PDF") from exc
     pages: list[str] = []
-    for page in reader.pages:
+    length = 0
+    for index in range(count):
         try:
-            pages.append(page.extract_text() or "")
-        except Exception:
-            pages.append("")
+            page = reader.pages[index]
+            text = page.extract_text() or ''
+            # An actual empty page is harmless; nonempty drawing/image content without
+            # extracted text may hide career evidence, and must not disappear silently.
+            contents = page.get_contents() if not text.strip() else None
+            if not text.strip() and contents is not None and contents.get_data().strip():
+                raise ValueError('该页存在内容但未能提取文字')
+        except Exception as exc:
+            raise ValueError(f'第{index+1}页未能完整读取文字，请检查损坏、扫描或图片内容；未返回部分结果。') from exc
+        length += len(text) + (1 if pages else 0)
+        if length > MAX_TEXT_CHARS:
+            raise ValueError(f'PDF 文字超过{MAX_TEXT_CHARS}字符，请拆分后上传；未截断内容。')
+        pages.append(text)
     text = "\n".join(pages).strip()
     if len(text) < 8:
         raise ValueError("未能从 PDF 抽出文字。扫描件或图片型简历无法识别，请换可复制文字的 PDF。")
-    return text[:MAX_TEXT_CHARS]
+    return text
 
 
 def _sanitize_extracted(payload: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise ModelFailure('Model extraction must be an object',retryable=False)
     base = empty_extracted()
     basic_in = payload.get("basic") if isinstance(payload.get("basic"), dict) else {}
     for key in base["basic"]:
@@ -327,7 +357,9 @@ def _sanitize_extracted(payload: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(raw, list):
             return []
         out: list[dict[str, str]] = []
-        for item in raw[:8]:
+        if len(raw)>50:
+            raise ModelFailure('Model returned too many resume entries',retryable=False)
+        for item in raw:
             if not isinstance(item, dict):
                 continue
             row = {field: item[field].strip() if isinstance(item.get(field), str) else "" for field in fields}
@@ -350,14 +382,18 @@ def _sanitize_extracted(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def parse_resume_pdf(pdf_base64: str, filename: str, *, parse_mode: str = "offline") -> dict[str, Any]:
-    if parse_mode not in {"offline", "dynamic"}:
+    if not isinstance(parse_mode,str) or parse_mode not in {"offline", "dynamic"}:
         raise ValueError("parse_mode must be offline or dynamic")
     if not isinstance(pdf_base64, str) or not pdf_base64.strip():
         raise ValueError("请上传 PDF")
     if not isinstance(filename, str) or not filename.lower().endswith(".pdf"):
         raise ValueError("只接受 .pdf 文件")
+    if len(filename)>255 or any(ord(c)<32 for c in filename):
+        raise ValueError('文件名过长或包含无效控制字符。')
+    if len(pdf_base64)>MAX_BASE64_CHARS:
+        raise ValueError('PDF 编码长度超限，文件不能超过5MB。')
     try:
-        data = base64.b64decode(pdf_base64, validate=False)
+        data = base64.b64decode(pdf_base64, validate=True)
     except Exception as exc:
         raise ValueError("PDF 编码无效") from exc
     if not data.startswith(b"%PDF"):
@@ -382,14 +418,22 @@ def parse_resume_pdf(pdf_base64: str, filename: str, *, parse_mode: str = "offli
             normalized = lambda value: re.sub(r"[^\w]", "", value.casefold())
             source = normalized(text)
             harvested = {normalized(value) for value in leaves(rules)}
+            if not leaves(sanitized):
+                raise ModelFailure('Model returned no usable fields',retryable=False)
             if any(normalized(value) not in source and normalized(value) not in harvested for value in leaves(sanitized)):
                 raise ModelFailure("Model fields contain text not grounded in the PDF", retryable=False)
-            rules = sanitized
+            # Model extraction fills missing groups/fields; it cannot erase the
+            # complete deterministic result with an empty or shorter response.
+            for group in ('basic','intention','extras'):
+                for field,value in sanitized[group].items():
+                    if not rules[group][field]:rules[group][field]=value
+            for group in ('education','internships','projects','awards'):
+                if not rules[group]:rules[group]=sanitized[group]
             extractor = "模型抽取"
             notice = "已用模型从 PDF 正文抽字段。请在经历库核对，未出现的信息不要补造。"
         except ModelFailure:
             extractor = "规则抽取（模型不可用）"
-            notice = "模型调用失败，已回退为规则抽取。请在经历库核对。"
+            notice = "模型调用失败或结果无效，已保留本地规则抽取结果。请在经历库核对。"
     return {
         "filename": filename,
         "extractor": extractor,

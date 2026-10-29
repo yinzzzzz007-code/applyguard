@@ -13,6 +13,7 @@ import type {
   ResumeMatchReport,
   ResumeParseResult,
   WorkflowResponse,
+  GroundingMode,
 } from './types'
 
 const DEFAULT_CANDIDATE = 'cand_demo_001'
@@ -79,7 +80,7 @@ function toApiError(payload: unknown, httpStatus: number): ApiResult<never>['err
 export type WorkflowParseMode = 'offline' | 'dynamic'
 
 export interface ApiClient {
-  reverifyWorkflow(workflow: WorkflowResponse, claims: Array<{ claim_id: string; text: string }>, draft?: EditableResumeForm | null): Promise<ApiResult<Partial<WorkflowResponse>>>
+  reverifyWorkflow(workflow: WorkflowResponse, claims: Array<{ claim_id: string; text: string }>, draft?: EditableResumeForm | null, mode?: GroundingMode): Promise<ApiResult<Partial<WorkflowResponse>>>
   getHealth(): Promise<ApiResult<{ status: string; service: string; version: string }>>
   getCareerVault(): Promise<ApiResult<CareerVaultSeed>>
   parseResumePdf(file: File, parseMode?: WorkflowParseMode): Promise<ApiResult<ResumeParseResult>>
@@ -189,12 +190,13 @@ async function fileToBase64(file: Blob): Promise<string> {
 export { fileToBase64 }
 
 export class ApplyGuardApiClient implements ApiClient {
-  async reverifyWorkflow(workflow: WorkflowResponse, claims: Array<{ claim_id: string; text: string }>, draft?: EditableResumeForm | null): Promise<ApiResult<Partial<WorkflowResponse>>> {
+  async reverifyWorkflow(workflow: WorkflowResponse, claims: Array<{ claim_id: string; text: string }>, draft?: EditableResumeForm | null, mode?: GroundingMode): Promise<ApiResult<Partial<WorkflowResponse>>> {
     try {
       const response = await apiFetch(`${apiBase()}/api/v1/workflow/reverify`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({candidate_id: workflow.candidate_id, application_id: workflow.application_id,
-          jd_text: workflow.parsed_jd.source_text, target_job: workflow.target_job, resume_draft: draft ?? undefined, claims}),
+          jd_text: workflow.parsed_jd.source_text, target_job: workflow.target_job, resume_draft: draft ?? undefined,
+          grounding_mode: mode ?? workflow.grounding?.mode, claims}),
       })
       const body = await readJson(response)
       if (!response.ok) return { error: toApiError(body, response.status) }
@@ -732,3 +734,19 @@ export function setApiClient(next: ApiClient): void {
 }
 
 export { DEFAULT_CANDIDATE }
+
+export async function groundingRequest<T>(path: 'polish' | 'export', workflow: WorkflowResponse,
+  draft: EditableResumeForm | null, extra: Record<string, unknown> = {}): Promise<ApiResult<T>> {
+  try {
+    const response = await apiFetch(`${apiBase()}/api/v1/resume/${path}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({candidate_id:workflow.candidate_id,application_id:workflow.application_id,
+        jd_text:workflow.parsed_jd.source_text,target_job:workflow.target_job,
+        resume_draft:draft ?? undefined,
+        claims:workflow.resume_claims.map(({claim_id,text}) => ({claim_id,text})), ...extra}),
+    })
+    const body = await readJson(response)
+    if (!response.ok) return {error:toApiError(body,response.status)}
+    return {data:body as T}
+  } catch { return {error:toApiError(null,0)} }
+}

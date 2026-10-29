@@ -258,6 +258,51 @@ export interface ClaimVerification {
   explanation: string
 }
 
+export type GroundingMode = 'sag' | 'sag_atomic'
+export interface GroundingSource {
+  source_id: string
+  evidence_id: string
+  experience_id: string
+  title: string
+  text: string
+  sha256: string
+  version: string
+  file_version?: number | null
+  retrieval_channels?: string[]
+}
+export interface GroundingClaimResult {
+  state: ClaimState
+  original_text: string
+  final_text: string
+  proposed_text?: string
+  proposal_rejected?: boolean
+  proposal_notice?: string
+  preservation?: { lost_supported_details: string[]; reason: string } | null
+  change_audit?: { changes: Array<{before: string; after: string}>; sensitive_change: boolean }
+  claim_text_sha256: string
+  complete: boolean
+  relation: 'SUPPORTED' | 'CONTRADICTED' | 'INSUFFICIENT'
+  retrieved_sources: GroundingSource[]
+  atoms: Array<{
+    atom_id: string
+    text: string
+    relation: 'SUPPORTED' | 'CONTRADICTED' | 'INSUFFICIENT'
+    reason: string
+    citations: Array<{ source_id: string; evidence_id: string; quote: string; source_sha256: string; start: number; end: number;
+      source_version?: string; file_version?: number | null;
+      positions?: Array<{page: number | null; line_start: number | null; line_end: number | null}> }>
+  }>
+}
+export interface GroundingReport {
+  mode: GroundingMode
+  engine: string
+  snapshot: string
+  prompt_version: string
+  error: string | null
+  export_requires_atomic: boolean
+  results: Record<string, GroundingClaimResult>
+}
+
 export interface AtsMappedField {
   field_id: string
   label: string
@@ -333,6 +378,7 @@ export interface AuditRecord {
 
 /** Full POST /api/v1/workflow/mock success body (offline / dynamic / fixture). */
 export interface WorkflowResponse {
+  grounding?: GroundingReport
   target_job?: import('./jobs').JobTarget
   requires_reverification?: boolean
   evidence_sources?: VaultEvidence[]

@@ -27,6 +27,7 @@ from backend.services.resume_selector import ResumeSelector
 from backend.services.skill_router import SkillRouter, WorkflowStopped, validate_request_ids
 from backend.services.model_client import HttpModelClient
 from backend.services import job_radar
+from backend.services.sag_grounding import GroundingUnavailable
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
@@ -81,6 +82,15 @@ def _error(code: str, message: str, trace_id: str, details: list[dict[str, Any]]
 
 
 def build_mock_workflow(request: dict[str, Any]) -> dict[str, Any]:
+    from backend.services.grounded_workflow import apply_grounding
+    response = _build_base_workflow(request)
+    grounding_request = {**request, 'candidate_id':response['candidate_id']}
+    if response.get('component_modes', {}).get('career_vault') == 'LOCAL_RESUME_DRAFT' and not isinstance(request.get('resume_draft'), dict):
+        grounding_request['resume_draft'] = load_resume_draft()
+    return apply_grounding(CAREER_VAULT_PATH, grounding_request, response)
+
+
+def _build_base_workflow(request: dict[str, Any]) -> dict[str, Any]:
     """Build one deterministic end-to-end proposal response."""
     target_job = job_radar.validate_target(request)
     if target_job and request.get("parse_mode") not in ("offline", "dynamic"):
@@ -419,7 +429,7 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             max_bytes = 8_000_000
         elif self.path == "/api/v1/resume/draft":
             max_bytes = 400_000
-        elif self.path in {"/api/v1/workflow/mock", "/api/v1/workflow/reverify"}:
+        elif self.path in {"/api/v1/workflow/mock", "/api/v1/workflow/reverify", "/api/v1/resume/polish", "/api/v1/resume/export"}:
             max_bytes = 262144
         elif self.path.startswith("/api/v1/evidence"):
             max_bytes = 12_000_000  # single-file import batches; keep under proxy limits
@@ -451,6 +461,12 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             elif self.path == "/api/v1/workflow/reverify":
                 from backend.services.reverification import reverify_workflow
                 response = reverify_workflow(CAREER_VAULT_PATH, request)
+            elif self.path == "/api/v1/resume/polish":
+                from backend.services.grounded_workflow import polish_workflow
+                response = polish_workflow(CAREER_VAULT_PATH, request)
+            elif self.path == "/api/v1/resume/export":
+                from backend.services.grounded_workflow import export_grounded
+                response = export_grounded(CAREER_VAULT_PATH, request)
             else:
                 response = build_mock_workflow(request)
         except (ConnectionResetError, BrokenPipeError, ConnectionAbortedError) as exc:
@@ -461,6 +477,9 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             return
         except job_radar.RadarUnavailable as exc:
             self._send_json(HTTPStatus.SERVICE_UNAVAILABLE, _error("RADAR_UNAVAILABLE", str(exc), trace_id))
+            return
+        except GroundingUnavailable as exc:
+            self._send_json(HTTPStatus.SERVICE_UNAVAILABLE, _error("GROUNDING_UNAVAILABLE", str(exc), trace_id))
             return
         except ValueError as exc:
             if str(exc) == "Route not found":

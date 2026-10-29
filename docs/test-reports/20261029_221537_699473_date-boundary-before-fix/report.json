@@ -1,0 +1,101 @@
+{
+  "started_at": "2026-10-29T22:15:37.699473+08:00",
+  "finished_at": "2026-10-29T22:15:38.044433+08:00",
+  "timezone": "Asia/Shanghai",
+  "label": "date-boundary-before-fix",
+  "scope": [
+    "tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix"
+  ],
+  "python": "3.12.14",
+  "status": "FAIL",
+  "methods": 1,
+  "passed": 0,
+  "failed": 1,
+  "skipped": 0,
+  "parameter_subcases": 6,
+  "elapsed_seconds": 0.34496,
+  "source_sha256": {
+    "backend\\__init__.py": "314894d0fdc7af1d0e107bda2f262fef3d6d50416f8c149d40f056de6b3bb595",
+    "backend\\app.py": "082a4d8ab063c95104eeb32d180af0fc36d6392110df8e32008ce94c9d985442",
+    "backend\\services\\__init__.py": "4bed5c52c87f6e6bd3f06eec9fbc913f9f10112f81823a4378703771c5c3c5e1",
+    "backend\\services\\atomic_verifier.py": "874dcc031d3af88ca8e3fa41ee274a1e47418d68ae24f6eeced3dbcb480f9fd8",
+    "backend\\services\\career_vault.py": "19f9a9a34d8017a3788c0a9e948458c1671251e16fa154caa3fe85dba792c9eb",
+    "backend\\services\\claim_validator.py": "9ef06c38ace8539980497d34cf6803f6c6bbfa2211271cad3dc8ec9191b8d99b",
+    "backend\\services\\edit_guard.py": "932bccde9f0d14874d340e487ae1629a0f44a2712cf710176c18639a30fba376",
+    "backend\\services\\evidence_matcher.py": "ad5620bd78d9bd1da7ca8ff720b4dfac14fd3557304e68c6a9f3e176a0e0e8fd",
+    "backend\\services\\evidence_parsers.py": "adc70d1096f7715bab3499cf168fd45849a9966d66256d274bd5bc549751da97",
+    "backend\\services\\evidence_workspace.py": "c29abac2d1cdca677d5579e4281cdcd7b734da9bc9a95f43604fe2631c6d9d0f",
+    "backend\\services\\grounded_workflow.py": "6ca97162ec518cbbba29a04181045150378bbbd63511d77209eb943ce5ef28a3",
+    "backend\\services\\jd_parser.py": "4d93003d3958d71f3947f9b89136d2ef9c83baf0c2a894ec186c58b4f343874a",
+    "backend\\services\\job_radar.py": "41564e680654e96a7b47f117a852b059ef0586eddf7364ca953e1e101161cad6",
+    "backend\\services\\local_evidence.py": "52b7a0bd5bca5069cfd12a3fa82743f4254895d13d91893ffc2a0bbc92b8c629",
+    "backend\\services\\local_store.py": "728871906ace976e8f6f7a97a460b7cb4d07810c10c1a8fcd08a1dbe31ff1b43",
+    "backend\\services\\model_client.py": "7488015b3c5f21fbade6dd8eaf079264292cb9239f4bee3ae2987f82d732bd06",
+    "backend\\services\\prompts.py": "7ade1702cf2e5ffb4cb44c848dd314d7de989d0d3b12838147d38a32164a7c13",
+    "backend\\services\\resume_draft_vault.py": "ed22cdfc442e804c61f6d7ec5e7a4d018e4c547771934d9b5aeee52cc4e35816",
+    "backend\\services\\resume_parser.py": "4bc984ee693d8128a80add479c77c4ce297479d07e1127160e720d2a5e4cc63e",
+    "backend\\services\\resume_sections.py": "6e6a5c516926cf86e7792812a6358aa188eea7706716f4d57cfdc8d95b2f1d1c",
+    "backend\\services\\resume_selector.py": "b3186b62913f1961746f3aeda3ba7affc9274758e9bd6c71cb91d688d9e46c6b",
+    "backend\\services\\reverification.py": "69a65594e3e620bf6cc83920fb0a9e2fa3b8a47eb3732fefadb1875daebc1bb9",
+    "backend\\services\\risk_engine.py": "0e751ac7642be480ed3a765cad2cba79a8c508f726f3c70b685bc4441a916e25",
+    "backend\\services\\sag_auxiliary.py": "91b3cc449c6415f73af470c10d0801a8a5f59801cd947bc7f58e76d246c3f13d",
+    "backend\\services\\sag_grounding.py": "5c0214eba07da2e4dd61262660168f44ee46e9282ebb7108c3d060e6b11e3f93",
+    "backend\\services\\schema_validation.py": "76ac5692c83d296865e5754d281342a69b23b54a9bfd8148554275fb107da6fe",
+    "backend\\services\\skill_router.py": "e199c9840ba092bf926e9c0759363a44a0277b54217ef99251a1ebe8dc39df3f",
+    "backend\\services\\structured_verifier.py": "121fcaad0ed31ba5a6683ef9d976e1d4b235d8c327fddfef31fa2ef78e17dea3",
+    "backend\\services\\third_party\\__init__.py": "7dab7352b9f3f966bf74798de78ff377f7102b020db4ee27534ce30a83ab2861",
+    "backend\\services\\third_party\\asu_metric_validation.py": "2e3bab857e160eab6d205ece4bf74125e234ec206310f3ef599cee87891e42e5",
+    "backend\\services\\third_party\\resume_matcher_bullet_selector.py": "c80d4845df7992a1525e7596192c23b7fece1eafce5ced4b3928e15cbcd43986",
+    "backend\\services\\third_party\\resume_matcher_keywords.py": "a6464154e01f7e01da40eaab6b6c292131a3352e263ae07cd7d1ca096fd0a996",
+    "tests\\test_api.py": "db6ac35949af852549ede36a6562d645c1709134abc49f86562bc247fe1c0247",
+    "tests\\test_c_audit.py": "19e4c8182e4df53d729d6df8afeef53b7b610315f43d71c76170d780f9c6a89d",
+    "tests\\test_contracts.py": "dc8afc81398df2c4e8fe8f5eef6c979dd9bd4c1bff12d6d3bc84c5d170b79c7f",
+    "tests\\test_docx_extract.py": "0c44b30433d19df090c067c27dce2d8a088f80ce4f2cfd32a01779583b570f32",
+    "tests\\test_evidence_workspace.py": "d1b3d6f56c71ea6a9f7f822e968e9d6d271df30370eca6897dbe56af1044a584",
+    "tests\\test_grounding.py": "d68ac2c74d8a42c7cc856c9b9fd3ddc63714b7629226386229a0b9a188adfa65",
+    "tests\\test_grounding_v2.py": "2f85302b10197dd9816222db99114685c5b9bbc0a2ecf715b4f035d19151f120",
+    "tests\\test_jd_chinese_offline.py": "af851112129d70a8148a6aa2549534ca21de6ff3ab172f51a962fd6b244af3fa",
+    "tests\\test_job_radar.py": "0ffd74967f6877c7c6e9be9028b6cda4992a182d7e99dc7276b3ca284e73cb06",
+    "tests\\test_member_b.py": "e353834241ca13758410a760f6e58848cc5f8cd058f735370286144af3025f71",
+    "tests\\test_member_c.py": "e37b5be2bfa6ee36f4c9f0d1b6ffa419d77f91cc529ccb15fc4249749eb25976",
+    "tests\\test_resume_abnormal.py": "a3b68cb22099cc221a95791402a61b2c2402ec5488035326cb4a695a65e1ddb1",
+    "tests\\test_resume_draft_vault.py": "d7c9fc0ab47fc9a69af0eebf62cb56aa67d9af57bbd31093da4dbe07ed7c61c7",
+    "tests\\test_resume_sections.py": "e523a7b7fb22396304203a039279e98f515bf7882dcd084d09e3cad9dba6f8f2",
+    "tests\\test_sag_auxiliary.py": "bc3c18d20c6154668edf4340022087dffe94e8353611102b9b61bdbb7cbab118",
+    "tests\\test_workflow_repairs.py": "ff9504ba0ecc241a7ad420860d164375e77f60dfd7e1bd46c7066530062b7993"
+  },
+  "records": [
+    {
+      "test": "tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix",
+      "status": "FAIL",
+      "subcases": [
+        {
+          "id": "test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix) (value='2024.13 - 2026.06')",
+          "status": "PASS"
+        },
+        {
+          "id": "test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix) (value='2024.09 - 2026.13')",
+          "status": "FAIL"
+        },
+        {
+          "id": "test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix) (value='2024.09 - 2026.00')",
+          "status": "FAIL"
+        },
+        {
+          "id": "test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix) (value='2026.06 - 2024.09')",
+          "status": "FAIL"
+        },
+        {
+          "id": "test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix) (value='2025.13 示例竞赛银奖')",
+          "status": "FAIL"
+        },
+        {
+          "id": "test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix) (value='2025.00 示例竞赛银奖')",
+          "status": "PASS"
+        }
+      ],
+      "elapsed_seconds": 0.0
+    }
+  ],
+  "note": "Method count and parameter subcase count are separate; fake-model tests do not measure LLM factual accuracy."
+}
