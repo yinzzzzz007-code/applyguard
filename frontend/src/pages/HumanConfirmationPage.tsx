@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { GroundedExport } from '../components/GroundedExport'
 import { useNavigate } from 'react-router-dom'
 import { ClaimBadge, RiskBadge } from '../components/States'
 import { useDemo } from '../context/DemoContext'
@@ -383,6 +384,7 @@ export function HumanConfirmationPage() {
       <label className="field-label" htmlFor="note">
         模拟确认备注
       </label>
+      <GroundedExport />
       <textarea
         id="note"
         className="jd-input"

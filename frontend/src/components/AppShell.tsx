@@ -1,124 +1,80 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import type { DemoScenario } from '../api/types'
 import { useDemo } from '../context/DemoContext'
 import { zhText } from '../i18n'
-import {
-  STEP_META,
-  STEP_ORDER,
-  loadMaxStep,
-  rememberMaxStep,
-  stepFromPath,
-  stepIndex,
-  type FlowStep,
-} from '../flow'
+import { STEP_META, STEP_ORDER, loadMaxStep, rememberMaxStep, stepFromPath, stepIndex } from '../flow'
+import { Icon, type IconName } from './Icon'
 
-const SCENARIOS: { id: DemoScenario; label: string; hint: string }[] = [
-  { id: 'live', label: '正常·在线', hint: '调用运行中的后端，默认离线规则解析' },
-  { id: 'prerecorded_block', label: '预录·阻断', hint: '预录：不支持内容被阻断' },
-  {
-    id: 'prerecorded_fallback',
-    label: '预录·回退',
-    hint: '预录：模型超时后规则回退',
-  },
-  { id: 'error', label: '错误重试', hint: '模拟后端不可用，或配合空岗位说明' },
+const STEP_ICONS: IconName[] = ['upload', 'folder', 'briefcase', 'layers', 'file', 'shield', 'window', 'check']
+const TOOLS: { path:string; label:string; icon:IconName }[] = [
+  {path:'/jobs',label:'岗位雷达',icon:'compass'},
+  {path:'/evidence',label:'证据工作区',icon:'library'},
+  {path:'/history',label:'申请历史',icon:'history'},
+]
+const SCENARIOS: {id:DemoScenario;label:string}[] = [
+  {id:'live',label:'连接本地后端'}, {id:'prerecorded_block',label:'预录 · 阻断样例'},
+  {id:'prerecorded_fallback',label:'预录 · 回退样例'}, {id:'error',label:'错误重试样例'},
 ]
 
-export function AppShell({ children }: { children: React.ReactNode }) {
-  const { scenario, setScenario, step, setStep, dataSourceLabel, workflow } = useDemo()
+export function AppShell({children}:{children:React.ReactNode}) {
+  const {scenario,setScenario,step,setStep,dataSourceLabel,workflow} = useDemo()
   const location = useLocation()
   const navigate = useNavigate()
-  const [maxStep, setMaxStep] = useState<FlowStep>(() => loadMaxStep())
-  const current = stepIndex(step)
-  const unlocked = Math.max(current, stepIndex(maxStep), stepIndex('vault'))
-
+  const drawer = useRef<HTMLDetailsElement>(null)
+  const fromPath = stepFromPath(location.pathname)
+  const unlocked = Math.max(stepIndex(step),stepIndex(loadMaxStep()),fromPath ? stepIndex(fromPath) : 0,stepIndex('vault'))
+  const title = fromPath ? STEP_META[fromPath].label : TOOLS.find(t => t.path === location.pathname)?.label ?? '申请工作台'
   useEffect(() => {
-    const fromPath = stepFromPath(location.pathname)
-    if (fromPath) {
-      setStep(fromPath)
-      setMaxStep(rememberMaxStep(fromPath))
-    }
-    // Keep scroll at top when entering a wizard step (not when only query changes)
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-  }, [location.pathname, setStep])
+    const target = stepFromPath(location.pathname)
+    if (target) {setStep(target);rememberMaxStep(target)}
+    if (drawer.current) drawer.current.open = false
+    window.scrollTo({top:0,left:0,behavior:'auto'})
+  },[location.pathname,setStep])
 
-  return (
-    <div className="app-shell">
-      <header className="topbar">
-        <div className="brand-block">
-          <p className="eyebrow">课程演示界面</p>
-          <h1 className="brand">申请护栏</h1>
-          <p className="tagline">
-            把可核查的经历变成可解释的简历建议，并在模拟网申前停下来让你确认。
-          </p>
-          <p className="muted data-source">数据来源：{dataSourceLabel}</p>
-          {workflow?.mock_notice ? (
-            <p className="muted tip-inline">{zhText(workflow.mock_notice)}</p>
-          ) : null}
-          {workflow?._prerecorded ? (
-            <p className="warn-text tip-inline">{zhText(workflow._prerecorded.notice)}</p>
-          ) : null}
-        </div>
-        <div className="scenario-switch" aria-label="演示场景">
-          <span className="scenario-label">演示场景</span>
-          <div className="scenario-buttons">
-            {SCENARIOS.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                className={scenario === s.id ? 'chip active' : 'chip'}
-                title={s.hint}
-                onClick={() => {
-                  setScenario(s.id)
-                  navigate('/')
-                }}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="topbar-actions">
-          <NavLink to="/jobs" className="btn secondary">
-            岗位雷达
-          </NavLink>
-          <NavLink to="/evidence" className="btn secondary">
-            证据工作区
-          </NavLink>
-          <NavLink to="/history" className="btn secondary">
-            申请历史
-          </NavLink>
-        </div>
-      </header>
-
-      <nav className="step-nav" aria-label="流程步骤">
-        <ol>
-          {STEP_ORDER.map((key, idx) => {
-            const meta = STEP_META[key]
-            const reachable = idx <= unlocked
-            const isCurrent = stepFromPath(location.pathname) === key
-            return (
-              <li key={key} className={isCurrent ? 'current' : reachable ? 'done' : ''}>
-                {reachable ? (
-                  <NavLink to={meta.path} end={meta.path === '/'}>
-                    {meta.label}
-                  </NavLink>
-                ) : (
-                  <span>{meta.label}</span>
-                )}
-              </li>
-            )
-          })}
-        </ol>
+  function navigation() {
+    return <>
+      <div className="workspace-scope"><span className="scope-mark">个</span><div><strong>个人工作台</strong><small>本地申请空间</small></div></div>
+      <nav className="workspace-nav" aria-label="申请流程">
+        <p className="nav-group-label">准备一份申请</p>
+        <ol>{STEP_ORDER.map((key,index) => <li key={key}>
+          {index <= unlocked ? <NavLink end={key === 'import'} to={STEP_META[key].path} className={({isActive}) => `workspace-nav-item${isActive ? ' is-current' : ''}`}>
+            <Icon name={STEP_ICONS[index]} /><span>{STEP_META[key].label}</span>{fromPath === key && <span className="nav-current-dot" />}
+          </NavLink> : <span className="workspace-nav-item is-locked" aria-disabled="true" title="完成前面的流程后解锁"><Icon name={STEP_ICONS[index]} /><span>{STEP_META[key].label}</span><Icon name="lock" /></span>}
+        </li>)}</ol>
       </nav>
-
-      <main className="page">{children}</main>
-
-      <footer className="footer">
-        <p>
-          在线演示默认走离线规则解析（不调模型）。预录场景加载本地样例，不冒充本次实时计算。
-        </p>
-      </footer>
+      <nav className="workspace-nav" aria-label="工作台工具"><p className="nav-group-label">资料与记录</p>
+        {TOOLS.map(tool => <NavLink key={tool.path} to={tool.path} className={({isActive}) => `workspace-nav-item${isActive ? ' is-current' : ''}`}><Icon name={tool.icon} /><span>{tool.label}</span></NavLink>)}
+      </nav>
+    </>
+  }
+  return <div className="workspace-shell">
+    <a className="skip-link" href="#workspace-main">跳到主要内容</a>
+    <aside className="workspace-sidebar">
+      <NavLink to="/" className="workspace-brand" aria-label="ApplyGuard 申请护栏首页"><Icon name="brand" /><span>ApplyGuard<small>申请护栏</small></span></NavLink>
+      {navigation()}
+      <div className="sidebar-note"><Icon name="shield" /><div><strong>每一条陈述，都有来处</strong><p>原始材料 · 事实核验 · 人工确认</p></div></div>
+      <div className="sidebar-bottom"><span className="scope-mark small">我</span><div><strong>我的申请空间</strong><small>课程实验版</small></div><Icon name="lock" /></div>
+    </aside>
+    <div className="workspace-body">
+      <header className="workspace-topbar">
+        <div className="workspace-breadcrumb"><span>申请工作台</span><Icon name="chevron" /><h1>{title}</h1></div>
+        <details className="workspace-scenario"><summary><span className="connection-dot" />{scenario === 'live' ? '本地后端' : '预录 / 模拟'}<Icon name="down" /></summary>
+          <div className="scenario-popover"><label htmlFor="demo-scenario">演示场景</label><select id="demo-scenario" value={scenario} onChange={event => {
+            if (workflow && !window.confirm('切换演示场景会清空本页工作流与未采用的建议。是否继续？')) return
+            setScenario(event.target.value as DemoScenario);navigate('/')
+          }}>{SCENARIOS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}</select><p>预录场景展示本地样例；在线模式由后端返回结果。</p></div>
+        </details>
+        <details className="mobile-navigation" ref={drawer} onKeyDown={event => {
+          if(event.key === 'Escape' && drawer.current) {drawer.current.open=false;drawer.current.querySelector('summary')?.focus()}
+        }}><summary aria-label="展开导航"><Icon name="menu" /></summary><div className="mobile-nav-sheet">{navigation()}</div></details>
+      </header>
+      <main id="workspace-main" className="workspace-main" tabIndex={-1}>
+        {workflow?._prerecorded && <p className="workspace-notice">{zhText(workflow._prerecorded.notice)}</p>}
+        {fromPath && workflow?.mock_notice && !workflow._prerecorded && <p className="sample-data-note">{zhText(workflow.mock_notice)}</p>}
+        {children}
+      </main>
+      <footer className="workspace-footer"><span>ApplyGuard · 让表达有据可依</span><details><summary>数据与模型说明</summary><p>数据来源：{dataSourceLabel}。{workflow?.mock_notice ? zhText(workflow.mock_notice) : ''} 岗位解析与 SAG 分别配置；SAG 启用时会向所配置的模型服务发送材料。</p></details></footer>
     </div>
-  )
+  </div>
 }

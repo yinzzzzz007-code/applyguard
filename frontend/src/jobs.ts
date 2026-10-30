@@ -24,3 +24,18 @@ export function parseJobImport(text: string): unknown[] {
 export function importMessage(result: { created: number; updated: number; unchanged: number }): string {
   return `导入完成：新增 ${result.created}，更新 ${result.updated}，未变化 ${result.unchanged}。`
 }
+
+export type JobScope = 'active' | 'preparing' | 'archived' | 'all'
+export type JobSort = 'newest' | 'company'
+export function filterJobs<T extends Pick<Opportunity,'title'|'company'|'location'|'description'|'status'|'stage'|'imported_at'>>(
+  items:T[], query:string, scope:JobScope, status:string, sort:JobSort,
+):T[] {
+  const terms = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean)
+  return items.filter(job => {
+    const inScope = scope === 'all' || (scope === 'archived' ? job.stage === 'archived' : scope === 'preparing' ? job.stage === 'preparing' : job.stage !== 'archived')
+    const text = [job.title,job.company,job.location,job.description].join(' ').toLocaleLowerCase()
+    return inScope && (status === 'all' || job.status === status) && terms.every(term => text.includes(term))
+  }).sort((a,b) => sort === 'company'
+    ? a.company.localeCompare(b.company,'zh-CN') || a.title.localeCompare(b.title,'zh-CN')
+    : (Date.parse(b.imported_at) || 0) - (Date.parse(a.imported_at) || 0))
+}

@@ -25,7 +25,7 @@ def simulator_mapping(application_id: str, claims: list[dict[str, Any]]) -> dict
             'consistency_state': 'NEEDS_REVIEW' if claims else 'BLOCKED'}
 
 
-def reverify_workflow(vault_path: Path, request: dict[str, Any]) -> dict[str, Any]:
+def reverify_workflow(vault_path: Path, request: dict[str, Any], *, _skip_grounding: bool = False) -> dict[str, Any]:
     from backend.services.job_radar import validate_target
     validate_target(request)
     from backend.services.skill_router import validate_request_ids
@@ -107,10 +107,14 @@ def reverify_workflow(vault_path: Path, request: dict[str, Any]) -> dict[str, An
     trace = [{'step': step, 'status': 'COMPLETED'} for step in STEPS[:7]]
     trace += [{'step': 'Human Confirmation', 'status': 'BLOCKED' if blocked else 'PENDING'},
               {'step': 'Audit Record', 'status': 'CREATED'}]
-    return {'resume_claims': claims, 'step_trace': trace, 'evidence_match': matched,
+    response = {'resume_claims': claims, 'step_trace': trace, 'evidence_match': matched,
             'evidence_sources': [source for item in items for source in item['evidence_sources']], 'claim_verification': results, 'ats_form_mapping': mapping,
             'field_controls': engine.field_controls(mapping, results), 'risk_result': risk,
             'workflow_status': 'BLOCKED' if blocked else 'AWAITING_HUMAN_CONFIRMATION',
             'human_confirmation': {'required': True, 'reason': '用户修改后已重新核验，请检查新的风险结果。',
                                    'allowed_actions': ['EDIT', 'CANCEL'] if blocked else ['CONFIRM', 'EDIT', 'CANCEL']},
             'trace_id': trace_id, 'audit_record': audit, 'requires_reverification': False}
+    if _skip_grounding:
+        return response
+    from backend.services.grounded_workflow import apply_grounding
+    return apply_grounding(vault_path, request, response)

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getApiClient } from '../api/client'
 import type { CareerVaultSeed, ClaimEvidenceCheck, EvidenceLink, EvidenceRecord } from '../api/types'
 import { ClaimBadge, EmptyState } from '../components/States'
+import { AtomicEvidence } from '../components/AtomicEvidence'
 import { useDemo } from '../context/DemoContext'
 import { zhText } from '../i18n'
 
@@ -154,9 +155,9 @@ export function ClaimVerificationPage() {
     <section className="panel">
       <header className="panel-head">
         <h2>陈述核验</h2>
-        <p>逐条查看简历陈述的证据与处理方式。</p>
+        <p>把每一句话，与支持它的原始材料放在一起核对。</p>
       </header>
-
+      <div className="claim-summary" aria-label="核验结果汇总">{(['VERIFIED','NEEDS_REVIEW','BLOCKED'] as const).map(state => <div key={state}><strong>{workflow.claim_verification.filter(v => v.state === state).length}</strong><ClaimBadge status={state} /></div>)}</div>
       <div className="btn-row">
         <button type="button" className="btn primary" disabled={rechecking} onClick={() => {
           setRechecking(true)
@@ -172,11 +173,11 @@ export function ClaimVerificationPage() {
         </div>
         <div className="claim-status-guide-item">
           <ClaimBadge status="NEEDS_REVIEW" />
-          <p>证据或措辞还需人工判断。查看来源后可保留原文或拒绝；修改后须重新核验。</p>
+          <p>证据或措辞还需核对。SAG模式下须补充证据或编辑后重新核验，人工确认不能代替通过。</p>
         </div>
         <div className="claim-status-guide-item">
           <ClaimBadge status="BLOCKED" />
-          <p>存在无法支持的内容。不能确认或复制，须拒绝并排除后才能继续查看后续步骤。</p>
+          <p>存在无法支持的内容。不能确认或复制；请编辑重核验，或拒绝并排除。</p>
         </div>
       </div>
 
@@ -208,7 +209,7 @@ export function ClaimVerificationPage() {
                 {zhText(v.explanation)}
               </p>
               <p className="muted">
-                支持度 {(v.support_score * 100).toFixed(0)}% · 是否锚定原文{' '}
+                {workflow.grounding ? '逐事实核验结果（不表示正确概率）' : `支持度 ${(v.support_score * 100).toFixed(0)}%`} · 是否锚定原文{' '}
                 {v.grounded ? '是' : '否'}
               </p>
               {v.unsupported_fragments?.length ? (
@@ -255,16 +256,17 @@ export function ClaimVerificationPage() {
                     </div>
                   ))}
               </div>
+              <AtomicEvidence result={workflow.grounding?.results[v.claim_id]} />
 
               {v.state === 'VERIFIED' && (
                 <p className="muted">
-                  已核验：表示相对经历库元数据可支持原文，不等于外部事实证明。无需额外操作即可进入后续（除非你编辑）。
+                  当前材料支持这句陈述；仍须核对原文和归属。修改后应重新核验。
                 </p>
               )}
 
               {v.state === 'NEEDS_REVIEW' && (
                 <div className="action-pad">
-                  <p className="warn-text">需要处理：确认保留、编辑（将变为待重新核验）、或拒绝。</p>
+                  <p className="warn-text">{workflow.grounding ? '请补充证据或编辑后重新核验，也可拒绝本句。' : '需要处理：确认保留、编辑（将变为待重新核验）、或拒绝。'}</p>
                   {d?.decision === 'edit' && (
                     <textarea
                       className="jd-input"
@@ -283,6 +285,7 @@ export function ClaimVerificationPage() {
                     <button
                       type="button"
                       className={d?.decision === 'confirm' ? 'btn primary' : 'btn secondary'}
+                      disabled={Boolean(workflow.grounding)}
                       onClick={() =>
                         setClaimDecision(v.claim_id, {
                           decision: 'confirm',
@@ -327,10 +330,20 @@ export function ClaimVerificationPage() {
                 </div>
               )}
 
+              {workflow.grounding && v.state !== 'NEEDS_REVIEW' && <div className="action-pad">
+                <button type="button" className="btn secondary" onClick={() => setClaimDecision(v.claim_id, {
+                  decision:'edit', editedText:claim?.text, freshness:'edited_pending_reverify',
+                })}>编辑后重新核验</button>
+                {d?.decision === 'edit' && <textarea className="jd-input" rows={3}
+                  value={d.editedText ?? claim?.text ?? ''} onChange={event => setClaimDecision(v.claim_id, {
+                    decision:'edit',editedText:event.target.value,freshness:'edited_pending_reverify',
+                  })} />}
+              </div>}
+
               {v.state === 'BLOCKED' && (
                 <div className="action-pad">
                   <p className="danger-text">
-                    已阻断：禁止确认为通过。只能拒绝并排除，相关网申字段也不可靠确认绕过。
+                    已阻断：禁止确认为通过。请编辑后重新核验或拒绝并排除，相关网申字段也不可靠确认绕过。
                   </p>
                   <div className="btn-row">
                     <button type="button" className="btn secondary" disabled>

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { parseJobImport, canPrepareJob, importMessage } from '../src/jobs.ts'
+import { parseJobImport, canPrepareJob, importMessage, filterJobs } from '../src/jobs.ts'
 import { saveApplicationHistory, loadApplicationHistory } from '../src/history.ts'
 import { readFileSync } from 'node:fs'
 
@@ -37,4 +37,28 @@ test('application summary retains opportunity version without saving JD or evide
   assert.equal(record.targetJobVersion, 2)
   assert.equal([...entries.values()].join('').includes('private-hash'), false)
   assert.equal([...entries.values()].join('').includes(workflow.parsed_jd.source_text), false)
+})
+
+const uiRows = [
+  {title:'Python 后端',company:'北桥实验室',location:'深圳',description:'API 自动化测试',status:'open',stage:'saved',imported_at:'2026-10-20'},
+  {title:'数据工程',company:'枫叶实验室',location:'上海',description:'Python SQL ETL',status:'unknown',stage:'preparing',imported_at:'2026-10-28'},
+  {title:'前端开发',company:'港湾实验室',location:'深圳',description:'React TypeScript',status:'closed',stage:'archived',imported_at:'2026-10-29'},
+]
+test('job search combines words across fields and normalizes whitespace and case', () => {
+  assert.deepEqual(filterJobs(uiRows,'  python   深圳 API  ','active','all','newest').map(j => j.title),['Python 后端'])
+  assert.equal(filterJobs(uiRows,'python 上海','active','open','newest').length,0)
+})
+test('job views separate preparing, archived and source status without changing eligibility', () => {
+  assert.deepEqual(filterJobs(uiRows,'','preparing','all','newest').map(j => j.title),['数据工程'])
+  const [archived] = filterJobs(uiRows,'','archived','closed','newest')
+  assert.equal(archived.title,'前端开发')
+  assert.equal(canPrepareJob(archived),false)
+  assert.equal(filterJobs(uiRows,'','active','closed','newest').length,0)
+})
+test('job sorting is deterministic and does not reorder the stored collection', () => {
+  const before=uiRows.map(j => j.title)
+  assert.deepEqual(filterJobs(uiRows,'','all','all','newest').map(j => j.title),['前端开发','数据工程','Python 后端'])
+  assert.deepEqual(uiRows.map(j => j.title),before)
+  const companies=filterJobs(uiRows,'','all','all','company').map(j => j.company)
+  assert.deepEqual(companies,[...companies].sort((a,b) => a.localeCompare(b,'zh-CN')))
 })

@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getApiClient, type WorkflowParseMode } from '../api/client'
 import type { ResumeParseResult } from '../api/types'
-import { EmptyState, ErrorState, LoadingState } from '../components/States'
+import { ErrorState, LoadingState } from '../components/States'
+import { Icon } from '../components/Icon'
 import { useDemo } from '../context/DemoContext'
 import { overwriteFromExtracted } from '../resume/formModel'
 
@@ -66,23 +67,25 @@ export function ResumeImportPage() {
   const basic = parsed?.form.basic
 
   return (
-    <section className="panel">
+    <section className="panel import-page">
       <header className="panel-head">
-        <h2>简历识别</h2>
-        <p>
-          可选步骤：上传可复制文字的 PDF，抽出姓名、联系方式、教育、经历与获奖等，再写入经历库核对。也可跳过，直接从经历库开始（演示种子或已保存草稿）。扫描件无法识别。不会向招聘网站提交。
-        </p>
+        <h2>从真实经历，开始下一份申请。</h2>
+        <p>导入简历、整理证据，再把你的经历表达得更好。</p>
       </header>
-
+      <div className="import-layout">
+      <div className="import-card">
+      <div className="surface-heading"><h3>导入你的简历</h3><span className="quiet-label">PDF 文档</span></div>
+      <p className="muted">识别基本信息与经历，写入前由你核对。</p>
       <label className="field-label" htmlFor="resume-parse-mode">识别方式</label>
       <select id="resume-parse-mode" value={parseMode} disabled={status === 'loading'}
         onChange={(event) => { setParseMode(event.target.value as WorkflowParseMode); setParsed(null); setStatus('idle') }}>
         <option value="offline">本地规则（默认，不调用模型）</option>
         <option value="dynamic">模型抽取（发送简历正文，可能产生费用）</option>
       </select>
-      <p className="muted">仅选择模型抽取时，才会将 PDF 正文和文件名发送给后端配置的服务商。可先脱敏；模型结果仍需人工核对。</p>
+      <p className="mode-note">{parseMode === 'offline' ? '本地处理，无需调用模型。支持可复制文字的 PDF。' : '正文和文件名将发送给后端配置的模型服务，可能产生费用；请先脱敏。'}</p>
       <label
         className={dragOver ? 'resume-dropzone is-over' : 'resume-dropzone'}
+        aria-busy={status === 'loading'}
         onDragOver={(event) => {
           event.preventDefault()
           setDragOver(true)
@@ -92,7 +95,7 @@ export function ResumeImportPage() {
           event.preventDefault()
           setDragOver(false)
           const next = event.dataTransfer.files[0]
-          if (next) {
+          if (next && status !== 'loading') {
             setFile(next)
             void runParse(next)
           }
@@ -101,7 +104,10 @@ export function ResumeImportPage() {
         <input
           type="file"
           accept="application/pdf,.pdf"
-          hidden
+          className="import-file-input"
+          aria-label="选择 PDF 简历"
+          aria-describedby="upload-requirements"
+          disabled={status === 'loading'}
           onChange={(event) => {
             const next = event.target.files?.[0]
             if (next) {
@@ -110,9 +116,12 @@ export function ResumeImportPage() {
             }
           }}
         />
-        <strong>{file ? file.name : '点击或拖入 PDF'}</strong>
-        <span className="muted">单个文件，不超过 5MB</span>
+        <span className="upload-document"><Icon name="file" /><span className="document-format">PDF</span></span>
+        <strong>{file ? file.name : '把简历拖到这里'}</strong>
+        <span className="upload-choice">或 <span>选择文件</span></span>
+        <span className="muted" id="upload-requirements">单个 PDF · 最大 5 MB · 暂不支持扫描件</span>
       </label>
+      <div className="privacy-line"><Icon name="lock" /><span>只用于整理本次申请，不会提交到招聘网站。</span></div>
 
       {status === 'loading' && <LoadingState label="正在识别简历…" />}
       {status === 'error' && (
@@ -148,16 +157,9 @@ export function ResumeImportPage() {
         </div>
       )}
 
-      {status === 'idle' && (
-        <EmptyState
-          title="尚未上传"
-          detail="这不是必做步骤。可点下方按钮，或顶部「经历库」，直接从第二步开始。"
-        />
-      )}
-
-      <div className="btn-row end">
+      <div className="btn-row import-actions">
         <button type="button" className="btn secondary" onClick={() => navigate('/vault')}>
-          跳过，直接进入经历库
+          先手动填写
         </button>
         <button
           type="button"
@@ -165,9 +167,21 @@ export function ResumeImportPage() {
           disabled={!parsed}
           onClick={() => void applyToVault()}
         >
-          写入经历库并核对
+          写入并核对 <Icon name="arrow" />
         </button>
       </div>
+      </div>
+      <aside className="import-context">
+        <div className="context-title"><h3>好表达，始于有依据。</h3><p>从原始材料到最终陈述，每一步都能回头查看。</p></div>
+        <ol className="import-journey">
+          <li><Icon name="folder" /><div><strong>把经历整理好</strong><p>集中保存教育、项目和实习，建立自己的经历库。</p></div></li>
+          <li><Icon name="spark" /><div><strong>让表达更贴合岗位</strong><p>检索相关经历，生成可对照原文的润色建议。</p></div></li>
+          <li><Icon name="shield" /><div><strong>逐项核对，再由你确认</strong><p>检查职责、技术、数字与时间，保留版本和修改记录。</p></div></li>
+        </ol>
+        <div className="context-footnote"><span className="mini-evidence-mark"><Icon name="layers" /></span><p>表达可以变得更好，<br /><strong>事实始终需要支持。</strong></p></div>
+      </aside>
+      </div>
+      <div className="import-bottom"><span>已有经历记录？可以直接继续编辑。</span><button className="text-action" type="button" onClick={() => navigate('/vault')}>打开经历库 <Icon name="arrow" /></button></div>
     </section>
   )
 }

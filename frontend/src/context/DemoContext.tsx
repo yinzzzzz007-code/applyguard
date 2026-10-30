@@ -191,6 +191,10 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     if (!workflow?.claim_verification.length || workflow.requires_reverification) return false
     for (const v of workflow.claim_verification) {
       const d = claimDecisions[v.claim_id]
+      if (workflow.grounding && d?.decision !== 'reject' &&
+          (workflow.grounding.mode !== 'sag_atomic' || workflow.grounding.error || v.state !== 'VERIFIED' ||
+           workflow.grounding.results[v.claim_id]?.state !== 'VERIFIED' ||
+           workflow.grounding.results[v.claim_id]?.final_text !== workflow.resume_claims.find(c => c.claim_id === v.claim_id)?.text)) return false
       if (v.state === 'BLOCKED') {
         // Cannot confirm-around BLOCKED; must reject/exclude
         if (d?.decision === 'confirm') return false

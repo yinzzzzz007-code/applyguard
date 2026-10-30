@@ -118,7 +118,7 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
       <header className="panel-head">
         <h2>岗位说明</h2>
         <p>
-          默认用离线规则解析岗位文本（不调用模型）。点「运行模型工作流」才会走模型；密钥只放在后端环境里，不会进浏览器。没配密钥时仍会规则回退。预录场景加载本地样例，不冒充本次实时计算。
+          粘贴目标岗位，找出与经历匹配的要求。岗位解析可使用离线规则；SAG 单独按服务端配置启用，启用后会发送相关材料给模型服务。
         </p>
       </header>
       <p><Link className="btn secondary" to="/jobs">从岗位雷达选择岗位</Link></p>
@@ -151,7 +151,7 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
           填入示例岗位
         </button>
         <button type="button" className="btn secondary" disabled={loadingTarget || status === 'loading'} onClick={() => changeInput('')}>
-          清空（测空输入）
+          清空
         </button>
         <button
           type="button"
@@ -243,7 +243,7 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
       )}
       {status === 'idle' && (
         <p className="muted tip">
-          离线可直接演示；模型路径需先在启动后端的环境里配好密钥，再点「运行模型工作流」。
+          岗位可离线解析；使用模型解析、SAG检索或原子事实核验需先在后端配置密钥。
         </p>
       )}
     </section>

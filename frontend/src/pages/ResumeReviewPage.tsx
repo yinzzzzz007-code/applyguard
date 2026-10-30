@@ -7,8 +7,11 @@ import type {
   ResumeClaim,
 } from '../api/types'
 import { EmptyState } from '../components/States'
+import { SAGPolishPanel } from '../components/SAGPolishPanel'
+import { saveTextVersion } from '../resume/groundingHistory'
 import { useDemo } from '../context/DemoContext'
 import { ZH_CLAIM_STATUS, zhLookup, zhText } from '../i18n'
+import { Icon } from '../components/Icon'
 
 type DraftClaim = {
   claim_id: string
@@ -19,7 +22,8 @@ type DraftClaim = {
 }
 
 function shortReason(reason: string): string {
-  return zhText(reason.split(':')[0]?.trim() || reason)
+  const value = reason.split(':')[0]?.trim() || reason
+  return value === 'LOW_RELEVANCE' ? '相关度较低' : zhText(value)
 }
 
 function safeClaimId(raw: string): string {
@@ -84,6 +88,9 @@ export function ResumeReviewPage() {
   const { workflow, patchWorkflow, resumeForm } = useDemo()
   const [draftText, setDraftText] = useState('')
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [historyError,setHistoryError] = useState('')
+  const [sourceQuery,setSourceQuery] = useState('')
+  const [sourceKind,setSourceKind] = useState('all')
 
   const draftClaims = useMemo(() => claimsFromResumeForm(resumeForm), [resumeForm])
   const draftById = useMemo(() => new Map(draftClaims.map((c) => [c.claim_id, c])), [draftClaims])
@@ -137,6 +144,10 @@ export function ResumeReviewPage() {
     claims.some((c) => !draftById.has(c.claim_id)) &&
     /lora|pipeline|fullstack|python_api/i.test(claims.map((c) => c.claim_id).join(' '))
 
+  const visibleSources = available.filter(item => (sourceKind === 'all' || item.kind === sourceKind) &&
+    (item.text+' '+item.experienceTitle).toLocaleLowerCase().includes(sourceQuery.trim().toLocaleLowerCase()))
+  const characters = claims.reduce((sum,claim) => sum+Array.from(claim.text).length,0)
+
   function requirementIdsFor(claimId: string): string[] {
     return [
       ...new Set(
@@ -161,6 +172,9 @@ export function ResumeReviewPage() {
     requirement_ids?: string[]
     support?: number
   }) {
+    if (workflow) {
+      try {saveTextVersion(workflow,'增加陈述前')} catch {setHistoryError('历史保存失败，尚未修改草稿。');return}
+    }
     patchWorkflow((prev) => {
       if (prev.resume_claims.some((c) => c.claim_id === input.claim_id)) return prev
       const added: ResumeClaim = {
@@ -198,6 +212,9 @@ export function ResumeReviewPage() {
   }
 
   function removeClaim(claim: ResumeClaim) {
+    if (workflow) {
+      try {saveTextVersion(workflow,'移出陈述前')} catch {setHistoryError('历史保存失败，尚未修改草稿。');return}
+    }
     patchWorkflow((prev) => ({
       ...prev,
       resume_claims: prev.resume_claims.filter((c) => c.claim_id !== claim.claim_id),
@@ -230,6 +247,9 @@ export function ResumeReviewPage() {
   }
 
   function clearSeedDraft() {
+    if (workflow) {
+      try {saveTextVersion(workflow,'清空前自动备份')} catch {setHistoryError('历史保存失败，尚未清空草稿。');return}
+    }
     patchWorkflow((prev) => ({
       ...prev,
       resume_claims: [],
@@ -251,7 +271,8 @@ export function ResumeReviewPage() {
     experienceTitle?: string
   }) {
     return (
-      <div className="rr-tip" role="tooltip">
+      <details className="rr-tip">
+        <summary>查看来源与选入理由</summary><div>
         <p className="rr-tip-title">{opts.claimId.replace(/^claim_/, '陈述·')}</p>
         <p>{opts.text}</p>
         {opts.experienceTitle ? <p className="muted">经历：{opts.experienceTitle}</p> : null}
@@ -271,18 +292,18 @@ export function ResumeReviewPage() {
             .join('；') || '无关联要求'}
         </p>
         {opts.support != null ? (
-          <p className="muted">支持度 {(opts.support * 100).toFixed(0)}%</p>
+          <p className="muted">{workflow?.grounding ? '事实支持情况请查看陈述核验' : `支持度 ${(opts.support * 100).toFixed(0)}%`}</p>
         ) : null}
-      </div>
+      </div></details>
     )
   }
 
   return (
     <section className="panel">
       <header className="panel-head">
-        <h2>简历审查</h2>
+        <h2>让经历，表达得更准确。</h2>
         <p>
-          自动选择未通过时，可把经历库句子或自定义句子手动加入草稿。手动加入不等于已核验通过，下一步仍需处理。
+          在左侧整理草稿，在右侧生成建议。每次修改，都需要重新核验。
         </p>
       </header>
 
@@ -315,13 +336,14 @@ export function ResumeReviewPage() {
         </p>
       )}
 
-      <div className="profile-card">
-        <p>
-          选择方式：确定性、受证据约束 · 最多 {selection.max_claims} 条 · 最多{' '}
-          {selection.max_characters} 字 · 当前草稿 {claims.length} 条
-        </p>
+      <div className="draft-summary-strip">
+        <div><strong>{claims.length}</strong><span>条草稿</span></div>
+        <div><strong>{characters}</strong><span>个字符</span></div>
+        <p>自动筛选参考：{selection.max_claims} 条 / {selection.max_characters} 字<br /><span>手动加入的陈述仍须核验。</span></p>
       </div>
 
+      <div className="review-workspace"><div className="review-draft">
+      {historyError && <p className="danger-text" role="alert">{historyError}</p>}
       <h3 className="em-section-title">已加入草稿</h3>
       {!claims.length ? (
         <p className="muted rr-empty">还没有句子。从下方卡片点「加入」，或自己写一条。</p>
@@ -381,12 +403,17 @@ export function ResumeReviewPage() {
         </div>
       </div>
 
-      <h3 className="em-section-title">未选入 / 可加入（经历库）</h3>
+      <div className="source-pool-heading"><h3 className="em-section-title">从经历库选入</h3><span>{visibleSources.length} / {available.length} 条</span></div>
+      <label className="work-search source-search"><Icon name="search" /><input aria-label="搜索可加入的经历" value={sourceQuery} onChange={e => setSourceQuery(e.target.value)} placeholder="搜索项目名称、技术或经历内容" />
+        {sourceQuery && <button type="button" aria-label="清除经历搜索" onClick={() => setSourceQuery('')}><Icon name="close" /></button>}</label>
+      <div className="scope-switch source-kind" aria-label="经历类型">{['all','实习','项目','获奖'].map(kind => <button type="button" key={kind} aria-pressed={sourceKind === kind} onClick={() => setSourceKind(kind)}>{kind === 'all' ? '全部' : kind}</button>)}</div>
       {!available.length ? (
         <p className="muted">没有可加入的经历库句子。</p>
+      ) : !visibleSources.length ? (
+        <div className="source-empty"><p>没有找到匹配的经历，试试其他关键词或类型。</p><button type="button" className="text-action" onClick={() => {setSourceQuery('');setSourceKind('all')}}>重置筛选</button></div>
       ) : (
         <div className="rr-grid">
-          {available.map((r) => {
+          {visibleSources.map((r) => {
             const reqIds = requirementIdsFor(r.claim_id)
             return (
               <article
@@ -431,8 +458,10 @@ export function ResumeReviewPage() {
         </div>
       )}
 
-      <div className="btn-row end">
-        <button type="button" className="btn primary" onClick={() => navigate('/claims')}>
+      </div><aside className="review-rail"><SAGPolishPanel /></aside></div>
+      <div className="btn-row end review-footer">
+        <span>{claims.length ? '已整理 '+claims.length+' 条草稿，下一步核对每条依据。' : '先从经历库选入，或手动添加一条陈述。'}</span>
+        <button type="button" className="btn primary" disabled={!claims.length} onClick={() => navigate('/claims')}>
           下一步：陈述核验
         </button>
       </div>

@@ -148,7 +148,6 @@ export function EvidenceMaterialLibrary(props: Props) {
     <section className="material-library" id="evidence-files" aria-label="材料库">
       <header className="material-library-head">
         <div>
-          <span className="relation-eyebrow">材料管理</span>
           <h3>材料库</h3>
           <p>可逐条或批量整理文件；新增不会覆盖已有材料。核对后再到上方关联经历。</p>
         </div>
@@ -170,7 +169,7 @@ export function EvidenceMaterialLibrary(props: Props) {
         <div className="material-browser">
           <div className="material-list-heading">
             <strong>文件列表</strong>
-            <span>{props.files.length} 份材料</span>
+            <span role="status">{filtered.length} / {props.files.length} 份材料</span>
           </div>
 
           <form
