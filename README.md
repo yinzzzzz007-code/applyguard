@@ -9,11 +9,17 @@ ApplyGuard 是在本机运行的求职申请辅助原型：整理个人经历与
 本分支在 10.22 版本基础上，由 **姜凌天（Gitvextor）** 组织并完成 AI 辅助实现与整合：SAG 两跳检索及版本缓存、原子事实核验、润色错改保护、历史状态回滚、双语简历解析与异常输入回归，以及工作台界面更新。署名对应本次新增改动，原项目和第三方贡献保留。
 
 - [相较 10.22 的新增内容、署名及边界](docs/release-2026-10-30-gitvextor.md)
+- [本次完整发布：Agent、ASu 错改保护及新版前端](docs/release-2026-10-30-gitvextor-complete.md)
+- [逐次测试报告归档（含失败、中断及脱敏记录）](docs/testing/runs/2026-10-30/README.md)
 - [2026-10-30 发布测试报告](docs/testing-report-2026-10-30.md)
+- [2026-10-30 Agent 实验、修复与续测报告](docs/testing-report-2026-10-30-agent.md)
+- [连接自己的 Agent：授权、撤销与 Harness 配置](docs/agent-connector.md)
+- [ASu 原版简历提升复用、雷达许可核实与测试（2026-10-30）](docs/reuse-asu-radar-2026-10-30.md)
+- [ASu 接入前后错改对照、限定语与误拦修复（2026-10-30；余额不足，完整实验待续）](docs/testing-report-2026-10-30-asu-edits.md)
 - [SAG 启动与复现](docs/sag-grounding.md) / [真实模型实验结果与限制](docs/sag-v2-results.md)
 - [提交作者与 GitHub 贡献归属](docs/contribution-attribution.md)
 
-工程测试与模型效果分别报告。冻结的 260 条实验样本仅完成 20 条职业案例的完整配对；尚未证明原子核验优于整句核验。自带本地 Agent / DeepSeek Harness 接入仍处于方案阶段，本分支没有实现或默认开启目录扫描。
+工程测试与模型效果分别报告。冻结实验已尝试全部260条：60条职业案例、197条FELM完成有效配对，另3条整句分支重试后仍失败。职业案例原子核验复核率6.7%，整句11.7%；FELM则为21.3%与15.2%，不能宣称原子核验普遍更优。自带Agent入口已在本地实验版实现：默认关闭，先授权来源和外发规则，随时撤销；没有默认目录扫描。
 
 ## 当前功能
 

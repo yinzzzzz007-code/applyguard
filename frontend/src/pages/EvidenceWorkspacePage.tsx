@@ -13,6 +13,7 @@ import type {
   ResumeMatchReport,
 } from '../api/types'
 import { EvidenceMaterialLibrary } from '../components/EvidenceMaterialLibrary'
+import { AgentConnector } from '../components/AgentConnector'
 import { materialName, orderedEvidenceSpans } from '../evidence/materials'
 import { EvidenceMatchBoard } from '../components/EvidenceMatchBoard'
 import { useDemo } from '../context/DemoContext'
@@ -1530,6 +1531,7 @@ export function EvidenceWorkspacePage() {
         }}
       />
 
+      <AgentConnector ensureWorkspace={ensureWorkspace} onImported={refreshLists} />
       <EvidenceMatchBoard key={`matches:${workspaceId}`} rows={vaultRows} selectedKey={selectedMatchKey} busy={!!busy || !!importProgress}
         sourceDetails={sourceDetails} evidenceExcerpt={evidenceExcerpt} onSelect={selectMatch}
         onConfirm={(row) => void confirmLinkMatch(row)} onReject={(row) => void rejectMatch(row)}

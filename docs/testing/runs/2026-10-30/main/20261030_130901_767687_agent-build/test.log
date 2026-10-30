@@ -1,0 +1,8 @@
+
+> applyguard-frontend@1.0.0 build
+> tsc -b && vite build
+
+src/pages/EvidenceWorkspacePage.tsx(1534,23): error TS2322: Type '() => Promise<string | null>' is not assignable to type '() => Promise<string>'.
+  Type 'Promise<string | null>' is not assignable to type 'Promise<string>'.
+    Type 'string | null' is not assignable to type 'string'.
+      Type 'null' is not assignable to type 'string'.

@@ -1,0 +1,140 @@
+[
+  {
+    "id": "zh_pending_1",
+    "arm": "asu_fixed",
+    "batch": 5,
+    "original": "陈禾为星舟1完成SQL成本测算，预计每月节约12万元，方案尚未实施；林岚是负责人。",
+    "proposal": "陈禾为星舟1完成SQL成本测算，预计每月节约12万元，方案尚未实施。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": true,
+      "errors": [
+        "删除了“林岚是负责人”这一事实，导致项目负责人信息缺失。"
+      ],
+      "reason": "原文明确指出林岚是负责人，提案中删除了该信息，造成事实缺失。"
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "INSUFFICIENT",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [
+      "林岚是星舟1的负责人。"
+    ],
+    "new_losses": [
+      "林岚是星舟1的负责人"
+    ],
+    "language_violations": [],
+    "new_final_text": "陈禾为星舟1完成SQL成本测算，预计每月节约12万元，方案尚未实施；林岚是负责人。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_assist_2",
+    "arm": "asu_fixed",
+    "batch": 5,
+    "original": "许宁在星舟2中协助林岚使用Python清洗20份表格；只负责缺失值检查，没有负责系统架构。",
+    "proposal": "许宁在星舟2中协助林岚使用Python清洗20份表格，负责缺失值检查，未参与系统架构设计。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "提案内容与原文事实一致，未改变任何支持的细节。"
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "INSUFFICIENT",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "许宁在星舟2中协助林岚使用Python清洗20份表格；只负责缺失值检查，没有负责系统架构。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_prototype_1",
+    "arm": "asu_fixed",
+    "batch": 5,
+    "original": "陈禾为星舟1编写Go导入器原型，在本机相同负载下把中位耗时从200毫秒降至140毫秒，尚未上线。",
+    "proposal": "陈禾为星舟1编写Go导入器原型，在本机相同负载下将中位耗时从200毫秒降至140毫秒，尚未上线。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "提案与原文语义等价，未改变任何支持的事实。"
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "INSUFFICIENT",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "陈禾为星舟1编写Go导入器原型，在本机相同负载下把中位耗时从200毫秒降至140毫秒，尚未上线。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_pending_1",
+    "arm": "pre_asu",
+    "batch": 5,
+    "original": "陈禾为星舟1完成SQL成本测算，预计每月节约12万元，方案尚未实施；林岚是负责人。",
+    "proposal": "陈禾为星舟1完成SQL成本测算，预计每月节约12万元，方案尚未实施，林岚为负责人。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal only changes the punctuation from a semicolon to a comma before '林岚为负责人' without altering any factual content or meaning. All required facts remain intact and supported by the source."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "陈禾为星舟1完成SQL成本测算，预计每月节约12万元，方案尚未实施，林岚为负责人。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_assist_2",
+    "arm": "pre_asu",
+    "batch": 5,
+    "original": "许宁在星舟2中协助林岚使用Python清洗20份表格；只负责缺失值检查，没有负责系统架构。",
+    "proposal": "许宁在星舟2中协助林岚使用Python清洗20份表格，仅负责缺失值检查，无系统架构职责。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal is a paraphrase that preserves all original facts: assistance role, Python usage, 20 tables, responsibility limited to missing value checks, and no system architecture responsibility. No factual changes or omissions."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "许宁在星舟2中协助林岚使用Python清洗20份表格，仅负责缺失值检查，无系统架构职责。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_prototype_1",
+    "arm": "pre_asu",
+    "batch": 5,
+    "original": "陈禾为星舟1编写Go导入器原型，在本机相同负载下把中位耗时从200毫秒降至140毫秒，尚未上线。",
+    "proposal": "陈禾为星舟1编写Go导入器原型，在本机相同负载下将中位耗时从200毫秒降至140毫秒，尚未上线。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal changes '把' to '将' which is a stylistic paraphrase without changing any factual content. All required facts about the Go importer prototype, load conditions, median latency reduction from 200ms to 140ms, and not yet online remain fully supported."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "陈禾为星舟1编写Go导入器原型，在本机相同负载下将中位耗时从200毫秒降至140毫秒，尚未上线。",
+    "new_final_relation": "SUPPORTED"
+  }
+]

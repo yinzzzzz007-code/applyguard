@@ -1,0 +1,27 @@
+{
+  "claim_zh_team_2": {
+    "lost_supported_details": [
+      "SQL接口由林岚完成。"
+    ],
+    "reason": "The proposal removes the detail that the SQL interface was completed by Lin Lan, which is explicitly stated in the original and supported sources.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_en_scope_3": {
+    "lost_supported_details": [
+      "The measured 32% reduction concerns backup storage only.",
+      "The measured 32% reduction does not concern total operating costs."
+    ],
+    "reason": "The proposal omits the scope limitation that the 32% reduction applies only to backup storage and not to total operating costs, which is clearly stated in the original and supported sources.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_zh_assist_1": {
+    "lost_supported_details": [
+      "陈禾没有负责系统架构。"
+    ],
+    "reason": "The proposal omits the explicit negation that Chen He did not take responsibility for system architecture, which is present in the original and supported sources.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  }
+}

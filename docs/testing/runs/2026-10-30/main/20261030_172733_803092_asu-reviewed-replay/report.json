@@ -1,0 +1,1599 @@
+{
+  "date": "2026-10-30T17:27:33.803092+08:00",
+  "status": "PARTIAL_REVIEWED_OFFLINE_REPLAY",
+  "input_run": "output\\asu-frozen-v2-20261030\\output\\test-reports\\20261030_165352_150056_asu-ablation-60",
+  "generated_outputs": 57,
+  "generation_pair_count": 15,
+  "primary_pair_count": 14,
+  "fully_checked_pair_count": 8,
+  "writing": {
+    "pre_asu": {
+      "paired_n": 14,
+      "changed": 13,
+      "wrong": 2,
+      "including_ambiguous_n": 15,
+      "wrong_upper_bound": 3
+    },
+    "asu_v1": {
+      "paired_n": 14,
+      "changed": 14,
+      "wrong": 3,
+      "including_ambiguous_n": 15,
+      "wrong_upper_bound": 4
+    },
+    "asu_fixed": {
+      "paired_n": 14,
+      "changed": 13,
+      "wrong": 2,
+      "including_ambiguous_n": 15,
+      "wrong_upper_bound": 3
+    }
+  },
+  "guards": {
+    "pre_asu": {
+      "paired_n": 8,
+      "wrong_n": 2,
+      "safe_changed_n": 5,
+      "old_retained_wrong": 0,
+      "replayed_retained_wrong": 0,
+      "old_false_blocks": 0,
+      "replayed_false_blocks": 0
+    },
+    "asu_v1": {
+      "paired_n": 8,
+      "wrong_n": 2,
+      "safe_changed_n": 6,
+      "old_retained_wrong": 1,
+      "replayed_retained_wrong": 0,
+      "old_false_blocks": 1,
+      "replayed_false_blocks": 1
+    },
+    "asu_fixed": {
+      "paired_n": 8,
+      "wrong_n": 2,
+      "safe_changed_n": 5,
+      "old_retained_wrong": 0,
+      "replayed_retained_wrong": 0,
+      "old_false_blocks": 0,
+      "replayed_false_blocks": 0
+    }
+  },
+  "records": [
+    {
+      "id": "en_offline_2",
+      "arm": "asu_fixed",
+      "original": "Morgan wrote Python interface tests for Seabird2; 20 of 40 tests passed offline. Morgan did not deploy the service.",
+      "proposal": "Morgan wrote Python interface tests for Seabird2, with 20 of 40 tests passing offline; Morgan did not deploy the service.",
+      "text_sha256": "3701c4eb38c75e9979dcff6c2160e64a0d419057660450847cb98239e5a09b6b",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal is a paraphrase of the original with equivalent meaning and all required facts preserved."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal combines the original sentences into one sentence without losing any original details or changing their meaning.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_correction_1",
+      "arm": "asu_fixed",
+      "original": "陈禾为星舟1编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+      "proposal": "陈禾为星舟1编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+      "text_sha256": "2888edcac2db1bfa04bbbb65c98e3d0bd8a64e533eb47acb8d20ce1e6c1f693f",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": true,
+        "errors": [
+          "Missing semicolon between '二等奖' and '早期一等奖记录已更正'"
+        ],
+        "reason": "The original uses a semicolon to separate two independent clauses, preserving the meaning that the early first prize record has been corrected. The proposal replaces the semicolon with a comma, which changes the sentence structure and may alter the intended meaning or clarity."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal merges the original sentences into a single sentence, preserving all original details and their meanings.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_assist_1",
+      "arm": "asu_fixed",
+      "original": "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries; Lee led the project and Avery did not own architecture.",
+      "proposal": "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries; Lee led the project and Avery did not own architecture.",
+      "text_sha256": "e4444d3ccab435f997eecf61aa711bec82c5c4edc91b6ab4ab33675d6b673741",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": false,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "Unchanged supported original; no edit made."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": null,
+      "replayed_violations": []
+    },
+    {
+      "id": "en_offline_2",
+      "arm": "asu_v1",
+      "original": "Morgan wrote Python interface tests for Seabird2; 20 of 40 tests passed offline. Morgan did not deploy the service.",
+      "proposal": "Morgan wrote Python interface tests for Seabird2, with 20 of 40 tests passing offline; Morgan did not deploy the service.",
+      "text_sha256": "3701c4eb38c75e9979dcff6c2160e64a0d419057660450847cb98239e5a09b6b",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal is a paraphrase that preserves all original facts and details without adding or omitting any information."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal combines the original sentences into one but retains all original details without loss.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_correction_1",
+      "arm": "asu_v1",
+      "original": "陈禾为星舟1编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+      "proposal": "陈禾为星舟1编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+      "text_sha256": "2888edcac2db1bfa04bbbb65c98e3d0bd8a64e533eb47acb8d20ce1e6c1f693f",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": true,
+        "errors": [
+          "Changed semicolon to comma between '2026年5月获得校级二等奖' and '早期一等奖记录已更正'"
+        ],
+        "reason": "The original uses a semicolon to separate two independent clauses, indicating two distinct facts: the award and the correction of the earlier record. The proposal replaces the semicolon with a comma, which is grammatically incorrect and changes the sentence structure, potentially merging two separate facts into one. This is a meaningful change that alters the original supported detail."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal merges the original sentences into one but preserves all original details and their temporal context.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_assist_1",
+      "arm": "asu_v1",
+      "original": "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries; Lee led the project and Avery did not own architecture.",
+      "proposal": "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries; Lee led the project and Avery did not own the architecture.",
+      "text_sha256": "459d6c6d4b9cd30d3764543823458129b52d9daa45ff407dddca2969199d08ff",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal only adds the definite article 'the' before 'architecture', which does not change the meaning or factual content of the claim. All required facts are preserved."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [
+          "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries"
+        ],
+        "reason": "The proposal adds the detail that Avery assisted Lee by reviewing 12 SQL queries, which was not present in the original claim. Thus, no original detail is lost; rather, new information is added.",
+        "model_lost_supported_details": [
+          "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries"
+        ],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_offline_2",
+      "arm": "pre_asu",
+      "original": "Morgan wrote Python interface tests for Seabird2; 20 of 40 tests passed offline. Morgan did not deploy the service.",
+      "proposal": "Morgan wrote Python interface tests for Seabird2, with 20 of 40 tests passing offline, but did not deploy the service.",
+      "text_sha256": "cdd956a69d6a8bf6367f9eb0823698bff6b24b420616f62eaedf995335bf6ef0",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal is a paraphrase of the original with all required facts preserved: Python interface tests, 20 of 40 tests passing offline, and no deployment by Morgan."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal combines the original sentences into one without losing any original detail or changing meaning.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_correction_1",
+      "arm": "pre_asu",
+      "original": "陈禾为星舟1编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+      "proposal": "陈禾为星舟1编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+      "text_sha256": "2888edcac2db1bfa04bbbb65c98e3d0bd8a64e533eb47acb8d20ce1e6c1f693f",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": true,
+        "errors": [
+          "Missing semicolon between '校级二等奖' and '早期一等奖记录已更正'"
+        ],
+        "reason": "The original uses a semicolon to separate two independent clauses, which is important for clarity and matches the source. The proposal replaces the semicolon with a comma, which is a punctuation change that alters the sentence structure and is not supported by the source."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal merges the original sentences into one sentence without omitting or altering any original supported details.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_assist_1",
+      "arm": "pre_asu",
+      "original": "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries; Lee led the project and Avery did not own architecture.",
+      "proposal": "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries; Lee led the project and Avery did not own architecture.",
+      "text_sha256": "e4444d3ccab435f997eecf61aa711bec82c5c4edc91b6ab4ab33675d6b673741",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": false,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "Unchanged supported original; no edit made."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": null,
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_sample_1",
+      "arm": "asu_fixed",
+      "original": "陈禾对星舟1做可用性访谈，便利抽样12人，其中8人完成操作；结果不代表总体用户。",
+      "proposal": "陈禾对星舟1进行便利抽样的可用性访谈，访谈12人，其中8人完成操作，结果不代表总体用户。",
+      "text_sha256": "f4b10afa629d0578236a39c0bc894d829622cb34df19c5392423dbda941ee90e",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "Proposal is a paraphrase of the original with all required facts preserved and no unsupported changes."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal retains all original details including the sample size, sampling method, number of completions, and the disclaimer about representativeness.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_pilot_2",
+      "arm": "asu_fixed",
+      "original": "许宁为星舟2制作SQL看板，在两家门店试点期间整理20条反馈；没有全公司推广。",
+      "proposal": "许宁为星舟2制作SQL看板，在两家门店试点期间整理了20条反馈，未进行全公司推广。",
+      "text_sha256": "248d41477bc090831d6c118ed830f2787bdede2838a684c02d5473b0d6e2445e",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "Proposal preserves all required facts and only rephrases the original without adding or removing information."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal preserves all original information about the SQL dashboard creation, feedback count, pilot scope, and lack of company-wide promotion.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_correction_3",
+      "arm": "asu_fixed",
+      "original": "唐遥为星舟3编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+      "proposal": "唐遥为星舟3编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+      "text_sha256": "e3a41d2f07a281e3c7eafbbcfa556f6dba6117ab139aa2536832c6393ddacd14",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "Proposal is a minor punctuation change that does not alter meaning or omit any required facts."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal maintains all original details about the test case creation, award date and level, and correction of earlier award records.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_sample_1",
+      "arm": "asu_v1",
+      "original": "陈禾对星舟1做可用性访谈，便利抽样12人，其中8人完成操作；结果不代表总体用户。",
+      "proposal": "陈禾对星舟1项目进行便利抽样的可用性访谈，访谈12人，其中8人完成操作，结果不代表总体用户。",
+      "text_sha256": "c6e96be4a1c9ea610aa0aa8ee37bf2f94d48d0f0d8d0d18fcba911bbfe2796b2",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal accurately preserves all original facts: Chen He conducted usability interviews for Xingzhou 1 with a convenience sample of 12 people, 8 completed the operation, and results do not represent the overall user population. The addition of '项目' (project) is a neutral clarification and does not change meaning."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal retains all original details including the use of convenience sampling, the number of participants (12), the number who completed the operation (8), and the disclaimer that results do not represent the overall user population.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_pilot_2",
+      "arm": "asu_v1",
+      "original": "许宁为星舟2制作SQL看板，在两家门店试点期间整理20条反馈；没有全公司推广。",
+      "proposal": "许宁为星舟2项目制作SQL看板，整理两家门店试点期间的20条反馈，项目未全公司推广。",
+      "text_sha256": "18277417e40a7aac6bd0a5bc171500886aec34d7a1c26b5cbad400129db716a9",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal retains all original facts: Xu Ning made an SQL dashboard for Xingzhou 2, collected 20 feedback items during the pilot in two stores, and the project was not promoted company-wide. The wording changes do not alter any fact."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal preserves all original information: the creation of the SQL dashboard by Xu Ning, the collection of 20 feedback items during the pilot in two stores, and the fact that the dashboard was not promoted company-wide.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_correction_3",
+      "arm": "asu_v1",
+      "original": "唐遥为星舟3编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+      "proposal": "唐遥为星舟3项目编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+      "text_sha256": "45a96b785a49b0d914c04a40c43d6e5bb03e269addb55ae28af2e558801c1230",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal preserves all original facts: Tang Yao wrote test cases for Xingzhou 3, won a school-level second prize in May 2026, and the earlier first prize record has been corrected. Adding '项目' (project) is a neutral clarification."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal maintains all original details: Tang Yao's work on test cases for Xingzhou 3, the award of a school-level second prize in May 2026, and the correction of the earlier first prize record.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_sample_1",
+      "arm": "pre_asu",
+      "original": "陈禾对星舟1做可用性访谈，便利抽样12人，其中8人完成操作；结果不代表总体用户。",
+      "proposal": "陈禾对星舟1进行可用性访谈，便利抽样12人，其中8人完成操作，结果不代表总体用户。",
+      "text_sha256": "ffb92432f91b545e52dec5cc74647ad7a02c9e032c039336e96160d4e8953e5f",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal is a paraphrase with equivalent meaning and punctuation change from semicolon to comma, which does not alter the facts or meaning. All required facts are preserved."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal retains all original details including the sample size, number of completions, sampling method, and the disclaimer about representativeness, just in a more concise form.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_pilot_2",
+      "arm": "pre_asu",
+      "original": "许宁为星舟2制作SQL看板，在两家门店试点期间整理20条反馈；没有全公司推广。",
+      "proposal": "许宁为星舟2制作SQL看板，在两家门店试点期间整理20条反馈，未推广至全公司。",
+      "text_sha256": "31cc708fc3289fd21dcfdb1ff98fc2f3d839f6b3c4d4ad6e3a11643ebce8fb75",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal rephrases '没有全公司推广' as '未推广至全公司', which is equivalent in meaning. All required facts are preserved."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal preserves all original information about the SQL dashboard creation, feedback collected during the pilot in two stores, and the lack of company-wide promotion, expressed more succinctly.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_correction_3",
+      "arm": "pre_asu",
+      "original": "唐遥为星舟3编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+      "proposal": "唐遥为星舟3编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+      "text_sha256": "e3a41d2f07a281e3c7eafbbcfa556f6dba6117ab139aa2536832c6393ddacd14",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": true,
+        "errors": [
+          "Changed semicolon to comma between '2026年5月获得校级二等奖' and '早期一等奖记录已更正'."
+        ],
+        "reason": "The original uses a semicolon to separate two related but distinct facts, indicating a pause and separation. The proposal replaces it with a comma, which can imply a closer connection or continuation, potentially altering the intended emphasis or clarity. Since the source uses a semicolon, the proposal's comma is a factual change in punctuation that affects the presentation of the facts."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal includes all original details about the test case creation, the award date and level, and the correction of the early first prize record, just in a condensed format.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_team_2",
+      "arm": "asu_fixed",
+      "original": "许宁参与星舟2三人小组，只实现Vue表单；SQL接口由林岚完成，团队获得校级二等奖。",
+      "proposal": "许宁参与星舟2三人小组，负责实现Vue表单，团队获得校级二等奖。",
+      "text_sha256": "4ec12f3eecc5d85368156aba4e025069d5cd15bfb880f3c016de59b4df9b482e",
+      "label": "WRONG",
+      "review_reason": "删除“只实现Vue”的个人职责限定及SQL接口归属林岚的信息。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal accurately reflects the original and source facts: participation in a three-person team, responsibility for Vue form only, and team award of school-level second prize. The mention of SQL interface by Lin Lan is omitted but not required to be explicitly stated in the proposal as it does not contradict or alter the claim about Ning Xu's role and team award."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [
+          "许宁只实现了Vue表单。",
+          "SQL接口由林岚完成。"
+        ],
+        "reason": "The proposal merges the first two points into one sentence, losing the explicit statement that SQL interface was completed by Lin Lan and that Xu Ning only implemented the Vue form.",
+        "model_lost_supported_details": [
+          "许宁只实现了Vue表单。",
+          "SQL接口由林岚完成。"
+        ],
+        "resolved_equivalences": [],
+        "qualifier_findings": [
+          {
+            "category": "limited_role",
+            "detail": "只实现"
+          }
+        ]
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_scope_3",
+      "arm": "asu_fixed",
+      "original": "Riley wrote PostgreSQL backup scripts for Seabird3; the measured 32% reduction concerns backup storage only, not total operating costs.",
+      "proposal": "Riley wrote PostgreSQL backup scripts for Seabird3, achieving a 32% reduction in backup storage usage.",
+      "text_sha256": "77f8ab4e1e8793535eee05db371005261910337060e4d04f8ab7894954090309",
+      "label": "AMBIGUOUS",
+      "review_reason": "backup storage限定仍在，但achieving是否引入个人因果贡献存在歧义；主分析排除，另给上下界。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": true,
+        "errors": [
+          "Omission of 'not total operating costs' clarifying the 32% reduction applies only to backup storage, not overall costs."
+        ],
+        "reason": "The proposal states a 32% reduction in backup storage usage but omits the critical clarification that this reduction concerns backup storage only and not total operating costs, which changes the scope of the claim and misrepresents the source."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [
+          "The measured 32% reduction does not concern total operating costs."
+        ],
+        "reason": "The proposal states a 32% reduction in backup storage usage but omits the clarification that this reduction does not apply to total operating costs.",
+        "model_lost_supported_details": [
+          "The measured 32% reduction does not concern total operating costs."
+        ],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": [
+        "建议将测量/评测改为促成成果，新增因果或个人贡献归属，须补证据。"
+      ]
+    },
+    {
+      "id": "zh_assist_1",
+      "arm": "asu_fixed",
+      "original": "陈禾在星舟1中协助林岚使用Python清洗12份表格；只负责缺失值检查，没有负责系统架构。",
+      "proposal": "陈禾在星舟1中协助林岚使用Python清洗12份表格，负责缺失值检查。",
+      "text_sha256": "48832592519a032320b296b428247126945c14d7628362514699efc5c2209c16",
+      "label": "WRONG",
+      "review_reason": "删除“只负责缺失值检查”的职责范围限定；部分版本还删除未负责架构。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": true,
+        "errors": [
+          "Omission of 'only' indicating Chen He was only responsible for missing value checks, and omission of 'did not handle system architecture'."
+        ],
+        "reason": "The proposal omits the limitation that Chen He only handled missing value checks and did not handle system architecture, which is a meaningful detail supported by the source. This changes the scope of responsibility and is therefore an error."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [
+          "陈禾没有负责系统架构。",
+          "只负责"
+        ],
+        "reason": "The proposal omits the explicit negation that Chen He did not take responsibility for system architecture.",
+        "model_lost_supported_details": [
+          "陈禾没有负责系统架构。"
+        ],
+        "resolved_equivalences": [],
+        "qualifier_findings": [
+          {
+            "category": "limited_role",
+            "detail": "只负责"
+          }
+        ]
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_team_2",
+      "arm": "asu_v1",
+      "original": "许宁参与星舟2三人小组，只实现Vue表单；SQL接口由林岚完成，团队获得校级二等奖。",
+      "proposal": "许宁参与星舟2三人小组，负责实现Vue表单，团队获得校级二等奖。",
+      "text_sha256": "4ec12f3eecc5d85368156aba4e025069d5cd15bfb880f3c016de59b4df9b482e",
+      "label": "WRONG",
+      "review_reason": "删除“只实现Vue”的个人职责限定及SQL接口归属林岚的信息。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal accurately reflects the original claim and source, maintaining all required facts: the team size, the individual's role limited to Vue form implementation, the SQL interface done by another member, and the team award."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [
+          "许宁只实现了Vue表单。",
+          "SQL接口由林岚完成。"
+        ],
+        "reason": "The proposal merges two separate facts into one sentence, omitting the explicit statement that SQL interface was completed by Lin Lan and that Xu Ning only implemented the Vue form.",
+        "model_lost_supported_details": [
+          "许宁只实现了Vue表单。",
+          "SQL接口由林岚完成。"
+        ],
+        "resolved_equivalences": [],
+        "qualifier_findings": [
+          {
+            "category": "limited_role",
+            "detail": "只实现"
+          }
+        ]
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_scope_3",
+      "arm": "asu_v1",
+      "original": "Riley wrote PostgreSQL backup scripts for Seabird3; the measured 32% reduction concerns backup storage only, not total operating costs.",
+      "proposal": "Riley wrote PostgreSQL backup scripts for Seabird3, achieving a 32% reduction in backup storage usage.",
+      "text_sha256": "77f8ab4e1e8793535eee05db371005261910337060e4d04f8ab7894954090309",
+      "label": "AMBIGUOUS",
+      "review_reason": "backup storage限定仍在，但achieving是否引入个人因果贡献存在歧义；主分析排除，另给上下界。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal correctly restates the original claim and source, preserving all required facts: Riley wrote PostgreSQL backup scripts, the 32% reduction is specifically in backup storage usage, and it does not imply reduction in total operating costs."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [
+          "The measured 32% reduction concerns backup storage only.",
+          "The measured 32% reduction does not concern total operating costs."
+        ],
+        "reason": "The proposal states a 32% reduction in backup storage usage but omits the clarification that this reduction applies only to backup storage and not to total operating costs.",
+        "model_lost_supported_details": [
+          "The measured 32% reduction concerns backup storage only.",
+          "The measured 32% reduction does not concern total operating costs."
+        ],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": [
+        "建议将测量/评测改为促成成果，新增因果或个人贡献归属，须补证据。"
+      ]
+    },
+    {
+      "id": "zh_assist_1",
+      "arm": "asu_v1",
+      "original": "陈禾在星舟1中协助林岚使用Python清洗12份表格；只负责缺失值检查，没有负责系统架构。",
+      "proposal": "陈禾在星舟1中协助林岚使用Python清洗12份表格，负责缺失值检查，未参与系统架构设计。",
+      "text_sha256": "3d63e34e1c77d1497a22bcfd622a93bd1ae35316e965711cab9b49cd5d0d7df0",
+      "label": "WRONG",
+      "review_reason": "删除“只负责缺失值检查”的职责范围限定；部分版本还删除未负责架构。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal maintains all required facts from the original and source: Chen He assisted (not led) Lin Lan using Python to clean 12 spreadsheets, was responsible only for missing value checks, and did not participate in system architecture design."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [
+          "只负责"
+        ],
+        "reason": "The proposal retains all original details, including the number of tables cleaned, the specific responsibility for missing value checks, and the negation of involvement in system architecture design, just rephrased.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": [
+          {
+            "category": "limited_role",
+            "detail": "只负责"
+          }
+        ]
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_team_2",
+      "arm": "pre_asu",
+      "original": "许宁参与星舟2三人小组，只实现Vue表单；SQL接口由林岚完成，团队获得校级二等奖。",
+      "proposal": "许宁参与星舟2三人小组，负责实现Vue表单，团队获得校级二等奖。",
+      "text_sha256": "4ec12f3eecc5d85368156aba4e025069d5cd15bfb880f3c016de59b4df9b482e",
+      "label": "WRONG",
+      "review_reason": "删除“只实现Vue”的个人职责限定及SQL接口归属林岚的信息。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal retains all key facts: three-person team, Ning Xu only implemented Vue forms, SQL interface done by Lin Lan, and the team won the school-level second prize. The proposal's phrasing is equivalent and does not omit or alter any supported detail."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [
+          "SQL接口由林岚完成。",
+          "只实现"
+        ],
+        "reason": "The proposal merges the first two sentences and omits the detail that the SQL interface was completed by Lin Lan, which is explicitly stated in the source.",
+        "model_lost_supported_details": [
+          "SQL接口由林岚完成。"
+        ],
+        "resolved_equivalences": [],
+        "qualifier_findings": [
+          {
+            "category": "limited_role",
+            "detail": "只实现"
+          }
+        ]
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_scope_3",
+      "arm": "pre_asu",
+      "original": "Riley wrote PostgreSQL backup scripts for Seabird3; the measured 32% reduction concerns backup storage only, not total operating costs.",
+      "proposal": "Riley wrote PostgreSQL backup scripts for Seabird3, achieving a 32% reduction in backup storage.",
+      "text_sha256": "37f236f609160f3f49ccfb7b89b2f5b82ff41443cabf64baf930f872868fd164",
+      "label": "AMBIGUOUS",
+      "review_reason": "backup storage限定仍在，但achieving是否引入个人因果贡献存在歧义；主分析排除，另给上下界。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": true,
+        "errors": [
+          "Omission of 'not total operating costs' clarifying the 32% reduction applies only to backup storage."
+        ],
+        "reason": "The proposal omits the important clarification that the 32% reduction concerns backup storage only and not total operating costs, which changes the scope of the claim and is unsupported by the source."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [
+          "The measured 32% reduction concerns backup storage only.",
+          "The measured 32% reduction does not concern total operating costs."
+        ],
+        "reason": "The proposal states a 32% reduction in backup storage but omits the important scope limitation that the reduction concerns backup storage only and not total operating costs, which is explicitly supported by the source.",
+        "model_lost_supported_details": [
+          "The measured 32% reduction concerns backup storage only.",
+          "The measured 32% reduction does not concern total operating costs."
+        ],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": [
+        "建议将测量/评测改为促成成果，新增因果或个人贡献归属，须补证据。"
+      ]
+    },
+    {
+      "id": "zh_assist_1",
+      "arm": "pre_asu",
+      "original": "陈禾在星舟1中协助林岚使用Python清洗12份表格；只负责缺失值检查，没有负责系统架构。",
+      "proposal": "陈禾在星舟1中协助林岚使用Python清洗12份表格，负责缺失值检查。",
+      "text_sha256": "48832592519a032320b296b428247126945c14d7628362514699efc5c2209c16",
+      "label": "WRONG",
+      "review_reason": "删除“只负责缺失值检查”的职责范围限定；部分版本还删除未负责架构。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": true,
+        "errors": [
+          "Omission of 'only' in 'only responsible for missing value check' and omission of 'did not handle system architecture'."
+        ],
+        "reason": "The proposal omits the limitation that Chen He was only responsible for missing value checks and did not handle system architecture, which changes the scope of responsibility and is unsupported by the source."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [
+          "陈禾没有负责系统架构。",
+          "只负责"
+        ],
+        "reason": "The proposal omits the explicit negation that Chen He did not take responsibility for system architecture, which is clearly stated in the source.",
+        "model_lost_supported_details": [
+          "陈禾没有负责系统架构。"
+        ],
+        "resolved_equivalences": [],
+        "qualifier_findings": [
+          {
+            "category": "limited_role",
+            "detail": "只负责"
+          }
+        ]
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_privacy_3",
+      "arm": "asu_fixed",
+      "original": "Riley analyzed 32 anonymized records for Seabird3 using SQL during a two-week internship; no raw personal records were accessed.",
+      "proposal": "Riley analyzed 32 anonymized records for Seabird3 using SQL during a two-week internship without accessing raw personal data.",
+      "text_sha256": "6835a6a6d8ae66eb0f149ce054963c29e7fbadb72362b4040ca2e82eee9e68ef",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": null,
+      "old_accept": null,
+      "replayed_v3_accept": null,
+      "replayed_losses": null,
+      "replayed_violations": []
+    },
+    {
+      "id": "en_sample_2",
+      "arm": "asu_fixed",
+      "original": "Morgan interviewed a convenience sample of 20 users about Seabird2; eight completed the task. The sample was not representative.",
+      "proposal": "Morgan interviewed a convenience sample of 20 users about Seabird2, with eight completing the task; the sample was not representative.",
+      "text_sha256": "0d34185b26e83554704768cc805d04a6a9617fec7119d90d9996c16da68df4be",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": null,
+      "old_accept": null,
+      "replayed_v3_accept": null,
+      "replayed_losses": null,
+      "replayed_violations": []
+    },
+    {
+      "id": "en_offline_1",
+      "arm": "asu_fixed",
+      "original": "Avery wrote Python interface tests for Seabird1; 12 of 40 tests passed offline. Avery did not deploy the service.",
+      "proposal": "Avery wrote Python interface tests for Seabird1, with 12 of 40 tests passing offline; Avery did not deploy the service.",
+      "text_sha256": "b141fb3dda43c01f9016104ecf236f18ff317e1712bd897d592046a8afa3c134",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": null,
+      "old_accept": null,
+      "replayed_v3_accept": null,
+      "replayed_losses": null,
+      "replayed_violations": []
+    },
+    {
+      "id": "en_privacy_3",
+      "arm": "asu_v1",
+      "original": "Riley analyzed 32 anonymized records for Seabird3 using SQL during a two-week internship; no raw personal records were accessed.",
+      "proposal": "Riley analyzed 32 anonymized records for Seabird3 using SQL during a two-week internship without accessing raw personal data.",
+      "text_sha256": "6835a6a6d8ae66eb0f149ce054963c29e7fbadb72362b4040ca2e82eee9e68ef",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal is a paraphrase that preserves all original facts: 32 anonymized records analyzed using SQL during a two-week internship, and no raw personal records accessed."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal conveys all original details including the number of records, the use of SQL, the two-week internship duration, and the fact that no raw personal records were accessed, just in a more concise form.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_sample_2",
+      "arm": "asu_v1",
+      "original": "Morgan interviewed a convenience sample of 20 users about Seabird2; eight completed the task. The sample was not representative.",
+      "proposal": "Morgan interviewed a convenience sample of 20 users about Seabird2, with eight completing the task; the sample was not representative.",
+      "text_sha256": "0d34185b26e83554704768cc805d04a6a9617fec7119d90d9996c16da68df4be",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal combines sentences but retains all original facts: Morgan interviewed a convenience sample of 20 users about Seabird2, eight completed the task, and the sample was not representative."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal retains all original details about the convenience sample size, the number of users completing the task, and the non-representativeness of the sample, just combined into a single sentence.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_offline_1",
+      "arm": "asu_v1",
+      "original": "Avery wrote Python interface tests for Seabird1; 12 of 40 tests passed offline. Avery did not deploy the service.",
+      "proposal": "Avery wrote Python interface tests for Seabird1, with 12 of 40 tests passing offline; did not deploy the service.",
+      "text_sha256": "a398aff0d139232cda5176b3c3cdf8382c720b2a770cb726e58718ae353bf537",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal paraphrases the original while preserving all facts: Avery wrote Python interface tests for Seabird1, 12 of 40 tests passed offline, and Avery did not deploy the service."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal preserves all original details about the number of tests written, the number passing offline, and the fact that Avery did not deploy the service, phrased more succinctly.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_privacy_3",
+      "arm": "pre_asu",
+      "original": "Riley analyzed 32 anonymized records for Seabird3 using SQL during a two-week internship; no raw personal records were accessed.",
+      "proposal": "Riley analyzed 32 anonymized records for Seabird3 using SQL during a two-week internship without accessing raw personal data.",
+      "text_sha256": "6835a6a6d8ae66eb0f149ce054963c29e7fbadb72362b4040ca2e82eee9e68ef",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal preserves all original facts: 32 anonymized records analyzed using SQL during a two-week internship, and no raw personal records accessed. The paraphrase 'without accessing raw personal data' is equivalent to 'no raw personal records were accessed'."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal conveys all original details including the number of records, the use of SQL, the duration of the internship, and the fact that no raw personal records were accessed, just in a more concise form.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_sample_2",
+      "arm": "pre_asu",
+      "original": "Morgan interviewed a convenience sample of 20 users about Seabird2; eight completed the task. The sample was not representative.",
+      "proposal": "Morgan interviewed a convenience sample of 20 users about Seabird2, with eight completing the task; the sample was not representative.",
+      "text_sha256": "0d34185b26e83554704768cc805d04a6a9617fec7119d90d9996c16da68df4be",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal retains all original facts: Morgan interviewed a convenience sample of 20 users about Seabird2, eight completed the task, and the sample was not representative. The sentence restructuring does not change meaning or omit details."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal retains all original details about the sample size, the number of users completing the task, and the non-representativeness of the sample, just combined into a single sentence.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_offline_1",
+      "arm": "pre_asu",
+      "original": "Avery wrote Python interface tests for Seabird1; 12 of 40 tests passed offline. Avery did not deploy the service.",
+      "proposal": "Avery wrote Python interface tests for Seabird1, with 12 of 40 tests passing offline; did not deploy the service.",
+      "text_sha256": "a398aff0d139232cda5176b3c3cdf8382c720b2a770cb726e58718ae353bf537",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal keeps all original facts: Avery wrote Python interface tests for Seabird1, 12 of 40 tests passed offline, and Avery did not deploy the service. The phrasing change does not alter any fact or omit details."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal preserves all original details about the number of tests written, the number passing offline, and the fact that Avery did not deploy the service, phrased more succinctly.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_pending_2",
+      "arm": "asu_fixed",
+      "original": "Morgan completed a Kubernetes migration plan for Seabird2; implementation is scheduled for 2027 and has not started. Morgan estimated a 20% cost reduction.",
+      "proposal": "Morgan completed a Kubernetes migration plan for Seabird2; implementation is scheduled for 2027 and has not started, with an estimated 20% cost reduction.",
+      "text_sha256": "de0cf81c871718a468041436f00e097a53ba45e73124e7d8054c91460b5d3dca",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal combines two sentences into one without changing any factual information or meaning. The estimated 20% cost reduction remains an estimate and the implementation schedule and status are unchanged."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal combines the original sentences into one but retains all original details including scope (Seabird2), time (scheduled for 2027), personal role (Morgan), negation (has not started), and numbers (20% cost reduction).",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_alias_2",
+      "arm": "asu_fixed",
+      "original": "许宁在星舟2（内部编号Q20）负责PostgreSQL恢复测试，Redis缓存由林岚负责；未主导项目。",
+      "proposal": "许宁负责星舟2（内部编号Q20）PostgreSQL恢复测试，Redis缓存由林岚负责，未主导项目。",
+      "text_sha256": "265887d61bdb8dd10a393d2d15db8541bc01d047a3401a8e1bf80e9fc2585036",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal maintains all original facts: project name and internal code, responsibility for PostgreSQL recovery testing, Redis cache responsibility by another person, and no project leadership by the subject. The slight rephrasing does not alter meaning."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal preserves all original details including scope (星舟2, internal code Q20), personal roles (许宁 responsible for PostgreSQL recovery testing, 林岚 responsible for Redis cache), and negation (许宁未主导项目). The information is simply combined into one sentence without loss.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_prototype_3",
+      "arm": "asu_fixed",
+      "original": "唐遥为星舟3编写Go导入器原型，在本机相同负载下把中位耗时从200毫秒降至140毫秒，尚未上线。",
+      "proposal": "唐遥为星舟3编写Go导入器原型，在本机相同负载下将中位耗时从200毫秒降至140毫秒，尚未上线。",
+      "text_sha256": "f98e31e8551e4a5768796bdf3ec1a13c679ef1f8a0f2f91584dc74ed916867c7",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal is a paraphrase that preserves all original facts: writing a Go importer prototype for Starship 3, same load on local machine, median latency reduced from 200ms to 140ms, and not yet launched. The change from '把' to '将' does not alter meaning."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal retains all original details including scope (星舟3), personal role (唐遥), performance numbers (median latency reduced from 200ms to 140ms), and negation (尚未上线). The information is combined but fully preserved.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_pending_2",
+      "arm": "asu_v1",
+      "original": "Morgan completed a Kubernetes migration plan for Seabird2; implementation is scheduled for 2027 and has not started. Morgan estimated a 20% cost reduction.",
+      "proposal": "Morgan completed a Kubernetes migration plan for Seabird2, estimating a 20% cost reduction; implementation is scheduled for 2027 and has not started.",
+      "text_sha256": "84edc0b181a1af18c16a226d9779823a8b69c6cd72e01b250d503fe0fe447938",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal reorders the sentence but retains all original facts and their meaning without omission or addition."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal combines all original details into a single sentence without losing any original information or changing meaning.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_alias_2",
+      "arm": "asu_v1",
+      "original": "许宁在星舟2（内部编号Q20）负责PostgreSQL恢复测试，Redis缓存由林岚负责；未主导项目。",
+      "proposal": "许宁负责星舟2（内部编号Q20）PostgreSQL恢复测试，Redis缓存由他人负责，未主导项目。",
+      "text_sha256": "459a3a785ff44de1c64380b26041f5a1ea4e3a4e66e1cccffd5b1f6668b93399",
+      "label": "WRONG",
+      "review_reason": "将Redis负责人林岚泛化成他人，丢失原文明确的分工信息。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": true,
+        "errors": [
+          "Redis缓存由林岚负责被改为由他人负责，具体人名被删除。"
+        ],
+        "reason": "The original specifies Redis cache is managed by 林岚, but the proposal replaces this with '他人' (someone else), losing the specific supported detail."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [
+          "Redis缓存由林岚负责。"
+        ],
+        "reason": "The proposal changes 'Redis缓存由林岚负责' to 'Redis缓存由他人负责', removing the specific name '林岚' which is supported by the source.",
+        "model_lost_supported_details": [
+          "Redis缓存由林岚负责。"
+        ],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_prototype_3",
+      "arm": "asu_v1",
+      "original": "唐遥为星舟3编写Go导入器原型，在本机相同负载下把中位耗时从200毫秒降至140毫秒，尚未上线。",
+      "proposal": "唐遥为星舟3编写Go导入器原型，在本机相同负载下将中位耗时从200毫秒降至140毫秒，尚未上线。",
+      "text_sha256": "f98e31e8551e4a5768796bdf3ec1a13c679ef1f8a0f2f91584dc74ed916867c7",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal uses a synonymous phrase '将...降至' instead of '把...降至' without changing any factual content or meaning."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal retains all original details, combining them into a single sentence without loss of information.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_pending_2",
+      "arm": "pre_asu",
+      "original": "Morgan completed a Kubernetes migration plan for Seabird2; implementation is scheduled for 2027 and has not started. Morgan estimated a 20% cost reduction.",
+      "proposal": "Morgan completed a Kubernetes migration plan for Seabird2, estimating a 20% cost reduction; implementation is scheduled for 2027 and has not started.",
+      "text_sha256": "84edc0b181a1af18c16a226d9779823a8b69c6cd72e01b250d503fe0fe447938",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": null,
+      "old_accept": null,
+      "replayed_v3_accept": null,
+      "replayed_losses": null,
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_alias_2",
+      "arm": "pre_asu",
+      "original": "许宁在星舟2（内部编号Q20）负责PostgreSQL恢复测试，Redis缓存由林岚负责；未主导项目。",
+      "proposal": "许宁在星舟2（内部编号Q20）负责PostgreSQL恢复测试，未主导项目，Redis缓存由林岚负责。",
+      "text_sha256": "a14246434bd91fc6a96f6b9f76c08602435a799c73acbbd615f9844c9d45d84d",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": null,
+      "old_accept": null,
+      "replayed_v3_accept": null,
+      "replayed_losses": null,
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_prototype_3",
+      "arm": "pre_asu",
+      "original": "唐遥为星舟3编写Go导入器原型，在本机相同负载下把中位耗时从200毫秒降至140毫秒，尚未上线。",
+      "proposal": "唐遥为星舟3编写Go导入器原型，在本机相同负载下将中位耗时从200毫秒降至140毫秒，尚未上线。",
+      "text_sha256": "f98e31e8551e4a5768796bdf3ec1a13c679ef1f8a0f2f91584dc74ed916867c7",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": null,
+      "old_accept": null,
+      "replayed_v3_accept": null,
+      "replayed_losses": null,
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_pending_1",
+      "arm": "asu_fixed",
+      "original": "陈禾为星舟1完成SQL成本测算，预计每月节约12万元，方案尚未实施；林岚是负责人。",
+      "proposal": "陈禾为星舟1完成SQL成本测算，预计每月节约12万元，方案尚未实施。",
+      "text_sha256": "b174e63d40321a00f6ad3557c77affcfa8636346b6c66c3b4bd02e11a2ffac2c",
+      "label": "WRONG",
+      "review_reason": "删除林岚为项目负责人的明确归属。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": true,
+        "errors": [
+          "删除了“林岚是负责人”这一事实，导致项目负责人信息缺失。"
+        ],
+        "reason": "原文明确指出林岚是负责人，提案中删除了该信息，造成事实缺失。"
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [
+          "林岚是星舟1的负责人。"
+        ],
+        "reason": "The proposal merges the first three sentences into one and omits the explicit statement that Lin Lan is the person in charge of Xingzhou 1, which is present in the original draft and supported by the source.",
+        "model_lost_supported_details": [
+          "林岚是星舟1的负责人。"
+        ],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_assist_2",
+      "arm": "asu_fixed",
+      "original": "许宁在星舟2中协助林岚使用Python清洗20份表格；只负责缺失值检查，没有负责系统架构。",
+      "proposal": "许宁在星舟2中协助林岚使用Python清洗20份表格，负责缺失值检查，未参与系统架构设计。",
+      "text_sha256": "c6e83de3dfcf75c6f6f317572408164bcc6ab1980c7fa30fa05daacd07e6c669",
+      "label": "WRONG",
+      "review_reason": "保留未做架构，但删除只负责缺失值检查的范围限定。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "提案内容与原文事实一致，未改变任何支持的细节。"
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [
+          "只负责"
+        ],
+        "reason": "The proposal retains all original details about Xu Ning's role and responsibilities, including assisting Lin Lan, cleaning 20 tables with Python, only being responsible for missing value checks, and not being responsible for system architecture.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": [
+          {
+            "category": "limited_role",
+            "detail": "只负责"
+          }
+        ]
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_prototype_1",
+      "arm": "asu_fixed",
+      "original": "陈禾为星舟1编写Go导入器原型，在本机相同负载下把中位耗时从200毫秒降至140毫秒，尚未上线。",
+      "proposal": "陈禾为星舟1编写Go导入器原型，在本机相同负载下将中位耗时从200毫秒降至140毫秒，尚未上线。",
+      "text_sha256": "218baea12cc1346d2ab94184c875a0be3cf08a07b1a79d3d3189300793338a0f",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "提案与原文语义等价，未改变任何支持的事实。"
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal preserves all original details about Chen He writing the Go importer prototype, reducing median latency from 200ms to 140ms under the same load on the local machine, and the prototype not yet being online.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_pending_1",
+      "arm": "pre_asu",
+      "original": "陈禾为星舟1完成SQL成本测算，预计每月节约12万元，方案尚未实施；林岚是负责人。",
+      "proposal": "陈禾为星舟1完成SQL成本测算，预计每月节约12万元，方案尚未实施，林岚为负责人。",
+      "text_sha256": "bcbef1dfe886ba6e5261e57c14fd9715608c7aecf3c40ac68f74ba71103bd3c9",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal only changes the punctuation from a semicolon to a comma before '林岚为负责人' without altering any factual content or meaning. All required facts remain intact and supported by the source."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal combines the original sentences into one sentence without losing any original details or changing their meaning.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_assist_2",
+      "arm": "pre_asu",
+      "original": "许宁在星舟2中协助林岚使用Python清洗20份表格；只负责缺失值检查，没有负责系统架构。",
+      "proposal": "许宁在星舟2中协助林岚使用Python清洗20份表格，仅负责缺失值检查，无系统架构职责。",
+      "text_sha256": "f7aabd9e7fd52c1096885a5b63c50c9b8a9f1ed1aba333e0f1521492f0076840",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal is a paraphrase that preserves all original facts: assistance role, Python usage, 20 tables, responsibility limited to missing value checks, and no system architecture responsibility. No factual changes or omissions."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal paraphrases the original sentences but retains all original details and their meanings.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "zh_prototype_1",
+      "arm": "pre_asu",
+      "original": "陈禾为星舟1编写Go导入器原型，在本机相同负载下把中位耗时从200毫秒降至140毫秒，尚未上线。",
+      "proposal": "陈禾为星舟1编写Go导入器原型，在本机相同负载下将中位耗时从200毫秒降至140毫秒，尚未上线。",
+      "text_sha256": "218baea12cc1346d2ab94184c875a0be3cf08a07b1a79d3d3189300793338a0f",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal changes '把' to '将' which is a stylistic paraphrase without changing any factual content. All required facts about the Go importer prototype, load conditions, median latency reduction from 200ms to 140ms, and not yet online remain fully supported."
+      },
+      "old_accept": true,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal merges the original sentences into one sentence without omitting or altering any original details.",
+        "model_lost_supported_details": [],
+        "resolved_equivalences": [],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_points_3",
+      "arm": "asu_v1",
+      "original": "Riley evaluated Seabird3 offline: accuracy increased from 80% to 84%, an increase of 4 percentage points. Riley did not train the model.",
+      "proposal": "Riley evaluated Seabird3 offline, confirming accuracy improvement from 80% to 84%, without training the model.",
+      "text_sha256": "2406df7bb111be034f55854ad2361ddf78e00e2dffb06de278136345fcf7239f",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal preserves all required facts: offline evaluation, same accuracy endpoints (making explicit delta redundant), and that Riley did not train the model. The paraphrase is equivalent and does not omit or add unsupported details."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal merges the accuracy increase into a single statement without explicitly stating the 4 percentage points increase, which is a meaningful original detail supported by the source.",
+        "model_lost_supported_details": [
+          "The accuracy increase of Seabird3 was 4 percentage points."
+        ],
+        "resolved_equivalences": [
+          "The accuracy increase of Seabird3 was 4 percentage points."
+        ],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_points_2",
+      "arm": "asu_v1",
+      "original": "Morgan evaluated Seabird2 offline: accuracy increased from 80% to 84%, an increase of 4 percentage points. Morgan did not train the model.",
+      "proposal": "Morgan evaluated Seabird2 offline, confirming accuracy improvement from 80% to 84%, without training the model.",
+      "text_sha256": "76dc8256e3b80e95b837f518a55ac1ee4e00d53fa048924050df88b4bf629db8",
+      "label": "SAFE",
+      "review_reason": "保留相关原文事实；等价改写、标点调整不算错改。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": false,
+        "errors": [],
+        "reason": "The proposal preserves all required facts: offline evaluation, same accuracy endpoints (making explicit delta redundant), and that Morgan did not train the model. The paraphrase is equivalent and does not omit or add unsupported details."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": true,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal summarizes the accuracy improvement without explicitly mentioning the 4 percentage points increase, losing this specific detail supported by the source.",
+        "model_lost_supported_details": [
+          "The accuracy increase of Seabird2 was 4 percentage points."
+        ],
+        "resolved_equivalences": [
+          "The accuracy increase of Seabird2 was 4 percentage points."
+        ],
+        "qualifier_findings": []
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_team_3",
+      "arm": "asu_v1",
+      "original": "Riley implemented only the React form for Seabird3 in a three-person team; Lee wrote the API. The team won a university-level second prize.",
+      "proposal": "Riley implemented the React form for Seabird3 in a three-person team, contributing to the team's university-level second prize.",
+      "text_sha256": "807d4bc4cc37f13298c095f950e95e7009dd7c9a29dcb3240b8e607dcb9b4e39",
+      "label": "WRONG",
+      "review_reason": "删除only及Lee负责API的归属，且增加对团队获奖的贡献表述。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": true,
+        "errors": [
+          "Omission of 'only' before 'the React form' removes the limitation that Riley implemented only the React form.",
+          "Omission of 'Lee wrote the API' removes the attribution of the API implementation to Lee, which is a required fact."
+        ],
+        "reason": "The proposal omits the fact that Riley implemented only the React form, which is a meaningful limitation, and also omits that Lee wrote the API. Both are required facts. The proposal also changes 'the team won a university-level second prize' to 'contributing to the team's university-level second prize', which is acceptable, but the omissions are errors."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [
+          "Riley implemented only the React form for Seabird3.",
+          "Lee wrote the API for Seabird3."
+        ],
+        "reason": "The proposal omits that Riley implemented only the React form and that Lee wrote the API, both meaningful original details supported by the source.",
+        "model_lost_supported_details": [
+          "Riley implemented only the React form for Seabird3.",
+          "Lee wrote the API for Seabird3."
+        ],
+        "resolved_equivalences": [],
+        "qualifier_findings": [
+          {
+            "category": "limited_role",
+            "detail": "implemented only"
+          }
+        ]
+      },
+      "replayed_violations": []
+    },
+    {
+      "id": "en_points_3",
+      "arm": "pre_asu",
+      "original": "Riley evaluated Seabird3 offline: accuracy increased from 80% to 84%, an increase of 4 percentage points. Riley did not train the model.",
+      "proposal": "Riley evaluated Seabird3 offline, contributing to an accuracy increase from 80% to 84%, without training the model.",
+      "text_sha256": "e70b39d9c78aa739752e11080495c802ac6bd6d81b2e86b556dbc28750f1f634",
+      "label": "WRONG",
+      "review_reason": "把评测/观察准确率提升改成contributing to，新增促成提升的因果归属。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": true,
+        "errors": [
+          "Added implication that Riley contributed to the accuracy increase, which is unsupported; original states Riley evaluated but did not train the model, so contribution to increase is not claimed."
+        ],
+        "reason": "The proposal changes 'Riley evaluated Seabird3 offline: accuracy increased from 80% to 84%' to 'Riley evaluated Seabird3 offline, contributing to an accuracy increase from 80% to 84%,' which implies Riley contributed to the increase. The source only supports that Riley evaluated and did not train the model; it does not support that Riley contributed to the increase. This is an unsupported addition."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal merges the accuracy increase into a single statement and omits the explicit mention of the 4 percentage points increase, which is a specific numeric detail supported by the source.",
+        "model_lost_supported_details": [
+          "The accuracy increase of Seabird3 was 4 percentage points."
+        ],
+        "resolved_equivalences": [
+          "The accuracy increase of Seabird3 was 4 percentage points."
+        ],
+        "qualifier_findings": []
+      },
+      "replayed_violations": [
+        "建议将测量/评测改为促成成果，新增因果或个人贡献归属，须补证据。"
+      ]
+    },
+    {
+      "id": "en_points_2",
+      "arm": "pre_asu",
+      "original": "Morgan evaluated Seabird2 offline: accuracy increased from 80% to 84%, an increase of 4 percentage points. Morgan did not train the model.",
+      "proposal": "Morgan evaluated Seabird2 offline, contributing to an accuracy increase from 80% to 84%, without training the model.",
+      "text_sha256": "63d483cfabb88aba4fa7507e96dc92fb25fa4e7593e7a3de13ec8d4113561de1",
+      "label": "WRONG",
+      "review_reason": "把评测/观察准确率提升改成contributing to，新增促成提升的因果归属。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": true,
+        "errors": [
+          "Added implication that Morgan contributed to the accuracy increase, which is unsupported; original states Morgan evaluated but did not train the model, so contribution to increase is not claimed."
+        ],
+        "reason": "The proposal changes 'Morgan evaluated Seabird2 offline: accuracy increased from 80% to 84%' to 'Morgan evaluated Seabird2 offline, contributing to an accuracy increase from 80% to 84%,' which implies Morgan contributed to the increase. The source only supports that Morgan evaluated and did not train the model; it does not support that Morgan contributed to the increase. This is an unsupported addition."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [],
+        "reason": "The proposal merges the accuracy increase into a single statement and omits the explicit mention of the 4 percentage points increase, which is a specific numeric detail supported by the source.",
+        "model_lost_supported_details": [
+          "The accuracy increase of Seabird2 was 4 percentage points."
+        ],
+        "resolved_equivalences": [
+          "The accuracy increase of Seabird2 was 4 percentage points."
+        ],
+        "qualifier_findings": []
+      },
+      "replayed_violations": [
+        "建议将测量/评测改为促成成果，新增因果或个人贡献归属，须补证据。"
+      ]
+    },
+    {
+      "id": "en_team_3",
+      "arm": "pre_asu",
+      "original": "Riley implemented only the React form for Seabird3 in a three-person team; Lee wrote the API. The team won a university-level second prize.",
+      "proposal": "Riley implemented the React form for Seabird3 in a three-person team that won a university-level second prize; Lee wrote the API.",
+      "text_sha256": "73fd379d8435c3ab8c98974ec18dfc5399884eb11c5b80451eab748678acc537",
+      "label": "WRONG",
+      "review_reason": "删除only，扩大了原文对个人实现范围的表述。",
+      "changed": true,
+      "automated_audit": {
+        "wrong_edit": true,
+        "errors": [
+          "Removed 'only' before 'the React form', which changes the meaning by implying Riley may have implemented more than just the React form; original states Riley implemented only the React form."
+        ],
+        "reason": "The proposal omits the word 'only' from 'Riley implemented only the React form for Seabird3,' which is a meaningful detail supported by the source. Removing 'only' changes the scope of Riley's implementation and is therefore an incorrect edit."
+      },
+      "old_accept": false,
+      "replayed_v3_accept": false,
+      "replayed_losses": {
+        "lost_supported_details": [
+          "Riley implemented only the React form for Seabird3 in a three-person team."
+        ],
+        "reason": "The proposal omits the word 'only' which specifies that Riley implemented exclusively the React form, a detail supported by the source.",
+        "model_lost_supported_details": [
+          "Riley implemented only the React form for Seabird3 in a three-person team."
+        ],
+        "resolved_equivalences": [],
+        "qualifier_findings": [
+          {
+            "category": "limited_role",
+            "detail": "implemented only"
+          }
+        ]
+      },
+      "replayed_violations": []
+    }
+  ],
+  "source_sha256": {
+    "backend\\services\\edit_invariants.py": "980a7752d027fcf78acc9fbd3a674515e449f6cd250e6902ebe2497fafd3db28",
+    "backend\\services\\edit_guard.py": "6df0d24df9b8c7e739f8b500fbdb29776b4678f7bd7e1e1da09d5300dfa4e0f5",
+    "backend\\services\\asu_resume.py": "6bb5b3d35ee5d14c4f4217315d90d01b6eed8e673724e28d50845bcc761f3b6a",
+    "scripts\\review_asu_partial.py": "322ed7b9da15ca91cb4141403b92a3446c5e9d03e7c005dcb9b5f771e59bdb24"
+  },
+  "limitations": [
+    "Assistant reviewed, not independent human gold; strict scope preservation rubric.",
+    "One ambiguous template excluded from primary analysis for ALL arms.",
+    "Guard replay uses the SAME cached v1 preservation-model responses and cached atomic verdicts; no paid calls.",
+    "No score for new citation alignment or changed prompts: those need fresh end-to-end model runs.",
+    "Trials encountered HTTP 403 insufficient balance; 60 paired cases have NOT completed.",
+    "Seen failures informed fixes; replay is a regression diagnostic, not an unseen holdout."
+  ]
+}

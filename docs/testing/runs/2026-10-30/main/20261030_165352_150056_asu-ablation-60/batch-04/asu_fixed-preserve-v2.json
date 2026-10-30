@@ -1,0 +1,20 @@
+{
+  "claim_en_pending_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal retains all original details including the completion of the plan, the scheduled implementation year 2027, the fact that implementation has not started, and the estimated 20% cost reduction. The rephrasing does not remove any supported information.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_zh_alias_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal preserves all original details: Xu Ning's responsibility for PostgreSQL recovery testing on Seabird2 (Q20), Lin Lan's responsibility for Redis cache, and that Xu Ning did not lead the project. The rephrasing does not omit any supported detail.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_zh_prototype_3": {
+    "lost_supported_details": [],
+    "reason": "The proposal keeps all original details: Tang Yao wrote the Go importer prototype for Seabird3, under the same load on the local machine the median latency was reduced from 200ms to 140ms, and the prototype has not yet been launched. The wording change does not remove any supported information.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  }
+}

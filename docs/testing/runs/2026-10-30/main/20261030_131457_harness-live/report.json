@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-30T13:15:18.356111+08:00",
+  "harness": "[LOCAL_USER]\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\cli\\bin\\dsh.cmd",
+  "model": "gpt-4.1-mini",
+  "endpoint": "https://api.chatanywhere.tech/v1",
+  "fixture": "3 synthetic Atlas files",
+  "connected": false,
+  "retrieved_cards": 0,
+  "submitted_cards": 0,
+  "elapsed_seconds": 20.906,
+  "exit_code": 1,
+  "failure": null,
+  "status": "FAIL",
+  "cards": [],
+  "note": "Single integration pilot, not independent accuracy evidence; source snippets returned are untrusted candidates."
+}

@@ -1,0 +1,26 @@
+{
+  "proposals": [
+    {
+      "claim_id": "claim_zh_pending_1",
+      "text": "陈禾为星舟1完成SQL成本测算，预计每月节约12万元，方案尚未实施，林岚为负责人。",
+      "evidence_ids": [
+        "ev_zh_pending_1"
+      ]
+    },
+    {
+      "claim_id": "claim_zh_assist_2",
+      "text": "许宁在星舟2中协助林岚使用Python清洗20份表格，仅负责缺失值检查，无系统架构职责。",
+      "evidence_ids": [
+        "ev_zh_assist_2"
+      ]
+    },
+    {
+      "claim_id": "claim_zh_prototype_1",
+      "text": "陈禾为星舟1编写Go导入器原型，在本机相同负载下将中位耗时从200毫秒降至140毫秒，尚未上线。",
+      "evidence_ids": [
+        "ev_zh_prototype_1"
+      ]
+    }
+  ],
+  "source": null
+}

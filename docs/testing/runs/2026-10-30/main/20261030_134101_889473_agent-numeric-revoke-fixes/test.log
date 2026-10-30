@@ -1,0 +1,41 @@
+test_both_verifier_paths_override_erroneous_model_approval (tests.test_numeric_unit_guard.NumericUnitTests.test_both_verifier_paths_override_erroneous_model_approval) ... ok
+test_does_not_override_existing_rejection (tests.test_numeric_unit_guard.NumericUnitTests.test_does_not_override_existing_rejection) ... ok
+test_percent_point_substitution_requires_review (tests.test_numeric_unit_guard.NumericUnitTests.test_percent_point_substitution_requires_review) ... ok
+test_valid_units_remain_supported (tests.test_numeric_unit_guard.NumericUnitTests.test_valid_units_remain_supported) ... ok
+test_background_never_imports (tests.test_agent_bridge.AgentBridgeTests.test_background_never_imports) ... ok
+test_changed_source_invalidates_confirmation (tests.test_agent_bridge.AgentBridgeTests.test_changed_source_invalidates_confirmation) ... ok
+test_confirmed_numbers_required (tests.test_agent_bridge.AgentBridgeTests.test_confirmed_numbers_required) ... ok
+test_expired_or_repeated_revoke_is_safe (tests.test_agent_bridge.AgentBridgeTests.test_expired_or_repeated_revoke_is_safe) ... ok
+test_expiry_and_revocation (tests.test_agent_bridge.AgentBridgeTests.test_expiry_and_revocation) ... ok
+test_fabricated_quote_or_hash_refused (tests.test_agent_bridge.AgentBridgeTests.test_fabricated_quote_or_hash_refused) ... ok
+test_github_immutable_scope (tests.test_agent_bridge.AgentBridgeTests.test_github_immutable_scope) ... ok
+test_injection_is_data (tests.test_agent_bridge.AgentBridgeTests.test_injection_is_data) ... ok
+test_materials_scattered_and_no_secret (tests.test_agent_bridge.AgentBridgeTests.test_materials_scattered_and_no_secret) ... ok
+test_pair_and_split_capabilities (tests.test_agent_bridge.AgentBridgeTests.test_pair_and_split_capabilities) ... ok
+test_path_boundaries (tests.test_agent_bridge.AgentBridgeTests.test_path_boundaries) ... ok
+test_pre_read_disclosure_required (tests.test_agent_bridge.AgentBridgeTests.test_pre_read_disclosure_required) ... ok
+test_private_auth_not_implicit (tests.test_agent_bridge.AgentBridgeTests.test_private_auth_not_implicit) ... ok
+test_real_workspace_import_stays_unreviewed (tests.test_agent_bridge.AgentBridgeTests.test_real_workspace_import_stays_unreviewed) ... ok
+test_revoke_during_search_discards_inflight_results (tests.test_agent_bridge.AgentBridgeTests.test_revoke_during_search_discards_inflight_results) ... ok
+test_scope_modes (tests.test_agent_bridge.AgentBridgeTests.test_scope_modes) ... ok
+test_secret_like_text_is_not_disclosed (tests.test_agent_bridge.AgentBridgeTests.test_secret_like_text_is_not_disclosed) ... ok
+test_summary_is_candidate_not_verified (tests.test_agent_bridge.AgentBridgeTests.test_summary_is_candidate_not_verified) ... ok
+test_symlink_escape (tests.test_agent_bridge.AgentBridgeTests.test_symlink_escape) ... ok
+test_cache_key_binds_strategy_query_scope_and_source_version (tests.test_grounding_v2.GroundingV2Tests.test_cache_key_binds_strategy_query_scope_and_source_version) ... ok
+test_coverage_repairs_are_bounded (tests.test_grounding_v2.GroundingV2Tests.test_coverage_repairs_are_bounded) ... ok
+test_full_claim_can_block_even_if_atoms_pass (tests.test_grounding_v2.GroundingV2Tests.test_full_claim_can_block_even_if_atoms_pass) ... ok
+test_missing_atom_ids_never_pass (tests.test_grounding_v2.GroundingV2Tests.test_missing_atom_ids_never_pass) ... ok
+test_numeric_coverage_in_chinese (tests.test_grounding_v2.GroundingV2Tests.test_numeric_coverage_in_chinese) ... ok
+test_rejected_edit_restores_and_rechecks_original (tests.test_grounding_v2.GroundingV2Tests.test_rejected_edit_restores_and_rechecks_original) ... ok
+test_reverting_a_bad_original_does_not_make_it_verified (tests.test_grounding_v2.GroundingV2Tests.test_reverting_a_bad_original_does_not_make_it_verified) ... ok
+test_sag_preview_cannot_replace_original (tests.test_grounding_v2.GroundingV2Tests.test_sag_preview_cannot_replace_original) ... ok
+test_strict_output_deterministic_id_and_exact_quote (tests.test_grounding_v2.GroundingV2Tests.test_strict_output_deterministic_id_and_exact_quote) ... ok
+test_supported_detail_loss_rejects_even_supported_proposal (tests.test_grounding_v2.GroundingV2Tests.test_supported_detail_loss_rejects_even_supported_proposal) ... ok
+test_all_supported_fact_categories_are_preserved_in_input (tests.test_edit_inventory.InventoryTests.test_all_supported_fact_categories_are_preserved_in_input) ... ok
+test_incomplete_original_inventory_prevents_application (tests.test_edit_inventory.InventoryTests.test_incomplete_original_inventory_prevents_application) ... ok
+test_wrong_original_is_not_protected_as_true (tests.test_edit_inventory.InventoryTests.test_wrong_original_is_not_protected_as_true) ... ok
+
+----------------------------------------------------------------------
+Ran 36 tests in 0.194s
+
+OK

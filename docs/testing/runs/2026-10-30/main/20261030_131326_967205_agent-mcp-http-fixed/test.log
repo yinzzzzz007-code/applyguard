@@ -1,0 +1,7 @@
+test_http_unauthorized_ui_and_invalid_token (tests.test_agent_mcp.MCPIntegrationTests.test_http_unauthorized_ui_and_invalid_token) ... ok
+test_protocol_exact_quotes_and_revocation (tests.test_agent_mcp.MCPIntegrationTests.test_protocol_exact_quotes_and_revocation) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 2.651s
+
+OK

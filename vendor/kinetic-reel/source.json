@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/tuzhechen2005/opus-video-skills",
+  "commit": "59744a69c7b916cfbe4c4ec84006b0c2f5e2fde1",
+  "committedAt": "2026-09-27T01:17:14Z",
+  "files": [
+    "README.zh-CN.md",
+    "LICENSE",
+    "skills/kinetic-reel/SKILL.md",
+    "skills/kinetic-reel/references/style-guide.md",
+    "skills/kinetic-reel/references/sound.md",
+    "skills/kinetic-reel/template/reel/cues.js"
+  ]
+}

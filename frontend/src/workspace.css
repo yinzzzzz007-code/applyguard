@@ -333,3 +333,12 @@ button:focus-visible,a:focus-visible,summary:focus-visible { scroll-margin:80px;
 .radar-workbench .radar-secondary { margin-top:8px; }
 .radar-detail > .radar-provenance { font-size:11px; }
 @media (max-width:760px) { .radar-overview { gap:4px 8px; }.radar-page-heading { margin-bottom:0; }.radar-workbench.has-detail > .radar-tools-row,.radar-workbench.has-detail > .radar-secondary { display:none; }.radar-workbench.has-detail > .radar-tools-row:has(details[open]) { display:grid; } }
+/* Gitvextor的原型：Agent 来源授权与候选证据。 */
+.agent-connector { margin-block: 24px; }
+.agent-connector-body { padding: 24px 0; max-width: 880px; }
+.agent-connector-body > label, .agent-connector-body fieldset label, .agent-evidence > label { display: block; margin-block: 14px; }
+.agent-connector-body fieldset { border: 1px solid #cbd5e1; padding: 16px; }
+.agent-connector-body pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.agent-evidence { padding-block: 24px; border-bottom: 1px solid #cbd5e1; }
+.agent-evidence p { overflow-wrap: anywhere; }
+.agent-evidence blockquote { margin: 16px 0; padding: 16px; background: #f1f5f9; white-space: pre-wrap; }

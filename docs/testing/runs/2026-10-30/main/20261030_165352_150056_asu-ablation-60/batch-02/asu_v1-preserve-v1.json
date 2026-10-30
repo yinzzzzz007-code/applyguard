@@ -1,0 +1,20 @@
+{
+  "claim_zh_team_2": {
+    "lost_supported_details": [
+      "许宁只实现了Vue表单。",
+      "SQL接口由林岚完成。"
+    ],
+    "reason": "The proposal merges two separate facts into one sentence, omitting the explicit statement that SQL interface was completed by Lin Lan and that Xu Ning only implemented the Vue form."
+  },
+  "claim_en_scope_3": {
+    "lost_supported_details": [
+      "The measured 32% reduction concerns backup storage only.",
+      "The measured 32% reduction does not concern total operating costs."
+    ],
+    "reason": "The proposal states a 32% reduction in backup storage usage but omits the clarification that this reduction applies only to backup storage and not to total operating costs."
+  },
+  "claim_zh_assist_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal retains all original details, including the number of tables cleaned, the specific responsibility for missing value checks, and the negation of involvement in system architecture design, just rephrased."
+  }
+}

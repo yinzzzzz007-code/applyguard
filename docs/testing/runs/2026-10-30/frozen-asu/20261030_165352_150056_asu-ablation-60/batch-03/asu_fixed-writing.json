@@ -1,0 +1,40 @@
+{
+  "proposals": [
+    {
+      "claim_id": "claim_en_privacy_3",
+      "text": "Riley analyzed 32 anonymized records for Seabird3 using SQL during a two-week internship without accessing raw personal data.",
+      "evidence_ids": [
+        "ev_en_privacy_3"
+      ]
+    },
+    {
+      "claim_id": "claim_en_sample_2",
+      "text": "Morgan interviewed a convenience sample of 20 users about Seabird2, with eight completing the task; the sample was not representative.",
+      "evidence_ids": [
+        "ev_en_sample_2"
+      ]
+    },
+    {
+      "claim_id": "claim_en_offline_1",
+      "text": "Avery wrote Python interface tests for Seabird1, with 12 of 40 tests passing offline; Avery did not deploy the service.",
+      "evidence_ids": [
+        "ev_en_offline_1"
+      ]
+    }
+  ],
+  "source": {
+    "name": "ASu-skills/great-resume",
+    "repository": "https://github.com/Hisn00w/ASu-skills",
+    "commit": "d27fd2a3864c48472a5c8ed942410098ba9cd35f",
+    "license": "MIT",
+    "resources": {
+      "skills/great-resume/SKILL.md": "82ccf4a504f0498072ea1a46a42b4b9bd035129ca27d132a66db244897b4067f",
+      "skills/great-resume/references/claim-evidence-ledger.md": "b478bf362024b910db084e8a238fae82c3af2298316bec98f070ef2647afce33",
+      "skills/great-resume/references/business-analysis-evidence.md": "f3fc5376e5a102c120f760c2053e8afe1f9fc10817887694441612915a11a91d"
+    },
+    "adapter_policy_sha256": "3ef6b6a0efc296a2ad5b086c0f7a7067446f506b8a4fd5075ce7bf2a0a575b5f",
+    "role": "rewrite_proposal_only",
+    "original_files_unchanged": true,
+    "edit_policy_sha256": "31e06848c5dc374125af733523b4d4e5b415e95beffe73e509108e9f2c20bcca"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "claim_en_privacy_3": {
+    "lost_supported_details": [],
+    "reason": "The proposal retains all original details about the number of records, anonymization, use of SQL, internship duration, and the fact that no raw personal records were accessed, just rephrased.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_en_sample_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal preserves all original details about the convenience sample size, number completing the task, and non-representativeness, only changing punctuation and phrasing.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_en_offline_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal keeps all original details about the number of tests written, number passing offline, and non-deployment, only altering punctuation and phrasing.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  }
+}

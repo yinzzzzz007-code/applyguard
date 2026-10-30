@@ -1,0 +1,19 @@
+{
+  "claim_en_offline_2": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal is a paraphrase that preserves all original facts and details without adding or omitting any information."
+  },
+  "claim_zh_correction_1": {
+    "wrong_edit": true,
+    "errors": [
+      "Changed semicolon to comma between '2026年5月获得校级二等奖' and '早期一等奖记录已更正'"
+    ],
+    "reason": "The original uses a semicolon to separate two independent clauses, indicating two distinct facts: the award and the correction of the earlier record. The proposal replaces the semicolon with a comma, which is grammatically incorrect and changes the sentence structure, potentially merging two separate facts into one. This is a meaningful change that alters the original supported detail."
+  },
+  "claim_en_assist_1": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal only adds the definite article 'the' before 'architecture', which does not change the meaning or factual content of the claim. All required facts are preserved."
+  }
+}

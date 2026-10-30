@@ -1,0 +1,14 @@
+{
+  "claim_en_offline_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal preserves all original details including the number of tests, offline passing count, and Morgan's non-deployment of the service, merely changing punctuation and phrasing without loss of information.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_zh_correction_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal retains all original details about Chen He writing test cases for Starship 1, receiving a school-level second prize in May 2026, and the correction of earlier first prize records, only changing punctuation without loss of information.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  }
+}

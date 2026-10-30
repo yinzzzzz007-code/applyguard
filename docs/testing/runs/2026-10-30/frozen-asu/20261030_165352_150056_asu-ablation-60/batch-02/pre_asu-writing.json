@@ -1,0 +1,26 @@
+{
+  "proposals": [
+    {
+      "claim_id": "claim_zh_team_2",
+      "text": "许宁参与星舟2三人小组，负责实现Vue表单，团队获得校级二等奖。",
+      "evidence_ids": [
+        "ev_zh_team_2"
+      ]
+    },
+    {
+      "claim_id": "claim_en_scope_3",
+      "text": "Riley wrote PostgreSQL backup scripts for Seabird3, achieving a 32% reduction in backup storage.",
+      "evidence_ids": [
+        "ev_en_scope_3"
+      ]
+    },
+    {
+      "claim_id": "claim_zh_assist_1",
+      "text": "陈禾在星舟1中协助林岚使用Python清洗12份表格，负责缺失值检查。",
+      "evidence_ids": [
+        "ev_zh_assist_1"
+      ]
+    }
+  ],
+  "source": null
+}

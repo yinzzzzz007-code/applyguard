@@ -1,0 +1,14 @@
+{
+  "claim_en_privacy_3": {
+    "lost_supported_details": [],
+    "reason": "The proposal conveys all original details including the number of records, the use of SQL, the duration of the internship, and the fact that no raw personal records were accessed, just in a more concise form."
+  },
+  "claim_en_sample_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal retains all original details about the sample size, the number of users completing the task, and the non-representativeness of the sample, just combined into a single sentence."
+  },
+  "claim_en_offline_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal preserves all original details about the number of tests written, the number passing offline, and the fact that Avery did not deploy the service, phrased more succinctly."
+  }
+}

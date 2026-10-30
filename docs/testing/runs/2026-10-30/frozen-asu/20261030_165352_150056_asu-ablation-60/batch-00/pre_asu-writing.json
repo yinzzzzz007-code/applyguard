@@ -1,0 +1,26 @@
+{
+  "proposals": [
+    {
+      "claim_id": "claim_en_offline_2",
+      "text": "Morgan wrote Python interface tests for Seabird2, with 20 of 40 tests passing offline, but did not deploy the service.",
+      "evidence_ids": [
+        "ev_en_offline_2"
+      ]
+    },
+    {
+      "claim_id": "claim_zh_correction_1",
+      "text": "陈禾为星舟1编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+      "evidence_ids": [
+        "ev_zh_correction_1"
+      ]
+    },
+    {
+      "claim_id": "claim_en_assist_1",
+      "text": "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries; Lee led the project and Avery did not own architecture.",
+      "evidence_ids": [
+        "ev_en_assist_1"
+      ]
+    }
+  ],
+  "source": null
+}

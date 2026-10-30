@@ -1,0 +1,10 @@
+{
+  "frozen_at": "2026-10-30T16:40:06.086147+08:00",
+  "pre_asu_git_commit": "809b1632d3e0cb0c140283808a5797e316f7b7ce",
+  "files": {
+    "pre_asu_atomic.py": "bd76415948b82e2eafaf9c29b2282a3aff85a8d453903719b5a7d569c688ce1c",
+    "asu_v1_atomic.py": "c9764d27cbfc60a955567c220b7fd0b5e260d0aae23fc4f71fc219df100f6eb3",
+    "asu_v1_policy.py": "2d5e2c28fb7154bbfcdcbf6fc9c12ca8f6cfafd29cfb6d5c3ebdb10050d1de17",
+    "preservation_v1.py": "5c7d192ad666db011288ddc610fe1fd14641e00ca70d0aa61de0e93e83a13742"
+  }
+}

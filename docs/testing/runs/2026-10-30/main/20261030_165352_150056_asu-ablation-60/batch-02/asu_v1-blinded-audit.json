@@ -1,0 +1,17 @@
+{
+  "claim_zh_team_2": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal accurately reflects the original claim and source, maintaining all required facts: the team size, the individual's role limited to Vue form implementation, the SQL interface done by another member, and the team award."
+  },
+  "claim_en_scope_3": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal correctly restates the original claim and source, preserving all required facts: Riley wrote PostgreSQL backup scripts, the 32% reduction is specifically in backup storage usage, and it does not imply reduction in total operating costs."
+  },
+  "claim_zh_assist_1": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal maintains all required facts from the original and source: Chen He assisted (not led) Lin Lan using Python to clean 12 spreadsheets, was responsible only for missing value checks, and did not participate in system architecture design."
+  }
+}

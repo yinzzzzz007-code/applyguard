@@ -1,0 +1,233 @@
+{
+  "claim_zh_team_2": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "许宁参与星舟2三人小组。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_b7bd6a93726fb7514ee52efd210d2b3f",
+            "evidence_id": "ev_zh_team_2",
+            "source_sha256": "bfd4d11974ec02cb6b7a5ab101e522dac2af08da5cc0a15e0b53f6c1093b59c0",
+            "quote": "许宁参与星舟2三人小组",
+            "start": 8,
+            "end": 19,
+            "experience_id": "exp_zh_team_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source explicitly states '许宁参与星舟2三人小组'."
+      },
+      {
+        "atom_id": "a2",
+        "text": "许宁负责实现Vue表单。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_b7bd6a93726fb7514ee52efd210d2b3f",
+            "evidence_id": "ev_zh_team_2",
+            "source_sha256": "bfd4d11974ec02cb6b7a5ab101e522dac2af08da5cc0a15e0b53f6c1093b59c0",
+            "quote": "只实现Vue表单",
+            "start": 20,
+            "end": 28,
+            "experience_id": "exp_zh_team_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '只实现Vue表单', indicating Xu Ning was responsible for implementing the Vue form."
+      },
+      {
+        "atom_id": "a3",
+        "text": "星舟2团队获得校级二等奖。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_b7bd6a93726fb7514ee52efd210d2b3f",
+            "evidence_id": "ev_zh_team_2",
+            "source_sha256": "bfd4d11974ec02cb6b7a5ab101e522dac2af08da5cc0a15e0b53f6c1093b59c0",
+            "quote": "团队获得校级二等奖",
+            "start": 40,
+            "end": 49,
+            "experience_id": "exp_zh_team_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '团队获得校级二等奖', confirming the team won the school-level second prize."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_b7bd6a93726fb7514ee52efd210d2b3f",
+          "evidence_id": "ev_zh_team_2",
+          "source_sha256": "bfd4d11974ec02cb6b7a5ab101e522dac2af08da5cc0a15e0b53f6c1093b59c0",
+          "quote": "许宁参与星舟2三人小组，只实现Vue表单；SQL接口由林岚完成，团队获得校级二等奖。",
+          "start": 8,
+          "end": 50,
+          "experience_id": "exp_zh_team_2",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source states: '许宁参与星舟2三人小组，只实现Vue表单；SQL接口由林岚完成，团队获得校级二等奖.' This confirms that Xu Ning participated in the three-person Starboat 2 team, was responsible for implementing the Vue form, and the team won the school-level second prize."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "4ec12f3eecc5d85368156aba4e025069d5cd15bfb880f3c016de59b4df9b482e"
+  },
+  "claim_en_scope_3": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "Riley为Seabird3编写了PostgreSQL备份脚本。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_faa1dd4462971bef543f948caec4a3dc",
+            "evidence_id": "ev_en_scope_3",
+            "source_sha256": "842e65643bc156f50dd99b90cb76c6a846bf2a2111002d48640b1d3eb3834766",
+            "quote": "Riley wrote PostgreSQL backup scripts for Seabird3",
+            "start": 23,
+            "end": 73,
+            "experience_id": "exp_en_scope_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source explicitly states 'Riley wrote PostgreSQL backup scripts for Seabird3.'"
+      },
+      {
+        "atom_id": "a2",
+        "text": "Riley编写的脚本实现了备份存储使用量减少32%。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_faa1dd4462971bef543f948caec4a3dc",
+            "evidence_id": "ev_en_scope_3",
+            "source_sha256": "842e65643bc156f50dd99b90cb76c6a846bf2a2111002d48640b1d3eb3834766",
+            "quote": "the measured 32% reduction concerns backup storage only",
+            "start": 75,
+            "end": 130,
+            "experience_id": "exp_en_scope_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states the 32% reduction is in backup storage usage, matching the claim."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "INSUFFICIENT",
+      "citations": [],
+      "reason": "The source states: 'Riley wrote PostgreSQL backup scripts for Seabird3; the measured 32% reduction concerns backup storage only.' This confirms Riley wrote the scripts and achieved a 32% reduction in backup storage usage."
+    },
+    "complete": true,
+    "relation": "INSUFFICIENT",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "77f8ab4e1e8793535eee05db371005261910337060e4d04f8ab7894954090309"
+  },
+  "claim_zh_assist_1": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "陈禾在星舟1中协助林岚使用Python清洗12份表格。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_8fc99c39dea1fab38d0dcb40e78e442a",
+            "evidence_id": "ev_zh_assist_1",
+            "source_sha256": "855b65c52e84ba3f8a1d4e6a9e7dc1d57d354f9ffa259a1b297137aa7fa692dc",
+            "quote": "陈禾在星舟1中协助林岚使用Python清洗12份表格",
+            "start": 8,
+            "end": 34,
+            "experience_id": "exp_zh_assist_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '陈禾在星舟1中协助林岚使用Python清洗12份表格'."
+      },
+      {
+        "atom_id": "a2",
+        "text": "陈禾负责缺失值检查。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_8fc99c39dea1fab38d0dcb40e78e442a",
+            "evidence_id": "ev_zh_assist_1",
+            "source_sha256": "855b65c52e84ba3f8a1d4e6a9e7dc1d57d354f9ffa259a1b297137aa7fa692dc",
+            "quote": "只负责缺失值检查",
+            "start": 35,
+            "end": 43,
+            "experience_id": "exp_zh_assist_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '只负责缺失值检查', confirming Chen He was responsible for missing value checks."
+      },
+      {
+        "atom_id": "a3",
+        "text": "陈禾未参与系统架构设计。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_8fc99c39dea1fab38d0dcb40e78e442a",
+            "evidence_id": "ev_zh_assist_1",
+            "source_sha256": "855b65c52e84ba3f8a1d4e6a9e7dc1d57d354f9ffa259a1b297137aa7fa692dc",
+            "quote": "没有负责系统架构",
+            "start": 44,
+            "end": 52,
+            "experience_id": "exp_zh_assist_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '没有负责系统架构', confirming Chen He did not participate in system architecture design."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_8fc99c39dea1fab38d0dcb40e78e442a",
+          "evidence_id": "ev_zh_assist_1",
+          "source_sha256": "855b65c52e84ba3f8a1d4e6a9e7dc1d57d354f9ffa259a1b297137aa7fa692dc",
+          "quote": "陈禾在星舟1中协助林岚使用Python清洗12份表格；只负责缺失值检查，没有负责系统架构。",
+          "start": 8,
+          "end": 53,
+          "experience_id": "exp_zh_assist_1",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source states: '陈禾在星舟1中协助林岚使用Python清洗12份表格；只负责缺失值检查，没有负责系统架构.' This confirms Chen He assisted Lin Lan using Python to clean 12 tables, was responsible for missing value checks, and did not participate in system architecture design."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "3d63e34e1c77d1497a22bcfd622a93bd1ae35316e965711cab9b49cd5d0d7df0"
+  }
+}

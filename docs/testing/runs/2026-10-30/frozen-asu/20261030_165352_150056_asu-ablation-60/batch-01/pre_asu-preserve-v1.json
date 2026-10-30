@@ -1,0 +1,14 @@
+{
+  "claim_zh_sample_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal retains all original details including the sample size, number of completions, sampling method, and the disclaimer about representativeness, just in a more concise form."
+  },
+  "claim_zh_pilot_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal preserves all original information about the SQL dashboard creation, feedback collected during the pilot in two stores, and the lack of company-wide promotion, expressed more succinctly."
+  },
+  "claim_zh_correction_3": {
+    "lost_supported_details": [],
+    "reason": "The proposal includes all original details about the test case creation, the award date and level, and the correction of the early first prize record, just in a condensed format."
+  }
+}

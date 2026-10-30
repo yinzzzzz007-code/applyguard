@@ -155,35 +155,55 @@ class GroundingService:
         original_text = {c['claim_id']:c['text'] for c in claims}
         originals = copy.deepcopy(claims)
         proposals, proposal_checks, preservation_checks = {}, {}, {}
+        original_checks = {}
+        polish_source = None
+        polish_violations = {}
+        original_hits = {}
+        reused_checks = set()
         try:
             hits = self.retrieve(active,sources,allowed,candidate)
+            original_hits = copy.deepcopy(hits)
             if polish and active:
-                polished = AtomicVerifier(self.model).polish(active,contexts,hits,jd)
+                if mode == 'sag_atomic':
+                    original_checks = AtomicVerifier(self.model).verify(active,contexts,hits)
+                polisher = AtomicVerifier(self.model)
+                polished = polisher.polish(active,contexts,hits,jd,original_checks=original_checks)
+                polish_source = polisher.polish_source
+                polish_violations = polisher.polish_violations
                 changed = {c['claim_id']:c for c in polished}
                 proposals = copy.deepcopy(changed)
                 claims = [changed.get(c['claim_id'],c) for c in claims]
                 active = [changed[c['claim_id']] for c in active]
-                hits = self.retrieve(active,sources,allowed,candidate)
+                changed_active = [c for c in active if c['text'] != original_text[c['claim_id']]]
+                if changed_active:hits.update(self.retrieve(changed_active,sources,allowed,candidate))
             if mode == 'sag_atomic' and active:
-                atomic = AtomicVerifier(self.model).verify(active,contexts,hits)
+                # Reuse only checks computed in THIS call against its immutable
+                # source snapshot. apply_grounding rechecks revocation afterward.
+                unchanged = [c for c in active if polish and c['text']==original_text[c['claim_id']]]
+                reused_checks.update(c['claim_id'] for c in unchanged)
+                atomic = {c['claim_id']:copy.deepcopy(original_checks[c['claim_id']]) for c in unchanged}
+                pending = [c for c in active if c['claim_id'] not in atomic]
+                if pending:atomic.update(AtomicVerifier(self.model).verify(pending,contexts,hits))
             if polish and proposals:
                 from backend.services.edit_guard import preservation
                 proposal_checks = copy.deepcopy(atomic)
                 changed_originals = [c for c in originals if c['claim_id'] in proposals
                     and c['text'] != proposals[c['claim_id']]['text']]
                 if mode == 'sag_atomic':
-                    preservation_checks = preservation(self.model,changed_originals,list(proposals.values()),hits)
+                    preservation_checks = preservation(self.model,changed_originals,list(proposals.values()),hits,original_checks)
                 rejected = {c['claim_id'] for c in changed_originals if mode != 'sag_atomic'
+                    or polish_violations.get(c['claim_id'])
                     or atomic.get(c['claim_id'],{}).get('relation') != 'SUPPORTED'
                     or preservation_checks.get(c['claim_id'],{}).get('lost_supported_details')}
                 fallback = [c for c in originals if c['claim_id'] in rejected]
                 if fallback:
                     restored = {c['claim_id']:c for c in fallback}
                     claims = [restored.get(c['claim_id'],c) for c in claims]
-                    fallback_hits = self.retrieve(fallback,sources,allowed,candidate)
+                    fallback_hits = {c['claim_id']:original_hits[c['claim_id']] for c in fallback}
                     hits.update(fallback_hits)
                     if mode == 'sag_atomic':
-                        atomic.update(AtomicVerifier(self.model).verify(fallback,contexts,fallback_hits))
+                        atomic.update({c['claim_id']:copy.deepcopy(original_checks[c['claim_id']]) for c in fallback})
+                        reused_checks.update(restored)
         except (GroundingUnavailable,ModelFailure,OSError,ValueError,TypeError,KeyError):
             # No fallback to a stale VERIFIED result, even for unchanged old text.
             error = 'SAG或模型核验未完成；当前文本不可按已核验内容导出。请检查配置后重试。'
@@ -212,19 +232,25 @@ class GroundingService:
                 'support_score':1.0 if state == 'VERIFIED' else 0.0,
                 'unsupported_fragments':unsupported,'explanation':explanation})
             results[cid] = {**row,'state':state,'retrieved_sources':hits.get(cid,[]),
-                'original_text':original_text[cid],'final_text':claim['text']}
+                'original_text':original_text[cid],'final_text':claim['text'],
+                'reused_current_run_original_check':cid in reused_checks}
             if cid in proposals:
                 from backend.services.edit_guard import change_audit
                 proposed = proposals[cid]['text']
                 results[cid].update(proposed_text=proposed,proposal_check=proposal_checks.get(cid),
+                    original_check=original_checks.get(cid),
+                    proposal_constraint_violations=polish_violations.get(cid,[]),
                     preservation=preservation_checks.get(cid),change_audit=change_audit(original_text[cid],proposed),
                     proposal_applied=not error and proposed==claim['text'],
                     proposal_rejected=proposed!=claim['text'],
-                    proposal_notice='建议未通过核验或信息保留检查，已保留原文；原文状态单独核验。' if proposed!=claim['text'] else '')
+                    proposal_notice=('；'.join(polish_violations[cid]) if polish_violations.get(cid)
+                        else '建议未通过核验或信息保留检查，已保留原文；原文状态单独核验。') if proposed!=claim['text'] else '')
         from backend.services.structured_verifier import SPLIT_PROMPT, CHECK_PROMPT
+        from backend.services.atomic_verifier import POLISH_PROMPT
         from backend.services.edit_guard import PRESERVE_PROMPT
         return claims, verifications, {'mode':mode,'engine':'zleap-sag 0.15.0','snapshot':snapshot,
-            'prompt_version':fingerprint([ATOM_PROMPT,JUDGE_PROMPT,SPLIT_PROMPT,CHECK_PROMPT,PRESERVE_PROMPT]),'results':results,'error':error,
+            'prompt_version':fingerprint([ATOM_PROMPT,JUDGE_PROMPT,SPLIT_PROMPT,CHECK_PROMPT,PRESERVE_PROMPT,POLISH_PROMPT,polish_source]),
+            'polish_source':polish_source,'results':results,'error':error,
             'export_requires_atomic':True}
 
 

@@ -8,12 +8,13 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "smoke": "node scripts/smoke-mock.mjs && node --test scripts/copy-rules.test.mjs scripts/history.test.mjs scripts/materials.test.mjs scripts/jobs.test.mjs"
+    "smoke": "node scripts/smoke-mock.mjs && node --test scripts/copy-rules.test.mjs scripts/history.test.mjs scripts/materials.test.mjs scripts/jobs.test.mjs scripts/reel.test.mjs"
   },
   "dependencies": {
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router-dom": "^7.18.4"
+    "react-router-dom": "^7.18.4",
+    "three": "0.160.0"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

@@ -1,0 +1,16 @@
+{
+  "claim_zh_pending_1": {
+    "lost_supported_details": [
+      "林岚是星舟1的负责人。"
+    ],
+    "reason": "The proposal merges the first three sentences into one and omits the explicit statement that Lin Lan is the person in charge of Xingzhou 1, which is present in the original draft and supported by the source."
+  },
+  "claim_zh_assist_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal retains all original details about Xu Ning's role and responsibilities, including assisting Lin Lan, cleaning 20 tables with Python, only being responsible for missing value checks, and not being responsible for system architecture."
+  },
+  "claim_zh_prototype_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal preserves all original details about Chen He writing the Go importer prototype, reducing median latency from 200ms to 140ms under the same load on the local machine, and the prototype not yet being online."
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "claim_en_offline_2": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "Morgan wrote Python interface tests for Seabird2.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_478ffb9235fe487b63b798043165f982",
+            "evidence_id": "ev_en_offline_2",
+            "source_sha256": "8085571d23011e8719d8646d0c2a91e94248701a8e0a772df67feaa20497e9c5",
+            "quote": "Morgan wrote Python interface tests for Seabird2; 20 of 40 tests passed offline. Morgan did not deploy the service.",
+            "start": 23,
+            "end": 138,
+            "experience_id": "exp_en_offline_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source explicitly states 'Morgan wrote Python interface tests for Seabird2.'"
+      },
+      {
+        "atom_id": "a2",
+        "text": "20 of 40 tests passed offline for Seabird2.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_478ffb9235fe487b63b798043165f982",
+            "evidence_id": "ev_en_offline_2",
+            "source_sha256": "8085571d23011e8719d8646d0c2a91e94248701a8e0a772df67feaa20497e9c5",
+            "quote": "Morgan wrote Python interface tests for Seabird2; 20 of 40 tests passed offline.",
+            "start": 23,
+            "end": 103,
+            "experience_id": "exp_en_offline_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '20 of 40 tests passed offline' for Seabird2."
+      },
+      {
+        "atom_id": "a3",
+        "text": "Morgan did not deploy the service.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_478ffb9235fe487b63b798043165f982",
+            "evidence_id": "ev_en_offline_2",
+            "source_sha256": "8085571d23011e8719d8646d0c2a91e94248701a8e0a772df67feaa20497e9c5",
+            "quote": "Morgan did not deploy the service.",
+            "start": 104,
+            "end": 138,
+            "experience_id": "exp_en_offline_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'Morgan did not deploy the service.'"
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_478ffb9235fe487b63b798043165f982",
+          "evidence_id": "ev_en_offline_2",
+          "source_sha256": "8085571d23011e8719d8646d0c2a91e94248701a8e0a772df67feaa20497e9c5",
+          "quote": "Morgan wrote Python interface tests for Seabird2; 20 of 40 tests passed offline. Morgan did not deploy the service.",
+          "start": 23,
+          "end": 138,
+          "experience_id": "exp_en_offline_2",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source states: 'Morgan wrote Python interface tests for Seabird2; 20 of 40 tests passed offline. Morgan did not deploy the service.' This exactly matches the full claim."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "3701c4eb38c75e9979dcff6c2160e64a0d419057660450847cb98239e5a09b6b"
+  },
+  "claim_zh_correction_1": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "陈禾为星舟1编写测试用例。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_3b33a38ebe5de2d4ef254a9e10c6df47",
+            "evidence_id": "ev_zh_correction_1",
+            "source_sha256": "65903dcc9bd2829fddf63eb652c68a03bf189191b0dd914e9639ecbd85560170",
+            "quote": "正式更正记录：陈禾为星舟1编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+            "start": 12,
+            "end": 58,
+            "experience_id": "exp_zh_correction_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '陈禾为星舟1编写测试用例' explicitly."
+      },
+      {
+        "atom_id": "a2",
+        "text": "陈禾在2026年5月获得校级二等奖。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_3b33a38ebe5de2d4ef254a9e10c6df47",
+            "evidence_id": "ev_zh_correction_1",
+            "source_sha256": "65903dcc9bd2829fddf63eb652c68a03bf189191b0dd914e9639ecbd85560170",
+            "quote": "正式更正记录：陈禾为星舟1编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+            "start": 12,
+            "end": 58,
+            "experience_id": "exp_zh_correction_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '2026年5月获得校级二等奖' explicitly."
+      },
+      {
+        "atom_id": "a3",
+        "text": "陈禾的早期一等奖记录已更正。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_3b33a38ebe5de2d4ef254a9e10c6df47",
+            "evidence_id": "ev_zh_correction_1",
+            "source_sha256": "65903dcc9bd2829fddf63eb652c68a03bf189191b0dd914e9639ecbd85560170",
+            "quote": "正式更正记录：陈禾为星舟1编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+            "start": 12,
+            "end": 58,
+            "experience_id": "exp_zh_correction_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '早期一等奖记录已更正' explicitly."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_3b33a38ebe5de2d4ef254a9e10c6df47",
+          "evidence_id": "ev_zh_correction_1",
+          "source_sha256": "65903dcc9bd2829fddf63eb652c68a03bf189191b0dd914e9639ecbd85560170",
+          "quote": "正式更正记录：陈禾为星舟1编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+          "start": 12,
+          "end": 58,
+          "experience_id": "exp_zh_correction_1",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source states: '正式更正记录：陈禾为星舟1编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。' which matches the full claim exactly."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "2888edcac2db1bfa04bbbb65c98e3d0bd8a64e533eb47acb8d20ce1e6c1f693f"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "repo": "Hisn00w/ASu-skills",
+  "commit": "d27fd2a3864c48472a5c8ed942410098ba9cd35f",
+  "committed_at": "2026-10-28T01:14:31Z",
+  "license": "MIT",
+  "files": {
+    "LICENSE": {
+      "git_blob_sha1": "9adaa69c29d219c0d16773408cd585dd496d7843",
+      "sha256": "06398ce806fbba7c3298c63e94026f992ddf79fae8e8d744085a58e8444a98cc",
+      "bytes": 1064
+    },
+    "skills/great-resume/SKILL.md": {
+      "git_blob_sha1": "94f8bccbc39fdc66bd8ced7a60f4fd28afa2eae0",
+      "sha256": "82ccf4a504f0498072ea1a46a42b4b9bd035129ca27d132a66db244897b4067f",
+      "bytes": 3247
+    },
+    "skills/great-resume/references/claim-evidence-ledger.md": {
+      "git_blob_sha1": "5bd69aa6bc7c3d2f9f90f4daadbc3ebf83e2b260",
+      "sha256": "b478bf362024b910db084e8a238fae82c3af2298316bec98f070ef2647afce33",
+      "bytes": 5277
+    },
+    "skills/great-resume/references/business-analysis-evidence.md": {
+      "git_blob_sha1": "263fa2ba0727d9f926d0100d3a4605f539905ff7",
+      "sha256": "f3fc5376e5a102c120f760c2053e8afe1f9fc10817887694441612915a11a91d",
+      "bytes": 6032
+    },
+    "assets/career-claim-ledger-template.json": {
+      "git_blob_sha1": "9e1eeb0a339a534f78e798fae9673ded98eeddce",
+      "sha256": "0ef5997e350981787d12f287bdd65662568501011c4c99a12653eae2383df59e",
+      "bytes": 2519
+    },
+    "scripts/validate_claim_ledger.py": {
+      "git_blob_sha1": "62fde7e9200c3fa7f66eebbcb4d14d44278985d2",
+      "sha256": "3e300d2bfaaff18bd6e1d385b934428499b0677259e5b8e8788f60943f579758",
+      "bytes": 8634
+    }
+  },
+  "scope": "Exact original great-resume instructions, references, ledger template and standalone validator; no plugin installation."
+}

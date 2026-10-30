@@ -1,0 +1,14 @@
+{
+  "claim_zh_sample_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal retains all original details including the use of convenience sampling, the number of participants (12), the number who completed the operation (8), and the disclaimer that results do not represent the overall user population."
+  },
+  "claim_zh_pilot_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal preserves all original information: the creation of the SQL dashboard by Xu Ning, the collection of 20 feedback items during the pilot in two stores, and the fact that the dashboard was not promoted company-wide."
+  },
+  "claim_zh_correction_3": {
+    "lost_supported_details": [],
+    "reason": "The proposal maintains all original details: Tang Yao's work on test cases for Xingzhou 3, the award of a school-level second prize in May 2026, and the correction of the earlier first prize record."
+  }
+}

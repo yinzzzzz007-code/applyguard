@@ -1,0 +1,20 @@
+{
+  "claim_zh_sample_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal retains all original details including scope, sample size, number of completions, and the disclaimer about representativeness.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_zh_pilot_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal preserves all original details about the SQL dashboard creation, pilot scope, feedback count, and lack of company-wide promotion.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_zh_correction_3": {
+    "lost_supported_details": [],
+    "reason": "The proposal maintains all original details including the role, date, award level, and correction of earlier records.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  }
+}

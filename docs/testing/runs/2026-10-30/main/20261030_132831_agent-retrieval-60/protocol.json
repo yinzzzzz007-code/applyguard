@@ -1,0 +1,489 @@
+{
+  "created": "20261030_132831",
+  "n": 60,
+  "files": 180,
+  "gold": [
+    {
+      "query": "Project000",
+      "expected": [
+        "notes/Project000.txt",
+        "repo/Project000.md",
+        "report/Project000.md"
+      ]
+    },
+    {
+      "query": "Project001",
+      "expected": [
+        "notes/Project001.txt",
+        "repo/Project001.md",
+        "report/Project001.md"
+      ]
+    },
+    {
+      "query": "Project002",
+      "expected": [
+        "notes/Project002.txt",
+        "repo/Project002.md",
+        "report/Project002.md"
+      ]
+    },
+    {
+      "query": "Project003",
+      "expected": [
+        "notes/Project003.txt",
+        "repo/Project003.md",
+        "report/Project003.md"
+      ]
+    },
+    {
+      "query": "Project004",
+      "expected": [
+        "notes/Project004.txt",
+        "repo/Project004.md",
+        "report/Project004.md"
+      ]
+    },
+    {
+      "query": "Project005",
+      "expected": [
+        "notes/Project005.txt",
+        "repo/Project005.md",
+        "report/Project005.md"
+      ]
+    },
+    {
+      "query": "Project006",
+      "expected": [
+        "notes/Project006.txt",
+        "repo/Project006.md",
+        "report/Project006.md"
+      ]
+    },
+    {
+      "query": "Project007",
+      "expected": [
+        "notes/Project007.txt",
+        "repo/Project007.md",
+        "report/Project007.md"
+      ]
+    },
+    {
+      "query": "Project008",
+      "expected": [
+        "notes/Project008.txt",
+        "repo/Project008.md",
+        "report/Project008.md"
+      ]
+    },
+    {
+      "query": "Project009",
+      "expected": [
+        "notes/Project009.txt",
+        "repo/Project009.md",
+        "report/Project009.md"
+      ]
+    },
+    {
+      "query": "Project010",
+      "expected": [
+        "notes/Project010.txt",
+        "repo/Project010.md",
+        "report/Project010.md"
+      ]
+    },
+    {
+      "query": "Project011",
+      "expected": [
+        "notes/Project011.txt",
+        "repo/Project011.md",
+        "report/Project011.md"
+      ]
+    },
+    {
+      "query": "Project012",
+      "expected": [
+        "notes/Project012.txt",
+        "repo/Project012.md",
+        "report/Project012.md"
+      ]
+    },
+    {
+      "query": "Project013",
+      "expected": [
+        "notes/Project013.txt",
+        "repo/Project013.md",
+        "report/Project013.md"
+      ]
+    },
+    {
+      "query": "Project014",
+      "expected": [
+        "notes/Project014.txt",
+        "repo/Project014.md",
+        "report/Project014.md"
+      ]
+    },
+    {
+      "query": "Project015",
+      "expected": [
+        "notes/Project015.txt",
+        "repo/Project015.md",
+        "report/Project015.md"
+      ]
+    },
+    {
+      "query": "Project016",
+      "expected": [
+        "notes/Project016.txt",
+        "repo/Project016.md",
+        "report/Project016.md"
+      ]
+    },
+    {
+      "query": "Project017",
+      "expected": [
+        "notes/Project017.txt",
+        "repo/Project017.md",
+        "report/Project017.md"
+      ]
+    },
+    {
+      "query": "Project018",
+      "expected": [
+        "notes/Project018.txt",
+        "repo/Project018.md",
+        "report/Project018.md"
+      ]
+    },
+    {
+      "query": "Project019",
+      "expected": [
+        "notes/Project019.txt",
+        "repo/Project019.md",
+        "report/Project019.md"
+      ]
+    },
+    {
+      "query": "Project020",
+      "expected": [
+        "notes/Project020.txt",
+        "repo/Project020.md",
+        "report/Project020.md"
+      ]
+    },
+    {
+      "query": "Project021",
+      "expected": [
+        "notes/Project021.txt",
+        "repo/Project021.md",
+        "report/Project021.md"
+      ]
+    },
+    {
+      "query": "Project022",
+      "expected": [
+        "notes/Project022.txt",
+        "repo/Project022.md",
+        "report/Project022.md"
+      ]
+    },
+    {
+      "query": "Project023",
+      "expected": [
+        "notes/Project023.txt",
+        "repo/Project023.md",
+        "report/Project023.md"
+      ]
+    },
+    {
+      "query": "Project024",
+      "expected": [
+        "notes/Project024.txt",
+        "repo/Project024.md",
+        "report/Project024.md"
+      ]
+    },
+    {
+      "query": "Project025",
+      "expected": [
+        "notes/Project025.txt",
+        "repo/Project025.md",
+        "report/Project025.md"
+      ]
+    },
+    {
+      "query": "Project026",
+      "expected": [
+        "notes/Project026.txt",
+        "repo/Project026.md",
+        "report/Project026.md"
+      ]
+    },
+    {
+      "query": "Project027",
+      "expected": [
+        "notes/Project027.txt",
+        "repo/Project027.md",
+        "report/Project027.md"
+      ]
+    },
+    {
+      "query": "Project028",
+      "expected": [
+        "notes/Project028.txt",
+        "repo/Project028.md",
+        "report/Project028.md"
+      ]
+    },
+    {
+      "query": "Project029",
+      "expected": [
+        "notes/Project029.txt",
+        "repo/Project029.md",
+        "report/Project029.md"
+      ]
+    },
+    {
+      "query": "Project030",
+      "expected": [
+        "notes/Project030.txt",
+        "repo/Project030.md",
+        "report/Project030.md"
+      ]
+    },
+    {
+      "query": "Project031",
+      "expected": [
+        "notes/Project031.txt",
+        "repo/Project031.md",
+        "report/Project031.md"
+      ]
+    },
+    {
+      "query": "Project032",
+      "expected": [
+        "notes/Project032.txt",
+        "repo/Project032.md",
+        "report/Project032.md"
+      ]
+    },
+    {
+      "query": "Project033",
+      "expected": [
+        "notes/Project033.txt",
+        "repo/Project033.md",
+        "report/Project033.md"
+      ]
+    },
+    {
+      "query": "Project034",
+      "expected": [
+        "notes/Project034.txt",
+        "repo/Project034.md",
+        "report/Project034.md"
+      ]
+    },
+    {
+      "query": "Project035",
+      "expected": [
+        "notes/Project035.txt",
+        "repo/Project035.md",
+        "report/Project035.md"
+      ]
+    },
+    {
+      "query": "Project036",
+      "expected": [
+        "notes/Project036.txt",
+        "repo/Project036.md",
+        "report/Project036.md"
+      ]
+    },
+    {
+      "query": "Project037",
+      "expected": [
+        "notes/Project037.txt",
+        "repo/Project037.md",
+        "report/Project037.md"
+      ]
+    },
+    {
+      "query": "Project038",
+      "expected": [
+        "notes/Project038.txt",
+        "repo/Project038.md",
+        "report/Project038.md"
+      ]
+    },
+    {
+      "query": "Project039",
+      "expected": [
+        "notes/Project039.txt",
+        "repo/Project039.md",
+        "report/Project039.md"
+      ]
+    },
+    {
+      "query": "Project040",
+      "expected": [
+        "notes/Project040.txt",
+        "repo/Project040.md",
+        "report/Project040.md"
+      ]
+    },
+    {
+      "query": "Project041",
+      "expected": [
+        "notes/Project041.txt",
+        "repo/Project041.md",
+        "report/Project041.md"
+      ]
+    },
+    {
+      "query": "Project042",
+      "expected": [
+        "notes/Project042.txt",
+        "repo/Project042.md",
+        "report/Project042.md"
+      ]
+    },
+    {
+      "query": "Project043",
+      "expected": [
+        "notes/Project043.txt",
+        "repo/Project043.md",
+        "report/Project043.md"
+      ]
+    },
+    {
+      "query": "Project044",
+      "expected": [
+        "notes/Project044.txt",
+        "repo/Project044.md",
+        "report/Project044.md"
+      ]
+    },
+    {
+      "query": "Project045",
+      "expected": [
+        "notes/Project045.txt",
+        "repo/Project045.md",
+        "report/Project045.md"
+      ]
+    },
+    {
+      "query": "Project046",
+      "expected": [
+        "notes/Project046.txt",
+        "repo/Project046.md",
+        "report/Project046.md"
+      ]
+    },
+    {
+      "query": "Project047",
+      "expected": [
+        "notes/Project047.txt",
+        "repo/Project047.md",
+        "report/Project047.md"
+      ]
+    },
+    {
+      "query": "Project048",
+      "expected": [
+        "notes/Project048.txt",
+        "repo/Project048.md",
+        "report/Project048.md"
+      ]
+    },
+    {
+      "query": "Project049",
+      "expected": [
+        "notes/Project049.txt",
+        "repo/Project049.md",
+        "report/Project049.md"
+      ]
+    },
+    {
+      "query": "Project050",
+      "expected": [
+        "notes/Project050.txt",
+        "repo/Project050.md",
+        "report/Project050.md"
+      ]
+    },
+    {
+      "query": "Project051",
+      "expected": [
+        "notes/Project051.txt",
+        "repo/Project051.md",
+        "report/Project051.md"
+      ]
+    },
+    {
+      "query": "Project052",
+      "expected": [
+        "notes/Project052.txt",
+        "repo/Project052.md",
+        "report/Project052.md"
+      ]
+    },
+    {
+      "query": "Project053",
+      "expected": [
+        "notes/Project053.txt",
+        "repo/Project053.md",
+        "report/Project053.md"
+      ]
+    },
+    {
+      "query": "Project054",
+      "expected": [
+        "notes/Project054.txt",
+        "repo/Project054.md",
+        "report/Project054.md"
+      ]
+    },
+    {
+      "query": "Project055",
+      "expected": [
+        "notes/Project055.txt",
+        "repo/Project055.md",
+        "report/Project055.md"
+      ]
+    },
+    {
+      "query": "Project056",
+      "expected": [
+        "notes/Project056.txt",
+        "repo/Project056.md",
+        "report/Project056.md"
+      ]
+    },
+    {
+      "query": "Project057",
+      "expected": [
+        "notes/Project057.txt",
+        "repo/Project057.md",
+        "report/Project057.md"
+      ]
+    },
+    {
+      "query": "Project058",
+      "expected": [
+        "notes/Project058.txt",
+        "repo/Project058.md",
+        "report/Project058.md"
+      ]
+    },
+    {
+      "query": "Project059",
+      "expected": [
+        "notes/Project059.txt",
+        "repo/Project059.md",
+        "report/Project059.md"
+      ]
+    }
+  ],
+  "annotation": "author-generated synthetic, not independent human annotation",
+  "metric": "document recall@20 with exact project identifier; connector lexical baseline, not LLM retrieval quality"
+}

@@ -1,0 +1,14 @@
+{
+  "claim_en_offline_2": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal is a paraphrase of the original with all required facts preserved: Python interface tests, 20 of 40 tests passing offline, and no deployment by Morgan."
+  },
+  "claim_zh_correction_1": {
+    "wrong_edit": true,
+    "errors": [
+      "Missing semicolon between '校级二等奖' and '早期一等奖记录已更正'"
+    ],
+    "reason": "The original uses a semicolon to separate two independent clauses, which is important for clarity and matches the source. The proposal replaces the semicolon with a comma, which is a punctuation change that alters the sentence structure and is not supported by the source."
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "claim_en_pending_2": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal reorders the sentence but retains all original facts and their meaning without omission or addition."
+  },
+  "claim_zh_alias_2": {
+    "wrong_edit": true,
+    "errors": [
+      "Redis缓存由林岚负责被改为由他人负责，具体人名被删除。"
+    ],
+    "reason": "The original specifies Redis cache is managed by 林岚, but the proposal replaces this with '他人' (someone else), losing the specific supported detail."
+  },
+  "claim_zh_prototype_3": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal uses a synonymous phrase '将...降至' instead of '把...降至' without changing any factual content or meaning."
+  }
+}

@@ -53,23 +53,42 @@ def _items(payload, expected):
 class AtomicVerifier:
     def __init__(self, model: ModelClient):
         self.model = model
+        self.polish_source = None
+        self.polish_violations = {}
 
-    def polish(self, claims, contexts, hits, jd):
+    def polish(self, claims, contexts, hits, jd, original_checks=None):
         import json
-        inputs = [{'id':c['claim_id'], 'draft':c['text'], 'context':contexts[c['claim_id']],
-            'sources':hits.get(c['claim_id'], [])} for c in claims]
+        from backend.services.asu_resume import proposal_policy,language_family,proposal_violations
+        upstream,self.polish_source=proposal_policy(claims,hits,jd)
+        from backend.services.edit_invariants import qualifier_inventory
+        edit_policy='''Before rewriting, make a private checklist of each source-supported qualifier.
+Keep the same individual role, estimated versus actual outcomes, not-implemented status,
+offline/pilot/prototype scope, non-participation, time and denominators attached to the right action.
+The protected_qualifiers field is a reminder, not evidence; original sources still decide corrections.
+When shortening, remove only redundant wording, not these constraints. Prefer retaining a whole
+clause if its qualifier cannot be expressed safely. A single unchanged bullet is acceptable.
+The same named metric's explicit endpoints (80% to 84%) can convey +4 percentage points without
+repeating it. Never rewrite that as +4% relative improvement or change the metric/scope.'''
+        prompt=POLISH_PROMPT+'\n\n'+upstream+'\n\n'+edit_policy
+        self.polish_source['edit_policy_sha256']=fingerprint(edit_policy)
+        inputs = [{'id':c['claim_id'], 'draft':c['text'], 'draft_language':language_family(c['text']), 'context':contexts[c['claim_id']],
+            'sources':hits.get(c['claim_id'], []),
+            'protected_qualifiers':qualifier_inventory('\n'.join(a['text'] for a in
+                (original_checks or {}).get(c['claim_id'],{}).get('atoms',[]) if a['relation']=='SUPPORTED'))} for c in claims]
         if callable(getattr(type(self.model),'complete_structured',None)):
             from backend.services.structured_verifier import obj, structured
             schema=obj({c['claim_id']:obj({'text':{'type':'string'}}) for c in claims})
-            rows=structured(self.model,POLISH_PROMPT.replace('Return JSON {items:[{id,text}]}.','Return JSON with the exact server-supplied keys.'),{'target_job':jd,'items':inputs},schema)
+            rows=structured(self.model,prompt.replace('Return JSON {items:[{id,text}]}.','Return JSON with the exact server-supplied keys.'),{'target_job':jd,'items':inputs},schema)
         else:
-            rows = _items(self.model.complete_json(POLISH_PROMPT,
+            rows = _items(self.model.complete_json(prompt,
                 json.dumps({'target_job':jd, 'items':inputs}, ensure_ascii=False)), [c['claim_id'] for c in claims])
         output = []
         for claim in claims:
             text = rows[claim['claim_id']].get('text')
             if not isinstance(text, str) or not 0 < len(text.strip()) <= 420:
                 raise GroundingUnavailable('润色输出为空或超过420字，未采用该输出。')
+            violations=proposal_violations(claim['text'],text,hits.get(claim['claim_id'],[]))
+            if violations:self.polish_violations[claim['claim_id']]=violations
             output.append({**claim, 'text':text.strip()})
         return output
 

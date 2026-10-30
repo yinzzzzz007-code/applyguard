@@ -1,0 +1,38 @@
+{
+  "claim_en_points_3": {
+    "lost_supported_details": [
+      "did not train"
+    ],
+    "reason": "The proposal retains all original details including offline evaluation, accuracy increase from 80% to 84%, the 4 percentage points increase, and that Riley did not train the model.",
+    "resolved_equivalences": [],
+    "qualifier_findings": [
+      {
+        "category": "not_trained",
+        "detail": "did not train"
+      }
+    ]
+  },
+  "claim_en_points_2": {
+    "lost_supported_details": [
+      "did not train"
+    ],
+    "reason": "The proposal retains all original details including offline evaluation, accuracy increase from 80% to 84%, the 4 percentage points increase, and that Morgan did not train the model.",
+    "resolved_equivalences": [],
+    "qualifier_findings": [
+      {
+        "category": "not_trained",
+        "detail": "did not train"
+      }
+    ]
+  },
+  "claim_en_team_3": {
+    "lost_supported_details": [
+      "Riley implemented only the React form for Seabird3 in a three-person team.",
+      "Lee wrote the API for Seabird3.",
+      "The team that worked on Seabird3 won a university-level second prize."
+    ],
+    "reason": "The proposal omits that Riley implemented only the React form (implying exclusivity), omits that Lee wrote the API, and omits the explicit mention of the three-person team and the team composition. It also changes the phrasing about the team winning the university-level second prize, losing the explicit statement that the team that worked on Seabird3 won it.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  }
+}

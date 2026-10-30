@@ -1,0 +1,39 @@
+{
+  "proposals": [
+    {
+      "claim_id": "claim_en_pending_2",
+      "text": "Morgan completed a Kubernetes migration plan for Seabird2; implementation is scheduled for 2027 and has not started, with an estimated 20% cost reduction.",
+      "evidence_ids": [
+        "ev_en_pending_2"
+      ]
+    },
+    {
+      "claim_id": "claim_zh_alias_2",
+      "text": "许宁负责星舟2（内部编号Q20）PostgreSQL恢复测试，Redis缓存由林岚负责，未主导项目。",
+      "evidence_ids": [
+        "ev_zh_alias_2"
+      ]
+    },
+    {
+      "claim_id": "claim_zh_prototype_3",
+      "text": "唐遥为星舟3编写Go导入器原型，在本机相同负载下将中位耗时从200毫秒降至140毫秒，尚未上线。",
+      "evidence_ids": [
+        "ev_zh_prototype_3"
+      ]
+    }
+  ],
+  "source": {
+    "name": "ASu-skills/great-resume",
+    "repository": "https://github.com/Hisn00w/ASu-skills",
+    "commit": "d27fd2a3864c48472a5c8ed942410098ba9cd35f",
+    "license": "MIT",
+    "resources": {
+      "skills/great-resume/SKILL.md": "82ccf4a504f0498072ea1a46a42b4b9bd035129ca27d132a66db244897b4067f",
+      "skills/great-resume/references/claim-evidence-ledger.md": "b478bf362024b910db084e8a238fae82c3af2298316bec98f070ef2647afce33"
+    },
+    "adapter_policy_sha256": "3ef6b6a0efc296a2ad5b086c0f7a7067446f506b8a4fd5075ce7bf2a0a575b5f",
+    "role": "rewrite_proposal_only",
+    "original_files_unchanged": true,
+    "edit_policy_sha256": "31e06848c5dc374125af733523b4d4e5b415e95beffe73e509108e9f2c20bcca"
+  }
+}

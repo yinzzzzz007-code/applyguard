@@ -1,0 +1,19 @@
+{
+  "claim_zh_pending_1": {
+    "wrong_edit": true,
+    "errors": [
+      "删除了“林岚是负责人”这一事实，导致项目负责人信息缺失。"
+    ],
+    "reason": "原文明确指出林岚是负责人，提案中删除了该信息，造成事实缺失。"
+  },
+  "claim_zh_assist_2": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "提案内容与原文事实一致，未改变任何支持的细节。"
+  },
+  "claim_zh_prototype_1": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "提案与原文语义等价，未改变任何支持的事实。"
+  }
+}

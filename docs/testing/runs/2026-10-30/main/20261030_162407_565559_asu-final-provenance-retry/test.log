@@ -1,0 +1,14 @@
+test_absent_assets_preserve_original_and_review (tests.test_asu_resume.ASuReuseTests.test_absent_assets_preserve_original_and_review) ... ok
+test_business_reference_is_loaded_only_when_relevant (tests.test_asu_resume.ASuReuseTests.test_business_reference_is_loaded_only_when_relevant) ... ok
+test_changed_upstream_asset_never_silently_runs (tests.test_asu_resume.ASuReuseTests.test_changed_upstream_asset_never_silently_runs) ... ok
+test_chinese_english_and_uncertain_language_boundaries (tests.test_asu_resume.ASuReuseTests.test_chinese_english_and_uncertain_language_boundaries) ... ok
+test_original_skill_and_ledger_reach_proposal_call (tests.test_asu_resume.ASuReuseTests.test_original_skill_and_ledger_reach_proposal_call) ... ok
+test_six_original_files_match_upstream_blob_and_sha256 (tests.test_asu_resume.ASuReuseTests.test_six_original_files_match_upstream_blob_and_sha256) ... ok
+test_unsolicited_translation_is_not_applied_even_if_judge_supports_it (tests.test_asu_resume.ASuReuseTests.test_unsolicited_translation_is_not_applied_even_if_judge_supports_it) ... ok
+test_unsupported_asu_proposal_does_not_override_guard_or_original (tests.test_asu_resume.ASuReuseTests.test_unsupported_asu_proposal_does_not_override_guard_or_original) ... ok
+test_verification_alone_does_not_load_writing_skill (tests.test_asu_resume.ASuReuseTests.test_verification_alone_does_not_load_writing_skill) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.071s
+
+OK

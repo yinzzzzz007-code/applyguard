@@ -1,0 +1,286 @@
+{
+  "claim_zh_team_2": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "许宁参与星舟2三人小组。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_b7bd6a93726fb7514ee52efd210d2b3f",
+            "evidence_id": "ev_zh_team_2",
+            "source_sha256": "bfd4d11974ec02cb6b7a5ab101e522dac2af08da5cc0a15e0b53f6c1093b59c0",
+            "quote": "许宁参与星舟2三人小组",
+            "start": 8,
+            "end": 19,
+            "experience_id": "exp_zh_team_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '许宁参与星舟2三人小组' directly."
+      },
+      {
+        "atom_id": "a2",
+        "text": "许宁只实现了Vue表单。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_b7bd6a93726fb7514ee52efd210d2b3f",
+            "evidence_id": "ev_zh_team_2",
+            "source_sha256": "bfd4d11974ec02cb6b7a5ab101e522dac2af08da5cc0a15e0b53f6c1093b59c0",
+            "quote": "只实现Vue表单",
+            "start": 20,
+            "end": 28,
+            "experience_id": "exp_zh_team_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '只实现Vue表单' referring to Xu Ning's contribution."
+      },
+      {
+        "atom_id": "a3",
+        "text": "SQL接口由林岚完成。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_b7bd6a93726fb7514ee52efd210d2b3f",
+            "evidence_id": "ev_zh_team_2",
+            "source_sha256": "bfd4d11974ec02cb6b7a5ab101e522dac2af08da5cc0a15e0b53f6c1093b59c0",
+            "quote": "SQL接口由林岚完成",
+            "start": 29,
+            "end": 39,
+            "experience_id": "exp_zh_team_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'SQL接口由林岚完成' indicating Lin Lan completed the SQL interface."
+      },
+      {
+        "atom_id": "a4",
+        "text": "团队获得了校级二等奖。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_b7bd6a93726fb7514ee52efd210d2b3f",
+            "evidence_id": "ev_zh_team_2",
+            "source_sha256": "bfd4d11974ec02cb6b7a5ab101e522dac2af08da5cc0a15e0b53f6c1093b59c0",
+            "quote": "团队获得校级二等奖",
+            "start": 40,
+            "end": 49,
+            "experience_id": "exp_zh_team_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '团队获得校级二等奖' indicating the team won a school-level second prize."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_b7bd6a93726fb7514ee52efd210d2b3f",
+          "evidence_id": "ev_zh_team_2",
+          "source_sha256": "bfd4d11974ec02cb6b7a5ab101e522dac2af08da5cc0a15e0b53f6c1093b59c0",
+          "quote": "已签字项目记录：许宁参与星舟2三人小组，只实现Vue表单；SQL接口由林岚完成，团队获得校级二等奖。",
+          "start": 0,
+          "end": 50,
+          "experience_id": "exp_zh_team_2",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source text explicitly states: '许宁参与星舟2三人小组，只实现Vue表单；SQL接口由林岚完成，团队获得校级二等奖。' This matches the full claim exactly in all aspects: participation, role, SQL interface by Lin Lan, and team award."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "37d20186878e596f842687b9fce23e41a01dc50785827b8b91c6049919373c5d"
+  },
+  "claim_en_scope_3": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "Riley wrote PostgreSQL backup scripts for Seabird3.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_faa1dd4462971bef543f948caec4a3dc",
+            "evidence_id": "ev_en_scope_3",
+            "source_sha256": "842e65643bc156f50dd99b90cb76c6a846bf2a2111002d48640b1d3eb3834766",
+            "quote": "Riley wrote PostgreSQL backup scripts for Seabird3",
+            "start": 23,
+            "end": 73,
+            "experience_id": "exp_en_scope_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'Riley wrote PostgreSQL backup scripts for Seabird3.'"
+      },
+      {
+        "atom_id": "a2",
+        "text": "The measured 32% reduction concerns backup storage only.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_faa1dd4462971bef543f948caec4a3dc",
+            "evidence_id": "ev_en_scope_3",
+            "source_sha256": "842e65643bc156f50dd99b90cb76c6a846bf2a2111002d48640b1d3eb3834766",
+            "quote": "the measured 32% reduction concerns backup storage only",
+            "start": 75,
+            "end": 130,
+            "experience_id": "exp_en_scope_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'the measured 32% reduction concerns backup storage only.'"
+      },
+      {
+        "atom_id": "a3",
+        "text": "The measured 32% reduction does not concern total operating costs.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_faa1dd4462971bef543f948caec4a3dc",
+            "evidence_id": "ev_en_scope_3",
+            "source_sha256": "842e65643bc156f50dd99b90cb76c6a846bf2a2111002d48640b1d3eb3834766",
+            "quote": "not total operating costs",
+            "start": 132,
+            "end": 157,
+            "experience_id": "exp_en_scope_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'not total operating costs' indicating the reduction does not concern total operating costs."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_faa1dd4462971bef543f948caec4a3dc",
+          "evidence_id": "ev_en_scope_3",
+          "source_sha256": "842e65643bc156f50dd99b90cb76c6a846bf2a2111002d48640b1d3eb3834766",
+          "quote": "Signed project record: Riley wrote PostgreSQL backup scripts for Seabird3; the measured 32% reduction concerns backup storage only, not total operating costs.",
+          "start": 0,
+          "end": 158,
+          "experience_id": "exp_en_scope_3",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source text states: 'Riley wrote PostgreSQL backup scripts for Seabird3; the measured 32% reduction concerns backup storage only, not total operating costs.' This matches the full claim exactly."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "822cd3799aa0b27b703b772bf81dbcd5c9d7fa[REDACTED_PHONE]b5abac526bc355a"
+  },
+  "claim_zh_assist_1": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "陈禾在星舟1中协助林岚使用Python清洗了12份表格。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_8fc99c39dea1fab38d0dcb40e78e442a",
+            "evidence_id": "ev_zh_assist_1",
+            "source_sha256": "855b65c52e84ba3f8a1d4e6a9e7dc1d57d354f9ffa259a1b297137aa7fa692dc",
+            "quote": "陈禾在星舟1中协助林岚使用Python清洗12份表格",
+            "start": 8,
+            "end": 34,
+            "experience_id": "exp_zh_assist_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '陈禾在星舟1中协助林岚使用Python清洗12份表格' directly."
+      },
+      {
+        "atom_id": "a2",
+        "text": "陈禾只负责缺失值检查。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_8fc99c39dea1fab38d0dcb40e78e442a",
+            "evidence_id": "ev_zh_assist_1",
+            "source_sha256": "855b65c52e84ba3f8a1d4e6a9e7dc1d57d354f9ffa259a1b297137aa7fa692dc",
+            "quote": "只负责缺失值检查",
+            "start": 35,
+            "end": 43,
+            "experience_id": "exp_zh_assist_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '只负责缺失值检查' indicating Chen He only responsible for missing value check."
+      },
+      {
+        "atom_id": "a3",
+        "text": "陈禾没有负责系统架构。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_8fc99c39dea1fab38d0dcb40e78e442a",
+            "evidence_id": "ev_zh_assist_1",
+            "source_sha256": "855b65c52e84ba3f8a1d4e6a9e7dc1d57d354f9ffa259a1b297137aa7fa692dc",
+            "quote": "没有负责系统架构",
+            "start": 44,
+            "end": 52,
+            "experience_id": "exp_zh_assist_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '没有负责系统架构' indicating Chen He did not take responsibility for system architecture."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_8fc99c39dea1fab38d0dcb40e78e442a",
+          "evidence_id": "ev_zh_assist_1",
+          "source_sha256": "855b65c52e84ba3f8a1d4e6a9e7dc1d57d354f9ffa259a1b297137aa7fa692dc",
+          "quote": "已签字项目记录：陈禾在星舟1中协助林岚使用Python清洗12份表格；只负责缺失值检查，没有负责系统架构。",
+          "start": 0,
+          "end": 53,
+          "experience_id": "exp_zh_assist_1",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source text states: '陈禾在星舟1中协助林岚使用Python清洗12份表格；只负责缺失值检查，没有负责系统架构。' This matches the full claim exactly."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "6290a2ffb56e6fc02a8a04a7eb5ab7f919c32f169b25227ed21bb50d2037f651"
+  }
+}

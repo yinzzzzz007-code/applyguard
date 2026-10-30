@@ -1,5 +1,29 @@
 # Third-party notices
 
+## Hisn00w ASu-skills original great-resume resources (2026-10-30)
+
+`third_party/asu-skills/` retains six byte-identical files from
+[`Hisn00w/ASu-skills`](https://github.com/Hisn00w/ASu-skills), commit
+`d27fd2a3864c48472a5c8ed942410098ba9cd35f` (2026-10-28 01:14:31 UTC):
+the MIT LICENSE, `skills/great-resume/SKILL.md`, its two evidence references,
+`assets/career-claim-ledger-template.json`, and `scripts/validate_claim_ledger.py`.
+Copyright (c) 2026 Hisn00w. The full original [MIT license](third_party/asu-skills/LICENSE)
+and Git blob/SHA256 manifest in `third_party/asu-skills/UPSTREAM.json` are retained.
+
+ApplyGuard's `backend/services/asu_resume.py` injects the unchanged writing resources
+into its explicitly requested polish operation. It supplies application-specific
+scope and structured-output constraints; upstream status labels never grant
+ApplyGuard verification. Claim checking, approval, history, and interface remain
+ApplyGuard implementations. The ledger template/validator are retained reference
+tools, not replacements for claim-truth verification. No global plugin is installed.
+This is separate from the older Claycui828 arithmetic helper described below.
+
+AI Career Radar was rechecked on 2026-10-30: main is still
+`0ca459b3f6975d93a08cc5eea7adfca7e2a89b5c` (2026-09-28 04:03:17 UTC).
+The complete repository tree, README and package manifests contain no identified
+project license grant. No new source copying is performed; the existing API adapter
+remains in use pending a suitable license or explicit author permission.
+
 ## AI Career Radar API interoperability
 
 ApplyGuard's opportunity library and loopback HTTP adapter interoperate with [`Haoyu-Gu/ai-career-radar`](https://github.com/Haoyu-Gu/ai-career-radar), inspected at commit `0ca459b3f6975d93a08cc5eea7adfca7e2a89b5c`. Only its public `GET /api/jobs` and `GET /api/jobs/{id}` response shapes are used. No upstream source code, UI assets, configuration, personal profile, model scoring weights, or runtime database is redistributed. No license file was present in that inspected revision. See `docs/career-radar-integration.md` for the independently implemented integration and its limits.
@@ -31,3 +55,17 @@ Copyright (c) 2026 Claycui828. The MIT license text is in [third_party_licenses/
 - ALCE：https://github.com/princeton-nlp/ALCE 。参考引文支持度评测思想；没有运行官方基准。官方 MIT 文本作为来源记录保留。
 
 原有 ApplyGuard 源码与文件仍保留上游声明。本文件不改变其许可，也不代表对整套项目授予新的许可。其他传递依赖遵守各自随包许可；本地锁文件记录已安装版本。
+
+## Kinetic reel、Three.js 与本机托管字体（2026-10-30）
+
+新版通用新手引导复用 tuzhechen2005/opus-video-skills 的 kinetic-reel
+模板核心，提交 59744a69c7b916cfbe4c4ec84006b0c2f5e2fde1。
+原模板与 MIT 许可见 vendor/kinetic-reel/，适配生成脚本见
+scripts/build-kinetic-adapter.py 和 scripts/kinetic-score.mjs。
+原作者及 Three.js 的 MIT 声明保留在
+[前端许可](frontend/public/licenses/kinetic-reel-and-three-MIT.txt)。
+这部分不能归作 Gitvextor 独立原创。
+
+Anton、Archivo Black、Instrument Serif 字体本机托管，
+各自 OFL 许可保存在 frontend/public/assets/fonts/ 中。
+配乐由模板合成器适配生成，无外部音频采样；用户主动开启声音后播放。

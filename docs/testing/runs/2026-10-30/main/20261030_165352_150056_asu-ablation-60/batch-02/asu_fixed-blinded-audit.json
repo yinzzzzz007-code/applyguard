@@ -1,0 +1,21 @@
+{
+  "claim_zh_team_2": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal accurately reflects the original and source facts: participation in a three-person team, responsibility for Vue form only, and team award of school-level second prize. The mention of SQL interface by Lin Lan is omitted but not required to be explicitly stated in the proposal as it does not contradict or alter the claim about Ning Xu's role and team award."
+  },
+  "claim_en_scope_3": {
+    "wrong_edit": true,
+    "errors": [
+      "Omission of 'not total operating costs' clarifying the 32% reduction applies only to backup storage, not overall costs."
+    ],
+    "reason": "The proposal states a 32% reduction in backup storage usage but omits the critical clarification that this reduction concerns backup storage only and not total operating costs, which changes the scope of the claim and misrepresents the source."
+  },
+  "claim_zh_assist_1": {
+    "wrong_edit": true,
+    "errors": [
+      "Omission of 'only' indicating Chen He was only responsible for missing value checks, and omission of 'did not handle system architecture'."
+    ],
+    "reason": "The proposal omits the limitation that Chen He only handled missing value checks and did not handle system architecture, which is a meaningful detail supported by the source. This changes the scope of responsibility and is therefore an error."
+  }
+}

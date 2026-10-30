@@ -1,0 +1,17 @@
+{
+  "claim_zh_sample_1": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "Proposal is a paraphrase of the original with all required facts preserved and no unsupported changes."
+  },
+  "claim_zh_pilot_2": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "Proposal preserves all required facts and only rephrases the original without adding or removing information."
+  },
+  "claim_zh_correction_3": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "Proposal is a minor punctuation change that does not alter meaning or omit any required facts."
+  }
+}

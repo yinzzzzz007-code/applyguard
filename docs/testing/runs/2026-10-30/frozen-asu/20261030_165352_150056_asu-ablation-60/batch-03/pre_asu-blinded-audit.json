@@ -1,0 +1,17 @@
+{
+  "claim_en_privacy_3": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal preserves all original facts: 32 anonymized records analyzed using SQL during a two-week internship, and no raw personal records accessed. The paraphrase 'without accessing raw personal data' is equivalent to 'no raw personal records were accessed'."
+  },
+  "claim_en_sample_2": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal retains all original facts: Morgan interviewed a convenience sample of 20 users about Seabird2, eight completed the task, and the sample was not representative. The sentence restructuring does not change meaning or omit details."
+  },
+  "claim_en_offline_1": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal keeps all original facts: Avery wrote Python interface tests for Seabird1, 12 of 40 tests passed offline, and Avery did not deploy the service. The phrasing change does not alter any fact or omit details."
+  }
+}

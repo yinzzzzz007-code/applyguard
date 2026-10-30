@@ -1,0 +1,61 @@
+test_content_length_limits_without_sending_large_body (tests.test_resume_abnormal.ResumeAbnormalHTTPTests.test_content_length_limits_without_sending_large_body) ... ok
+test_fixed_seed_wrong_type_fuzz_120_cases (tests.test_resume_abnormal.ResumeAbnormalHTTPTests.test_fixed_seed_wrong_type_fuzz_120_cases) ... ok
+test_invalid_pdf_keeps_error_envelope_and_service_healthy (tests.test_resume_abnormal.ResumeAbnormalHTTPTests.test_invalid_pdf_keeps_error_envelope_and_service_healthy) ... ok
+test_json_contract_bad_utf8_and_root_types (tests.test_resume_abnormal.ResumeAbnormalHTTPTests.test_json_contract_bad_utf8_and_root_types) ... 
+  test_json_contract_bad_utf8_and_root_types (tests.test_resume_abnormal.ResumeAbnormalHTTPTests.test_json_contract_bad_utf8_and_root_types) (value=b'{') ... FAIL
+  test_json_contract_bad_utf8_and_root_types (tests.test_resume_abnormal.ResumeAbnormalHTTPTests.test_json_contract_bad_utf8_and_root_types) (value=b'\xff') ... FAIL
+test_repeat_and_concurrent_requests_do_not_cross_contaminate (tests.test_resume_abnormal.ResumeAbnormalHTTPTests.test_repeat_and_concurrent_requests_do_not_cross_contaminate) ... ok
+test_blank_page_alongside_text_is_allowed (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_blank_page_alongside_text_is_allowed) ... ok
+test_drawing_without_text_is_not_treated_as_blank (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_drawing_without_text_is_not_treated_as_blank) ... ok
+test_empty_model_response_preserves_rule_fields (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_empty_model_response_preserves_rule_fields) ... ok
+test_encoded_size_rejected_before_decoding (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_encoded_size_rejected_before_decoding) ... ok
+test_encrypted_pdf_returns_actionable_validation (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_encrypted_pdf_returns_actionable_validation) ... ok
+test_fake_corrupt_and_empty_pdf (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_fake_corrupt_and_empty_pdf) ... ok
+test_invalid_base64_not_silently_repaired (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_base64_not_silently_repaired) ... ok
+test_invalid_or_invented_model_payload_falls_back (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_or_invented_model_payload_falls_back) ... ok
+test_missing_and_wrong_type_payload (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_missing_and_wrong_type_payload) ... ok
+test_offline_mode_never_calls_model_with_instructions_in_text (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_offline_mode_never_calls_model_with_instructions_in_text) ... ok
+test_page_count_at_boundary_and_over (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_page_count_at_boundary_and_over) ... ok
+test_page_failure_cannot_return_partial_resume (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_page_failure_cannot_return_partial_resume) ... ok
+test_partial_model_response_cannot_drop_rule_projects (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_partial_model_response_cannot_drop_rule_projects) ... ok
+test_pdf_byte_size_checked_before_parsing (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_pdf_byte_size_checked_before_parsing) ... ok
+test_pdf_javascript_is_data_not_executed (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_pdf_javascript_is_data_not_executed) ... ok
+test_text_limit_never_silently_truncates (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_text_limit_never_silently_truncates) ... ok
+test_wrong_filename_extension_type_and_controls (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_wrong_filename_extension_type_and_controls) ... ok
+test_wrong_mode_types_are_validation_errors (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_wrong_mode_types_are_validation_errors) ... ok
+test_education_does_not_confuse_rank_with_major_or_invent_month (tests.test_resume_sections.ResumeSectionsTests.test_education_does_not_confuse_rank_with_major_or_invent_month) ... ok
+test_header_labels_are_not_mistaken_for_names (tests.test_resume_sections.ResumeSectionsTests.test_header_labels_are_not_mistaken_for_names) ... ok
+test_heading_words_in_description_do_not_cut_sections (tests.test_resume_sections.ResumeSectionsTests.test_heading_words_in_description_do_not_cut_sections) ... ok
+test_mixed_honors_are_not_headings_or_experience_paragraphs (tests.test_resume_sections.ResumeSectionsTests.test_mixed_honors_are_not_headings_or_experience_paragraphs) ... ok
+test_month_precision_and_multiple_education_records (tests.test_resume_sections.ResumeSectionsTests.test_month_precision_and_multiple_education_records) ... ok
+test_multiline_title_and_distinct_research_engineering_projects (tests.test_resume_sections.ResumeSectionsTests.test_multiline_title_and_distinct_research_engineering_projects) ... ok
+test_offline_pdf_pipeline_keeps_all_rows_without_model (tests.test_resume_sections.ResumeSectionsTests.test_offline_pdf_pipeline_keeps_all_rows_without_model) ... ok
+test_unlabelled_bilingual_header_and_missing_identity_fields (tests.test_resume_sections.ResumeSectionsTests.test_unlabelled_bilingual_header_and_missing_identity_fields) ... ok
+test_rule_extract_reads_contest_section (tests.test_api.ResumeExtractTests.test_rule_extract_reads_contest_section) ... ok
+test_rule_extract_reads_labeled_chinese_fields (tests.test_api.ResumeExtractTests.test_rule_extract_reads_labeled_chinese_fields) ... ok
+test_default_never_constructs_model_even_with_key (tests.test_workflow_repairs.ResumeModelConsentTests.test_default_never_constructs_model_even_with_key) ... ok
+test_explicit_dynamic_is_required_and_invalid_mode_rejected (tests.test_workflow_repairs.ResumeModelConsentTests.test_explicit_dynamic_is_required_and_invalid_mode_rejected) ... ok
+test_model_invented_identity_falls_back_to_local_source (tests.test_workflow_repairs.ResumeModelConsentTests.test_model_invented_identity_falls_back_to_local_source) ... ok
+
+======================================================================
+FAIL: test_json_contract_bad_utf8_and_root_types (tests.test_resume_abnormal.ResumeAbnormalHTTPTests.test_json_contract_bad_utf8_and_root_types) (value=b'{')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "[LOCAL_USER]\.codex\visualizations\2026\10\29\01a18641-01a9-7e31-85a7-f651b4b504af\applyguard-sag-app\tests\test_resume_abnormal.py", line 120, in test_json_contract_bad_utf8_and_root_types
+    status,result=self.request(value);self.assertEqual(status,422);self.assertEqual(result['error']['code'],'VALIDATION_ERROR')
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 422
+
+======================================================================
+FAIL: test_json_contract_bad_utf8_and_root_types (tests.test_resume_abnormal.ResumeAbnormalHTTPTests.test_json_contract_bad_utf8_and_root_types) (value=b'\xff')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "[LOCAL_USER]\.codex\visualizations\2026\10\29\01a18641-01a9-7e31-85a7-f651b4b504af\applyguard-sag-app\tests\test_resume_abnormal.py", line 120, in test_json_contract_bad_utf8_and_root_types
+    status,result=self.request(value);self.assertEqual(status,422);self.assertEqual(result['error']['code'],'VALIDATION_ERROR')
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 422
+
+----------------------------------------------------------------------
+Ran 36 tests in 1.400s
+
+FAILED (failures=2)

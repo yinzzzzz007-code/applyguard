@@ -1,0 +1,26 @@
+{
+  "proposals": [
+    {
+      "claim_id": "claim_en_points_3",
+      "text": "Riley evaluated Seabird3 offline, contributing to an accuracy increase from 80% to 84%, without training the model.",
+      "evidence_ids": [
+        "ev_en_points_3"
+      ]
+    },
+    {
+      "claim_id": "claim_en_points_2",
+      "text": "Morgan evaluated Seabird2 offline, contributing to an accuracy increase from 80% to 84%, without training the model.",
+      "evidence_ids": [
+        "ev_en_points_2"
+      ]
+    },
+    {
+      "claim_id": "claim_en_team_3",
+      "text": "Riley implemented the React form for Seabird3 in a three-person team that won a university-level second prize; Lee wrote the API.",
+      "evidence_ids": [
+        "ev_en_team_3"
+      ]
+    }
+  ],
+  "source": null
+}

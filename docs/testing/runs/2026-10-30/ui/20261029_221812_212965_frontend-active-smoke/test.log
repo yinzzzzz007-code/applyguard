@@ -1,0 +1,29 @@
+
+> applyguard-frontend@1.0.0 smoke
+> node scripts/smoke-mock.mjs && node --test scripts/copy-rules.test.mjs scripts/history.test.mjs scripts/materials.test.mjs scripts/jobs.test.mjs
+
+SMOKE_MOCK_PASSED
+✔ grounded copying binds final text, atomic mode and complete result (0.7876ms)
+✔ text history preserves wording but never stores verification credentials (5.3122ms)
+✔ verified claim is copyable, blocked and edited claims are not (0.2535ms)
+✔ blocked field cannot be copied, and confirmation is required for a normal field (0.2239ms)
+✔ unsupported manual claims remain uncopyable even after confirmation (0.2088ms)
+✔ draft placeholders and pending revalidation never unlock copying (0.1569ms)
+✔ legacy drafts with missing basic fields remain editable (3.1857ms)
+✔ local history stores only a simulation summary and can remove it (5.2073ms)
+✔ imports JSON arrays/envelopes and JSONL, and rejects partial/oversized input (2.9578ms)
+✔ reference, closed and archived opportunities cannot prepare applications (0.2769ms)
+✔ application summary retains opportunity version without saving JD or evidence (5.8711ms)
+✔ recognition saved does not imply human review or an experience link (0.6214ms)
+✔ failed or stale content does not retain a reviewed display (0.1051ms)
+✔ a placeholder OCR span still needs manual inspection (0.0735ms)
+✔ duplicate basenames remain distinguishable by their folders (0.1015ms)
+✔ text follows page and line order without changing the source array (0.751ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 128.4875

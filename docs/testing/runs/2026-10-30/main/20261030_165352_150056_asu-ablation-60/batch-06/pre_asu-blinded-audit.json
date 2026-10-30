@@ -1,0 +1,23 @@
+{
+  "claim_en_points_3": {
+    "wrong_edit": true,
+    "errors": [
+      "Added implication that Riley contributed to the accuracy increase, which is unsupported; original states Riley evaluated but did not train the model, so contribution to increase is not claimed."
+    ],
+    "reason": "The proposal changes 'Riley evaluated Seabird3 offline: accuracy increased from 80% to 84%' to 'Riley evaluated Seabird3 offline, contributing to an accuracy increase from 80% to 84%,' which implies Riley contributed to the increase. The source only supports that Riley evaluated and did not train the model; it does not support that Riley contributed to the increase. This is an unsupported addition."
+  },
+  "claim_en_points_2": {
+    "wrong_edit": true,
+    "errors": [
+      "Added implication that Morgan contributed to the accuracy increase, which is unsupported; original states Morgan evaluated but did not train the model, so contribution to increase is not claimed."
+    ],
+    "reason": "The proposal changes 'Morgan evaluated Seabird2 offline: accuracy increased from 80% to 84%' to 'Morgan evaluated Seabird2 offline, contributing to an accuracy increase from 80% to 84%,' which implies Morgan contributed to the increase. The source only supports that Morgan evaluated and did not train the model; it does not support that Morgan contributed to the increase. This is an unsupported addition."
+  },
+  "claim_en_team_3": {
+    "wrong_edit": true,
+    "errors": [
+      "Removed 'only' before 'the React form', which changes the meaning by implying Riley may have implemented more than just the React form; original states Riley implemented only the React form."
+    ],
+    "reason": "The proposal omits the word 'only' from 'Riley implemented only the React form for Seabird3,' which is a meaningful detail supported by the source. Removing 'only' changes the scope of Riley's implementation and is therefore an incorrect edit."
+  }
+}

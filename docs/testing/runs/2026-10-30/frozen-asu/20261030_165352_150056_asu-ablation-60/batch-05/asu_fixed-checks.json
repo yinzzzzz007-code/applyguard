@@ -1,0 +1,227 @@
+{
+  "claim_zh_pending_1": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "陈禾为星舟1完成SQL成本测算。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_45a7b22d9b1fb65a544fd2e6080fc784",
+            "evidence_id": "ev_zh_pending_1",
+            "source_sha256": "c6ccf4cdc0dd38bdde7a09a88af70bddbb5fee31c888c5de86bc8bee27466a95",
+            "quote": "陈禾为星舟1完成SQL成本测算",
+            "start": 8,
+            "end": 23,
+            "experience_id": "exp_zh_pending_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: '陈禾为星舟1完成SQL成本测算'."
+      },
+      {
+        "atom_id": "a2",
+        "text": "预计每月节约12万元。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_45a7b22d9b1fb65a544fd2e6080fc784",
+            "evidence_id": "ev_zh_pending_1",
+            "source_sha256": "c6ccf4cdc0dd38bdde7a09a88af70bddbb5fee31c888c5de86bc8bee27466a95",
+            "quote": "预计每月节约12万元",
+            "start": 24,
+            "end": 34,
+            "experience_id": "exp_zh_pending_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: '预计每月节约12万元'."
+      },
+      {
+        "atom_id": "a3",
+        "text": "方案尚未实施。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_45a7b22d9b1fb65a544fd2e6080fc784",
+            "evidence_id": "ev_zh_pending_1",
+            "source_sha256": "c6ccf4cdc0dd38bdde7a09a88af70bddbb5fee31c888c5de86bc8bee27466a95",
+            "quote": "方案尚未实施",
+            "start": 35,
+            "end": 41,
+            "experience_id": "exp_zh_pending_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: '方案尚未实施'."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "INSUFFICIENT",
+      "citations": [],
+      "reason": "The source explicitly states: '陈禾为星舟1完成SQL成本测算，预计每月节约12万元，方案尚未实施；林岚是负责人.' This matches the full claim exactly."
+    },
+    "complete": true,
+    "relation": "INSUFFICIENT",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "b174e63d40321a00f6ad3557c77affcfa8636346b6c66c3b4bd02e11a2ffac2c"
+  },
+  "claim_zh_assist_2": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "许宁在星舟2中协助林岚使用Python清洗20份表格。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_c12f935d3c4d49af1277fc85c7a114f7",
+            "evidence_id": "ev_zh_assist_2",
+            "source_sha256": "49c0d302fec679fff2ea4dc5cbe9fd4d5605b7b44fb3bf1e1c356f72c2953749",
+            "quote": "许宁在星舟2中协助林岚使用Python清洗20份表格",
+            "start": 8,
+            "end": 34,
+            "experience_id": "exp_zh_assist_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: '许宁在星舟2中协助林岚使用Python清洗20份表格'."
+      },
+      {
+        "atom_id": "a2",
+        "text": "许宁负责缺失值检查。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_c12f935d3c4d49af1277fc85c7a114f7",
+            "evidence_id": "ev_zh_assist_2",
+            "source_sha256": "49c0d302fec679fff2ea4dc5cbe9fd4d5605b7b44fb3bf1e1c356f72c2953749",
+            "quote": "只负责缺失值检查",
+            "start": 35,
+            "end": 43,
+            "experience_id": "exp_zh_assist_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: '只负责缺失值检查'."
+      },
+      {
+        "atom_id": "a3",
+        "text": "许宁未参与系统架构设计。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_c12f935d3c4d49af1277fc85c7a114f7",
+            "evidence_id": "ev_zh_assist_2",
+            "source_sha256": "49c0d302fec679fff2ea4dc5cbe9fd4d5605b7b44fb3bf1e1c356f72c2953749",
+            "quote": "没有负责系统架构",
+            "start": 44,
+            "end": 52,
+            "experience_id": "exp_zh_assist_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: '没有负责系统架构'."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "INSUFFICIENT",
+      "citations": [],
+      "reason": "The source states: '许宁在星舟2中协助林岚使用Python清洗20份表格；只负责缺失值检查，没有负责系统架构.' This supports all parts of the claim."
+    },
+    "complete": true,
+    "relation": "INSUFFICIENT",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "c6e83de3dfcf75c6f6f317572408164bcc6ab1980c7fa30fa05daacd07e6c669"
+  },
+  "claim_zh_prototype_1": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "陈禾为星舟1编写Go导入器原型。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_8942f0db25b99ea4e0f1ba7f5d2ac1aa",
+            "evidence_id": "ev_zh_prototype_1",
+            "source_sha256": "d[REDACTED_PHONE]b8b92aaf9c34f13c05ffc7f6f3665086c033720c27fce97b4699",
+            "quote": "陈禾为星舟1编写Go导入器原型",
+            "start": 8,
+            "end": 23,
+            "experience_id": "exp_zh_prototype_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: '陈禾为星舟1编写Go导入器原型'."
+      },
+      {
+        "atom_id": "a2",
+        "text": "在本机相同负载下将中位耗时从200毫秒降至140毫秒。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_8942f0db25b99ea4e0f1ba7f5d2ac1aa",
+            "evidence_id": "ev_zh_prototype_1",
+            "source_sha256": "d[REDACTED_PHONE]b8b92aaf9c34f13c05ffc7f6f3665086c033720c27fce97b4699",
+            "quote": "在本机相同负载下把中位耗时从200毫秒降至140毫秒",
+            "start": 24,
+            "end": 50,
+            "experience_id": "exp_zh_prototype_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: '在本机相同负载下把中位耗时从200毫秒降至140毫秒'."
+      },
+      {
+        "atom_id": "a3",
+        "text": "该Go导入器原型尚未上线。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_8942f0db25b99ea4e0f1ba7f5d2ac1aa",
+            "evidence_id": "ev_zh_prototype_1",
+            "source_sha256": "d[REDACTED_PHONE]b8b92aaf9c34f13c05ffc7f6f3665086c033720c27fce97b4699",
+            "quote": "尚未上线",
+            "start": 51,
+            "end": 55,
+            "experience_id": "exp_zh_prototype_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: '尚未上线'."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "INSUFFICIENT",
+      "citations": [],
+      "reason": "The source states: '陈禾为星舟1编写Go导入器原型，在本机相同负载下把中位耗时从200毫秒降至140毫秒，尚未上线.' This matches the full claim exactly."
+    },
+    "complete": true,
+    "relation": "INSUFFICIENT",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "218baea12cc1346d2ab94184c875a0be3cf08a07b1a79d3d3189300793338a0f"
+  }
+}

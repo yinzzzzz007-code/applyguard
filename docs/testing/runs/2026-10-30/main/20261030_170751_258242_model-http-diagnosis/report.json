@@ -1,0 +1,19 @@
+{
+  "started_at": "2026-10-30T17:07:51.258242+08:00",
+  "model": "gpt-4.1-mini",
+  "status": 200,
+  "usage": {
+    "prompt_tokens": 15,
+    "completion_tokens": 5,
+    "total_tokens": 20,
+    "completion_tokens_details": {
+      "audio_tokens": 0,
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cached_tokens": 0
+    }
+  },
+  "finished_at": "2026-10-30T17:08:28.825354+08:00"
+}

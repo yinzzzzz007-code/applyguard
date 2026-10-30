@@ -1,0 +1,22 @@
+Submitted evidence from ApplyGuard MCP sources about Atlas project role, technology, and outcomes:
+
+1. Quote: "Atlas project: Lin used SQL to write evaluation queries. Zhou was the project lead. Lin did not train the model." (version 4d3e8dcf6a7bed5870b5c60bc029ce2f55d2c86274e2da11610f7c809f319267)
+   Interpretation: Lin's role was to write SQL evaluation queries; Zhou was the project lead; Lin did not train the model.
+   Missing evidence: direct confirmation of Lin's leadership role, confirmation about training the model.
+
+2. Quote: "Atlas evaluation: 84 of 100 examples were correct; this was offline, not production." (version 4d3e8dcf6a7bed5870b5c60bc029ce2f55d2c86274e2da11610f7c809f319267)
+   Interpretation: The evaluation accuracy was 84% on offline examples, not in production.
+   Missing evidence: production deployment results.
+
+3. Quote: "Atlas correction: old slides claiming 40% improvement are withdrawn. The measured accuracy was 84%." (version 558fe9b33d6403c19207fdbe8b2cfc75bce0c86f8a01298d33b9863fc1e86cb2)
+   Interpretation: Initial claims of 40% improvement were withdrawn; confirmed accuracy was 84%.
+   Missing evidence: details on the original claim context and full evaluation methodology.
+
+No evidence supports that Lin led the project or trained the model. The evaluation metrics and corrections have been documented as above.
+
+Processing request of type ListToolsRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest

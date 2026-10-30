@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-30T05:58:08.116Z",
+  "timezone": "UTC (Asia/Shanghai +08)",
+  "base": "http://127.0.0.1:8897",
+  "channel": "chrome",
+  "status": "PASS",
+  "checks": [
+    "entry",
+    "consent-required",
+    "create",
+    "waiting-not-fake-connected",
+    "revoke-during-pending-refresh",
+    "stale-response-ignored",
+    "revoked-token-denied",
+    "route-leave-revocation",
+    "mobile-no-overflow"
+  ],
+  "errors": []
+}

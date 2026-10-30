@@ -1,0 +1,17 @@
+{
+  "claim_zh_sample_1": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal accurately preserves all original facts: Chen He conducted usability interviews for Xingzhou 1 with a convenience sample of 12 people, 8 completed the operation, and results do not represent the overall user population. The addition of '项目' (project) is a neutral clarification and does not change meaning."
+  },
+  "claim_zh_pilot_2": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal retains all original facts: Xu Ning made an SQL dashboard for Xingzhou 2, collected 20 feedback items during the pilot in two stores, and the project was not promoted company-wide. The wording changes do not alter any fact."
+  },
+  "claim_zh_correction_3": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal preserves all original facts: Tang Yao wrote test cases for Xingzhou 3, won a school-level second prize in May 2026, and the earlier first prize record has been corrected. Adding '项目' (project) is a neutral clarification."
+  }
+}
