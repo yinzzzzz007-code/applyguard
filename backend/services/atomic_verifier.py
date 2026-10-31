@@ -61,6 +61,7 @@ class AtomicVerifier:
         from backend.services.asu_resume import proposal_policy,language_family,proposal_violations
         upstream,self.polish_source=proposal_policy(claims,hits,jd)
         from backend.services.edit_invariants import qualifier_inventory
+        from backend.services.fact_lock import source_bound_ledger, locked_edit_findings
         edit_policy='''Before rewriting, make a private checklist of each source-supported qualifier.
 Keep the same individual role, estimated versus actual outcomes, not-implemented status,
 offline/pilot/prototype scope, non-participation, time and denominators attached to the right action.
@@ -68,11 +69,14 @@ The protected_qualifiers field is a reminder, not evidence; original sources sti
 When shortening, remove only redundant wording, not these constraints. Prefer retaining a whole
 clause if its qualifier cannot be expressed safely. A single unchanged bullet is acceptable.
 The same named metric's explicit endpoints (80% to 84%) can convey +4 percentage points without
-repeating it. Never rewrite that as +4% relative improvement or change the metric/scope.'''
+repeating it. Never rewrite that as +4% relative improvement or change the metric/scope.
+When locked_facts are present, preserve each fact's subject, action, technology, quantity and
+qualifiers. Use the source quote as a check, not as permission to transfer a fact to someone else.'''
         prompt=POLISH_PROMPT+'\n\n'+upstream+'\n\n'+edit_policy
         self.polish_source['edit_policy_sha256']=fingerprint(edit_policy)
         inputs = [{'id':c['claim_id'], 'draft':c['text'], 'draft_language':language_family(c['text']), 'context':contexts[c['claim_id']],
             'sources':hits.get(c['claim_id'], []),
+            'locked_facts':source_bound_ledger(c['text'],(original_checks or {}).get(c['claim_id']),hits.get(c['claim_id'],[])),
             'protected_qualifiers':qualifier_inventory('\n'.join(a['text'] for a in
                 (original_checks or {}).get(c['claim_id'],{}).get('atoms',[]) if a['relation']=='SUPPORTED'))} for c in claims]
         if callable(getattr(type(self.model),'complete_structured',None)):
@@ -88,6 +92,7 @@ repeating it. Never rewrite that as +4% relative improvement or change the metri
             if not isinstance(text, str) or not 0 < len(text.strip()) <= 420:
                 raise GroundingUnavailable('润色输出为空或超过420字，未采用该输出。')
             violations=proposal_violations(claim['text'],text,hits.get(claim['claim_id'],[]))
+            violations+=locked_edit_findings(claim['text'],text,(original_checks or {}).get(claim['claim_id']))
             if violations:self.polish_violations[claim['claim_id']]=violations
             output.append({**claim, 'text':text.strip()})
         return output
