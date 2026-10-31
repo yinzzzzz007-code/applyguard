@@ -38,7 +38,10 @@ def causal_escalation(original,proposal,sources=()):
     in-scope source statement can justify it; keyword overlap alone cannot.
     """
     observation=r'评测|测得|测量|\bevaluat(?:ed|ing|ion)\b|\bmeasur(?:ed|ing|ement)\b'
-    causal=r'\bcontribut(?:ed|ing)\s+to\b|\bachiev(?:ed|ing|es)\b|\b(?:drove|driving)\b|推动|使得|带来'
+    causal=(r'\bcontribut(?:ed|ing)\s+to\b|\bachiev(?:ed|ing|es)\b|\b(?:drove|driving)\b'
+            r'|\bdeliver(?:ed|ing|s)?\s+(?:a\s+)?(?:\d+(?:\.\d+)?\s*%\s+)?'
+            r'(?:[A-Za-z-]+\s+){0,3}(?:reduction|improvement|increase|gain)\b'
+            r'|推动|使得|带来')
     if (re.search(observation,original,re.I) and re.search(causal,proposal,re.I)
         and not re.search(causal,original,re.I) and not any(proposal.strip() in s.get('text','') for s in sources)):
         return ['建议将测量/评测改为促成成果，新增因果或个人贡献归属，须补证据。']

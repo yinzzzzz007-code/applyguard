@@ -104,10 +104,11 @@ def main():
                 "proposed_resume_text": row["proposal"],
                 "reviewer_label": None, "reason": None, "reviewer": None, "reviewed_at": None,
             })
-    worksheet.write_text(json.dumps({
-        "created_at": now.isoformat(), "instructions": "Judge proposal against source and original. "
-        "Use SAFE, WRONG or AMBIGUOUS. Blind queue: prior labels and automated decisions omitted.",
-        "records": queue}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if not worksheet.exists():
+        worksheet.write_text(json.dumps({
+            "created_at": now.isoformat(), "instructions": "Judge proposal against source and original. "
+            "Use SAFE, WRONG or AMBIGUOUS. Blind queue: prior labels and automated decisions omitted.",
+            "records": queue}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"report": str(out), "counts": report["counts"]}, ensure_ascii=True))
 
 

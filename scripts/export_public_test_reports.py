@@ -131,13 +131,18 @@ def export(sources: list[tuple[str, Path]], destination: Path) -> dict:
     (destination / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
+    archive_date = next((part for part in reversed(destination.parts)
+                         if re.fullmatch(r"\d{4}-\d{2}-\d{2}", part)),
+                        datetime.now(ZoneInfo("Asia/Shanghai")).date().isoformat())
     readme = [
-        "# 2026-10-30 测试报告归档", "",
+        f"# {archive_date} 测试报告归档", "",
         "本目录是逐次测试记录的脱敏公开副本，原报告日期、失败、重试与中断状态均保留。",
         "导出不是重跑。模型效果、单元测试、构建与 UI 验收应分别阅读，不合并分母。",
         "密钥、授权令牌、私人联系方式和本机路径已脱敏；Harness 配置、会话档案和"
         "未复核截图不上传。文件原始/公开 SHA256 与排除类型见 [manifest.json](manifest.json)。",
-        "", "main：功能实验版；ui：界面开发目录的历史回归；frozen-asu：冻结实验续跑。",
+        "", ("main：功能实验版；ui：界面开发目录的历史回归；frozen-asu：冻结实验续跑。"
+             if {label for label, _ in sources} <= {"main", "ui", "frozen-asu"} else
+             "各目录名对应原始测试轮次；按原日期与状态阅读，勿把重复回归当成独立样本。"),
         "", "| 报告 | 开始时间（原记录） | 状态 |", "| --- | --- | --- |",
     ]
     for path, when, status in runs:

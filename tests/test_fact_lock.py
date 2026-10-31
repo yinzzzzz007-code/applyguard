@@ -54,12 +54,37 @@ class FactLockTests(unittest.TestCase):
         changed = "Redis 缓存由其他人负责；周同学负责 Vue 表单。"
         self.assertTrue(any("归属" in item for item in locked_edit_findings(old, changed, SUPPORTED)))
         self.assertTrue(locked_edit_findings("林岚是项目负责人。", "项目负责人未明确。", SUPPORTED))
+        self.assertEqual(locked_edit_findings(
+            "李宁是项目负责人；赵明仅实现 React 页面。",
+            "项目由李宁负责；赵明仅实现 React 页面。", SUPPORTED), [])
+        self.assertEqual(locked_edit_findings(
+            "Avery assisted Lee with Docker tests.",
+            "Avery helped Lee with Docker tests.", SUPPORTED), [])
+        self.assertEqual(locked_edit_findings(
+            "陈禾实现 TypeScript 前端，未负责 Java 服务。",
+            "陈禾实现 TypeScript 前端，没有负责 Java 服务。", SUPPORTED), [])
+        self.assertTrue(locked_edit_findings(
+            "陈禾实现 TypeScript 前端，未负责 Java 服务。",
+            "陈禾实现 TypeScript 前端，并负责 Java 服务。", SUPPORTED))
 
     def test_redundant_percentage_point_can_be_omitted(self):
         old = "准确率从80%提升至84%，提高4个百分点。"
         new = "准确率从80%提升至84%。"
         self.assertEqual(locked_edit_findings(old, new, SUPPORTED), [])
         self.assertTrue(locked_edit_findings(old, "准确率从80%提升至85%。", SUPPORTED))
+        english = "Accuracy rose from 80% to 84%, an increase of 4 percentage points."
+        self.assertTrue(locked_edit_findings(
+            english, "Accuracy rose from 80% to 84%, a 4% relative increase.", SUPPORTED))
+        self.assertEqual(locked_edit_findings(
+            "The job took 200 ms.", "The job took 200 milliseconds.", SUPPORTED), [])
+
+    def test_measurement_does_not_authorize_delivered_business_result(self):
+        from backend.services.asu_resume import proposal_violations
+        old = "Lina measured a 10% latency reduction in a local trial."
+        bad = "Lina delivered a 10% latency reduction in production."
+        good = "In a local trial, Lina measured latency 10% lower."
+        self.assertTrue(proposal_violations(old, bad))
+        self.assertFalse(proposal_violations(old, good))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,259 @@
+{
+  "date": "2026-10-31T12:19:07.769740+08:00",
+  "status": "COMPLETE_RULE_ONLY",
+  "split": "confirmation",
+  "dataset_sha256": "1e7d5ff79747537dcd73d6279888e671d756cf1a20f07ddad131b64e109de017",
+  "baseline": "deterministic lost_qualifiers + proposal_violations",
+  "candidate": "baseline + locked_edit_findings",
+  "counts": {
+    "SAFE_cases": 10,
+    "WRONG_cases": 10,
+    "baseline_SAFE_pass": 10,
+    "baseline_WRONG_block": 4,
+    "baseline_WRONG_pass": 6,
+    "cases": 20,
+    "new_SAFE_block": 1,
+    "new_SAFE_pass": 9,
+    "new_WRONG_block": 9,
+    "new_WRONG_pass": 1
+  },
+  "records": [
+    {
+      "id": "confirm-01-safe",
+      "category": "scope",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "be1fff6613c7334c0171225b04e5fd20d9d7b692c914436a579c41ca73227c92"
+    },
+    {
+      "id": "confirm-01-wrong",
+      "category": "scope",
+      "expected": "WRONG",
+      "baseline_block": true,
+      "new_block": true,
+      "baseline_findings": [
+        "仅参与"
+      ],
+      "new_findings": [
+        "遗漏已核验限定条件：仅参与"
+      ],
+      "text_sha256": "d4b42d11d8d6cd4d1b1d5fce39264a6c4338c9b1940da505f5d2cc08917ad44e"
+    },
+    {
+      "id": "confirm-02-safe",
+      "category": "denominator",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "431aec518cc1aae3ce6a757d68ece47b963481d1d3c5c4f92e942badd8a9b8e8"
+    },
+    {
+      "id": "confirm-02-wrong",
+      "category": "denominator",
+      "expected": "WRONG",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "遗漏或改变原有数字／单位：32"
+      ],
+      "text_sha256": "9afb4f41048df0b61da80d29e1e2a8b99979500c72b5ba88ae4c4574096619bc"
+    },
+    {
+      "id": "confirm-03-safe",
+      "category": "planned",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "59d734f842d139aea9abf5f4888b13285b49d0e6f6e7b3b08b7ae3f50caea209"
+    },
+    {
+      "id": "confirm-03-wrong",
+      "category": "planned",
+      "expected": "WRONG",
+      "baseline_block": true,
+      "new_block": true,
+      "baseline_findings": [
+        "not deployed"
+      ],
+      "new_findings": [
+        "遗漏已核验限定条件：not deployed"
+      ],
+      "text_sha256": "4eab83901cdf0b2a55a76c169279c588240abd1a8893a486917ab5e1b563354b"
+    },
+    {
+      "id": "confirm-04-safe",
+      "category": "unit_wording",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "c28d7714f9b0a663c83a6c3aa85c536f8b9e00af4871d1bd2e96ce323422fa2d"
+    },
+    {
+      "id": "confirm-04-wrong",
+      "category": "unit_wording",
+      "expected": "WRONG",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "遗漏或改变原有数字／单位：200ms"
+      ],
+      "text_sha256": "97041c0a02b93b62d76f0780a511c8c2c2c8c391318480508a7da336247cb95c"
+    },
+    {
+      "id": "confirm-05-safe",
+      "category": "owner",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "遗漏原文明确的负责人：李宁"
+      ],
+      "text_sha256": "ea25e0218f047c83293c92f385d25fd3b3cb52313ace66e0a52b593c0cf588f5"
+    },
+    {
+      "id": "confirm-05-wrong",
+      "category": "owner",
+      "expected": "WRONG",
+      "baseline_block": true,
+      "new_block": true,
+      "baseline_findings": [
+        "仅实现"
+      ],
+      "new_findings": [
+        "遗漏已核验限定条件：仅实现",
+        "改变人物与技术的归属：赵明仅 / react",
+        "遗漏原文明确的负责人：李宁"
+      ],
+      "text_sha256": "8628b321038ae6623c0ec879add9cd00efba0e6ed020b69ccc05f8570f557367"
+    },
+    {
+      "id": "confirm-06-safe",
+      "category": "causal_credit",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "7f6125fe27b7612886147602d23122aa50f52cc9a9cbee5cac2dbb85997ec37c"
+    },
+    {
+      "id": "confirm-06-wrong",
+      "category": "causal_credit",
+      "expected": "WRONG",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "1febc1ade2638510269be19ce81d0e8f3d4b1052467ca4a69535616b0994f41c"
+    },
+    {
+      "id": "confirm-07-safe",
+      "category": "unlisted_technology",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "e5505516f8c1e146ae3f1fbcb16be85af939574b489f960d4df1f904a5091516"
+    },
+    {
+      "id": "confirm-07-wrong",
+      "category": "unlisted_technology",
+      "expected": "WRONG",
+      "baseline_block": true,
+      "new_block": true,
+      "baseline_findings": [
+        "did not deploy"
+      ],
+      "new_findings": [
+        "遗漏已核验限定条件：did not deploy"
+      ],
+      "text_sha256": "0cd1c6356cadc185f0436de8b00ebf20738ece14948e7c5282613441d17f2937"
+    },
+    {
+      "id": "confirm-08-safe",
+      "category": "english_attribution",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "cf95ca9180fbf186df183f028767ac5f173e27984cadf1949cdab4c5faff91d6"
+    },
+    {
+      "id": "confirm-08-wrong",
+      "category": "english_attribution",
+      "expected": "WRONG",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "改变人物与技术的归属：ben / sql"
+      ],
+      "text_sha256": "9ae951f5c90f130fca6098205c86ce6be32a9d3036d61d76b6977ceeb09ea74e"
+    },
+    {
+      "id": "confirm-09-safe",
+      "category": "pilot",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "e06092e01eba1b4eb2e46efa3321ff05a2cf533e624575ffaa12616069cb7bb5"
+    },
+    {
+      "id": "confirm-09-wrong",
+      "category": "pilot",
+      "expected": "WRONG",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "遗漏或改变原有数字／单位：2"
+      ],
+      "text_sha256": "2c04aba511340030d7e7b1adcb7bafdae1a76b19267cc1d0e25292bf1df68760"
+    },
+    {
+      "id": "confirm-10-safe",
+      "category": "percentage_points",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "1d37c8d2e422664a27e4cf5f3988abc1f311cca4cc401ac684c3111c078853f9"
+    },
+    {
+      "id": "confirm-10-wrong",
+      "category": "percentage_points",
+      "expected": "WRONG",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "遗漏或改变原有数字／单位：3个百分点"
+      ],
+      "text_sha256": "b139b5f02cc24a66470582e1f52fa27ae76f5f58293bf6da1243c8b02e61d8a8"
+    }
+  ],
+  "limits": [
+    "Fictional author-labeled text, not independent human annotation.",
+    "Pairs were manually constructed; they are not model outputs.",
+    "Original source was stipulated by the fixture, not verified by SAG.",
+    "No LLM atomic judge or preservation judge was run on new cases.",
+    "Rates apply only to this rule-only challenge, not the full app."
+  ]
+}

@@ -17,6 +17,7 @@ ApplyGuard 是在本机运行的求职申请辅助原型：整理个人经历与
 - [ASu 原版简历提升复用、雷达许可核实与测试（2026-10-30）](docs/reuse-asu-radar-2026-10-30.md)
 - [ASu 接入前后错改对照、限定语与误拦修复（2026-10-30；余额不足，完整实验待续）](docs/testing-report-2026-10-30-asu-edits.md)
 - [事实锁定与局部润色实验报告（2026-10-31）](docs/testing-report-2026-10-31-fact-lock.md)
+- [事实锁扩展测试：新样本、误拦修复与剩余限制（2026-10-31）](docs/testing-report-2026-10-31-fact-lock-challenge.md)
 - [SAG 启动与复现](docs/sag-grounding.md) / [真实模型实验结果与限制](docs/sag-v2-results.md)
 - [提交作者与 GitHub 贡献归属](docs/contribution-attribution.md)
 
