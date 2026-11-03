@@ -3,7 +3,7 @@ import copy,json,unittest
 from unittest.mock import patch
 from backend.services.atomic_verifier import AtomicVerifier
 from backend.services.structured_verifier import missing_numeric_qualifiers
-from backend.services.grounded_workflow import GroundingService,collect_sources
+from backend.services.grounded_workflow import GroundingService,collect_sources,high_risk_edit
 from backend.services.sag_grounding import SAGRetriever,evidence_snapshot,GroundingUnavailable
 from tests.test_grounding import AllSources,experience,CLAIM,TEXT
 
@@ -77,5 +77,28 @@ class GroundingV2Tests(unittest.TestCase):
         self.assertNotEqual(SAGRetriever.cache_key(q,'vector'),SAGRetriever.cache_key({**q,'source_ids':['b']},'vector'))
         s,_,_=collect_sources([experience()],'cand_test');changed=copy.deepcopy(s);changed[0]['version']='v2'
         self.assertNotEqual(evidence_snapshot(s),evidence_snapshot(changed))
+    def test_high_risk_edit_routes_to_strong_judge_and_cannot_override_primary(self):
+        proposal='Alex led Python interface tests for Atlas.'
+        self.assertTrue(high_risk_edit(TEXT,proposal))
+        self.assertTrue(high_risk_edit(TEXT,TEXT.replace('Alex','Morgan')))
+        self.assertFalse(high_risk_edit(TEXT,TEXT.replace('Atlas.','Atlas!')))
+        with patch.dict('os.environ',{'APPLYGUARD_STRONG_AI_MODEL':'strong-test'}), patch(
+                'backend.services.grounded_workflow.HttpModelClient',return_value=Model(fullbad=True)) as constructor:
+            claims,checks,report=GroundingService(retriever=AllSources(),model=Model(proposal=proposal)).run(
+                [copy.deepcopy(CLAIM)],[experience()],'cand_test','sag_atomic',polish=True)
+        constructor.assert_called_once()
+        self.assertEqual(claims[0]['text'],TEXT)
+        self.assertTrue(report['results'][CLAIM['claim_id']]['proposal_rejected'])
+        self.assertEqual(report['results'][CLAIM['claim_id']]['risk_escalation']['relation'],'CONTRADICTED')
+        self.assertEqual(checks[0]['state'],'VERIFIED')
+    def test_strong_judge_failure_keeps_original(self):
+        proposal='Alex led Python interface tests for Atlas.'
+        with patch.dict('os.environ',{'APPLYGUARD_STRONG_AI_MODEL':'strong-test'}), patch(
+                'backend.services.grounded_workflow.HttpModelClient',side_effect=OSError('unavailable')):
+            claims,_,report=GroundingService(retriever=AllSources(),model=Model(proposal=proposal)).run(
+                [copy.deepcopy(CLAIM)],[experience()],'cand_test','sag_atomic',polish=True)
+        self.assertEqual(claims[0]['text'],TEXT)
+        self.assertTrue(report['results'][CLAIM['claim_id']]['proposal_rejected'])
+        self.assertIn('error',report['results'][CLAIM['claim_id']]['risk_escalation'])
 
 if __name__=='__main__':unittest.main()

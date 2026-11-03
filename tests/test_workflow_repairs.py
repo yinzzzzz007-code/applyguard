@@ -23,7 +23,10 @@ JD='Backend Developer requires Python HTTP API and automated testing.'
 class EvidenceRepairTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory()
-        self.env=patch.dict(os.environ,{'APPLYGUARD_EVIDENCE_DIR':self.tmp.name,'APPLYGUARD_LOCAL_DIR':self.tmp.name})
+        # This suite isolates the legacy offline matcher; SAG-default behavior
+        # is covered by the grounding policy tests.
+        self.env=patch.dict(os.environ,{'APPLYGUARD_EVIDENCE_DIR':self.tmp.name,
+            'APPLYGUARD_LOCAL_DIR':self.tmp.name,'APPLYGUARD_GROUNDING_MODE':'off'})
         self.env.start()
         self.ws=ew.create_workspace('Fictional regression')
         self.file=self.upload(TEXT)
