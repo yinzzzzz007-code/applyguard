@@ -273,7 +273,7 @@ export function JobRadarPage() {
         {detailTab === 'analysis' && freshAnalysis && analysis && <section className="radar-analysis" aria-label="证据缺口结果">
           <div className="coverage-heading"><div><span>有已核验证据支持</span><strong>{analysis.supported}<small> / {analysis.total} 条要求</small></strong></div><Link to="/evidence" className="btn secondary">补充证据<Icon name="arrow" /></Link></div><p className="muted">{analysis.notice}</p>
           {!analysis.has_resume && <p className="callout warn">尚未提供有效经历，请先 <Link to="/">导入简历</Link> 或完善经历库。这里不会使用演示种子替代你的经历。</p>}
-          {!analysis.total && <p className="callout warn">规则未识别出要求，请人工检查完整 JD；这不表示没有要求。</p>}
+          {!analysis.total && <p className="callout warn">{analysis.excluded ? '任职要求与加分项中没有可匹配条目。职位描述不参与证据匹配。' : '规则未识别出要求，请人工检查完整 JD；这不表示没有要求。'}</p>}
           <div className="scope-switch" aria-label="预检结果筛选">{[['all','全部'],['missing','待补证'],['supported','已支持']].map(([id,label]) => <button type="button" key={id} aria-pressed={coverageFilter === id} onClick={() => setCoverageFilter(id)}>{label}</button>)}</div>
           {!visibleRequirements.length && <p className="radar-inline-empty">此分类下没有要求。可切换到“全部”查看预检结果。</p>}
           {visibleRequirements.map((req) => <div className="item-block" key={req.requirement_id}>

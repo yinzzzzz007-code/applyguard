@@ -39,7 +39,7 @@ export function SAGPolishPanel() {
   return <div className="sag-panel" aria-label="SAG润色与事实核验">
     <div className="sag-panel-heading"><Icon name="spark" /><h3>有依据的润色</h3></div>
     <p>检索相关原件，优化表达；逐项检查新增、夸大或错配的事实。</p>
-    <p className="muted">默认使用 SAG＋原子事实核验；缺少配置或证据时不会自动放行。</p>
+    <p className="muted">项目、竞赛／获奖与实习使用 SAG＋原子事实核验；个人资料与教育信息按填写使用，不参与核验或润色。</p>
     <div className="sag-provider-note"><Icon name="lock" /><span>材料将发送给本机配置的模型服务。</span></div>
     <div className="btn-row">
       <button className="btn primary" type="button" disabled={busy || !workflow.resume_claims.length} onClick={() => void run(true)}>
@@ -54,7 +54,7 @@ export function SAGPolishPanel() {
     {pending?.grounding && <div>
       {pending.grounding.error && <p className="danger-text">{pending.grounding.error}</p>}
       {Object.entries(pending.grounding.results).map(([id,result]) => <article className="item-block" key={id}>
-        <ClaimBadge status={result.state} />
+        <ClaimBadge status={result.state} personal={result.verification_scope === 'personal'} />
         <div className="proposal-comparison"><div><span>原稿</span><p>{result.original_text}</p></div><div><span>AI 建议</span><p>{result.proposed_text ?? result.final_text}</p></div></div>
         {result.proposal_rejected && <p className="warn-text" role="status">{result.proposal_notice}</p>}
         {result.risk_escalation && <p className="warn-text">高风险修改已二次核验：{result.risk_escalation.error ??

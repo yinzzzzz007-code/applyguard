@@ -14,7 +14,12 @@ from backend.services.atomic_verifier import AtomicVerifier, ATOM_PROMPT, JUDGE_
 from backend.services.career_vault import CareerVault
 from backend.services.local_evidence import vault_evidence_id
 from backend.services.model_client import HttpModelClient, ModelFailure
-from backend.services.resume_draft_vault import experiences_from_resume_draft, _safe_id
+from backend.services.resume_draft_vault import (
+    claim_is_form_confirmed,
+    experiences_from_resume_draft,
+    is_form_confirmed_evidence,
+    _safe_id,
+)
 from backend.services.sag_grounding import SAGRetriever, GroundingUnavailable, evidence_snapshot, fingerprint
 
 _HIGH_RISK = re.compile(r'\d|[%％]|主导|负责|协助|参与|领导|成果|提升|降低|上线|部署|试点|离线|预计|未|不|'
@@ -108,12 +113,17 @@ def collect_sources(items: list[dict], candidate: str):
     sources, contexts, allowed = [], {}, {}
     for experience in items:
         if experience.get('candidate_id') != candidate:continue
+        # Personal/education profile text never enters SAG indexes or model contexts.
+        if experience.get('claims') and all(
+                claim_is_form_confirmed(c['claim_id'], [experience]) for c in experience['claims']):
+            continue
         by_evidence = {}
         for source in experience.get('evidence_sources', []):
             eid = source['evidence_id']
             text = source.get('description', '')
-            if (eid.startswith('ev_draft_') or source.get('verification_status') != 'VERIFIED'
-                    or not isinstance(text,str) or not text.strip()):
+            if eid.startswith('ev_draft_') or is_form_confirmed_evidence(source):
+                continue
+            if source.get('verification_status') != 'VERIFIED' or not isinstance(text, str) or not text.strip():
                 continue
             sid = 'src_' + fingerprint([candidate,experience['experience_id'],eid])[:32]
             row = {'source_id':sid,'evidence_id':eid,'candidate_id':candidate,
@@ -141,8 +151,18 @@ def collect_sources(items: list[dict], candidate: str):
 class GroundingService:
     def __init__(self, *, retriever=None, model=None):
         self.retriever = retriever if retriever is not None else SAGRetriever()
-        self.model = model if model is not None else HttpModelClient(
-            max_tokens=int(os.getenv('APPLYGUARD_GROUNDING_MAX_TOKENS','6000')), require_complete=True)
+        self._model = model
+
+    @property
+    def model(self):
+        if self._model is None:
+            self._model = HttpModelClient(
+                max_tokens=int(os.getenv('APPLYGUARD_GROUNDING_MAX_TOKENS','6000')), require_complete=True)
+        return self._model
+
+    @model.setter
+    def model(self, value):
+        self._model = value
 
     def retrieve(self, claims, sources, allowed, candidate):
         queries = [{'claim_id':c['claim_id'],'text':c['text'],'source_ids':allowed.get(c['claim_id'],[])} for c in claims]
@@ -167,6 +187,8 @@ class GroundingService:
 
     def run(self, claims, items, candidate, mode, *, jd='', polish=False):
         sources, contexts, allowed = collect_sources(items,candidate)
+        personal = {c['claim_id']:c for item in items if item.get('candidate_id') == candidate
+                    for c in item.get('claims', []) if claim_is_form_confirmed(c['claim_id'], [item])}
         snapshot = evidence_snapshot(sources)
         active = [c for c in claims if c['claim_id'] in contexts and allowed.get(c['claim_id'])]
         error = None
@@ -181,7 +203,7 @@ class GroundingService:
         risk_escalation = {}
         reused_checks = set()
         try:
-            hits = self.retrieve(active,sources,allowed,candidate)
+            hits = self.retrieve(active,sources,allowed,candidate) if active else {}
             original_hits = copy.deepcopy(hits)
             if polish and active:
                 if mode == 'sag_atomic':
@@ -256,7 +278,14 @@ class GroundingService:
             cid = claim['claim_id']
             row = atomic.get(cid, {'atoms':[],'complete':False,'relation':'INSUFFICIENT',
                 'claim_text_sha256':fingerprint(claim['text'])})
-            if cid not in contexts or not allowed.get(cid):
+            is_personal = cid in personal
+            if is_personal:
+                unchanged = claim['text'] == personal[cid]['text']
+                state = 'VERIFIED' if unchanged else 'BLOCKED'
+                explanation = ('个人资料按表单填写使用，不进行SAG核验或AI润色。' if unchanged
+                               else '请在个人资料表单修改后重新载入，不能借用个人资料编号填写经历陈述。')
+                row = {**row, 'complete': False, 'atoms': [], 'relation': 'INSUFFICIENT'}
+            elif cid not in contexts or not allowed.get(cid):
                 state, explanation = 'BLOCKED','当前陈述没有候选人所属经历的有效原件；草稿、JD及人工点击不能补足证据。'
             elif error:
                 state, explanation = 'NEEDS_REVIEW',error
@@ -267,14 +296,16 @@ class GroundingService:
                 explanation = {'VERIFIED':'所有已拆分事实及完整性检查通过，逐字引文来自当前经历原件；请人工核对后使用。',
                     'BLOCKED':'至少一项原子事实与当前原件矛盾，禁止导出。',
                     'NEEDS_REVIEW':'至少一项事实证据不足、引用无效或拆分不完整，尚不可导出。'}[state]
-            claim['evidence_ids'] = sorted({s['evidence_id'] for s in sources if s['source_id'] in allowed.get(cid,[])})
+            claim['evidence_ids'] = (personal[cid]['evidence_ids'] if is_personal else
+                sorted({s['evidence_id'] for s in sources if s['source_id'] in allowed.get(cid,[])}))
             claim['status'] = 'BLOCKED' if state == 'BLOCKED' else 'DRAFT'
             unsupported = [a['text'] for a in row['atoms'] if a['relation'] != 'SUPPORTED']
             if state == 'BLOCKED' and not unsupported:unsupported = [claim['text']]
-            verifications.append({'claim_id':cid,'state':state,'grounded':state == 'VERIFIED',
-                'support_score':1.0 if state == 'VERIFIED' else 0.0,
+            verifications.append({'claim_id':cid,'state':state,'grounded':state == 'VERIFIED' and not is_personal,
+                'support_score':1.0 if state == 'VERIFIED' and not is_personal else 0.0,
                 'unsupported_fragments':unsupported,'explanation':explanation})
-            results[cid] = {**row,'state':state,'retrieved_sources':hits.get(cid,[]),
+            results[cid] = {**row,'state':state,'verification_scope':'personal' if is_personal else 'experience',
+                'scope_notice':explanation if is_personal else '', 'retrieved_sources':hits.get(cid,[]),
                 'original_text':original_text[cid],'final_text':claim['text'],
                 'reused_current_run_original_check':cid in reused_checks}
             if cid in proposals:
@@ -310,6 +341,7 @@ def apply_grounding(vault_path, request, response, *, polish=False):
     if evidence_snapshot(current) != report['snapshot']:
         report['error'] = '核验过程中材料或关联已变化，请重新核验。'
         for result in verified:
+            if report['results'][result['claim_id']].get('verification_scope') == 'personal':continue
             result.update(state='NEEDS_REVIEW',grounded=False,support_score=0.0,explanation=report['error'])
             report['results'][result['claim_id']]['state'] = 'NEEDS_REVIEW'
     from backend.services.reverification import simulator_mapping

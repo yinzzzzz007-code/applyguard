@@ -7,6 +7,23 @@ import { loadTextVersions, restoreTextVersion, saveTextVersion } from '../src/re
 const normal = JSON.parse(readFileSync(new URL('../public/prerecorded/normal.json', import.meta.url)))
 const blocked = JSON.parse(readFileSync(new URL('../public/prerecorded/unsupported_block.json', import.meta.url)))
 
+test('personal profile copies without evidence but is never a pass for an experience or stale edit', () => {
+  const value = structuredClone(normal)
+  const v = value.claim_verification.find(c => c.state === 'VERIFIED')
+  const c = value.resume_claims.find(c => c.claim_id === v.claim_id)
+  c.evidence_ids = ['ev_draft_edu']
+  v.grounded = false
+  value.grounding = {mode: 'sag_atomic', error: null, results: {
+    [c.claim_id]: {state: 'VERIFIED', final_text: c.text, verification_scope: 'personal'},
+  }}
+  assert.equal(copyableClaim(value, {}, c.claim_id), true)
+  value.grounding.results[c.claim_id].verification_scope = 'experience'
+  assert.equal(copyableClaim(value, {}, c.claim_id), false)
+  value.grounding.results[c.claim_id].verification_scope = 'personal'
+  c.text += ' changed'
+  assert.equal(copyableClaim(value, {}, c.claim_id), false)
+})
+
 test('grounded copying binds final text, atomic mode and complete result', () => {
   const value=structuredClone(normal)
   const v=value.claim_verification.find(c => c.state === 'VERIFIED')

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from datetime import date
 from typing import Any
 
 _ID_SAFE = re.compile(r"[^a-zA-Z0-9_]+")
@@ -52,6 +53,7 @@ def _one_experience(
     end: str,
     description: str,
     kind: str,
+    form_confirmed: bool = False,
 ) -> dict[str, Any] | None:
     organization = (organization or "").strip() or "（未填组织）"
     role = (role or title or "").strip() or kind
@@ -67,6 +69,16 @@ def _one_experience(
         for ln in re.split(r"[\n\r]+", description or "")
         if ln.strip()
     ]
+    # Education rows are user-authored profile fields; treat the filled form as confirmed evidence.
+    claim_state = "VERIFIED" if form_confirmed else "UNVERIFIED"
+    source_status = "VERIFIED" if form_confirmed else "UNVERIFIED"
+    claim_confidence = 0.88 if form_confirmed else 0.55
+    source_confidence = 0.85 if form_confirmed else 0.4
+    source_note = (
+        f"来自本机经历库已填写的{kind}信息（表单确认为准）"
+        if form_confirmed
+        else f"来自本机经历库草稿的{kind}条目（尚未关联本地证据原件）"
+    )
     return {
         "experience_id": _safe_id("exp_", exp_id, "item"),
         "candidate_id": candidate_id,
@@ -84,8 +96,8 @@ def _one_experience(
                 "claim_id": claim_id,
                 "text": summary,
                 "evidence_ids": [evidence_id],
-                "confidence": 0.55,
-                "verification_state": "UNVERIFIED",
+                "confidence": claim_confidence,
+                "verification_state": claim_state,
             }
         ],
         "evidence_sources": [
@@ -93,15 +105,67 @@ def _one_experience(
                 "evidence_id": evidence_id,
                 "type": "OTHER",
                 "source_type": "OTHER",
-                "description": f"来自本机经历库草稿的{kind}条目（尚未关联本地证据原件）",
+                "description": source_note,
                 "uri": None,
                 "source_reference": f"local-draft://{exp_id}",
-                "confidence": 0.4,
-                "verification_status": "UNVERIFIED",
+                "confidence": source_confidence,
+                "verification_status": source_status,
             }
         ],
-        "verification_state": "UNVERIFIED",
+        "verification_state": claim_state,
     }
+
+
+def is_form_confirmed_evidence(source: dict[str, Any] | None) -> bool:
+    """Only education profile rows bypass experience verification."""
+    if not isinstance(source, dict):
+        return False
+    reference = str(source.get("source_reference") or "")
+    description = str(source.get("description") or "")
+    return (
+        source.get("verification_status") == "VERIFIED"
+        and reference.startswith("local-draft://")
+        and "已填写的教育信息（表单确认为准）" in description
+    )
+
+
+def claim_is_form_confirmed(claim_id: str, experiences: list[dict[str, Any]]) -> bool:
+    for experience in experiences:
+        sources = {
+            source["evidence_id"]: source
+            for source in experience.get("evidence_sources", [])
+            if isinstance(source, dict) and source.get("evidence_id")
+        }
+        for claim in experience.get("claims", []):
+            if claim.get("claim_id") != claim_id:
+                continue
+            refs = claim.get("evidence_ids") or []
+            return bool(refs) and all(is_form_confirmed_evidence(sources.get(evidence_id)) for evidence_id in refs)
+    return False
+
+
+def _education_claim_text(school: str, degree: str, major: str, start: str, end: str) -> str:
+    bits = [part for part in (school, degree, major) if part]
+    span = " — ".join(part for part in (_ym(start) or start, _ym(end) or end) if part)
+    enrolled = False
+    end_ym = _ym(end)
+    if end_ym:
+        try:
+            year, month = (int(part) for part in end_ym.split("-", 1))
+            # Future (or current-year) end dates mean the candidate is still enrolled.
+            today = date.today()
+            enrolled = date(year, month, 1) >= date(today.year, today.month, 1)
+        except ValueError:
+            enrolled = False
+    elif start and not end:
+        enrolled = True
+    status = "在读" if enrolled else ""
+    head = " · ".join(bits) if bits else "教育经历"
+    if status and status not in head:
+        head = f"{head}（{status}）"
+    if span:
+        return f"{head} · {span}"[:420]
+    return head[:420]
 
 
 def experiences_from_resume_draft(form: dict[str, Any]) -> list[dict[str, Any]]:
@@ -120,6 +184,32 @@ def experiences_from_resume_draft(form: dict[str, Any]) -> list[dict[str, Any]]:
         seen.add(eid)
         out.append(item)
 
+    for idx, row in enumerate(form.get("education") or []):
+        if not isinstance(row, dict):
+            continue
+        school = str(row.get("school") or "").strip()
+        degree = str(row.get("degree") or "").strip()
+        major = str(row.get("major") or "").strip()
+        if not school and not major and not degree:
+            continue
+        start = str(row.get("start") or "")
+        end = str(row.get("end") or "")
+        text = _education_claim_text(school, degree, major, start, end)
+        push(
+            _one_experience(
+                candidate_id=candidate_id,
+                exp_id=str(row.get("id") or f"education_{idx}"),
+                organization=school or "教育经历",
+                title=degree or major or "教育经历",
+                role="在读" if "在读" in text else (degree or "教育"),
+                start=start,
+                end=end,
+                description=text,
+                kind="教育",
+                form_confirmed=True,
+            )
+        )
+
     for idx, row in enumerate(form.get("internships") or []):
         if not isinstance(row, dict):
             continue
@@ -134,6 +224,8 @@ def experiences_from_resume_draft(form: dict[str, Any]) -> list[dict[str, Any]]:
                 end=str(row.get("end") or ""),
                 description=str(row.get("description") or ""),
                 kind="实习",
+                # 实习与项目、竞赛一样，必须关联原件并核验。
+                form_confirmed=False,
             )
         )
 
@@ -151,6 +243,8 @@ def experiences_from_resume_draft(form: dict[str, Any]) -> list[dict[str, Any]]:
                 end=str(row.get("end") or ""),
                 description=str(row.get("description") or ""),
                 kind="项目",
+                # 项目须关联本地证据后才能视为已核验。
+                form_confirmed=False,
             )
         )
 
@@ -174,6 +268,8 @@ def experiences_from_resume_draft(form: dict[str, Any]) -> list[dict[str, Any]]:
                 end="",
                 description=text,
                 kind="获奖",
+                # 比赛 / 获奖须关联本地证据后才能视为已核验。
+                form_confirmed=False,
             )
         )
 

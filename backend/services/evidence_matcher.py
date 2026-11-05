@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from backend.services.jd_match_scope import select_requirements_for_matching
+
 
 _NON_ALNUM = re.compile(r"[^a-z0-9+#.]+")
 # Keep CJK / fullwidth letters so Chinese JD terms are not wiped to empty strings.
@@ -38,6 +40,8 @@ _CJK_BRIDGES = {
     "学历": {"bsc", "bachelor", "degree", "student"},
     "计算机": {"software", "computer", "engineering", "python"},
     "人工智能": {"machine learning", "llm", "pytorch", "model evaluation"},
+    "数据科学": {"computer", "software", "python", "machine learning", "data pipelines"},
+    "大数据": {"computer", "software", "python", "data pipelines", "machine learning"},
     "数学": {"math", "mathematics"},
     "深度学习": {"pytorch", "machine learning", "model evaluation", "llm"},
     "机器学习": {"pytorch", "machine learning", "model evaluation", "llm"},
@@ -62,6 +66,12 @@ _CJK_BRIDGES = {
     "微调": {"llm fine tuning"},
     "评测": {"model evaluation"},
 }
+
+# Majors that satisfy「计算机 / 软件 / 人工智能或相关专业」on Chinese internship JDs.
+_CS_RELATED_MAJOR_MARKERS = (
+    "计算机", "软件工程", "软件技术", "人工智能", "智能科学", "数据科学", "大数据",
+    "网络工程", "信息安全", "物联网", "电子信息", "信息工程", "计算机科学", "信息管理",
+)
 
 # English requirement terms → Chinese vault wording (skills stay English).
 _EN_CJK_VARIANTS = {
@@ -99,6 +109,18 @@ def _has_cjk(value: str) -> bool:
     return bool(re.search(r"[\u3400-\u9fff]", value))
 
 
+def _cs_related_major_in(text: str) -> bool:
+    fold = (text or "").casefold()
+    return any(marker.casefold() in fold for marker in _CS_RELATED_MAJOR_MARKERS)
+
+
+def _requirement_asks_related_cs_major(requirement: dict[str, Any], terms: set[str]) -> bool:
+    blob = f"{requirement.get('text') or ''} {requirement.get('evidence_text') or ''} {' '.join(terms)}"
+    if "相关专业" in blob:
+        return True
+    return any(key in blob for key in ("计算机", "人工智能", "软件工程", "软件"))
+
+
 def _mentions(term: str, text: str) -> bool:
     """Match complete terms, CJK substrings, aliases, or explicit CJK→EN bridges."""
     if not term or not text:
@@ -133,7 +155,11 @@ def _clamp(value: float) -> float:
 
 
 class EvidenceMatcher:
-    """A deterministic, explainable proposal baseline; it does not parse JD text."""
+    """A deterministic, explainable proposal baseline; it does not parse JD text.
+
+    When the JD marks 任职要求 / 加分项 separately from 职位描述, only the first
+    two sections are scored. Unsectioned text is left unchanged.
+    """
 
     def match(self, parsed_jd: dict[str, Any], experiences: list[dict[str, Any]]) -> dict[str, Any]:
         candidate_ids = {experience["candidate_id"] for experience in experiences}
@@ -143,7 +169,7 @@ class EvidenceMatcher:
         matches: list[dict[str, Any]] = []
         uncovered: list[dict[str, Any]] = []
 
-        for requirement in parsed_jd["requirements"]:
+        for requirement in select_requirements_for_matching(parsed_jd):
             requirement_terms = self._requirement_terms(requirement)
             if not requirement_terms:
                 uncovered.append(
@@ -210,29 +236,62 @@ class EvidenceMatcher:
         requirement_terms: set[str],
         experience: dict[str, Any],
     ) -> dict[str, Any] | None:
-        skill_terms = {term for skill in experience.get("skills", []) if (term := _normalise(skill))}
-        responsibility_text = " ".join(
-            [experience.get("summary", ""), *experience.get("responsibilities", []), experience.get("title", ""), experience.get("role", "")]
-        )
         claims = [
             claim for claim in experience.get("claims", [])
             if any(_mentions(term, claim["text"]) for term in requirement_terms)
         ]
         if not claims:
             return None
-        # Term is supported only when a linked claim states it (CJK terms may bridge to EN claim wording).
+        return self.score_linked_claims(requirement, requirement_terms, experience, claims)
+
+    def score_linked_claims(
+        self,
+        requirement: dict[str, Any],
+        requirement_terms: set[str],
+        experience: dict[str, Any],
+        claims: list[dict[str, Any]],
+        *,
+        semantic_score: float | None = None,
+        model_rationale: str | None = None,
+        require_keyword_hit: bool = True,
+    ) -> dict[str, Any] | None:
+        """Score an explicit claim set; optional AI semantic_score may relax term-gap notes."""
+        if not claims:
+            return None
+        skill_terms = {term for skill in experience.get("skills", []) if (term := _normalise(skill))}
+        responsibility_text = " ".join(
+            [experience.get("summary", ""), *experience.get("responsibilities", []), experience.get("title", ""), experience.get("role", "")]
+        )
+        claim_blob = " ".join(
+            str(part)
+            for part in (
+                experience.get("title", ""),
+                experience.get("organization", ""),
+                experience.get("summary", ""),
+                *(claim.get("text") or "" for claim in claims),
+            )
+        )
+        related_major_hit = _requirement_asks_related_cs_major(requirement, requirement_terms) and _cs_related_major_in(
+            claim_blob
+        )
         supported_terms = {
             term for term in requirement_terms if any(_mentions(term, claim["text"]) for claim in claims)
         }
+        if related_major_hit:
+            for term in requirement_terms:
+                if any(key in term for key in ("计算机", "人工智能", "软件", "相关专业", "本科", "学历", "专业")):
+                    supported_terms.add(term)
         keyword_hits = sorted(
             term
             for term in supported_terms
             if term in skill_terms or any(_mentions(term, skill) for skill in experience.get("skills", []))
         )
         responsibility_hits = sorted(term for term in supported_terms if _mentions(term, responsibility_text))
-        if not keyword_hits and not responsibility_hits:
+        if related_major_hit and "相关专业" not in responsibility_hits:
+            responsibility_hits = sorted({*responsibility_hits, "相关专业"})
+        if require_keyword_hit and not keyword_hits and not responsibility_hits and semantic_score is None and not related_major_hit:
             return None
-        claim_ids = [claim["claim_id"] for claim in claims]
+        claim_ids = list(dict.fromkeys(claim["claim_id"] for claim in claims))
         evidence_ids = sorted({evidence_id for claim in claims for evidence_id in claim.get("evidence_ids", [])})
         sources = experience.get("evidence_sources", [])
         source_by_id = {source["evidence_id"]: source for source in sources}
@@ -244,21 +303,27 @@ class EvidenceMatcher:
         conflicts = self._conflicts(experience, claims, linked_sources)
         missing_evidence = self._missing_evidence(experience, claims, linked_sources)
         unsupported_terms = sorted(requirement_terms - supported_terms)
-        if unsupported_terms:
+        # AI may attest paraphrase coverage; still never invent evidence IDs or clear verification gaps.
+        ai_covers_terms = isinstance(semantic_score, (int, float)) and float(semantic_score) >= 0.55
+        if related_major_hit:
+            ai_covers_terms = True
+        if unsupported_terms and not ai_covers_terms:
             missing_evidence.append(f"No linked claim explicitly supports: {', '.join(unsupported_terms)}.")
         verification_score = self._verification_score(experience, claims, linked_sources)
-        keyword_overlap = len(keyword_hits) / len(requirement_terms)
-        responsibility_overlap = len(responsibility_hits) / len(requirement_terms)
+        term_denom = max(len(requirement_terms), 1)
+        keyword_overlap = len(keyword_hits) / term_denom
+        responsibility_overlap = len(responsibility_hits) / term_denom
         metric_bonus = 0.1 if any(
             set(metric.get("evidence_ids", [])).intersection(evidence_ids)
             for metric in experience.get("metrics", [])
         ) else 0.0
         conflict_penalty = 0.3 if conflicts else 0.0
         missing_penalty = 0.25 if missing_evidence else 0.0
-        # Chinese JDs often list many terms; keep partial EN/CJK bridge hits visible as MEDIUM.
-        if missing_evidence and (keyword_hits or responsibility_hits) and any(_has_cjk(term) for term in requirement_terms):
+        if missing_evidence and (keyword_hits or responsibility_hits or ai_covers_terms) and (
+            any(_has_cjk(term) for term in requirement_terms) or ai_covers_terms
+        ):
             missing_penalty = min(missing_penalty, 0.1)
-        relevance = _clamp(
+        lexical = _clamp(
             0.45 * keyword_overlap
             + 0.15 * responsibility_overlap
             + 0.15 * verification_score
@@ -267,10 +332,39 @@ class EvidenceMatcher:
             - conflict_penalty
             - missing_penalty
         )
+        if isinstance(semantic_score, (int, float)):
+            semantic = _clamp(float(semantic_score))
+        else:
+            semantic = None
+        # 数据科学 / 大数据等对「相关专业」按强覆盖处理，避免模型保守打成中等分。
+        if related_major_hit:
+            semantic = max(semantic or 0.0, 0.95)
+        if semantic is not None:
+            # Prefer the model score so keyword sparsity does not crush on-topic matches.
+            relevance = _clamp(0.15 * lexical + 0.85 * semantic - conflict_penalty * 0.5)
+        else:
+            relevance = lexical
+            if related_major_hit:
+                relevance = max(relevance, 0.9)
         evidence_strength = self._evidence_strength(relevance, verification_score, confidence_score, conflicts, missing_evidence)
         ready_for_selection = evidence_strength == "STRONG" and not conflicts and not missing_evidence
         rationale = self._rationale(keyword_hits, responsibility_hits, evidence_ids, conflicts, missing_evidence)
-
+        if related_major_hit:
+            rationale = f"{rationale} 相关专业：数据科学/计算机类专业视为满足相关专业要求。"
+        if model_rationale:
+            rationale = f"{rationale} AI: {model_rationale.strip()[:180]}"
+        breakdown = {
+            "keyword_overlap": _clamp(keyword_overlap),
+            "responsibility_overlap": _clamp(responsibility_overlap),
+            "verification_score": _clamp(verification_score),
+            "confidence_score": _clamp(confidence_score),
+            "metric_bonus": metric_bonus,
+            "conflict_penalty": conflict_penalty,
+            "missing_evidence_penalty": missing_penalty,
+        }
+        if semantic is not None:
+            breakdown["ai_semantic_score"] = _clamp(semantic)
+            breakdown["ai_score_10"] = round(_clamp(semantic) * 10.0, 1)
         return {
             "requirement_id": requirement["requirement_id"],
             "experience_id": experience["experience_id"],
@@ -283,15 +377,7 @@ class EvidenceMatcher:
             "evidence_ids": evidence_ids,
             "missing_evidence": missing_evidence,
             "ready_for_selection": ready_for_selection,
-            "score_breakdown": {
-                "keyword_overlap": _clamp(keyword_overlap),
-                "responsibility_overlap": _clamp(responsibility_overlap),
-                "verification_score": _clamp(verification_score),
-                "confidence_score": _clamp(confidence_score),
-                "metric_bonus": metric_bonus,
-                "conflict_penalty": conflict_penalty,
-                "missing_evidence_penalty": missing_penalty,
-            },
+            "score_breakdown": breakdown,
         }
 
     @staticmethod

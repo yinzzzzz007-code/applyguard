@@ -192,7 +192,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     for (const v of workflow.claim_verification) {
       const d = claimDecisions[v.claim_id]
       if (workflow.grounding && d?.decision !== 'reject' &&
-          (workflow.grounding.mode !== 'sag_atomic' || workflow.grounding.error || v.state !== 'VERIFIED' ||
+          (workflow.grounding.mode !== 'sag_atomic' ||
+           (workflow.grounding.error && workflow.grounding.results[v.claim_id]?.verification_scope !== 'personal') || v.state !== 'VERIFIED' ||
            workflow.grounding.results[v.claim_id]?.state !== 'VERIFIED' ||
            workflow.grounding.results[v.claim_id]?.final_text !== workflow.resume_claims.find(c => c.claim_id === v.claim_id)?.text)) return false
       if (v.state === 'BLOCKED') {
@@ -201,7 +202,14 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         if (d?.decision !== 'reject') return false
       }
       const claim = workflow.resume_claims.find((item) => item.claim_id === v.claim_id)
-      if ((!claim?.evidence_ids.length || claim.evidence_ids.some((id) => id.startsWith('ev_draft_'))) && d?.decision !== 'reject') return false
+      // 无证据链仍不可进入网申。个人教育资料表单草稿若已 VERIFIED，可继续；
+      // 项目/比赛/实习草稿未核验会保持 BLOCKED，须拒绝排除。
+      if (!claim?.evidence_ids.length && d?.decision !== 'reject') return false
+      const hasUnverifiedDraft =
+        !!claim &&
+        claim.evidence_ids.some((id) => id.startsWith('ev_draft_')) &&
+        v.state !== 'VERIFIED'
+      if (hasUnverifiedDraft && d?.decision !== 'reject') return false
       if (v.state === 'NEEDS_REVIEW') {
         if (!d?.decision) return false
         if (d.decision === 'edit' || d.freshness === 'edited_pending_reverify') {

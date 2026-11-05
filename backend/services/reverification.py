@@ -10,7 +10,7 @@ from backend.services.claim_validator import ClaimValidator
 from backend.services.evidence_matcher import EvidenceMatcher
 from backend.services.jd_parser import JDParser
 from backend.services.local_evidence import attach_local_evidence
-from backend.services.resume_draft_vault import experiences_from_resume_draft
+from backend.services.resume_draft_vault import claim_is_form_confirmed, experiences_from_resume_draft
 from backend.services.risk_engine import RiskEngine
 from backend.services.schema_validation import validate_contract
 
@@ -64,13 +64,19 @@ def reverify_workflow(vault_path: Path, request: dict[str, Any], *, _skip_ground
         original = originals.get(claim_id)
         refs = original['evidence_ids'] if original else []
         draft_source = any(key.startswith('ev_draft_') for key in refs)
+        form_confirmed = claim_is_form_confirmed(claim_id, items)
         relevant = [row['requirement_id'] for row in matched['matches'] if claim_id in row['claim_ids']]
         claim = {'claim_id': claim_id, 'application_id': application, 'text': text.strip(),
                  'evidence_ids': refs, 'requirement_ids': sorted(set(relevant)),
                  'evidence_support_score': float(original.get('confidence', 0)) if original else 0,
                  'selection_reason': 'User selection checked by backend against candidate-owned evidence.',
                  'status': 'DRAFT'}
-        if original is None or draft_source or not refs:
+        # 个人教育资料按表单使用；项目、竞赛和实习须真实原件。
+        if form_confirmed and original and text.strip() == original.get('text'):
+            result = {'claim_id': claim_id, 'state': 'VERIFIED', 'grounded': False,
+                      'support_score': 0, 'unsupported_fragments': [],
+                      'explanation': '个人教育资料按表单使用，不进行SAG核验。'}
+        elif original is None or not refs or draft_source:
             result = {'claim_id': claim_id, 'state': 'BLOCKED', 'grounded': False, 'support_score': 0,
                       'unsupported_fragments': [text.strip()],
                       'explanation': '没有可支持本句的候选人证据原件；人工确认不能解除无证据阻断。'}

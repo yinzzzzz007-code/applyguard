@@ -13,14 +13,15 @@ export function copyableClaim(
   const verification = workflow.claim_verification.find((item) => item.claim_id === claimId)
   const decision = decisions[claimId]
   const claim = workflow.resume_claims.find((item) => item.claim_id === claimId)
+  const personal = workflow.grounding?.results[claimId]?.verification_scope === 'personal'
   if (workflow.requires_reverification || !verification || !claim) return false
   if (workflow.grounding) {
     const report = workflow.grounding
     const result = report.results[claimId]
-    if (report.mode !== 'sag_atomic' || report.error || !result || result.state !== 'VERIFIED' ||
+    if (report.mode !== 'sag_atomic' || (report.error && !personal) || !result || result.state !== 'VERIFIED' ||
         result.final_text !== claim.text || verification.state !== 'VERIFIED') return false
   }
-  if (!claim.evidence_ids.length || claim.evidence_ids.some((id) => id.startsWith('ev_draft_'))) return false
+  if (!personal && (!claim.evidence_ids.length || claim.evidence_ids.some((id) => id.startsWith('ev_draft_')))) return false
   if (decision?.decision === 'reject' || decision?.freshness === 'rejected') return false
   if (decision?.decision === 'edit' || decision?.freshness === 'edited_pending_reverify') return false
   if (verification.state === 'BLOCKED') return false

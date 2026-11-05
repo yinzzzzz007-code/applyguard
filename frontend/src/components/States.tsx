@@ -65,7 +65,8 @@ export function ErrorState({
   )
 }
 
-export function ClaimBadge({ status }: { status: ClaimState }) {
+export function ClaimBadge({ status, personal = false }: { status: ClaimState; personal?: boolean }) {
+  if (personal && status === 'VERIFIED') return <span className="badge muted">个人资料 · 不核验</span>
   const map: Record<ClaimState, string> = {
     VERIFIED: 'badge ok',
     NEEDS_REVIEW: 'badge warn',

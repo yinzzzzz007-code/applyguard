@@ -67,6 +67,12 @@ export const ZH_PARSER: Record<string, string> = {
   RULE_FALLBACK: '规则回退',
 }
 
+export const ZH_MATCHER: Record<string, string> = {
+  DETERMINISTIC: '规则匹配',
+  AI_SEMANTIC: '模型语义匹配',
+  RULE_FALLBACK: '规则回退',
+}
+
 export const ZH_MAPPER: Record<string, string> = {
   FIXTURE: '固定映射',
 }

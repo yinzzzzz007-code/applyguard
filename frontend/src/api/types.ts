@@ -210,6 +210,11 @@ export interface EvidenceMatchItem {
   evidence_ids?: string[]
   missing_evidence?: string[]
   ready_for_selection?: boolean
+  score_breakdown?: {
+    ai_score_10?: number
+    ai_semantic_score?: number
+    [key: string]: number | undefined
+  }
 }
 
 export interface EvidenceMatchResult {
@@ -222,6 +227,12 @@ export interface EvidenceMatchResult {
     missing_evidence: string[]
     reason: string
   }>
+  ai_match?: {
+    mode: 'MODEL' | 'RULE_FALLBACK'
+    prompt_version: string
+    scored_rows?: number
+    failure?: string
+  }
 }
 
 export interface ResumeClaim {
@@ -271,6 +282,8 @@ export interface GroundingSource {
   retrieval_channels?: string[]
 }
 export interface GroundingClaimResult {
+  verification_scope?: 'personal' | 'experience'
+  scope_notice?: string
   state: ClaimState
   original_text: string
   final_text: string
