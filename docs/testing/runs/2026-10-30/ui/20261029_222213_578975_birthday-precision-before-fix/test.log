@@ -1,0 +1,53 @@
+test_birth_date_keeps_precision_and_rejects_impossible_dates (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_birth_date_keeps_precision_and_rejects_impossible_dates) ... 
+  test_birth_date_keeps_precision_and_rejects_impossible_dates (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_birth_date_keeps_precision_and_rejects_impossible_dates) (raw='出生年月：2002-08') ... FAIL
+  test_birth_date_keeps_precision_and_rejects_impossible_dates (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_birth_date_keeps_precision_and_rejects_impossible_dates) (raw='出生日期：2002-13-01') ... FAIL
+  test_birth_date_keeps_precision_and_rejects_impossible_dates (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_birth_date_keeps_precision_and_rejects_impossible_dates) (raw='出生日期：2002-02-30') ... FAIL
+test_birth_date_keeps_precision_and_rejects_impossible_dates (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_birth_date_keeps_precision_and_rejects_impossible_dates) ... FAIL
+
+======================================================================
+FAIL: test_birth_date_keeps_precision_and_rejects_impossible_dates (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_birth_date_keeps_precision_and_rejects_impossible_dates) (raw='出生年月：2002-08')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "[LOCAL_USER]\.codex\visualizations\2026\10\29\01a18641-01a9-7e31-85a7-f651b4b504af\applyguard-sag-app\tests\test_resume_abnormal.py", line 35, in test_birth_date_keeps_precision_and_rejects_impossible_dates
+    self.assertEqual(form['basic']['birthday'],'')
+AssertionError: '2002-08-01' != ''
+- 2002-08-01
+
+
+======================================================================
+FAIL: test_birth_date_keeps_precision_and_rejects_impossible_dates (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_birth_date_keeps_precision_and_rejects_impossible_dates) (raw='出生日期：2002-13-01')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "[LOCAL_USER]\.codex\visualizations\2026\10\29\01a18641-01a9-7e31-85a7-f651b4b504af\applyguard-sag-app\tests\test_resume_abnormal.py", line 35, in test_birth_date_keeps_precision_and_rejects_impossible_dates
+    self.assertEqual(form['basic']['birthday'],'')
+AssertionError: '2002-13-01' != ''
+- 2002-13-01
+
+
+======================================================================
+FAIL: test_birth_date_keeps_precision_and_rejects_impossible_dates (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_birth_date_keeps_precision_and_rejects_impossible_dates) (raw='出生日期：2002-02-30')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "[LOCAL_USER]\.codex\visualizations\2026\10\29\01a18641-01a9-7e31-85a7-f651b4b504af\applyguard-sag-app\tests\test_resume_abnormal.py", line 35, in test_birth_date_keeps_precision_and_rejects_impossible_dates
+    self.assertEqual(form['basic']['birthday'],'')
+AssertionError: '2002-02-01' != ''
+- 2002-02-01
+
+
+======================================================================
+FAIL: test_birth_date_keeps_precision_and_rejects_impossible_dates (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_birth_date_keeps_precision_and_rejects_impossible_dates)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "[LOCAL_USER]\.codex\visualizations\2026\10\29\01a18641-01a9-7e31-85a7-f651b4b504af\applyguard-sag-app\tests\test_resume_abnormal.py", line 37, in test_birth_date_keeps_precision_and_rejects_impossible_dates
+    self.assertEqual(parser.extract_resume_from_text('出生日期：2004-02-29')['basic']['birthday'],'2004-02-29')
+AssertionError: '2004-02-01' != '2004-02-29'
+- 2004-02-01
+?         ^^
++ 2004-02-29
+?         ^^
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.005s
+
+FAILED (failures=4)

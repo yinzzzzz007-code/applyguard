@@ -1,0 +1,21 @@
+{
+  "claim_zh_team_2": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal retains all key facts: three-person team, Ning Xu only implemented Vue forms, SQL interface done by Lin Lan, and the team won the school-level second prize. The proposal's phrasing is equivalent and does not omit or alter any supported detail."
+  },
+  "claim_en_scope_3": {
+    "wrong_edit": true,
+    "errors": [
+      "Omission of 'not total operating costs' clarifying the 32% reduction applies only to backup storage."
+    ],
+    "reason": "The proposal omits the important clarification that the 32% reduction concerns backup storage only and not total operating costs, which changes the scope of the claim and is unsupported by the source."
+  },
+  "claim_zh_assist_1": {
+    "wrong_edit": true,
+    "errors": [
+      "Omission of 'only' in 'only responsible for missing value check' and omission of 'did not handle system architecture'."
+    ],
+    "reason": "The proposal omits the limitation that Chen He was only responsible for missing value checks and did not handle system architecture, which changes the scope of responsibility and is unsupported by the source."
+  }
+}

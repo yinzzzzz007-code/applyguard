@@ -1,0 +1,32 @@
+{
+  "exported_at": "2026-10-31T11:41:08.770555+08:00",
+  "policy": "Text-only public copy; credentials, personal contacts and local paths redacted. Original dates, failures, partial runs and source hashes retained. Screenshots, profiles, databases and session archives excluded. Export is not a new test run.",
+  "files": [
+    {
+      "path": "full/report.json",
+      "original_sha256": "8d2573bba9f04901fefd2914c5c7ab79ada25271493ddca433eed4b71828993a",
+      "public_sha256": "2493e9621b9e4175ff292ce034bdeaa8c206fbe8dced345dc6dc81292875c1bc"
+    },
+    {
+      "path": "full/report.md",
+      "original_sha256": "7481c4e1cb0bb3da2ded07d06d195a71a51370d7b211a30f09cd40ed756dfa22",
+      "public_sha256": "7481c4e1cb0bb3da2ded07d06d195a71a51370d7b211a30f09cd40ed756dfa22"
+    },
+    {
+      "path": "full/test.log",
+      "original_sha256": "bcbc8a71f34be8b22c94717235f43ec587baab8f83bff4afcc59445e3e336fb6",
+      "public_sha256": "bcbc8a71f34be8b22c94717235f43ec587baab8f83bff4afcc59445e3e336fb6"
+    },
+    {
+      "path": "replay/report.json",
+      "original_sha256": "cf557bb9e462b44cbf0c6e290a730086080bdbeaad10ffc9853dffc016cbac63",
+      "public_sha256": "186313e27726669da3bcf1a1b9adbfa2e279546b31378edfe1e574a49a5b347a"
+    },
+    {
+      "path": "replay/report.md",
+      "original_sha256": "5920bda12c5ee23a4e5df8f718ba426dcd4333cd6b7799f05f0571aee704dea0",
+      "public_sha256": "5920bda12c5ee23a4e5df8f718ba426dcd4333cd6b7799f05f0571aee704dea0"
+    }
+  ],
+  "excluded_by_type": {}
+}

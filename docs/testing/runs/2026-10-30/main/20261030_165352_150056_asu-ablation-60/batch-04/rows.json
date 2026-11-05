@@ -1,0 +1,142 @@
+[
+  {
+    "id": "en_pending_2",
+    "arm": "asu_v1",
+    "batch": 4,
+    "original": "Morgan completed a Kubernetes migration plan for Seabird2; implementation is scheduled for 2027 and has not started. Morgan estimated a 20% cost reduction.",
+    "proposal": "Morgan completed a Kubernetes migration plan for Seabird2, estimating a 20% cost reduction; implementation is scheduled for 2027 and has not started.",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal reorders the sentence but retains all original facts and their meaning without omission or addition."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": false,
+    "old_losses": [],
+    "new_losses": [
+      "estimated"
+    ],
+    "language_violations": [],
+    "new_final_text": "Morgan completed a Kubernetes migration plan for Seabird2; implementation is scheduled for 2027 and has not started. Morgan estimated a 20% cost reduction.",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_alias_2",
+    "arm": "asu_v1",
+    "batch": 4,
+    "original": "许宁在星舟2（内部编号Q20）负责PostgreSQL恢复测试，Redis缓存由林岚负责；未主导项目。",
+    "proposal": "许宁负责星舟2（内部编号Q20）PostgreSQL恢复测试，Redis缓存由他人负责，未主导项目。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": true,
+      "errors": [
+        "Redis缓存由林岚负责被改为由他人负责，具体人名被删除。"
+      ],
+      "reason": "The original specifies Redis cache is managed by 林岚, but the proposal replaces this with '他人' (someone else), losing the specific supported detail."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [
+      "Redis缓存由林岚负责。"
+    ],
+    "new_losses": [
+      "Redis缓存由林岚负责。"
+    ],
+    "language_violations": [],
+    "new_final_text": "许宁在星舟2（内部编号Q20）负责PostgreSQL恢复测试，Redis缓存由林岚负责；未主导项目。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_prototype_3",
+    "arm": "asu_v1",
+    "batch": 4,
+    "original": "唐遥为星舟3编写Go导入器原型，在本机相同负载下把中位耗时从200毫秒降至140毫秒，尚未上线。",
+    "proposal": "唐遥为星舟3编写Go导入器原型，在本机相同负载下将中位耗时从200毫秒降至140毫秒，尚未上线。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal uses a synonymous phrase '将...降至' instead of '把...降至' without changing any factual content or meaning."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "唐遥为星舟3编写Go导入器原型，在本机相同负载下将中位耗时从200毫秒降至140毫秒，尚未上线。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "en_pending_2",
+    "arm": "asu_fixed",
+    "batch": 4,
+    "original": "Morgan completed a Kubernetes migration plan for Seabird2; implementation is scheduled for 2027 and has not started. Morgan estimated a 20% cost reduction.",
+    "proposal": "Morgan completed a Kubernetes migration plan for Seabird2; implementation is scheduled for 2027 and has not started, with an estimated 20% cost reduction.",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal combines two sentences into one without changing any factual information or meaning. The estimated 20% cost reduction remains an estimate and the implementation schedule and status are unchanged."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "INSUFFICIENT",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "Morgan completed a Kubernetes migration plan for Seabird2; implementation is scheduled for 2027 and has not started. Morgan estimated a 20% cost reduction.",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_alias_2",
+    "arm": "asu_fixed",
+    "batch": 4,
+    "original": "许宁在星舟2（内部编号Q20）负责PostgreSQL恢复测试，Redis缓存由林岚负责；未主导项目。",
+    "proposal": "许宁负责星舟2（内部编号Q20）PostgreSQL恢复测试，Redis缓存由林岚负责，未主导项目。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal maintains all original facts: project name and internal code, responsibility for PostgreSQL recovery testing, Redis cache responsibility by another person, and no project leadership by the subject. The slight rephrasing does not alter meaning."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "INSUFFICIENT",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "许宁在星舟2（内部编号Q20）负责PostgreSQL恢复测试，Redis缓存由林岚负责；未主导项目。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_prototype_3",
+    "arm": "asu_fixed",
+    "batch": 4,
+    "original": "唐遥为星舟3编写Go导入器原型，在本机相同负载下把中位耗时从200毫秒降至140毫秒，尚未上线。",
+    "proposal": "唐遥为星舟3编写Go导入器原型，在本机相同负载下将中位耗时从200毫秒降至140毫秒，尚未上线。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal is a paraphrase that preserves all original facts: writing a Go importer prototype for Starship 3, same load on local machine, median latency reduced from 200ms to 140ms, and not yet launched. The change from '把' to '将' does not alter meaning."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "INSUFFICIENT",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "唐遥为星舟3编写Go导入器原型，在本机相同负载下把中位耗时从200毫秒降至140毫秒，尚未上线。",
+    "new_final_relation": "SUPPORTED"
+  }
+]

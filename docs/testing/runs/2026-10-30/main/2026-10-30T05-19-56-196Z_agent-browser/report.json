@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-30T05:20:16.005Z",
+  "timezone": "UTC (Asia/Shanghai +08)",
+  "status": "PASS",
+  "checks": [
+    "entry",
+    "consent",
+    "create",
+    "waiting-not-fake-connected",
+    "revoke",
+    "mobile-no-overflow"
+  ],
+  "errors": []
+}

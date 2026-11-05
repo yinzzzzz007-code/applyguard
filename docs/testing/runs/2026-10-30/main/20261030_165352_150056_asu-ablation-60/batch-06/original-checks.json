@@ -1,0 +1,306 @@
+{
+  "claim_en_points_3": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "Riley evaluated Seabird3 offline.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_22e6125729b21fff9042b32fa4f7c0de",
+            "evidence_id": "ev_en_points_3",
+            "source_sha256": "1a7c2e51f16da9a430364ed0558732d0ae1d8d2c03ff35bed4ad63ac03222232",
+            "quote": "Riley evaluated Seabird3 offline",
+            "start": 23,
+            "end": 55,
+            "experience_id": "exp_en_points_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'Riley evaluated Seabird3 offline' explicitly."
+      },
+      {
+        "atom_id": "a2",
+        "text": "The accuracy of Seabird3 increased from 80% to 84%.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_22e6125729b21fff9042b32fa4f7c0de",
+            "evidence_id": "ev_en_points_3",
+            "source_sha256": "1a7c2e51f16da9a430364ed0558732d0ae1d8d2c03ff35bed4ad63ac03222232",
+            "quote": "accuracy increased from 80% to 84%",
+            "start": 57,
+            "end": 91,
+            "experience_id": "exp_en_points_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'accuracy increased from 80% to 84%' for Seabird3."
+      },
+      {
+        "atom_id": "a3",
+        "text": "The accuracy increase of Seabird3 was 4 percentage points.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_22e6125729b21fff9042b32fa4f7c0de",
+            "evidence_id": "ev_en_points_3",
+            "source_sha256": "1a7c2e51f16da9a430364ed0558732d0ae1d8d2c03ff35bed4ad63ac03222232",
+            "quote": "an increase of 4 percentage points",
+            "start": 93,
+            "end": 127,
+            "experience_id": "exp_en_points_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'an increase of 4 percentage points' which matches the claim."
+      },
+      {
+        "atom_id": "a4",
+        "text": "Riley did not train the Seabird3 model.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_22e6125729b21fff9042b32fa4f7c0de",
+            "evidence_id": "ev_en_points_3",
+            "source_sha256": "1a7c2e51f16da9a430364ed0558732d0ae1d8d2c03ff35bed4ad63ac03222232",
+            "quote": "Riley did not train the model",
+            "start": 129,
+            "end": 158,
+            "experience_id": "exp_en_points_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'Riley did not train the model' explicitly."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_22e6125729b21fff9042b32fa4f7c0de",
+          "evidence_id": "ev_en_points_3",
+          "source_sha256": "1a7c2e51f16da9a430364ed0558732d0ae1d8d2c03ff35bed4ad63ac03222232",
+          "quote": "Signed project record: Riley evaluated Seabird3 offline: accuracy increased from 80% to 84%, an increase of 4 percentage points. Riley did not train the model.",
+          "start": 0,
+          "end": 159,
+          "experience_id": "exp_en_points_3",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source text explicitly states: 'Riley evaluated Seabird3 offline: accuracy increased from 80% to 84%, an increase of 4 percentage points. Riley did not train the model.' This matches the full claim exactly."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "d23e0a67f236e2f63bc0ec739f58e3e9cd78b176128a23e8b73fd931d7ab618e"
+  },
+  "claim_en_points_2": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "Morgan evaluated Seabird2 offline.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_45f9ce56e951b52cd6671f9c95795bf3",
+            "evidence_id": "ev_en_points_2",
+            "source_sha256": "7eb724d1f03a9b6d646d39b8c358d62fa9043c4e8753872a8dedc2ff2f71b24a",
+            "quote": "Morgan evaluated Seabird2 offline",
+            "start": 23,
+            "end": 56,
+            "experience_id": "exp_en_points_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'Morgan evaluated Seabird2 offline' explicitly."
+      },
+      {
+        "atom_id": "a2",
+        "text": "The accuracy of Seabird2 increased from 80% to 84%.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_45f9ce56e951b52cd6671f9c95795bf3",
+            "evidence_id": "ev_en_points_2",
+            "source_sha256": "7eb724d1f03a9b6d646d39b8c358d62fa9043c4e8753872a8dedc2ff2f71b24a",
+            "quote": "accuracy increased from 80% to 84%",
+            "start": 58,
+            "end": 92,
+            "experience_id": "exp_en_points_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'accuracy increased from 80% to 84%' for Seabird2."
+      },
+      {
+        "atom_id": "a3",
+        "text": "The accuracy increase of Seabird2 was 4 percentage points.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_45f9ce56e951b52cd6671f9c95795bf3",
+            "evidence_id": "ev_en_points_2",
+            "source_sha256": "7eb724d1f03a9b6d646d39b8c358d62fa9043c4e8753872a8dedc2ff2f71b24a",
+            "quote": "an increase of 4 percentage points",
+            "start": 94,
+            "end": 128,
+            "experience_id": "exp_en_points_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'an increase of 4 percentage points' which matches the claim."
+      },
+      {
+        "atom_id": "a4",
+        "text": "Morgan did not train the Seabird2 model.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_45f9ce56e951b52cd6671f9c95795bf3",
+            "evidence_id": "ev_en_points_2",
+            "source_sha256": "7eb724d1f03a9b6d646d39b8c358d62fa9043c4e8753872a8dedc2ff2f71b24a",
+            "quote": "Morgan did not train the model",
+            "start": 130,
+            "end": 160,
+            "experience_id": "exp_en_points_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'Morgan did not train the model' explicitly."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_45f9ce56e951b52cd6671f9c95795bf3",
+          "evidence_id": "ev_en_points_2",
+          "source_sha256": "7eb724d1f03a9b6d646d39b8c358d62fa9043c4e8753872a8dedc2ff2f71b24a",
+          "quote": "Signed project record: Morgan evaluated Seabird2 offline: accuracy increased from 80% to 84%, an increase of 4 percentage points. Morgan did not train the model.",
+          "start": 0,
+          "end": 161,
+          "experience_id": "exp_en_points_2",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source text explicitly states: 'Morgan evaluated Seabird2 offline: accuracy increased from 80% to 84%, an increase of 4 percentage points. Morgan did not train the model.' This matches the full claim exactly."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "3737e877d4ee40bafaef0deb075ad81b60c7817917e28de5b0299941f4aaec91"
+  },
+  "claim_en_team_3": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "Riley implemented only the React form for Seabird3 in a three-person team.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_86cf914eab8002da1b5f5ecfe139f4b7",
+            "evidence_id": "ev_en_team_3",
+            "source_sha256": "76b5e70eb26caa28833d43a803bc9e1b1caf5da2dfc04598e62a5b0b5b57c272",
+            "quote": "Riley implemented only the React form for Seabird3 in a three-person team",
+            "start": 23,
+            "end": 96,
+            "experience_id": "exp_en_team_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'Riley implemented only the React form for Seabird3 in a three-person team' explicitly."
+      },
+      {
+        "atom_id": "a2",
+        "text": "Lee wrote the API for Seabird3.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_86cf914eab8002da1b5f5ecfe139f4b7",
+            "evidence_id": "ev_en_team_3",
+            "source_sha256": "76b5e70eb26caa28833d43a803bc9e1b1caf5da2dfc04598e62a5b0b5b57c272",
+            "quote": "Lee wrote the API",
+            "start": 98,
+            "end": 115,
+            "experience_id": "exp_en_team_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'Lee wrote the API' explicitly."
+      },
+      {
+        "atom_id": "a3",
+        "text": "The team that worked on Seabird3 won a university-level second prize.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_86cf914eab8002da1b5f5ecfe139f4b7",
+            "evidence_id": "ev_en_team_3",
+            "source_sha256": "76b5e70eb26caa28833d43a803bc9e1b1caf5da2dfc04598e62a5b0b5b57c272",
+            "quote": "The team won a university-level second prize",
+            "start": 117,
+            "end": 161,
+            "experience_id": "exp_en_team_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'The team won a university-level second prize' explicitly."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_86cf914eab8002da1b5f5ecfe139f4b7",
+          "evidence_id": "ev_en_team_3",
+          "source_sha256": "76b5e70eb26caa28833d43a803bc9e1b1caf5da2dfc04598e62a5b0b5b57c272",
+          "quote": "Signed project record: Riley implemented only the React form for Seabird3 in a three-person team; Lee wrote the API. The team won a university-level second prize.",
+          "start": 0,
+          "end": 162,
+          "experience_id": "exp_en_team_3",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source text explicitly states: 'Riley implemented only the React form for Seabird3 in a three-person team; Lee wrote the API. The team won a university-level second prize.' This matches the full claim exactly."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "819e4f9d1426266e46c6480185623f18cffdf52ae2e0c0f1ac4524d9af758892"
+  }
+}

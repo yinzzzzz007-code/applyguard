@@ -225,6 +225,13 @@ def _build_base_workflow(request: dict[str, Any]) -> dict[str, Any]:
 
 class ApplyGuardHandler(BaseHTTPRequestHandler):
     server_version = "ApplyGuard/0.1"
+    # Keep browser asset connections alive: close-after-response produced
+    # intermittent ERR_CONNECTION_RESET for large JS bundles on Windows.
+    protocol_version = "HTTP/1.1"
+
+    def setup(self) -> None:
+        super().setup()
+        self.connection.settimeout(20)
 
     def log_message(self, format: str, *args: Any) -> None:
         logging.info("request client=%s message=%s", self.client_address[0], format % args)
@@ -425,6 +432,34 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         trace_id = f"trace_{uuid.uuid4().hex[:12]}"
+        if self.path in {'/api/v1/agent/ui', '/api/v1/agent/call'}:
+            from backend.services.agent_bridge import ui_call, agent_call
+            try:
+                length=int(self.headers.get('Content-Length','0'))
+                if not 0<length<=32000:
+                    self.close_connection=True
+                    raise ValueError('请求过大或为空')
+                # Drain the bounded request body before an authorization error.
+                # Closing a Windows socket with unread data can reset the TCP
+                # connection and hide the useful rejection response.
+                self.connection.settimeout(5)
+                raw=self.rfile.read(length)
+                host = self.headers.get('Host', '')
+                if urlsplit('http://'+host).hostname not in {'127.0.0.1','localhost'}:
+                    raise ValueError('仅允许本机连接')
+                if self.path.endswith('/ui') and (self.headers.get('Origin') != 'http://'+host or self.headers.get('X-ApplyGuard-UI') != '1'):
+                    raise ValueError('需要本机同源界面授权')
+                if self.path.endswith('/call') and self.headers.get('Origin'):
+                    raise ValueError('Agent接口不接受浏览器跨域请求')
+                body=json.loads(raw)
+                if not isinstance(body,dict): raise ValueError('需要JSON对象')
+                result = ui_call(body) if self.path.endswith('/ui') else agent_call(body,self.headers.get('Authorization','').removeprefix('Bearer '))
+                self._send_json(HTTPStatus.OK,result)
+            except (ValueError, OSError) as exc:
+                self._send_json(HTTPStatus.UNPROCESSABLE_ENTITY, {'error':{'message':str(exc)}})
+            except Exception:
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {'error':{'message':'Agent请求失败；请检查来源授权并重试'}})
+            return
         if self.path == "/api/v1/resume/parse":
             max_bytes = 8_000_000
         elif self.path == "/api/v1/resume/draft":

@@ -1,0 +1,20 @@
+{
+  "claim_zh_pending_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal retains all original details including scope, roles, time, and status without omission or change.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_zh_assist_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal preserves all original details about the scope, roles, and negations exactly as in the original.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_zh_prototype_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal maintains all original details including scope, performance metrics, and status without loss or alteration.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  }
+}

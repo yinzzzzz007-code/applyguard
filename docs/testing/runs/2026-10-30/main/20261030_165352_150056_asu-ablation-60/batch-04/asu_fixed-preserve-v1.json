@@ -1,0 +1,14 @@
+{
+  "claim_en_pending_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal combines the original sentences into one but retains all original details including scope (Seabird2), time (scheduled for 2027), personal role (Morgan), negation (has not started), and numbers (20% cost reduction)."
+  },
+  "claim_zh_alias_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal preserves all original details including scope (星舟2, internal code Q20), personal roles (许宁 responsible for PostgreSQL recovery testing, 林岚 responsible for Redis cache), and negation (许宁未主导项目). The information is simply combined into one sentence without loss."
+  },
+  "claim_zh_prototype_3": {
+    "lost_supported_details": [],
+    "reason": "The proposal retains all original details including scope (星舟3), personal role (唐遥), performance numbers (median latency reduced from 200ms to 140ms), and negation (尚未上线). The information is combined but fully preserved."
+  }
+}

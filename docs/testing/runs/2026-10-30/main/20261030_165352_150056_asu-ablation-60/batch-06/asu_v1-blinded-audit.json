@@ -1,0 +1,20 @@
+{
+  "claim_en_points_3": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal preserves all required facts: offline evaluation, same accuracy endpoints (making explicit delta redundant), and that Riley did not train the model. The paraphrase is equivalent and does not omit or add unsupported details."
+  },
+  "claim_en_points_2": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal preserves all required facts: offline evaluation, same accuracy endpoints (making explicit delta redundant), and that Morgan did not train the model. The paraphrase is equivalent and does not omit or add unsupported details."
+  },
+  "claim_en_team_3": {
+    "wrong_edit": true,
+    "errors": [
+      "Omission of 'only' before 'the React form' removes the limitation that Riley implemented only the React form.",
+      "Omission of 'Lee wrote the API' removes the attribution of the API implementation to Lee, which is a required fact."
+    ],
+    "reason": "The proposal omits the fact that Riley implemented only the React form, which is a meaningful limitation, and also omits that Lee wrote the API. Both are required facts. The proposal also changes 'the team won a university-level second prize' to 'contributing to the team's university-level second prize', which is acceptable, but the omissions are errors."
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "proposals": [
+    {
+      "claim_id": "claim_zh_sample_1",
+      "text": "陈禾对星舟1进行可用性访谈，便利抽样12人，其中8人完成操作，结果不代表总体用户。",
+      "evidence_ids": [
+        "ev_zh_sample_1"
+      ]
+    },
+    {
+      "claim_id": "claim_zh_pilot_2",
+      "text": "许宁为星舟2制作SQL看板，在两家门店试点期间整理20条反馈，未推广至全公司。",
+      "evidence_ids": [
+        "ev_zh_pilot_2"
+      ]
+    },
+    {
+      "claim_id": "claim_zh_correction_3",
+      "text": "唐遥为星舟3编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+      "evidence_ids": [
+        "ev_zh_correction_3"
+      ]
+    }
+  ],
+  "source": null
+}

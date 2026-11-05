@@ -113,9 +113,9 @@ class CParserTests(unittest.TestCase):
 class CClaimAndRiskTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        with (ROOT / "data" / "career-vault.seed.json").open() as stream:
+        with (ROOT / "data" / "career-vault.seed.json").open(encoding='utf-8') as stream:
             cls.experiences = json.load(stream)["experiences"]
-        with (ROOT / "data" / "form-mapping.example.json").open() as stream:
+        with (ROOT / "data" / "form-mapping.example.json").open(encoding='utf-8') as stream:
             cls.mapping = json.load(stream)
 
     def claim(self):

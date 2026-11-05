@@ -1,0 +1,16 @@
+{
+  "claim_en_offline_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal combines the original sentences into one but retains all original details without loss."
+  },
+  "claim_zh_correction_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal merges the original sentences into one but preserves all original details and their temporal context."
+  },
+  "claim_en_assist_1": {
+    "lost_supported_details": [
+      "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries"
+    ],
+    "reason": "The proposal adds the detail that Avery assisted Lee by reviewing 12 SQL queries, which was not present in the original claim. Thus, no original detail is lost; rather, new information is added."
+  }
+}

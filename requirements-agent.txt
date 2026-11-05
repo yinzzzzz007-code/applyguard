@@ -1,0 +1,2 @@
+# Optional local MCP adapter; install alongside requirements.txt
+mcp==1.30.0

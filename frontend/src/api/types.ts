@@ -277,6 +277,8 @@ export interface GroundingClaimResult {
   proposed_text?: string
   proposal_rejected?: boolean
   proposal_notice?: string
+  risk_escalation?: { model: string; relation: 'SUPPORTED' | 'CONTRADICTED' | 'INSUFFICIENT';
+    agrees_with_primary?: boolean; error?: string } | null
   preservation?: { lost_supported_details: string[]; reason: string } | null
   change_audit?: { changes: Array<{before: string; after: string}>; sensitive_change: boolean }
   claim_text_sha256: string

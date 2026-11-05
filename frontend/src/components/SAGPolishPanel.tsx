@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { groundingRequest, getApiClient } from '../api/client'
-import type { GroundingMode, WorkflowResponse } from '../api/types'
+import type { WorkflowResponse } from '../api/types'
 import { useDemo } from '../context/DemoContext'
 import { AtomicEvidence } from './AtomicEvidence'
 import { ClaimBadge } from './States'
@@ -10,7 +10,6 @@ import { Icon } from './Icon'
 
 export function SAGPolishPanel() {
   const {workflow,resumeForm,setWorkflow} = useDemo()
-  const [mode,setMode] = useState<GroundingMode>('sag_atomic')
   const [busy,setBusy] = useState(false)
   const [error,setError] = useState('')
   const [pending,setPending] = useState<Partial<WorkflowResponse> | null>(null)
@@ -26,9 +25,9 @@ export function SAGPolishPanel() {
     setBusy(true); setError(''); setPending(null)
     try {
       const result = polish
-        ? await groundingRequest<Partial<WorkflowResponse>>('polish',workflow,resumeForm,{grounding_mode:mode})
+        ? await groundingRequest<Partial<WorkflowResponse>>('polish',workflow,resumeForm,{grounding_mode:'sag_atomic'})
         : await getApiClient().reverifyWorkflow(workflow,
-            workflow.resume_claims.map(({claim_id,text}) => ({claim_id,text})),resumeForm,mode)
+            workflow.resume_claims.map(({claim_id,text}) => ({claim_id,text})),resumeForm,'sag_atomic')
       if (current.current !== started) { setError('输入已改变，请针对最新内容重新运行。'); return }
       if (result.error || !result.data) {setError(result.error?.message ?? '未完成');return}
       proposalSignature.current = started
@@ -40,11 +39,7 @@ export function SAGPolishPanel() {
   return <div className="sag-panel" aria-label="SAG润色与事实核验">
     <div className="sag-panel-heading"><Icon name="spark" /><h3>有依据的润色</h3></div>
     <p>检索相关原件，优化表达；逐项检查新增、夸大或错配的事实。</p>
-    <label className="field-label" htmlFor="sag-mode">处理方式</label>
-    <select id="sag-mode" value={mode} disabled={busy} onChange={event => {setMode(event.target.value as GroundingMode);setPending(null)}}>
-      <option value="sag_atomic">SAG＋原子事实核验</option>
-      <option value="sag">SAG检索与润色预览</option>
-    </select>
+    <p className="muted">默认使用 SAG＋原子事实核验；缺少配置或证据时不会自动放行。</p>
     <div className="sag-provider-note"><Icon name="lock" /><span>材料将发送给本机配置的模型服务。</span></div>
     <div className="btn-row">
       <button className="btn primary" type="button" disabled={busy || !workflow.resume_claims.length} onClick={() => void run(true)}>
@@ -62,6 +57,8 @@ export function SAGPolishPanel() {
         <ClaimBadge status={result.state} />
         <div className="proposal-comparison"><div><span>原稿</span><p>{result.original_text}</p></div><div><span>AI 建议</span><p>{result.proposed_text ?? result.final_text}</p></div></div>
         {result.proposal_rejected && <p className="warn-text" role="status">{result.proposal_notice}</p>}
+        {result.risk_escalation && <p className="warn-text">高风险修改已二次核验：{result.risk_escalation.error ??
+          (result.risk_escalation.agrees_with_primary ? '两次判断一致。' : '两次判断不同，建议未自动采用。')}</p>}
         {result.preservation?.lost_supported_details.map((text,index) => <p className="warn-text" key={index}>可能丢失有效信息：{text}</p>)}
         {result.change_audit?.sensitive_change && <p className="warn-text">涉及数字、职责、时间或限定词变化，请重点核对。</p>}
         <p><strong>待采用正文：</strong>{result.final_text}</p>

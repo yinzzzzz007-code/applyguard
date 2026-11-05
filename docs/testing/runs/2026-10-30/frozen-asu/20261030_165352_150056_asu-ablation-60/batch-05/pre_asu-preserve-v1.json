@@ -1,0 +1,14 @@
+{
+  "claim_zh_pending_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal combines the original sentences into one sentence without losing any original details or changing their meaning."
+  },
+  "claim_zh_assist_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal paraphrases the original sentences but retains all original details and their meanings."
+  },
+  "claim_zh_prototype_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal merges the original sentences into one sentence without omitting or altering any original details."
+  }
+}

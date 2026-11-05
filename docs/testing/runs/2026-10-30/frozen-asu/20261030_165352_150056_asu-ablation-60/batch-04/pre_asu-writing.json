@@ -1,0 +1,26 @@
+{
+  "proposals": [
+    {
+      "claim_id": "claim_en_pending_2",
+      "text": "Morgan completed a Kubernetes migration plan for Seabird2, estimating a 20% cost reduction; implementation is scheduled for 2027 and has not started.",
+      "evidence_ids": [
+        "ev_en_pending_2"
+      ]
+    },
+    {
+      "claim_id": "claim_zh_alias_2",
+      "text": "许宁在星舟2（内部编号Q20）负责PostgreSQL恢复测试，未主导项目，Redis缓存由林岚负责。",
+      "evidence_ids": [
+        "ev_zh_alias_2"
+      ]
+    },
+    {
+      "claim_id": "claim_zh_prototype_3",
+      "text": "唐遥为星舟3编写Go导入器原型，在本机相同负载下将中位耗时从200毫秒降至140毫秒，尚未上线。",
+      "evidence_ids": [
+        "ev_zh_prototype_3"
+      ]
+    }
+  ],
+  "source": null
+}

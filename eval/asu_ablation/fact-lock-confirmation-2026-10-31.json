@@ -1,0 +1,187 @@
+{
+  "frozen_at": "2026-10-31T12:19:00.657060+08:00",
+  "author": "Codex; no human adjudication",
+  "protocol": "Additional fictional author-labeled confirmation cases, frozen after development repairs and before first evaluation. Do not tune rules against these and call them still unseen.",
+  "cases": [
+    {
+      "id": "confirm-01-safe",
+      "split": "confirmation",
+      "category": "scope",
+      "source": "Fictional signed record: 仅参与 Spark 日志清洗，未设计平台架构。",
+      "original": "仅参与 Spark 日志清洗，未设计平台架构。",
+      "proposal": "只参与 Spark 日志清洗，没有设计平台架构。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "confirm-01-wrong",
+      "split": "confirmation",
+      "category": "scope",
+      "source": "Fictional signed record: 仅参与 Spark 日志清洗，未设计平台架构。",
+      "original": "仅参与 Spark 日志清洗，未设计平台架构。",
+      "proposal": "主导 Spark 平台架构设计。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "confirm-02-safe",
+      "split": "confirmation",
+      "category": "denominator",
+      "source": "Fictional signed record: Nora validated 8 of 32 invoices with Python.",
+      "original": "Nora validated 8 of 32 invoices with Python.",
+      "proposal": "Using Python, Nora validated 8 out of 32 invoices.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "confirm-02-wrong",
+      "split": "confirmation",
+      "category": "denominator",
+      "source": "Fictional signed record: Nora validated 8 of 32 invoices with Python.",
+      "original": "Nora validated 8 of 32 invoices with Python.",
+      "proposal": "Nora validated 8 of 23 invoices with Python.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "confirm-03-safe",
+      "split": "confirmation",
+      "category": "planned",
+      "source": "Fictional signed record: The Docker rollout is planned for 2027 and is not deployed.",
+      "original": "The Docker rollout is planned for 2027 and is not deployed.",
+      "proposal": "Not yet deployed, the Docker rollout is planned for 2027.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "confirm-03-wrong",
+      "split": "confirmation",
+      "category": "planned",
+      "source": "Fictional signed record: The Docker rollout is planned for 2027 and is not deployed.",
+      "original": "The Docker rollout is planned for 2027 and is not deployed.",
+      "proposal": "The Docker rollout was completed in 2027.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "confirm-04-safe",
+      "split": "confirmation",
+      "category": "unit_wording",
+      "source": "Fictional signed record: The Go importer took 250 ms before and 200 ms after tuning.",
+      "original": "The Go importer took 250 ms before and 200 ms after tuning.",
+      "proposal": "After tuning, the Go importer took 200 milliseconds, down from 250 milliseconds.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "confirm-04-wrong",
+      "split": "confirmation",
+      "category": "unit_wording",
+      "source": "Fictional signed record: The Go importer took 250 ms before and 200 ms after tuning.",
+      "original": "The Go importer took 250 ms before and 200 ms after tuning.",
+      "proposal": "After tuning, the Go importer took 180 ms, down from 250 ms.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "confirm-05-safe",
+      "split": "confirmation",
+      "category": "owner",
+      "source": "Fictional signed record: 李宁是项目负责人；赵明仅实现 React 页面。",
+      "original": "李宁是项目负责人；赵明仅实现 React 页面。",
+      "proposal": "项目由李宁负责；赵明仅实现 React 页面。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "confirm-05-wrong",
+      "split": "confirmation",
+      "category": "owner",
+      "source": "Fictional signed record: 李宁是项目负责人；赵明仅实现 React 页面。",
+      "original": "李宁是项目负责人；赵明仅实现 React 页面。",
+      "proposal": "赵明负责整个项目并实现 React 页面。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "confirm-06-safe",
+      "split": "confirmation",
+      "category": "causal_credit",
+      "source": "Fictional signed record: Lina measured a 10% latency reduction in a local trial.",
+      "original": "Lina measured a 10% latency reduction in a local trial.",
+      "proposal": "In a local trial, Lina measured latency 10% lower.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "confirm-06-wrong",
+      "split": "confirmation",
+      "category": "causal_credit",
+      "source": "Fictional signed record: Lina measured a 10% latency reduction in a local trial.",
+      "original": "Lina measured a 10% latency reduction in a local trial.",
+      "proposal": "Lina delivered a 10% latency reduction in production.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "confirm-07-safe",
+      "split": "confirmation",
+      "category": "unlisted_technology",
+      "source": "Fictional signed record: Mira tested a Kafka consumer but did not deploy it.",
+      "original": "Mira tested a Kafka consumer but did not deploy it.",
+      "proposal": "Mira tested the Kafka consumer; it was not deployed.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "confirm-07-wrong",
+      "split": "confirmation",
+      "category": "unlisted_technology",
+      "source": "Fictional signed record: Mira tested a Kafka consumer but did not deploy it.",
+      "original": "Mira tested a Kafka consumer but did not deploy it.",
+      "proposal": "Mira tested a RabbitMQ consumer and deployed it.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "confirm-08-safe",
+      "split": "confirmation",
+      "category": "english_attribution",
+      "source": "Fictional signed record: Mina tested Docker; Ben implemented SQL queries.",
+      "original": "Mina tested Docker; Ben implemented SQL queries.",
+      "proposal": "Docker was tested by Mina; Ben implemented SQL queries.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "confirm-08-wrong",
+      "split": "confirmation",
+      "category": "english_attribution",
+      "source": "Fictional signed record: Mina tested Docker; Ben implemented SQL queries.",
+      "original": "Mina tested Docker; Ben implemented SQL queries.",
+      "proposal": "Mina implemented SQL queries; Ben tested Docker.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "confirm-09-safe",
+      "split": "confirmation",
+      "category": "pilot",
+      "source": "Fictional signed record: 试点仅覆盖2家门店，尚未全量上线。",
+      "original": "试点仅覆盖2家门店，尚未全量上线。",
+      "proposal": "只在2家门店试点，尚未全量上线。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "confirm-09-wrong",
+      "split": "confirmation",
+      "category": "pilot",
+      "source": "Fictional signed record: 试点仅覆盖2家门店，尚未全量上线。",
+      "original": "试点仅覆盖2家门店，尚未全量上线。",
+      "proposal": "试点已覆盖20家门店并全面上线。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "confirm-10-safe",
+      "split": "confirmation",
+      "category": "percentage_points",
+      "source": "Fictional signed record: 准确率从60%升至63%，提高3个百分点。",
+      "original": "准确率从60%升至63%，提高3个百分点。",
+      "proposal": "准确率从60%升至63%。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "confirm-10-wrong",
+      "split": "confirmation",
+      "category": "percentage_points",
+      "source": "Fictional signed record: 准确率从60%升至63%，提高3个百分点。",
+      "original": "准确率从60%升至63%，提高3个百分点。",
+      "proposal": "准确率从60%升至63%，相对提高3%。",
+      "expected": "WRONG"
+    }
+  ]
+}

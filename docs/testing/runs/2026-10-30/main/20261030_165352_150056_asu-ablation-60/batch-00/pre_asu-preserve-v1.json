@@ -1,0 +1,10 @@
+{
+  "claim_en_offline_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal combines the original sentences into one without losing any original detail or changing meaning."
+  },
+  "claim_zh_correction_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal merges the original sentences into one sentence without omitting or altering any original supported details."
+  }
+}

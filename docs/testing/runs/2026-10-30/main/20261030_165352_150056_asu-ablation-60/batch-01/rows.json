@@ -1,0 +1,202 @@
+[
+  {
+    "id": "zh_sample_1",
+    "arm": "asu_v1",
+    "batch": 1,
+    "original": "陈禾对星舟1做可用性访谈，便利抽样12人，其中8人完成操作；结果不代表总体用户。",
+    "proposal": "陈禾对星舟1项目进行便利抽样的可用性访谈，访谈12人，其中8人完成操作，结果不代表总体用户。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal accurately preserves all original facts: Chen He conducted usability interviews for Xingzhou 1 with a convenience sample of 12 people, 8 completed the operation, and results do not represent the overall user population. The addition of '项目' (project) is a neutral clarification and does not change meaning."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "陈禾对星舟1项目进行便利抽样的可用性访谈，访谈12人，其中8人完成操作，结果不代表总体用户。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_pilot_2",
+    "arm": "asu_v1",
+    "batch": 1,
+    "original": "许宁为星舟2制作SQL看板，在两家门店试点期间整理20条反馈；没有全公司推广。",
+    "proposal": "许宁为星舟2项目制作SQL看板，整理两家门店试点期间的20条反馈，项目未全公司推广。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal retains all original facts: Xu Ning made an SQL dashboard for Xingzhou 2, collected 20 feedback items during the pilot in two stores, and the project was not promoted company-wide. The wording changes do not alter any fact."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "许宁为星舟2项目制作SQL看板，整理两家门店试点期间的20条反馈，项目未全公司推广。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_correction_3",
+    "arm": "asu_v1",
+    "batch": 1,
+    "original": "唐遥为星舟3编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+    "proposal": "唐遥为星舟3项目编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal preserves all original facts: Tang Yao wrote test cases for Xingzhou 3, won a school-level second prize in May 2026, and the earlier first prize record has been corrected. Adding '项目' (project) is a neutral clarification."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "唐遥为星舟3项目编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_sample_1",
+    "arm": "asu_fixed",
+    "batch": 1,
+    "original": "陈禾对星舟1做可用性访谈，便利抽样12人，其中8人完成操作；结果不代表总体用户。",
+    "proposal": "陈禾对星舟1进行便利抽样的可用性访谈，访谈12人，其中8人完成操作，结果不代表总体用户。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "Proposal is a paraphrase of the original with all required facts preserved and no unsupported changes."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "陈禾对星舟1进行便利抽样的可用性访谈，访谈12人，其中8人完成操作，结果不代表总体用户。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_pilot_2",
+    "arm": "asu_fixed",
+    "batch": 1,
+    "original": "许宁为星舟2制作SQL看板，在两家门店试点期间整理20条反馈；没有全公司推广。",
+    "proposal": "许宁为星舟2制作SQL看板，在两家门店试点期间整理了20条反馈，未进行全公司推广。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "Proposal preserves all required facts and only rephrases the original without adding or removing information."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "许宁为星舟2制作SQL看板，在两家门店试点期间整理了20条反馈，未进行全公司推广。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_correction_3",
+    "arm": "asu_fixed",
+    "batch": 1,
+    "original": "唐遥为星舟3编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+    "proposal": "唐遥为星舟3编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "Proposal is a minor punctuation change that does not alter meaning or omit any required facts."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "唐遥为星舟3编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_sample_1",
+    "arm": "pre_asu",
+    "batch": 1,
+    "original": "陈禾对星舟1做可用性访谈，便利抽样12人，其中8人完成操作；结果不代表总体用户。",
+    "proposal": "陈禾对星舟1进行可用性访谈，便利抽样12人，其中8人完成操作，结果不代表总体用户。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal is a paraphrase with equivalent meaning and punctuation change from semicolon to comma, which does not alter the facts or meaning. All required facts are preserved."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "陈禾对星舟1进行可用性访谈，便利抽样12人，其中8人完成操作，结果不代表总体用户。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_pilot_2",
+    "arm": "pre_asu",
+    "batch": 1,
+    "original": "许宁为星舟2制作SQL看板，在两家门店试点期间整理20条反馈；没有全公司推广。",
+    "proposal": "许宁为星舟2制作SQL看板，在两家门店试点期间整理20条反馈，未推广至全公司。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal rephrases '没有全公司推广' as '未推广至全公司', which is equivalent in meaning. All required facts are preserved."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "许宁为星舟2制作SQL看板，在两家门店试点期间整理20条反馈，未推广至全公司。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_correction_3",
+    "arm": "pre_asu",
+    "batch": 1,
+    "original": "唐遥为星舟3编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+    "proposal": "唐遥为星舟3编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": true,
+      "errors": [
+        "Changed semicolon to comma between '2026年5月获得校级二等奖' and '早期一等奖记录已更正'."
+      ],
+      "reason": "The original uses a semicolon to separate two related but distinct facts, indicating a pause and separation. The proposal replaces it with a comma, which can imply a closer connection or continuation, potentially altering the intended emphasis or clarity. Since the source uses a semicolon, the proposal's comma is a factual change in punctuation that affects the presentation of the facts."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "唐遥为星舟3编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+    "new_final_relation": "SUPPORTED"
+  }
+]

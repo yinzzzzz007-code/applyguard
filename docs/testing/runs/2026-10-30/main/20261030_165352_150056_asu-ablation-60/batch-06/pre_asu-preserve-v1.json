@@ -1,0 +1,20 @@
+{
+  "claim_en_points_3": {
+    "lost_supported_details": [
+      "The accuracy increase of Seabird3 was 4 percentage points."
+    ],
+    "reason": "The proposal merges the accuracy increase into a single statement and omits the explicit mention of the 4 percentage points increase, which is a specific numeric detail supported by the source."
+  },
+  "claim_en_points_2": {
+    "lost_supported_details": [
+      "The accuracy increase of Seabird2 was 4 percentage points."
+    ],
+    "reason": "The proposal merges the accuracy increase into a single statement and omits the explicit mention of the 4 percentage points increase, which is a specific numeric detail supported by the source."
+  },
+  "claim_en_team_3": {
+    "lost_supported_details": [
+      "Riley implemented only the React form for Seabird3 in a three-person team."
+    ],
+    "reason": "The proposal omits the word 'only' which specifies that Riley implemented exclusively the React form, a detail supported by the source."
+  }
+}

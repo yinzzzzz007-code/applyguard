@@ -1,0 +1,367 @@
+{
+  "frozen_at": "2026-10-31T12:15:09.415586+08:00",
+  "author": "Codex, not an independent human reviewer",
+  "protocol": "20 fictional source scenarios, one safe and one wrong edit each; development split may guide repairs, evaluation split stays untouched after first run. Rule-only comparison, no model generation.",
+  "cases": [
+    {
+      "id": "new-01-safe",
+      "split": "dev",
+      "category": "number",
+      "source": "Fictional signed record: 陈禾负责 Python 数据清洗，准确率为80%。",
+      "original": "陈禾负责 Python 数据清洗，准确率为80%。",
+      "proposal": "陈禾负责 Python 数据清洗；准确率为80%。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-01-wrong",
+      "split": "dev",
+      "category": "number",
+      "source": "Fictional signed record: 陈禾负责 Python 数据清洗，准确率为80%。",
+      "original": "陈禾负责 Python 数据清洗，准确率为80%。",
+      "proposal": "陈禾负责 Python 数据清洗，准确率为90%。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-02-safe",
+      "split": "dev",
+      "category": "role_scope",
+      "source": "Fictional signed record: 只负责 Vue 表单，接口由林岚负责。",
+      "original": "只负责 Vue 表单，接口由林岚负责。",
+      "proposal": "仅负责 Vue 表单；接口由林岚负责。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-02-wrong",
+      "split": "dev",
+      "category": "role_scope",
+      "source": "Fictional signed record: 只负责 Vue 表单，接口由林岚负责。",
+      "original": "只负责 Vue 表单，接口由林岚负责。",
+      "proposal": "负责 Vue 表单和接口。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-03-safe",
+      "split": "dev",
+      "category": "offline",
+      "source": "Fictional signed record: 在离线环境测试 Redis 缓存，尚未上线。",
+      "original": "在离线环境测试 Redis 缓存，尚未上线。",
+      "proposal": "Redis 缓存仅在离线环境测试，尚未上线。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-03-wrong",
+      "split": "dev",
+      "category": "offline",
+      "source": "Fictional signed record: 在离线环境测试 Redis 缓存，尚未上线。",
+      "original": "在离线环境测试 Redis 缓存，尚未上线。",
+      "proposal": "Redis 缓存已上线并投入生产。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-04-safe",
+      "split": "dev",
+      "category": "assistance",
+      "source": "Fictional signed record: 我协助开发 SQL 报表，未主导项目。",
+      "original": "我协助开发 SQL 报表，未主导项目。",
+      "proposal": "SQL 报表由我协助开发；我未主导项目。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-04-wrong",
+      "split": "dev",
+      "category": "assistance",
+      "source": "Fictional signed record: 我协助开发 SQL 报表，未主导项目。",
+      "original": "我协助开发 SQL 报表，未主导项目。",
+      "proposal": "我主导开发 SQL 报表。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-05-safe",
+      "split": "dev",
+      "category": "owner",
+      "source": "Fictional signed record: 林岚是项目负责人；我负责 PostgreSQL 恢复测试。",
+      "original": "林岚是项目负责人；我负责 PostgreSQL 恢复测试。",
+      "proposal": "林岚为项目负责人；我负责 PostgreSQL 恢复测试。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-05-wrong",
+      "split": "dev",
+      "category": "owner",
+      "source": "Fictional signed record: 林岚是项目负责人；我负责 PostgreSQL 恢复测试。",
+      "original": "林岚是项目负责人；我负责 PostgreSQL 恢复测试。",
+      "proposal": "我负责 PostgreSQL 恢复测试。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-06-safe",
+      "split": "dev",
+      "category": "estimate",
+      "source": "Fictional signed record: 预计每月节约12万元，方案尚未实施。",
+      "original": "预计每月节约12万元，方案尚未实施。",
+      "proposal": "方案尚未实施；预计每月节约12万元。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-06-wrong",
+      "split": "dev",
+      "category": "estimate",
+      "source": "Fictional signed record: 预计每月节约12万元，方案尚未实施。",
+      "original": "预计每月节约12万元，方案尚未实施。",
+      "proposal": "方案已实施，每月节约12万元。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-07-safe",
+      "split": "dev",
+      "category": "denominator",
+      "source": "Fictional signed record: Morgan ran 20 of 40 tests offline.",
+      "original": "Morgan ran 20 of 40 tests offline.",
+      "proposal": "Offline, Morgan ran 20 out of 40 tests.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-07-wrong",
+      "split": "dev",
+      "category": "denominator",
+      "source": "Fictional signed record: Morgan ran 20 of 40 tests offline.",
+      "original": "Morgan ran 20 of 40 tests offline.",
+      "proposal": "Morgan ran 20 of 50 tests offline.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-08-safe",
+      "split": "dev",
+      "category": "unit_wording",
+      "source": "Fictional signed record: The Python job took 200 ms in the local test.",
+      "original": "The Python job took 200 ms in the local test.",
+      "proposal": "In the local test, the Python job took 200 milliseconds.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-08-wrong",
+      "split": "dev",
+      "category": "unit_wording",
+      "source": "Fictional signed record: The Python job took 200 ms in the local test.",
+      "original": "The Python job took 200 ms in the local test.",
+      "proposal": "The Python job took 20 ms in the local test.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-09-safe",
+      "split": "dev",
+      "category": "percentage_points",
+      "source": "Fictional signed record: Accuracy rose from 80% to 84%, an increase of 4 percentage points.",
+      "original": "Accuracy rose from 80% to 84%, an increase of 4 percentage points.",
+      "proposal": "Accuracy rose from 80% to 84%.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-09-wrong",
+      "split": "dev",
+      "category": "percentage_points",
+      "source": "Fictional signed record: Accuracy rose from 80% to 84%, an increase of 4 percentage points.",
+      "original": "Accuracy rose from 80% to 84%, an increase of 4 percentage points.",
+      "proposal": "Accuracy rose from 80% to 84%, a 4% relative increase.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-10-safe",
+      "split": "dev",
+      "category": "attribution",
+      "source": "Fictional signed record: Redis 缓存由林岚负责；Vue 表单由周同学负责。",
+      "original": "Redis 缓存由林岚负责；Vue 表单由周同学负责。",
+      "proposal": "林岚负责 Redis 缓存；周同学负责 Vue 表单。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-10-wrong",
+      "split": "dev",
+      "category": "attribution",
+      "source": "Fictional signed record: Redis 缓存由林岚负责；Vue 表单由周同学负责。",
+      "original": "Redis 缓存由林岚负责；Vue 表单由周同学负责。",
+      "proposal": "林岚负责 Vue 表单；周同学负责 Redis 缓存。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-11-safe",
+      "split": "eval",
+      "category": "assistance",
+      "source": "Fictional signed record: Avery assisted Lee with Docker tests; Lee led the project.",
+      "original": "Avery assisted Lee with Docker tests; Lee led the project.",
+      "proposal": "Avery helped Lee with Docker tests; Lee led the project.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-11-wrong",
+      "split": "eval",
+      "category": "assistance",
+      "source": "Fictional signed record: Avery assisted Lee with Docker tests; Lee led the project.",
+      "original": "Avery assisted Lee with Docker tests; Lee led the project.",
+      "proposal": "Avery led the Docker tests and the project.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-12-safe",
+      "split": "eval",
+      "category": "scheduled",
+      "source": "Fictional signed record: Kai completed a Kubernetes migration plan for 2027; work has not started.",
+      "original": "Kai completed a Kubernetes migration plan for 2027; work has not started.",
+      "proposal": "Kai finished the Kubernetes migration plan for 2027; implementation has not started.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-12-wrong",
+      "split": "eval",
+      "category": "scheduled",
+      "source": "Fictional signed record: Kai completed a Kubernetes migration plan for 2027; work has not started.",
+      "original": "Kai completed a Kubernetes migration plan for 2027; work has not started.",
+      "proposal": "Kai completed the Kubernetes migration in 2027.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-13-safe",
+      "split": "eval",
+      "category": "attribution",
+      "source": "Fictional signed record: 林岚负责 React 组件，周同学负责 Redis 缓存。",
+      "original": "林岚负责 React 组件，周同学负责 Redis 缓存。",
+      "proposal": "React 组件由林岚负责；Redis 缓存由周同学负责。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-13-wrong",
+      "split": "eval",
+      "category": "attribution",
+      "source": "Fictional signed record: 林岚负责 React 组件，周同学负责 Redis 缓存。",
+      "original": "林岚负责 React 组件，周同学负责 Redis 缓存。",
+      "proposal": "林岚负责 Redis 缓存；周同学负责 React 组件。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-14-safe",
+      "split": "eval",
+      "category": "negative_role",
+      "source": "Fictional signed record: 陈禾实现 TypeScript 前端，未负责 Java 服务。",
+      "original": "陈禾实现 TypeScript 前端，未负责 Java 服务。",
+      "proposal": "陈禾实现 TypeScript 前端，没有负责 Java 服务。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-14-wrong",
+      "split": "eval",
+      "category": "negative_role",
+      "source": "Fictional signed record: 陈禾实现 TypeScript 前端，未负责 Java 服务。",
+      "original": "陈禾实现 TypeScript 前端，未负责 Java 服务。",
+      "proposal": "陈禾实现 TypeScript 前端，并负责 Java 服务。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-15-safe",
+      "split": "eval",
+      "category": "prototype",
+      "source": "Fictional signed record: This Rust importer is a prototype, not deployed.",
+      "original": "This Rust importer is a prototype, not deployed.",
+      "proposal": "The Rust importer remains a prototype and is not deployed.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-15-wrong",
+      "split": "eval",
+      "category": "prototype",
+      "source": "Fictional signed record: This Rust importer is a prototype, not deployed.",
+      "original": "This Rust importer is a prototype, not deployed.",
+      "proposal": "The Rust importer runs in production.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-16-safe",
+      "split": "eval",
+      "category": "pilot_scope",
+      "source": "Fictional signed record: 试点覆盖2家门店，尚未全量上线。",
+      "original": "试点覆盖2家门店，尚未全量上线。",
+      "proposal": "仅在2家门店试点，尚未全量上线。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-16-wrong",
+      "split": "eval",
+      "category": "pilot_scope",
+      "source": "Fictional signed record: 试点覆盖2家门店，尚未全量上线。",
+      "original": "试点覆盖2家门店，尚未全量上线。",
+      "proposal": "已在全部门店上线。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-17-safe",
+      "split": "eval",
+      "category": "future_time",
+      "source": "Fictional signed record: Flink 作业计划2028年迁移，尚未执行。",
+      "original": "Flink 作业计划2028年迁移，尚未执行。",
+      "proposal": "尚未执行的 Flink 作业迁移计划定于2028年。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-17-wrong",
+      "split": "eval",
+      "category": "future_time",
+      "source": "Fictional signed record: Flink 作业计划2028年迁移，尚未执行。",
+      "original": "Flink 作业计划2028年迁移，尚未执行。",
+      "proposal": "Flink 作业已于2028年完成迁移。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-18-safe",
+      "split": "eval",
+      "category": "denominator",
+      "source": "Fictional signed record: 样本中12/30条记录匹配。",
+      "original": "样本中12/30条记录匹配。",
+      "proposal": "30条样本记录中有12条匹配。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-18-wrong",
+      "split": "eval",
+      "category": "denominator",
+      "source": "Fictional signed record: 样本中12/30条记录匹配。",
+      "original": "样本中12/30条记录匹配。",
+      "proposal": "样本中12/40条记录匹配。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-19-safe",
+      "split": "eval",
+      "category": "percentage_points",
+      "source": "Fictional signed record: 准确率从70%升至75%，提高5个百分点。",
+      "original": "准确率从70%升至75%，提高5个百分点。",
+      "proposal": "准确率从70%升至75%。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-19-wrong",
+      "split": "eval",
+      "category": "percentage_points",
+      "source": "Fictional signed record: 准确率从70%升至75%，提高5个百分点。",
+      "original": "准确率从70%升至75%，提高5个百分点。",
+      "proposal": "准确率提高5%（相对）。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "new-20-safe",
+      "split": "eval",
+      "category": "measurement",
+      "source": "Fictional signed record: Lina measured 18% lower latency in an offline test.",
+      "original": "Lina measured 18% lower latency in an offline test.",
+      "proposal": "In an offline test, Lina measured latency 18% lower.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "new-20-wrong",
+      "split": "eval",
+      "category": "measurement",
+      "source": "Fictional signed record: Lina measured 18% lower latency in an offline test.",
+      "original": "Lina measured 18% lower latency in an offline test.",
+      "proposal": "Lina delivered an 18% latency reduction in production.",
+      "expected": "WRONG"
+    }
+  ]
+}

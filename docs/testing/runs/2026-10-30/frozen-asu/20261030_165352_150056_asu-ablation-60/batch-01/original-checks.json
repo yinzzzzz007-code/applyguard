@@ -1,0 +1,286 @@
+{
+  "claim_zh_sample_1": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "陈禾对星舟1做了可用性访谈。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_23bb6de8c2ea25429981893684616be6",
+            "evidence_id": "ev_zh_sample_1",
+            "source_sha256": "1c66a5272a5ff1752c08af0554665e14f39cf25f546fae32b51b4fdfd9ce5e00",
+            "quote": "陈禾对星舟1做可用性访谈",
+            "start": 8,
+            "end": 20,
+            "experience_id": "exp_zh_sample_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '陈禾对星舟1做可用性访谈' exactly."
+      },
+      {
+        "atom_id": "a2",
+        "text": "陈禾使用便利抽样抽取了12人。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_23bb6de8c2ea25429981893684616be6",
+            "evidence_id": "ev_zh_sample_1",
+            "source_sha256": "1c66a5272a5ff1752c08af0554665e14f39cf25f546fae32b51b4fdfd9ce5e00",
+            "quote": "便利抽样12人",
+            "start": 21,
+            "end": 28,
+            "experience_id": "exp_zh_sample_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '便利抽样12人' exactly."
+      },
+      {
+        "atom_id": "a3",
+        "text": "在这12人中，有8人完成了操作。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_23bb6de8c2ea25429981893684616be6",
+            "evidence_id": "ev_zh_sample_1",
+            "source_sha256": "1c66a5272a5ff1752c08af0554665e14f39cf25f546fae32b51b4fdfd9ce5e00",
+            "quote": "其中8人完成操作",
+            "start": 29,
+            "end": 37,
+            "experience_id": "exp_zh_sample_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '其中8人完成操作' exactly."
+      },
+      {
+        "atom_id": "a4",
+        "text": "访谈结果不代表总体用户。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_23bb6de8c2ea25429981893684616be6",
+            "evidence_id": "ev_zh_sample_1",
+            "source_sha256": "1c66a5272a5ff1752c08af0554665e14f39cf25f546fae32b51b4fdfd9ce5e00",
+            "quote": "结果不代表总体用户",
+            "start": 38,
+            "end": 47,
+            "experience_id": "exp_zh_sample_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '结果不代表总体用户' exactly."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_23bb6de8c2ea25429981893684616be6",
+          "evidence_id": "ev_zh_sample_1",
+          "source_sha256": "1c66a5272a5ff1752c08af0554665e14f39cf25f546fae32b51b4fdfd9ce5e00",
+          "quote": "陈禾对星舟1做可用性访谈，便利抽样12人，其中8人完成操作；结果不代表总体用户。",
+          "start": 8,
+          "end": 48,
+          "experience_id": "exp_zh_sample_1",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source text exactly matches the full claim: '陈禾对星舟1做可用性访谈，便利抽样12人，其中8人完成操作；结果不代表总体用户。'"
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "0c52559a70873427b214e5264f56c1ed1f043d6d358fc055218b473d11889a19"
+  },
+  "claim_zh_pilot_2": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "许宁为星舟2制作了SQL看板。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_58fac27798ff51a4907d301241fdf588",
+            "evidence_id": "ev_zh_pilot_2",
+            "source_sha256": "9956672fb7082a5402de396b1fb9ba46c1e25f060b608df63711c6ffbebb42ba",
+            "quote": "许宁为星舟2制作SQL看板",
+            "start": 8,
+            "end": 21,
+            "experience_id": "exp_zh_pilot_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '许宁为星舟2制作SQL看板' exactly."
+      },
+      {
+        "atom_id": "a2",
+        "text": "许宁在两家门店试点期间整理了20条反馈。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_58fac27798ff51a4907d301241fdf588",
+            "evidence_id": "ev_zh_pilot_2",
+            "source_sha256": "9956672fb7082a5402de396b1fb9ba46c1e25f060b608df63711c6ffbebb42ba",
+            "quote": "在两家门店试点期间整理20条反馈",
+            "start": 22,
+            "end": 38,
+            "experience_id": "exp_zh_pilot_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '在两家门店试点期间整理20条反馈' exactly."
+      },
+      {
+        "atom_id": "a3",
+        "text": "该SQL看板没有在全公司推广。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_58fac27798ff51a4907d301241fdf588",
+            "evidence_id": "ev_zh_pilot_2",
+            "source_sha256": "9956672fb7082a5402de396b1fb9ba46c1e25f060b608df63711c6ffbebb42ba",
+            "quote": "没有全公司推广",
+            "start": 39,
+            "end": 46,
+            "experience_id": "exp_zh_pilot_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '没有全公司推广' exactly."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_58fac27798ff51a4907d301241fdf588",
+          "evidence_id": "ev_zh_pilot_2",
+          "source_sha256": "9956672fb7082a5402de396b1fb9ba46c1e25f060b608df63711c6ffbebb42ba",
+          "quote": "许宁为星舟2制作SQL看板，在两家门店试点期间整理20条反馈；没有全公司推广。",
+          "start": 8,
+          "end": 47,
+          "experience_id": "exp_zh_pilot_2",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source text exactly matches the full claim: '许宁为星舟2制作SQL看板，在两家门店试点期间整理20条反馈；没有全公司推广。'"
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "3e233ee0e12f3524e80cd8957b09c2243c0fbeb106624dff61c74e4b58485956"
+  },
+  "claim_zh_correction_3": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "唐遥为星舟3编写了测试用例。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_15ecee0da6403eed69298f5ffdb201bb",
+            "evidence_id": "ev_zh_correction_3",
+            "source_sha256": "b5973fe1da860aff82806ab83f1dc610f3702d8cf7af94d9ce27d396cc9453bf",
+            "quote": "唐遥为星舟3编写测试用例",
+            "start": 19,
+            "end": 31,
+            "experience_id": "exp_zh_correction_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '唐遥为星舟3编写测试用例' exactly in the corrected record."
+      },
+      {
+        "atom_id": "a2",
+        "text": "唐遥在2026年5月获得了校级二等奖。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_15ecee0da6403eed69298f5ffdb201bb",
+            "evidence_id": "ev_zh_correction_3",
+            "source_sha256": "b5973fe1da860aff82806ab83f1dc610f3702d8cf7af94d9ce27d396cc9453bf",
+            "quote": "2026年5月获得校级二等奖",
+            "start": 32,
+            "end": 46,
+            "experience_id": "exp_zh_correction_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '2026年5月获得校级二等奖' exactly in the corrected record."
+      },
+      {
+        "atom_id": "a3",
+        "text": "唐遥的早期一等奖记录已更正。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_15ecee0da6403eed69298f5ffdb201bb",
+            "evidence_id": "ev_zh_correction_3",
+            "source_sha256": "b5973fe1da860aff82806ab83f1dc610f3702d8cf7af94d9ce27d396cc9453bf",
+            "quote": "早期一等奖记录已更正",
+            "start": 47,
+            "end": 57,
+            "experience_id": "exp_zh_correction_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '早期一等奖记录已更正' exactly in the corrected record and mentions the early uncorrected record."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_15ecee0da6403eed69298f5ffdb201bb",
+          "evidence_id": "ev_zh_correction_3",
+          "source_sha256": "b5973fe1da860aff82806ab83f1dc610f3702d8cf7af94d9ce27d396cc9453bf",
+          "quote": "早期未修订记录：一等奖。正式更正记录：唐遥为星舟3编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+          "start": 0,
+          "end": 58,
+          "experience_id": "exp_zh_correction_3",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source text states the corrected record: '唐遥为星舟3编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。' and also mentions the early uncorrected record '一等奖'."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "57f1deb98f18fa828bdcfe19334c9fcdb6e30b33413bb22d0d326fe6e94fe623"
+  }
+}

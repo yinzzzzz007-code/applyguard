@@ -1,0 +1,17 @@
+{
+  "claim_zh_pending_1": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal only changes the punctuation from a semicolon to a comma before '林岚为负责人' without altering any factual content or meaning. All required facts remain intact and supported by the source."
+  },
+  "claim_zh_assist_2": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal is a paraphrase that preserves all original facts: assistance role, Python usage, 20 tables, responsibility limited to missing value checks, and no system architecture responsibility. No factual changes or omissions."
+  },
+  "claim_zh_prototype_1": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal changes '把' to '将' which is a stylistic paraphrase without changing any factual content. All required facts about the Go importer prototype, load conditions, median latency reduction from 200ms to 140ms, and not yet online remain fully supported."
+  }
+}

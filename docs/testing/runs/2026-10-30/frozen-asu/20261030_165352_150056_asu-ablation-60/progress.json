@@ -1,0 +1,97 @@
+{
+  "updated_at": "2026-10-30T17:12:12.611333+08:00",
+  "complete_rows": 27,
+  "errors": [
+    {
+      "batch": 3,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 6,
+      "type": "ModelFailure",
+      "message": "Service authorization failure; remaining requests paused"
+    },
+    {
+      "batch": 7,
+      "type": "ModelFailure",
+      "message": "Service authorization failure; remaining requests paused"
+    },
+    {
+      "batch": 8,
+      "type": "ModelFailure",
+      "message": "Service authorization failure; remaining requests paused"
+    },
+    {
+      "batch": 9,
+      "type": "ModelFailure",
+      "message": "Service authorization failure; remaining requests paused"
+    },
+    {
+      "batch": 10,
+      "type": "ModelFailure",
+      "message": "Service authorization failure; remaining requests paused"
+    },
+    {
+      "batch": 11,
+      "type": "ModelFailure",
+      "message": "Service authorization failure; remaining requests paused"
+    },
+    {
+      "batch": 12,
+      "type": "ModelFailure",
+      "message": "Service authorization failure; remaining requests paused"
+    },
+    {
+      "batch": 13,
+      "type": "ModelFailure",
+      "message": "Service authorization failure; remaining requests paused"
+    },
+    {
+      "batch": 14,
+      "type": "ModelFailure",
+      "message": "Service authorization failure; remaining requests paused"
+    },
+    {
+      "batch": 15,
+      "type": "ModelFailure",
+      "message": "Service authorization failure; remaining requests paused"
+    },
+    {
+      "batch": 16,
+      "type": "ModelFailure",
+      "message": "Service authorization failure; remaining requests paused"
+    },
+    {
+      "batch": 17,
+      "type": "ModelFailure",
+      "message": "Service authorization failure; remaining requests paused"
+    },
+    {
+      "batch": 18,
+      "type": "ModelFailure",
+      "message": "Service authorization failure; remaining requests paused"
+    },
+    {
+      "batch": 19,
+      "type": "ModelFailure",
+      "message": "Service authorization failure; remaining requests paused"
+    },
+    {
+      "batch": 5,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 4,
+      "type": "ModelFailure",
+      "message": "Service authorization failure; remaining requests paused"
+    }
+  ],
+  "usage": {
+    "calls": 18,
+    "prompt_tokens": 368,
+    "completion_tokens": 211,
+    "total_tokens": 579
+  }
+}

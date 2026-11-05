@@ -57,15 +57,33 @@ def structured(model,prompt,data,schema):
         # Retry formatting/transport once, never retry a semantic verdict to force a pass.
     raise GroundingUnavailable('结构化核验未完成。')
 
+def aligned_quote(text,quote):
+    """Return original bytes after a unique punctuation-only alignment.
+
+    Does not bridge ellipses, remove words, change signs/units or normalize digits.
+    The stored quote is always an actual contiguous original substring.
+    """
+    if quote in text:return quote,False
+    pairs={'，':',','；':';','：':':','（':'(', '）':')','。':'.'}
+    def normalized(value):
+        return ''.join(char if char=='。' and i>0 and i+1<len(value) and value[i-1].isdigit() and value[i+1].isdigit()
+            else pairs.get(char,char) for i,char in enumerate(value))
+    source,needle=normalized(text),normalized(quote)
+    index=source.find(needle)
+    if index<0 or source.find(needle,index+1)>=0:return None,False
+    return text[index:index+len(quote)],True
+
 def citations(row,sources,context):
     by_id={s['source_id']:s for s in sources};valid=[]
     for citation in row.get('citations',[]):
         source=by_id.get(citation.get('source_id'));quote=citation.get('quote')
-        if (not source or not isinstance(quote,str) or len(quote.strip())<3 or quote not in source['text']
+        if (not source or not isinstance(quote,str) or len(quote.strip())<3
             or source['candidate_id']!=context['candidate_id'] or source['experience_id']!=context['experience_id']):continue
+        quote,normalized=aligned_quote(source['text'],quote)
+        if quote is None:continue
         start=source.get('text_offset',0)+source['text'].find(quote)
         valid.append({'source_id':source['source_id'],'evidence_id':source['evidence_id'],
-            'source_sha256':source['sha256'],'quote':quote,'start':start,'end':start+len(quote),
+            'source_sha256':source['sha256'],'quote':quote,'quote_punctuation_aligned':normalized,'start':start,'end':start+len(quote),
             'experience_id':source['experience_id'],'source_version':source.get('version'),
             'file_version':source.get('file_version'),'positions':[p for p in source.get('positions',[])
                 if p['start']<start+len(quote) and p['end']>start]})
@@ -78,7 +96,27 @@ def missing_numeric_qualifiers(text,atoms):
     # Not a semantic parser: catches literal dropped numeric qualifiers conservatively.
     pattern=r'(?<![0-9A-Za-z_.])-?\d+(?:\.\d+)?(?:%|个百分点)?'
     original=set(re.findall(pattern,text));covered=set(re.findall(pattern,' '.join(atoms)))
-    return sorted(original-covered)
+    from backend.services.edit_invariants import equivalent_point_detail
+    return sorted(value for value in original-covered if not equivalent_point_detail(value,text,' '.join(atoms)))
+
+def guard_percent_units(text, verdict):
+    """A narrow fail-closed guard, not a general numeric entailment checker.
+
+    Reusing a percentage-point value as a percent can change the fact. If the
+    supporting quote only contains the former unit, require review. Never turn
+    this ambiguity into a contradiction or override an existing rejection.
+    """
+    if verdict['relation']!='SUPPORTED':return verdict
+    from decimal import Decimal
+    number=r'(?<![0-9.])(-?\d+(?:\.\d+)?)\s*'
+    percent=number+r'(?:[%％]|percent(?!age)\b)'
+    points=number+r'(?:个?百分点|percentage\s+points?\b|pp\b)'
+    quoted='\n'.join(c['quote'] for c in verdict['citations'])
+    values=lambda pattern, value:{Decimal(n) for n in re.findall(pattern,value,re.I)}
+    ambiguous=values(percent,text)&(values(points,quoted)-values(percent,quoted))
+    if not ambiguous:return verdict
+    return {**verdict,'relation':'INSUFFICIENT','unit_review':True,
+        'reason':'百分比与百分点可能混用，须核对基准、单位及计算口径。 '+verdict['reason']}
 
 class StructuredVerifier:
     def __init__(self,model):self.model=model
@@ -124,9 +162,9 @@ class StructuredVerifier:
         result={}
         for claim in claims:
             cid=claim['claim_id'];entry=inputs[cid];row=judged[cid]
-            checked=[{'atom_id':aid,'text':text,**citations(row['atoms'][aid],entry['sources'],entry['context'])}
+            checked=[{'atom_id':aid,'text':text,**guard_percent_units(text,citations(row['atoms'][aid],entry['sources'],entry['context']))}
                 for aid,text in entry['atoms'].items()]
-            full=citations(row['full_claim'],entry['sources'],entry['context'])
+            full=guard_percent_units(claim['text'],citations(row['full_claim'],entry['sources'],entry['context']))
             complete=not row['missing_assertions'] and not numeric[cid]
             relation=('CONTRADICTED' if full['relation']=='CONTRADICTED' or any(a['relation']=='CONTRADICTED' for a in checked)
                 else 'SUPPORTED' if complete and full['relation']=='SUPPORTED' and all(a['relation']=='SUPPORTED' for a in checked)
@@ -140,4 +178,4 @@ class StructuredVerifier:
         schema=obj({c['claim_id']:verdict_schema([s['source_id'] for s in hits.get(c['claim_id'],[])]) for c in claims})
         inputs={c['claim_id']:{'full_claim':c['text'],'context':contexts[c['claim_id']],'sources':hits.get(c['claim_id'],[])} for c in claims}
         judged=structured(self.model,WHOLE_PROMPT,inputs,schema)
-        return {cid:citations(judged[cid],row['sources'],row['context']) for cid,row in inputs.items()}
+        return {cid:guard_percent_units(row['full_claim'],citations(judged[cid],row['sources'],row['context'])) for cid,row in inputs.items()}

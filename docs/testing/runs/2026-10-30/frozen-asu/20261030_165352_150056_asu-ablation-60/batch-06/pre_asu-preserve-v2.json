@@ -1,0 +1,36 @@
+{
+  "claim_en_points_3": {
+    "lost_supported_details": [
+      "Riley did not train the Seabird3 model."
+    ],
+    "reason": "The proposal changes 'Riley did not train the Seabird3 model' to 'without training the model' but adds 'contributing to' the accuracy increase, which implies a causal role not supported by the original text. The original explicitly states Riley did not train the model, which is a negation detail lost in the proposal.",
+    "resolved_equivalences": [],
+    "qualifier_findings": [
+      {
+        "category": "not_trained",
+        "detail": "did not train"
+      }
+    ]
+  },
+  "claim_en_points_2": {
+    "lost_supported_details": [
+      "Morgan did not train the Seabird2 model."
+    ],
+    "reason": "The proposal changes 'Morgan did not train the Seabird2 model' to 'without training the model' but adds 'contributing to' the accuracy increase, implying a causal role not supported by the original text. The original explicitly states Morgan did not train the model, which is a negation detail lost in the proposal.",
+    "resolved_equivalences": [],
+    "qualifier_findings": [
+      {
+        "category": "not_trained",
+        "detail": "did not train"
+      }
+    ]
+  },
+  "claim_en_team_3": {
+    "lost_supported_details": [
+      "Riley implemented only the React form for Seabird3 in a three-person team."
+    ],
+    "reason": "The proposal omits 'only' regarding Riley's implementation of the React form, which specifies Riley's limited role. This detail about the scope of Riley's contribution is lost.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  }
+}

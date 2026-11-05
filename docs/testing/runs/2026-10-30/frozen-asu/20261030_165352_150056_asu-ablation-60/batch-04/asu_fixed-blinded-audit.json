@@ -1,0 +1,17 @@
+{
+  "claim_en_pending_2": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal combines two sentences into one without changing any factual information or meaning. The estimated 20% cost reduction remains an estimate and the implementation schedule and status are unchanged."
+  },
+  "claim_zh_alias_2": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal maintains all original facts: project name and internal code, responsibility for PostgreSQL recovery testing, Redis cache responsibility by another person, and no project leadership by the subject. The slight rephrasing does not alter meaning."
+  },
+  "claim_zh_prototype_3": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal is a paraphrase that preserves all original facts: writing a Go importer prototype for Starship 3, same load on local machine, median latency reduced from 200ms to 140ms, and not yet launched. The change from '把' to '将' does not alter meaning."
+  }
+}

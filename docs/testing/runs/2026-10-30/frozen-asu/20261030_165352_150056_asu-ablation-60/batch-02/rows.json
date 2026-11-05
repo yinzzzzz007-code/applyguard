@@ -1,0 +1,247 @@
+[
+  {
+    "id": "zh_team_2",
+    "arm": "asu_fixed",
+    "batch": 2,
+    "original": "许宁参与星舟2三人小组，只实现Vue表单；SQL接口由林岚完成，团队获得校级二等奖。",
+    "proposal": "许宁参与星舟2三人小组，负责实现Vue表单，团队获得校级二等奖。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal accurately reflects the original and source facts: participation in a three-person team, responsibility for Vue form only, and team award of school-level second prize. The mention of SQL interface by Lin Lan is omitted but not required to be explicitly stated in the proposal as it does not contradict or alter the claim about Ning Xu's role and team award."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [
+      "许宁只实现了Vue表单。",
+      "SQL接口由林岚完成。"
+    ],
+    "new_losses": [
+      "SQL接口由林岚完成。"
+    ],
+    "language_violations": [],
+    "new_final_text": "许宁参与星舟2三人小组，只实现Vue表单；SQL接口由林岚完成，团队获得校级二等奖。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "en_scope_3",
+    "arm": "asu_fixed",
+    "batch": 2,
+    "original": "Riley wrote PostgreSQL backup scripts for Seabird3; the measured 32% reduction concerns backup storage only, not total operating costs.",
+    "proposal": "Riley wrote PostgreSQL backup scripts for Seabird3, achieving a 32% reduction in backup storage usage.",
+    "changed": true,
+    "audit": {
+      "wrong_edit": true,
+      "errors": [
+        "Omission of 'not total operating costs' clarifying the 32% reduction applies only to backup storage, not overall costs."
+      ],
+      "reason": "The proposal states a 32% reduction in backup storage usage but omits the critical clarification that this reduction concerns backup storage only and not total operating costs, which changes the scope of the claim and misrepresents the source."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [
+      "The measured 32% reduction does not concern total operating costs."
+    ],
+    "new_losses": [
+      "The measured 32% reduction concerns backup storage only.",
+      "The measured 32% reduction does not concern total operating costs."
+    ],
+    "language_violations": [],
+    "new_final_text": "Riley wrote PostgreSQL backup scripts for Seabird3; the measured 32% reduction concerns backup storage only, not total operating costs.",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_assist_1",
+    "arm": "asu_fixed",
+    "batch": 2,
+    "original": "陈禾在星舟1中协助林岚使用Python清洗12份表格；只负责缺失值检查，没有负责系统架构。",
+    "proposal": "陈禾在星舟1中协助林岚使用Python清洗12份表格，负责缺失值检查。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": true,
+      "errors": [
+        "Omission of 'only' indicating Chen He was only responsible for missing value checks, and omission of 'did not handle system architecture'."
+      ],
+      "reason": "The proposal omits the limitation that Chen He only handled missing value checks and did not handle system architecture, which is a meaningful detail supported by the source. This changes the scope of responsibility and is therefore an error."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [
+      "陈禾没有负责系统架构。"
+    ],
+    "new_losses": [
+      "陈禾没有负责系统架构。"
+    ],
+    "language_violations": [],
+    "new_final_text": "陈禾在星舟1中协助林岚使用Python清洗12份表格；只负责缺失值检查，没有负责系统架构。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_team_2",
+    "arm": "pre_asu",
+    "batch": 2,
+    "original": "许宁参与星舟2三人小组，只实现Vue表单；SQL接口由林岚完成，团队获得校级二等奖。",
+    "proposal": "许宁参与星舟2三人小组，负责实现Vue表单，团队获得校级二等奖。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal retains all key facts: three-person team, Ning Xu only implemented Vue forms, SQL interface done by Lin Lan, and the team won the school-level second prize. The proposal's phrasing is equivalent and does not omit or alter any supported detail."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [
+      "SQL接口由林岚完成。"
+    ],
+    "new_losses": [
+      "SQL接口由林岚完成。"
+    ],
+    "language_violations": [],
+    "new_final_text": "许宁参与星舟2三人小组，只实现Vue表单；SQL接口由林岚完成，团队获得校级二等奖。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "en_scope_3",
+    "arm": "pre_asu",
+    "batch": 2,
+    "original": "Riley wrote PostgreSQL backup scripts for Seabird3; the measured 32% reduction concerns backup storage only, not total operating costs.",
+    "proposal": "Riley wrote PostgreSQL backup scripts for Seabird3, achieving a 32% reduction in backup storage.",
+    "changed": true,
+    "audit": {
+      "wrong_edit": true,
+      "errors": [
+        "Omission of 'not total operating costs' clarifying the 32% reduction applies only to backup storage."
+      ],
+      "reason": "The proposal omits the important clarification that the 32% reduction concerns backup storage only and not total operating costs, which changes the scope of the claim and is unsupported by the source."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [
+      "The measured 32% reduction concerns backup storage only.",
+      "The measured 32% reduction does not concern total operating costs."
+    ],
+    "new_losses": [
+      "The measured 32% reduction concerns backup storage only.",
+      "The measured 32% reduction does not concern total operating costs."
+    ],
+    "language_violations": [],
+    "new_final_text": "Riley wrote PostgreSQL backup scripts for Seabird3; the measured 32% reduction concerns backup storage only, not total operating costs.",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_assist_1",
+    "arm": "pre_asu",
+    "batch": 2,
+    "original": "陈禾在星舟1中协助林岚使用Python清洗12份表格；只负责缺失值检查，没有负责系统架构。",
+    "proposal": "陈禾在星舟1中协助林岚使用Python清洗12份表格，负责缺失值检查。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": true,
+      "errors": [
+        "Omission of 'only' in 'only responsible for missing value check' and omission of 'did not handle system architecture'."
+      ],
+      "reason": "The proposal omits the limitation that Chen He was only responsible for missing value checks and did not handle system architecture, which changes the scope of responsibility and is unsupported by the source."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [
+      "陈禾没有负责系统架构。"
+    ],
+    "new_losses": [
+      "陈禾没有负责系统架构。"
+    ],
+    "language_violations": [],
+    "new_final_text": "陈禾在星舟1中协助林岚使用Python清洗12份表格；只负责缺失值检查，没有负责系统架构。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_team_2",
+    "arm": "asu_v1",
+    "batch": 2,
+    "original": "许宁参与星舟2三人小组，只实现Vue表单；SQL接口由林岚完成，团队获得校级二等奖。",
+    "proposal": "许宁参与星舟2三人小组，负责实现Vue表单，团队获得校级二等奖。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal accurately reflects the original claim and source, maintaining all required facts: the team size, the individual's role limited to Vue form implementation, the SQL interface done by another member, and the team award."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [
+      "许宁只实现了Vue表单。",
+      "SQL接口由林岚完成。"
+    ],
+    "new_losses": [
+      "SQL接口由林岚完成。"
+    ],
+    "language_violations": [],
+    "new_final_text": "许宁参与星舟2三人小组，只实现Vue表单；SQL接口由林岚完成，团队获得校级二等奖。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "en_scope_3",
+    "arm": "asu_v1",
+    "batch": 2,
+    "original": "Riley wrote PostgreSQL backup scripts for Seabird3; the measured 32% reduction concerns backup storage only, not total operating costs.",
+    "proposal": "Riley wrote PostgreSQL backup scripts for Seabird3, achieving a 32% reduction in backup storage usage.",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal correctly restates the original claim and source, preserving all required facts: Riley wrote PostgreSQL backup scripts, the 32% reduction is specifically in backup storage usage, and it does not imply reduction in total operating costs."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "INSUFFICIENT",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [
+      "The measured 32% reduction concerns backup storage only.",
+      "The measured 32% reduction does not concern total operating costs."
+    ],
+    "new_losses": [
+      "The measured 32% reduction concerns backup storage only.",
+      "The measured 32% reduction does not concern total operating costs."
+    ],
+    "language_violations": [],
+    "new_final_text": "Riley wrote PostgreSQL backup scripts for Seabird3; the measured 32% reduction concerns backup storage only, not total operating costs.",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_assist_1",
+    "arm": "asu_v1",
+    "batch": 2,
+    "original": "陈禾在星舟1中协助林岚使用Python清洗12份表格；只负责缺失值检查，没有负责系统架构。",
+    "proposal": "陈禾在星舟1中协助林岚使用Python清洗12份表格，负责缺失值检查，未参与系统架构设计。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal maintains all required facts from the original and source: Chen He assisted (not led) Lin Lan using Python to clean 12 spreadsheets, was responsible only for missing value checks, and did not participate in system architecture design."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "陈禾在星舟1中协助林岚使用Python清洗12份表格，负责缺失值检查，未参与系统架构设计。",
+    "new_final_relation": "SUPPORTED"
+  }
+]

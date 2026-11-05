@@ -1,0 +1,627 @@
+{
+  "date": "2026-10-30T13:58:02.717011+08:00",
+  "protocol": "1293e6d9687bc91cc8a1a83cbbbf39740080568d65ded5f636768bd80df1353c",
+  "dataset_sha256": "4f743b6414dd1dae84bde328693fe3028ed414ed471f3b8cb309a981a5f75cc5",
+  "career_paired": {
+    "whole": {
+      "n": 60,
+      "positives": 30,
+      "negatives": 30,
+      "missed": 1,
+      "false_blocked": 0,
+      "review": 7,
+      "miss_rate": 0.03333333333333333,
+      "false_block_rate": 0.0,
+      "review_rate": 0.11666666666666667,
+      "positive_review": 1,
+      "positive_not_auto_passed_rate": 0.03333333333333333,
+      "missed_ids": [
+        "career_mosaic_n0"
+      ],
+      "false_blocked_ids": []
+    },
+    "atomic": {
+      "n": 60,
+      "positives": 30,
+      "negatives": 30,
+      "missed": 1,
+      "false_blocked": 0,
+      "review": 4,
+      "miss_rate": 0.03333333333333333,
+      "false_block_rate": 0.0,
+      "review_rate": 0.06666666666666667,
+      "positive_review": 0,
+      "positive_not_auto_passed_rate": 0.0,
+      "missed_ids": [
+        "career_mosaic_n0"
+      ],
+      "false_blocked_ids": []
+    }
+  },
+  "felm_paired": {
+    "whole": {
+      "n": 197,
+      "positives": 97,
+      "negatives": 100,
+      "missed": 3,
+      "false_blocked": 0,
+      "review": 30,
+      "miss_rate": 0.03,
+      "false_block_rate": 0.0,
+      "review_rate": 0.15228426395939088,
+      "positive_review": 4,
+      "positive_not_auto_passed_rate": 0.041237113402061855,
+      "missed_ids": [
+        "felm_wk_161_1",
+        "felm_wk_81_1",
+        "felm_science_46_0"
+      ],
+      "false_blocked_ids": []
+    },
+    "atomic": {
+      "n": 197,
+      "positives": 97,
+      "negatives": 100,
+      "missed": 3,
+      "false_blocked": 0,
+      "review": 42,
+      "miss_rate": 0.03,
+      "false_block_rate": 0.0,
+      "review_rate": 0.2131979695431472,
+      "positive_review": 23,
+      "positive_not_auto_passed_rate": 0.23711340206185566,
+      "missed_ids": [
+        "felm_wk_161_1",
+        "felm_science_3_5",
+        "felm_science_46_0"
+      ],
+      "false_blocked_ids": []
+    }
+  },
+  "valid_career_records": 6,
+  "valid_felm_cases": 197,
+  "planned": {
+    "career": 60,
+    "felm": 200
+  },
+  "limitations": [
+    "Author-labelled synthetic career cases clustered within 6 projects",
+    "FELM evidence is annotation-conditioned, not official benchmark scoring",
+    "Frozen algorithm predates new Agent/original-inventory changes",
+    "No independent human gold for generated edits"
+  ],
+  "career_batch_timing": {
+    "retrieval_first": {
+      "seconds": [
+        0.578,
+        3.516,
+        178.235,
+        3.5,
+        0.5,
+        221.531
+      ],
+      "median_seconds": 3.508
+    },
+    "retrieval_cached": {
+      "seconds": [
+        0.609,
+        0.672,
+        0.687,
+        0.766,
+        0.594,
+        0.594
+      ],
+      "median_seconds": 0.6405000000000001
+    },
+    "atomic": {
+      "seconds": [
+        23.891,
+        33.062,
+        61.641,
+        18.172,
+        41.891,
+        33.016
+      ],
+      "median_seconds": 33.039
+    },
+    "whole_sequential_batches": {
+      "seconds": [
+        16.672,
+        16.625,
+        17.936999999999998,
+        13.734,
+        15.983999999999998,
+        15.594
+      ],
+      "median_seconds": 16.304499999999997
+    },
+    "polish_and_guard": {
+      "seconds": [
+        150.578,
+        144.25,
+        210.703,
+        134.172,
+        129.625,
+        209.187
+      ],
+      "median_seconds": 147.414
+    }
+  },
+  "complete": false,
+  "availability": {
+    "attempted_career_cases": 60,
+    "attempted_felm_cases": 200,
+    "failed_felm_cases": [
+      "felm_reasoning_79_1",
+      "felm_reasoning_70_1",
+      "felm_reasoning_163_12"
+    ]
+  },
+  "created_at": "2026-10-30T14:06:11.916477+08:00",
+  "engineering_reports": [
+    {
+      "status": "FAIL",
+      "date": "2026-10-30T05:16:42.742Z",
+      "report_directory": "output/test-reports/2026-10-30T05-16-41-244Z_agent-browser"
+    },
+    {
+      "status": "FAIL",
+      "date": "2026-10-30T05:19:23.183Z",
+      "report_directory": "output/test-reports/2026-10-30T05-18-33-727Z_agent-browser"
+    },
+    {
+      "status": "PASS",
+      "date": "2026-10-30T05:20:16.005Z",
+      "checks": [
+        "entry",
+        "consent",
+        "create",
+        "waiting-not-fake-connected",
+        "revoke",
+        "mobile-no-overflow"
+      ],
+      "report_directory": "output/test-reports/2026-10-30T05-19-56-196Z_agent-browser",
+      "visual_qa": "NOT_ACCEPTED: screenshot unstyled; superseded by final browser report"
+    },
+    {
+      "status": "FAIL",
+      "date": "2026-10-30T05:22:35.806Z",
+      "report_directory": "output/test-reports/2026-10-30T05-21-46-343Z_agent-browser"
+    },
+    {
+      "status": "PASS",
+      "date": "2026-10-30T05:24:37.801Z",
+      "checks": [
+        "entry",
+        "consent",
+        "create",
+        "waiting-not-fake-connected",
+        "revoke",
+        "mobile-no-overflow"
+      ],
+      "report_directory": "output/test-reports/2026-10-30T05-24-36-744Z_agent-browser"
+    },
+    {
+      "status": "PASS",
+      "date": "2026-10-30T05:31:06.584Z",
+      "checks": [
+        "entry",
+        "consent",
+        "create",
+        "waiting-not-fake-connected",
+        "revoke",
+        "route-leave-revocation",
+        "mobile-no-overflow"
+      ],
+      "report_directory": "output/test-reports/2026-10-30T05-31-05-368Z_agent-browser"
+    },
+    {
+      "status": "FAIL",
+      "date": "2026-10-30T05:43:44.061Z",
+      "report_directory": "output/test-reports/2026-10-30T05-42-54-644Z_agent-browser"
+    },
+    {
+      "status": "FAIL",
+      "date": "2026-10-30T05:47:44.446Z",
+      "report_directory": "output/test-reports/2026-10-30T05-46-54-898Z_agent-browser"
+    },
+    {
+      "status": "FAIL",
+      "date": "2026-10-30T05:52:11.371Z",
+      "report_directory": "output/test-reports/2026-10-30T05-51-21-918Z_agent-browser"
+    },
+    {
+      "status": "FAIL",
+      "date": "2026-10-30T05:54:49.137Z",
+      "report_directory": "output/test-reports/2026-10-30T05-53-59-624Z_agent-browser"
+    },
+    {
+      "status": "PASS",
+      "date": "2026-10-30T05:56:21.327Z",
+      "checks": [
+        "entry",
+        "consent-required",
+        "create",
+        "waiting-not-fake-connected",
+        "revoke-during-pending-refresh",
+        "stale-response-ignored",
+        "revoked-token-denied",
+        "route-leave-revocation",
+        "mobile-no-overflow"
+      ],
+      "report_directory": "output/test-reports/2026-10-30T05-56-20-180Z_agent-browser"
+    },
+    {
+      "status": "PASS",
+      "date": "2026-10-30T05:58:08.116Z",
+      "checks": [
+        "entry",
+        "consent-required",
+        "create",
+        "waiting-not-fake-connected",
+        "revoke-during-pending-refresh",
+        "stale-response-ignored",
+        "revoked-token-denied",
+        "route-leave-revocation",
+        "mobile-no-overflow"
+      ],
+      "report_directory": "output/test-reports/2026-10-30T05-58-06-885Z_agent-browser"
+    },
+    {
+      "status": "FAIL",
+      "started_at": "2026-10-30T13:09:01.767687+08:00",
+      "finished_at": "2026-10-30T13:09:05.984860+08:00",
+      "elapsed_seconds": 4.217173,
+      "report_directory": "output/test-reports/20261030_130901_767687_agent-build"
+    },
+    {
+      "status": "FAIL",
+      "started_at": "2026-10-30T13:10:26.995644+08:00",
+      "finished_at": "2026-10-30T13:10:27.222816+08:00",
+      "methods": 16,
+      "passed": 15,
+      "failed": 1,
+      "skipped": 0,
+      "parameter_subcases": 21,
+      "elapsed_seconds": 0.227172,
+      "report_directory": "output/test-reports/20261030_131026_995644_agent-boundaries"
+    },
+    {
+      "status": "PASS",
+      "started_at": "2026-10-30T13:10:27.399662+08:00",
+      "finished_at": "2026-10-30T13:10:30.989547+08:00",
+      "elapsed_seconds": 3.589885,
+      "report_directory": "output/test-reports/20261030_131027_399662_agent-build-retest"
+    },
+    {
+      "status": "PASS_WITH_SKIPS",
+      "started_at": "2026-10-30T13:11:40.947849+08:00",
+      "finished_at": "2026-10-30T13:11:51.240176+08:00",
+      "methods": 216,
+      "passed": 215,
+      "failed": 0,
+      "skipped": 1,
+      "parameter_subcases": 279,
+      "elapsed_seconds": 10.292327,
+      "report_directory": "output/test-reports/20261030_131140_947849_agent-backend-full"
+    },
+    {
+      "status": "FAIL",
+      "started_at": "2026-10-30T13:12:44.653398+08:00",
+      "finished_at": "2026-10-30T13:12:44.858610+08:00",
+      "methods": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "parameter_subcases": 0,
+      "elapsed_seconds": 0.205212,
+      "report_directory": "output/test-reports/20261030_131244_653398_agent-mcp-integration"
+    },
+    {
+      "status": "FAIL",
+      "started_at": "2026-10-30T13:13:07.610335+08:00",
+      "finished_at": "2026-10-30T13:13:10.488885+08:00",
+      "methods": 2,
+      "passed": 0,
+      "failed": 2,
+      "skipped": 0,
+      "parameter_subcases": 4,
+      "elapsed_seconds": 2.87855,
+      "report_directory": "output/test-reports/20261030_131307_610335_agent-mcp-retest"
+    },
+    {
+      "status": "PASS",
+      "started_at": "2026-10-30T13:13:26.967205+08:00",
+      "finished_at": "2026-10-30T13:13:29.870301+08:00",
+      "methods": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "parameter_subcases": 4,
+      "elapsed_seconds": 2.903096,
+      "report_directory": "output/test-reports/20261030_131326_967205_agent-mcp-http-fixed"
+    },
+    {
+      "status": "FAIL",
+      "date": "2026-10-30T13:15:18.356111+08:00",
+      "elapsed_seconds": 20.906,
+      "report_directory": "output/test-reports/20261030_131457_harness-live"
+    },
+    {
+      "status": "PASS",
+      "date": "2026-10-30T13:18:04.327675+08:00",
+      "elapsed_seconds": 16.188,
+      "report_directory": "output/test-reports/20261030_131748_harness-live"
+    },
+    {
+      "status": "PASS",
+      "started_at": "2026-10-30T13:21:56.521113+08:00",
+      "finished_at": "2026-10-30T13:21:58.442996+08:00",
+      "elapsed_seconds": 1.921883,
+      "report_directory": "output/test-reports/20261030_132156_521113_agent-frontend-smoke"
+    },
+    {
+      "status": "PASS",
+      "started_at": "2026-10-30T13:21:59.194634+08:00",
+      "finished_at": "2026-10-30T13:22:00.172759+08:00",
+      "elapsed_seconds": 0.978125,
+      "report_directory": "output/test-reports/20261030_132159_194634_agent-lint"
+    },
+    {
+      "status": "PASS",
+      "started_at": "2026-10-30T13:26:23.188141+08:00",
+      "finished_at": "2026-10-30T13:26:25.939386+08:00",
+      "methods": 29,
+      "passed": 29,
+      "failed": 0,
+      "skipped": 0,
+      "parameter_subcases": 0,
+      "elapsed_seconds": 2.751245,
+      "report_directory": "output/test-reports/20261030_132623_188141_agent-edit-inventory"
+    },
+    {
+      "date": "2026-10-30T13:28:34.770656+08:00",
+      "report_directory": "output/test-reports/20261030_132831_agent-retrieval-60"
+    },
+    {
+      "status": "PASS_WITH_SKIPS",
+      "started_at": "2026-10-30T13:28:34.921042+08:00",
+      "finished_at": "2026-10-30T13:28:47.517985+08:00",
+      "methods": 221,
+      "passed": 220,
+      "failed": 0,
+      "skipped": 1,
+      "parameter_subcases": 283,
+      "elapsed_seconds": 12.596943,
+      "report_directory": "output/test-reports/20261030_132834_921042_agent-final-backend"
+    },
+    {
+      "status": "PASS",
+      "started_at": "2026-10-30T13:31:01.617204+08:00",
+      "finished_at": "2026-10-30T13:31:01.796028+08:00",
+      "methods": 17,
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0,
+      "parameter_subcases": 21,
+      "elapsed_seconds": 0.178824,
+      "report_directory": "output/test-reports/20261030_133101_617204_agent-revoke-inflight"
+    },
+    {
+      "status": "PASS",
+      "started_at": "2026-10-30T13:31:01.962353+08:00",
+      "finished_at": "2026-10-30T13:31:05.042058+08:00",
+      "elapsed_seconds": 3.079705,
+      "report_directory": "output/test-reports/20261030_133101_962353_agent-consent-build"
+    },
+    {
+      "status": "PASS",
+      "started_at": "2026-10-30T13:32:46.373717+08:00",
+      "finished_at": "2026-10-30T13:32:46.592476+08:00",
+      "methods": 18,
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "parameter_subcases": 21,
+      "elapsed_seconds": 0.218759,
+      "report_directory": "output/test-reports/20261030_133246_373717_agent-secret-boundary"
+    },
+    {
+      "status": "PASS",
+      "started_at": "2026-10-30T13:41:01.889473+08:00",
+      "finished_at": "2026-10-30T13:41:02.294932+08:00",
+      "methods": 36,
+      "passed": 36,
+      "failed": 0,
+      "skipped": 0,
+      "parameter_subcases": 27,
+      "elapsed_seconds": 0.405459,
+      "report_directory": "output/test-reports/20261030_134101_889473_agent-numeric-revoke-fixes"
+    },
+    {
+      "status": "FAIL",
+      "started_at": "2026-10-30T13:41:50.693059+08:00",
+      "finished_at": "2026-10-30T13:41:50.763330+08:00",
+      "elapsed_seconds": 0.070271,
+      "report_directory": "output/test-reports/20261030_134150_693059_agent-final-build"
+    },
+    {
+      "status": "FAIL",
+      "started_at": "2026-10-30T13:41:53.300496+08:00",
+      "finished_at": "2026-10-30T13:42:05.643966+08:00",
+      "methods": 213,
+      "passed": 188,
+      "failed": 24,
+      "skipped": 1,
+      "parameter_subcases": 266,
+      "elapsed_seconds": 12.34347,
+      "report_directory": "output/test-reports/20261030_134153_300496_agent-final-fixes"
+    },
+    {
+      "status": "PASS",
+      "started_at": "2026-10-30T13:42:23.983337+08:00",
+      "finished_at": "2026-10-30T13:42:28.534676+08:00",
+      "elapsed_seconds": 4.551339,
+      "report_directory": "output/test-reports/20261030_134223_983337_agent-final-build-retest"
+    },
+    {
+      "status": "FAIL",
+      "started_at": "2026-10-30T13:44:12.640263+08:00",
+      "finished_at": "2026-10-30T13:44:25.506231+08:00",
+      "methods": 228,
+      "passed": 226,
+      "failed": 1,
+      "skipped": 1,
+      "parameter_subcases": 289,
+      "elapsed_seconds": 12.865968,
+      "report_directory": "output/test-reports/20261030_134412_640263_agent-final-encoding-proxy"
+    },
+    {
+      "status": "PASS_WITH_SKIPS",
+      "started_at": "2026-10-30T13:46:18.935745+08:00",
+      "finished_at": "2026-10-30T13:46:31.545304+08:00",
+      "methods": 228,
+      "passed": 227,
+      "failed": 0,
+      "skipped": 1,
+      "parameter_subcases": 289,
+      "elapsed_seconds": 12.609559,
+      "report_directory": "output/test-reports/20261030_134618_935745_agent-final-regression"
+    },
+    {
+      "status": "PASS",
+      "started_at": "2026-10-30T13:51:21.678599+08:00",
+      "finished_at": "2026-10-30T13:51:26.940998+08:00",
+      "methods": 49,
+      "passed": 49,
+      "failed": 0,
+      "skipped": 0,
+      "parameter_subcases": 6,
+      "elapsed_seconds": 5.262399,
+      "report_directory": "output/test-reports/20261030_135121_678599_agent-original-reuse"
+    },
+    {
+      "status": "PASS",
+      "started_at": "2026-10-30T13:53:24.912363+08:00",
+      "finished_at": "2026-10-30T13:53:26.644272+08:00",
+      "elapsed_seconds": 1.731909,
+      "report_directory": "output/test-reports/20261030_135324_912363_agent-final-lint"
+    },
+    {
+      "status": "PASS_WITH_SKIPS",
+      "started_at": "2026-10-30T13:58:08.253193+08:00",
+      "finished_at": "2026-10-30T13:58:20.780261+08:00",
+      "methods": 230,
+      "passed": 229,
+      "failed": 0,
+      "skipped": 1,
+      "parameter_subcases": 289,
+      "elapsed_seconds": 12.527068,
+      "report_directory": "output/test-reports/20261030_135808_253193_agent-release-final"
+    },
+    {
+      "status": "PASS",
+      "started_at": "2026-10-30T14:04:19.996965+08:00",
+      "finished_at": "2026-10-30T14:04:20.459208+08:00",
+      "elapsed_seconds": 0.462243,
+      "report_directory": "output/test-reports/20261030_140419_996965_eval-fixture-preflight"
+    }
+  ],
+  "usage_records": {
+    "resume-status-20261030-incomplete-fixture.json": {
+      "usage": {
+        "calls": 335,
+        "prompt_tokens": 477799,
+        "completion_tokens": 176920,
+        "total_tokens": 654719
+      },
+      "auditor_usage": {
+        "calls": 0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0
+      },
+      "note": "SDK usage is not included; previous failures preserved in local attempts."
+    },
+    "resume-status-20261030-valid-main.json": {
+      "usage": {
+        "calls": 406,
+        "prompt_tokens": 615455,
+        "completion_tokens": 213132,
+        "total_tokens": 828587
+      },
+      "auditor_usage": {
+        "calls": 32,
+        "prompt_tokens": 45440,
+        "completion_tokens": 3267,
+        "total_tokens": 48707
+      },
+      "note": "SDK usage is not included; previous failures preserved in local attempts."
+    },
+    "resume-status.json": {
+      "usage": {
+        "calls": 4,
+        "prompt_tokens": 6108,
+        "completion_tokens": 13419,
+        "total_tokens": 19527
+      },
+      "auditor_usage": {
+        "calls": 0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0
+      },
+      "note": "SDK usage is not included; previous failures preserved in local attempts."
+    }
+  },
+  "harness": {
+    "date": "2026-10-30T13:18:04.327675+08:00",
+    "model": "gpt-4.1-mini",
+    "endpoint": "https://api.chatanywhere.tech/v1",
+    "fixture": "3 synthetic Atlas files",
+    "connected": true,
+    "retrieved_cards": 4,
+    "submitted_cards": 3,
+    "elapsed_seconds": 16.188,
+    "exit_code": 0,
+    "failure": null,
+    "status": "PASS"
+  },
+  "lexical_fixture": {
+    "date": "2026-10-30T13:28:34.770656+08:00",
+    "cases": 60,
+    "documents": 180,
+    "recalled": 180,
+    "expected": 180,
+    "wrong_project_hits": 0,
+    "median_seconds": 0.06199999999807915,
+    "p95_seconds": 0.07800000000133878,
+    "limitation": "Exact project names; no synonym/multihop/large-tree benchmark; wrong-project retrieval is not personal-attribution error."
+  },
+  "delivery_source_sha256": {
+    "backend/services/agent_bridge.py": "33bd07d111a99d9f3376487c4c97527a4fb9bc542923ce724d56d40ef300988b",
+    "docs/agent-connector.md": "b2697613aca83ded0ae174507e0e99bfb6c8cf13e64c2a5c59136d8166f6cdb6",
+    "docs/testing-report-2026-10-30-agent.md": "4c42cce4e9a62972907200398ebaccffefae60b680c5bfbfaf060f0580cd5ebb",
+    "frontend/src/components/AgentConnector.tsx": "2836331931d208a8ddfc4076764ae5a2f8d8217c4f0b98e49716e62e5642ee24",
+    "requirements-agent.txt": "2a60ed5715622d0881b8fa626a973e3f8c489366706d98d361a327060d136505",
+    "scripts/agent_browser_smoke.cjs": "d713c4b7cf06158f1ffedebf397666ef1cf907a0644d36037751b191b838c2cd",
+    "scripts/agent_mcp.py": "f40fa3c05645462af92c038aa84507d968d81075586d414025f990968e0d03b3",
+    "scripts/agent_retrieval_benchmark.py": "7299195fdeca4620bbe7be246b4aa31affb9850dc23a694d3675a8343523fb26",
+    "scripts/harness_agent_probe.py": "39389a1b519b28a2b7d96ef830da9da672f39fb326b63034f234162f15932f12",
+    "scripts/summarize_resumed_eval.py": "f73b38d1588c1163da3f492d08e98db77d86138f6ca0370410290d8d7747d06a",
+    "tests/test_agent_bridge.py": "6c9adbe64884550ea33b4a98ef1edb483e7b09b332a4cdaa4e3e12dff4c96be7",
+    "tests/test_agent_mcp.py": "08cfc569b187fdaa98aff97742fed69043b82d9ef522cb2eabf914dd5d1ea8f3",
+    "tests/test_edit_inventory.py": "6fa20b2e586885700f3068dad3220518bf536a95c994ad04c05dc7d55f06e36c",
+    "tests/test_numeric_unit_guard.py": "f524450e3b1b3b337ca8aa057b5788d7a3a7de8557ff2d289dbc0c4cbbbb056c",
+    "README.md": "5c4690add850d04dea355d06de7d90cd952b689672da09dec9cd806ec559899c",
+    "backend/app.py": "405e20d66304ee99f9954600c67a85c95074d382f039a8af39e1d9395bd67f54",
+    "backend/services/edit_guard.py": "5c7d192ad666db011288ddc610fe1fd14641e00ca70d0aa61de0e93e83a13742",
+    "backend/services/grounded_workflow.py": "114d9a14574f610f78b0b6eb55d5af5377a7b5c492cecc4fb3dd9ca6f331d077",
+    "backend/services/structured_verifier.py": "73f0a08aeef143be0dedf4dd706935e9c0ef53bfa1c18b91cbe38463647fe1ca",
+    "frontend/src/pages/EvidenceWorkspacePage.tsx": "25a2f9baefd9bd29f7bf8096727005defb3605f9262f7a19610a2c709af91ae6",
+    "frontend/src/workspace.css": "2a7eba736bc8807b5099aed03e0a24481f685c4fa95449cc041277917b15b10b",
+    "scripts/resume_expanded_eval.py": "272405a0dc3369f09fdea31d7e6a5aee2ff60213c830d858ebf8ce708acab46a",
+    "tests/test_c_audit.py": "2ee5a32e479a8f2924c5a058dc70d8a78dc26cf3530ec19a7f8e42cb50b57775",
+    "tests/test_member_c.py": "142d4d21ade43059409b1723d9416f1437eeb4fb9a5e29751a8071a9c331275e"
+  }
+}

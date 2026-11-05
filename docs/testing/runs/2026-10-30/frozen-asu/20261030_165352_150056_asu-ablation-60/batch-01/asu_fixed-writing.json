@@ -1,0 +1,40 @@
+{
+  "proposals": [
+    {
+      "claim_id": "claim_zh_sample_1",
+      "text": "陈禾对星舟1进行便利抽样的可用性访谈，访谈12人，其中8人完成操作，结果不代表总体用户。",
+      "evidence_ids": [
+        "ev_zh_sample_1"
+      ]
+    },
+    {
+      "claim_id": "claim_zh_pilot_2",
+      "text": "许宁为星舟2制作SQL看板，在两家门店试点期间整理了20条反馈，未进行全公司推广。",
+      "evidence_ids": [
+        "ev_zh_pilot_2"
+      ]
+    },
+    {
+      "claim_id": "claim_zh_correction_3",
+      "text": "唐遥为星舟3编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+      "evidence_ids": [
+        "ev_zh_correction_3"
+      ]
+    }
+  ],
+  "source": {
+    "name": "ASu-skills/great-resume",
+    "repository": "https://github.com/Hisn00w/ASu-skills",
+    "commit": "d27fd2a3864c48472a5c8ed942410098ba9cd35f",
+    "license": "MIT",
+    "resources": {
+      "skills/great-resume/SKILL.md": "82ccf4a504f0498072ea1a46a42b4b9bd035129ca27d132a66db244897b4067f",
+      "skills/great-resume/references/claim-evidence-ledger.md": "b478bf362024b910db084e8a238fae82c3af2298316bec98f070ef2647afce33",
+      "skills/great-resume/references/business-analysis-evidence.md": "f3fc5376e5a102c120f760c2053e8afe1f9fc10817887694441612915a11a91d"
+    },
+    "adapter_policy_sha256": "3ef6b6a0efc296a2ad5b086c0f7a7067446f506b8a4fd5075ce7bf2a0a575b5f",
+    "role": "rewrite_proposal_only",
+    "original_files_unchanged": true,
+    "edit_policy_sha256": "31e06848c5dc374125af733523b4d4e5b415e95beffe73e509108e9f2c20bcca"
+  }
+}

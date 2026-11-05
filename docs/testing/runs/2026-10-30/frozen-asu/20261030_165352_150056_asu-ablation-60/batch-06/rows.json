@@ -1,0 +1,170 @@
+[
+  {
+    "id": "en_points_3",
+    "arm": "pre_asu",
+    "batch": 6,
+    "original": "Riley evaluated Seabird3 offline: accuracy increased from 80% to 84%, an increase of 4 percentage points. Riley did not train the model.",
+    "proposal": "Riley evaluated Seabird3 offline, contributing to an accuracy increase from 80% to 84%, without training the model.",
+    "changed": true,
+    "audit": {
+      "wrong_edit": true,
+      "errors": [
+        "Added implication that Riley contributed to the accuracy increase, which is unsupported; original states Riley evaluated but did not train the model, so contribution to increase is not claimed."
+      ],
+      "reason": "The proposal changes 'Riley evaluated Seabird3 offline: accuracy increased from 80% to 84%' to 'Riley evaluated Seabird3 offline, contributing to an accuracy increase from 80% to 84%,' which implies Riley contributed to the increase. The source only supports that Riley evaluated and did not train the model; it does not support that Riley contributed to the increase. This is an unsupported addition."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [
+      "The accuracy increase of Seabird3 was 4 percentage points."
+    ],
+    "new_losses": [
+      "Riley did not train the Seabird3 model."
+    ],
+    "language_violations": [],
+    "new_final_text": "Riley evaluated Seabird3 offline: accuracy increased from 80% to 84%, an increase of 4 percentage points. Riley did not train the model.",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "en_points_2",
+    "arm": "pre_asu",
+    "batch": 6,
+    "original": "Morgan evaluated Seabird2 offline: accuracy increased from 80% to 84%, an increase of 4 percentage points. Morgan did not train the model.",
+    "proposal": "Morgan evaluated Seabird2 offline, contributing to an accuracy increase from 80% to 84%, without training the model.",
+    "changed": true,
+    "audit": {
+      "wrong_edit": true,
+      "errors": [
+        "Added implication that Morgan contributed to the accuracy increase, which is unsupported; original states Morgan evaluated but did not train the model, so contribution to increase is not claimed."
+      ],
+      "reason": "The proposal changes 'Morgan evaluated Seabird2 offline: accuracy increased from 80% to 84%' to 'Morgan evaluated Seabird2 offline, contributing to an accuracy increase from 80% to 84%,' which implies Morgan contributed to the increase. The source only supports that Morgan evaluated and did not train the model; it does not support that Morgan contributed to the increase. This is an unsupported addition."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [
+      "The accuracy increase of Seabird2 was 4 percentage points."
+    ],
+    "new_losses": [
+      "Morgan did not train the Seabird2 model."
+    ],
+    "language_violations": [],
+    "new_final_text": "Morgan evaluated Seabird2 offline: accuracy increased from 80% to 84%, an increase of 4 percentage points. Morgan did not train the model.",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "en_team_3",
+    "arm": "pre_asu",
+    "batch": 6,
+    "original": "Riley implemented only the React form for Seabird3 in a three-person team; Lee wrote the API. The team won a university-level second prize.",
+    "proposal": "Riley implemented the React form for Seabird3 in a three-person team that won a university-level second prize; Lee wrote the API.",
+    "changed": true,
+    "audit": {
+      "wrong_edit": true,
+      "errors": [
+        "Removed 'only' before 'the React form', which changes the meaning by implying Riley may have implemented more than just the React form; original states Riley implemented only the React form."
+      ],
+      "reason": "The proposal omits the word 'only' from 'Riley implemented only the React form for Seabird3,' which is a meaningful detail supported by the source. Removing 'only' changes the scope of Riley's implementation and is therefore an incorrect edit."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [
+      "Riley implemented only the React form for Seabird3 in a three-person team."
+    ],
+    "new_losses": [
+      "Riley implemented only the React form for Seabird3 in a three-person team."
+    ],
+    "language_violations": [],
+    "new_final_text": "Riley implemented only the React form for Seabird3 in a three-person team; Lee wrote the API. The team won a university-level second prize.",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "en_points_3",
+    "arm": "asu_v1",
+    "batch": 6,
+    "original": "Riley evaluated Seabird3 offline: accuracy increased from 80% to 84%, an increase of 4 percentage points. Riley did not train the model.",
+    "proposal": "Riley evaluated Seabird3 offline, confirming accuracy improvement from 80% to 84%, without training the model.",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal preserves all required facts: offline evaluation, same accuracy endpoints (making explicit delta redundant), and that Riley did not train the model. The paraphrase is equivalent and does not omit or add unsupported details."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [
+      "The accuracy increase of Seabird3 was 4 percentage points."
+    ],
+    "new_losses": [
+      "did not train"
+    ],
+    "language_violations": [],
+    "new_final_text": "Riley evaluated Seabird3 offline: accuracy increased from 80% to 84%, an increase of 4 percentage points. Riley did not train the model.",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "en_points_2",
+    "arm": "asu_v1",
+    "batch": 6,
+    "original": "Morgan evaluated Seabird2 offline: accuracy increased from 80% to 84%, an increase of 4 percentage points. Morgan did not train the model.",
+    "proposal": "Morgan evaluated Seabird2 offline, confirming accuracy improvement from 80% to 84%, without training the model.",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal preserves all required facts: offline evaluation, same accuracy endpoints (making explicit delta redundant), and that Morgan did not train the model. The paraphrase is equivalent and does not omit or add unsupported details."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [
+      "The accuracy increase of Seabird2 was 4 percentage points."
+    ],
+    "new_losses": [
+      "did not train"
+    ],
+    "language_violations": [],
+    "new_final_text": "Morgan evaluated Seabird2 offline: accuracy increased from 80% to 84%, an increase of 4 percentage points. Morgan did not train the model.",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "en_team_3",
+    "arm": "asu_v1",
+    "batch": 6,
+    "original": "Riley implemented only the React form for Seabird3 in a three-person team; Lee wrote the API. The team won a university-level second prize.",
+    "proposal": "Riley implemented the React form for Seabird3 in a three-person team, contributing to the team's university-level second prize.",
+    "changed": true,
+    "audit": {
+      "wrong_edit": true,
+      "errors": [
+        "Omission of 'only' before 'the React form' removes the limitation that Riley implemented only the React form.",
+        "Omission of 'Lee wrote the API' removes the attribution of the API implementation to Lee, which is a required fact."
+      ],
+      "reason": "The proposal omits the fact that Riley implemented only the React form, which is a meaningful limitation, and also omits that Lee wrote the API. Both are required facts. The proposal also changes 'the team won a university-level second prize' to 'contributing to the team's university-level second prize', which is acceptable, but the omissions are errors."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [
+      "Riley implemented only the React form for Seabird3.",
+      "Lee wrote the API for Seabird3."
+    ],
+    "new_losses": [
+      "Riley implemented only the React form for Seabird3 in a three-person team.",
+      "Lee wrote the API for Seabird3.",
+      "The team that worked on Seabird3 won a university-level second prize."
+    ],
+    "language_violations": [],
+    "new_final_text": "Riley implemented only the React form for Seabird3 in a three-person team; Lee wrote the API. The team won a university-level second prize.",
+    "new_final_relation": "SUPPORTED"
+  }
+]

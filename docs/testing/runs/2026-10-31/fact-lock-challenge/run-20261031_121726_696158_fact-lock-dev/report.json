@@ -1,0 +1,262 @@
+{
+  "date": "2026-10-31T12:17:26.696158+08:00",
+  "status": "COMPLETE_RULE_ONLY",
+  "split": "dev",
+  "dataset_sha256": "877b698a0df9d98e10dc8bf82dc4a4425029049af890611f10f188efc1b91bf2",
+  "baseline": "deterministic lost_qualifiers + proposal_violations",
+  "candidate": "baseline + locked_edit_findings",
+  "counts": {
+    "SAFE_cases": 10,
+    "WRONG_cases": 10,
+    "baseline_SAFE_pass": 10,
+    "baseline_WRONG_block": 4,
+    "baseline_WRONG_pass": 6,
+    "cases": 20,
+    "new_SAFE_pass": 10,
+    "new_WRONG_block": 10
+  },
+  "records": [
+    {
+      "id": "new-01-safe",
+      "category": "number",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "4ae5cba1a71c04cb0e007f5c2c17290d31e4cebbd06e91ad38410f669555be4b"
+    },
+    {
+      "id": "new-01-wrong",
+      "category": "number",
+      "expected": "WRONG",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "遗漏或改变原有数字／单位：80%"
+      ],
+      "text_sha256": "0065a909cb6e6de9eb3150a3d26681b99d73f123601c532b6eb99f5d0fced2d8"
+    },
+    {
+      "id": "new-02-safe",
+      "category": "role_scope",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "4109e78c252deee897cc975fc95a925045ab040a68adf6b85f9afebe754a3168"
+    },
+    {
+      "id": "new-02-wrong",
+      "category": "role_scope",
+      "expected": "WRONG",
+      "baseline_block": true,
+      "new_block": true,
+      "baseline_findings": [
+        "只负责"
+      ],
+      "new_findings": [
+        "遗漏已核验限定条件：只负责"
+      ],
+      "text_sha256": "bf262eb4aba14325cf7949b91947cb2cc87d1df07eaf5462a7e28c856d261f1e"
+    },
+    {
+      "id": "new-03-safe",
+      "category": "offline",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "d223b2d82213bd861394c9dfec46a16e077738cdd53b14a43552d061778cb1da"
+    },
+    {
+      "id": "new-03-wrong",
+      "category": "offline",
+      "expected": "WRONG",
+      "baseline_block": true,
+      "new_block": true,
+      "baseline_findings": [
+        "离线",
+        "尚未上线"
+      ],
+      "new_findings": [
+        "遗漏已核验限定条件：离线",
+        "遗漏已核验限定条件：尚未上线"
+      ],
+      "text_sha256": "003d43df7c8643ce5966625074e5efba6c0c1a4abc976471010a50ee834c9d57"
+    },
+    {
+      "id": "new-04-safe",
+      "category": "assistance",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "56d71021952d57f5623f05d2b2baa4c9fcf602478eb513282d33295e9331f612"
+    },
+    {
+      "id": "new-04-wrong",
+      "category": "assistance",
+      "expected": "WRONG",
+      "baseline_block": true,
+      "new_block": true,
+      "baseline_findings": [
+        "协助",
+        "未主导"
+      ],
+      "new_findings": [
+        "遗漏已核验限定条件：协助",
+        "遗漏已核验限定条件：未主导"
+      ],
+      "text_sha256": "c9ab1635c9e7ef840de26e7d997606053a58d427f5e1b3f318dacda3fcc38f16"
+    },
+    {
+      "id": "new-05-safe",
+      "category": "owner",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "a40ff2054ccc55bd040fff5b88bc948a75434ad65fb3b2879478ad59a435aa55"
+    },
+    {
+      "id": "new-05-wrong",
+      "category": "owner",
+      "expected": "WRONG",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "遗漏原文明确的负责人：林岚"
+      ],
+      "text_sha256": "089a7bf531de62cb037e7ba4b35c05b594771a9ef6ac73b7e0814d9452b22ca7"
+    },
+    {
+      "id": "new-06-safe",
+      "category": "estimate",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "9496eb6a553f40694dd235d7153a73fcab0129e931355634a723c4ae2b00a714"
+    },
+    {
+      "id": "new-06-wrong",
+      "category": "estimate",
+      "expected": "WRONG",
+      "baseline_block": true,
+      "new_block": true,
+      "baseline_findings": [
+        "尚未实施",
+        "预计"
+      ],
+      "new_findings": [
+        "遗漏已核验限定条件：尚未实施",
+        "遗漏已核验限定条件：预计"
+      ],
+      "text_sha256": "c2c3b1cf7d34b5fff33ca24020c0b092d99e28194b390f7f9be28c139c818a56"
+    },
+    {
+      "id": "new-07-safe",
+      "category": "denominator",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "83b9b89427dbf87cce154059ec89e1178c8647bdf264fb080d0feea6889791ba"
+    },
+    {
+      "id": "new-07-wrong",
+      "category": "denominator",
+      "expected": "WRONG",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "遗漏或改变原有数字／单位：40"
+      ],
+      "text_sha256": "6bf18d290c973468f2fcf231cc96cca950c2a42f75d6a4457a9dfb7891c51dca"
+    },
+    {
+      "id": "new-08-safe",
+      "category": "unit_wording",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "c851ac68c3f6ed7654e91d74240ec1ccc2b160f582ff622335a234a1f1e860bf"
+    },
+    {
+      "id": "new-08-wrong",
+      "category": "unit_wording",
+      "expected": "WRONG",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "遗漏或改变原有数字／单位：200ms"
+      ],
+      "text_sha256": "1f138b23ba362d2b0965c866fc075a3c1db7d35a0945fd6785d8cca739ef0d4d"
+    },
+    {
+      "id": "new-09-safe",
+      "category": "percentage_points",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "43126a8e0497411b4c2346bddb3628811a14a188d9efd937724a632a663637b1"
+    },
+    {
+      "id": "new-09-wrong",
+      "category": "percentage_points",
+      "expected": "WRONG",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "遗漏或改变原有数字／单位：4percentagepoints"
+      ],
+      "text_sha256": "7c88a12e5ed609e8087b112ee398ae7f2b82a1276e927743cf00c7b92d7b8266"
+    },
+    {
+      "id": "new-10-safe",
+      "category": "attribution",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "8f9b5d42153336766f3ffae5acae27b49384d7ad1d4ffe8b4b245ceae4738ec5"
+    },
+    {
+      "id": "new-10-wrong",
+      "category": "attribution",
+      "expected": "WRONG",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "改变人物与技术的归属：周同学 / vue",
+        "改变人物与技术的归属：林岚 / redis"
+      ],
+      "text_sha256": "0bbb6d3a9d089cac50eddcaba57589ccaad1396db2d5d38babd71cb3ff647654"
+    }
+  ],
+  "limits": [
+    "Fictional author-labeled text, not independent human annotation.",
+    "Pairs were manually constructed; they are not model outputs.",
+    "Original source was stipulated by the fixture, not verified by SAG.",
+    "No LLM atomic judge or preservation judge was run on new cases.",
+    "Rates apply only to this rule-only challenge, not the full app."
+  ]
+}

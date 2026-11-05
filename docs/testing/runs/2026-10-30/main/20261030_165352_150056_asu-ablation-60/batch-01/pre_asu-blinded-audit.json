@@ -1,0 +1,19 @@
+{
+  "claim_zh_sample_1": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal is a paraphrase with equivalent meaning and punctuation change from semicolon to comma, which does not alter the facts or meaning. All required facts are preserved."
+  },
+  "claim_zh_pilot_2": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal rephrases '没有全公司推广' as '未推广至全公司', which is equivalent in meaning. All required facts are preserved."
+  },
+  "claim_zh_correction_3": {
+    "wrong_edit": true,
+    "errors": [
+      "Changed semicolon to comma between '2026年5月获得校级二等奖' and '早期一等奖记录已更正'."
+    ],
+    "reason": "The original uses a semicolon to separate two related but distinct facts, indicating a pause and separation. The proposal replaces it with a comma, which can imply a closer connection or continuation, potentially altering the intended emphasis or clarity. Since the source uses a semicolon, the proposal's comma is a factual change in punctuation that affects the presentation of the facts."
+  }
+}

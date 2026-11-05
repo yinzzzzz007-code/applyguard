@@ -5,6 +5,8 @@ import { useDemo } from '../context/DemoContext'
 import { zhText } from '../i18n'
 import { STEP_META, STEP_ORDER, loadMaxStep, rememberMaxStep, stepFromPath, stepIndex } from '../flow'
 import { Icon, type IconName } from './Icon'
+import { ProjectReel } from './ProjectReel'
+import { PageMotion } from './PageMotion'
 
 const STEP_ICONS: IconName[] = ['upload', 'folder', 'briefcase', 'layers', 'file', 'shield', 'window', 'check']
 const TOOLS: { path:string; label:string; icon:IconName }[] = [
@@ -72,8 +74,9 @@ export function AppShell({children}:{children:React.ReactNode}) {
       <main id="workspace-main" className="workspace-main" tabIndex={-1}>
         {workflow?._prerecorded && <p className="workspace-notice">{zhText(workflow._prerecorded.notice)}</p>}
         {fromPath && workflow?.mock_notice && !workflow._prerecorded && <p className="sample-data-note">{zhText(workflow.mock_notice)}</p>}
-        {children}
+        <PageMotion>{children}</PageMotion>
       </main>
+      <ProjectReel />
       <footer className="workspace-footer"><span>ApplyGuard · 让表达有据可依</span><details><summary>数据与模型说明</summary><p>数据来源：{dataSourceLabel}。{workflow?.mock_notice ? zhText(workflow.mock_notice) : ''} 岗位解析与 SAG 分别配置；SAG 启用时会向所配置的模型服务发送材料。</p></details></footer>
     </div>
   </div>

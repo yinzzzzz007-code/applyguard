@@ -1,0 +1,97 @@
+{
+  "updated_at": "2026-10-30T17:05:17.968911+08:00",
+  "complete_rows": 27,
+  "errors": [
+    {
+      "batch": 5,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 3,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 7,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 8,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 9,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 10,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 11,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 12,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 4,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 14,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 15,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 16,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 17,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 13,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 19,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 18,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    },
+    {
+      "batch": 6,
+      "type": "ModelFailure",
+      "message": "Model service returned HTTP 403"
+    }
+  ],
+  "usage": {
+    "calls": 143,
+    "prompt_tokens": 198959,
+    "completion_tokens": 44540,
+    "total_tokens": 243499
+  }
+}

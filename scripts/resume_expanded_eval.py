@@ -8,6 +8,21 @@ import expanded_grounding_eval as run
 class StopRun(BaseException):pass
 STOP=threading.Event()
 BaseClient=run.HttpModelClient
+def preflight(data):
+    """Validate non-model stages before any paid call."""
+    from jsonschema import Draft202012Validator
+    names=('audit-record','claim-verification','error','evidence-match','experience',
+           'form-mapping','parsed-jd','resume-claim','risk-result')
+    for name in names:
+        path=run.ROOT/'contracts'/(name+'.schema.json')
+        Draft202012Validator.check_schema(json.loads(path.read_text(encoding='utf-8')))
+    from backend.services.claim_validator import ClaimValidator
+    from scripts.evaluate_external_benchmark_pilot import _felm_validator_results
+    for record in data['career_records']:
+        candidate,items,claims=run.make_record(record,[c for c in data['career'] if c['record_id']==record['id']])
+        for claim in claims:ClaimValidator().verify(claim,items,candidate)
+    _felm_validator_results(data['felm'])
+
 def main():
     from backend.services.model_client import ModelFailure
     class Client(BaseClient):
@@ -22,11 +37,12 @@ def main():
     for name,expected in protocol['code'].items():
         if hashlib.sha256((run.ROOT/name).read_bytes()).hexdigest()!=expected:
             raise SystemExit('Frozen algorithm changed: '+name+'; create a new protocol instead.')
-    run.configure()
-    if os.environ['APPLYGUARD_AI_MODEL']!=protocol['model']:raise SystemExit('Model differs from frozen protocol')
     data=json.loads((run.LOCAL/'frozen-dataset.json').read_text(encoding='utf-8'))
     if hashlib.sha256((run.LOCAL/'frozen-dataset.json').read_bytes()).hexdigest()!=protocol['dataset_sha256']:
         raise SystemExit('Dataset changed')
+    preflight(data)
+    run.configure()
+    if os.environ['APPLYGUARD_AI_MODEL']!=protocol['model']:raise SystemExit('Model differs from frozen protocol')
     os.environ['APPLYGUARD_GROUNDING_DIR']=str(run.LOCAL/'sag')
     client=Client(max_tokens=6000,timeout=110,require_complete=True)
     auditor=Client(model=protocol['auditor'],max_tokens=4000,timeout=110,require_complete=True)
@@ -44,6 +60,8 @@ def main():
         try:return fn(*args)
         except GroundingUnavailable:
             STOP.set();raise StopRun('SAG failed; stopped before submitting more records') from None
+        except Exception:
+            STOP.set();raise StopRun('Unexpected task error; remaining model calls cancelled') from None
     failures=[]
     with ThreadPoolExecutor(max_workers=2) as pool:
         jobs=[]
@@ -52,7 +70,10 @@ def main():
         for i in range(0,len(data['felm']),3):
             jobs.append(pool.submit(safe_task,run.felm_task,data['felm'][i:i+3],client,i//3,protocol['id']))
         for future in as_completed(jobs):
-            try:future.result()
+            try:
+                result=future.result()
+                if result and (result.get('atomic_error') or result.get('whole_error') or result.get('whole_errors')):
+                    failures.append('invalid_model_output')
             except StopRun as error:
                 if not failures:print(str(error),flush=True)
                 failures.append('service_unavailable');STOP.set()

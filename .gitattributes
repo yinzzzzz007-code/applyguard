@@ -7,3 +7,11 @@
 *.doc binary
 *.docx binary
 *.pptx binary
+# Preserve vendored source byte-for-byte, including upstream line endings.
+# Preserve byte-identical upstream / frozen experiment artifacts.
+third_party/asu-skills/** -text -whitespace
+eval/asu_ablation/baseline/** -text -whitespace
+vendor/kinetic-reel/** -text -whitespace
+# Published report hashes refer to exact exported bytes, including log whitespace.
+docs/testing/runs/** -text -whitespace
+frontend/public/assets/fonts/*-OFL.txt -text -whitespace

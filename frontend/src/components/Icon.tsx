@@ -1,5 +1,9 @@
-export type IconName = 'brand' | 'upload' | 'folder' | 'briefcase' | 'layers' | 'file' | 'shield' | 'window' | 'check' | 'compass' | 'library' | 'history' | 'lock' | 'chevron' | 'down' | 'menu' | 'arrow' | 'spark' | 'search' | 'plus' | 'close' | 'refresh' | 'pin' | 'back'
+export type IconName = 'brand' | 'upload' | 'folder' | 'briefcase' | 'layers' | 'file' | 'shield' | 'window' | 'check' | 'compass' | 'library' | 'history' | 'lock' | 'chevron' | 'down' | 'menu' | 'arrow' | 'spark' | 'search' | 'plus' | 'close' | 'refresh' | 'pin' | 'back' | 'play' | 'pause' | 'volume' | 'mute'
 const paths: Record<IconName,React.ReactNode> = {
+  play:<path d="m8 4 12 8-12 8V4Z" />,
+  pause:<path d="M8 4v16M16 4v16" />,
+  volume:<><path d="m11 4-6 5H2v6h3l6 5V4Z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></>,
+  mute:<><path d="m11 4-6 5H2v6h3l6 5V4Z"/><path d="m16 9 6 6m0-6-6 6"/></>,
   search:<><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></>,
   plus:<path d="M12 5v14M5 12h14"/>,
   close:<path d="m6 6 12 12M18 6 6 18"/>,

@@ -1,0 +1,21 @@
+{
+  "claim_en_points_3": {
+    "lost_supported_details": [
+      "The accuracy increase of Seabird3 was 4 percentage points."
+    ],
+    "reason": "The proposal merges the accuracy increase into a single statement without explicitly stating the 4 percentage points increase, which is a meaningful original detail supported by the source."
+  },
+  "claim_en_points_2": {
+    "lost_supported_details": [
+      "The accuracy increase of Seabird2 was 4 percentage points."
+    ],
+    "reason": "The proposal summarizes the accuracy improvement without explicitly mentioning the 4 percentage points increase, losing this specific detail supported by the source."
+  },
+  "claim_en_team_3": {
+    "lost_supported_details": [
+      "Riley implemented only the React form for Seabird3.",
+      "Lee wrote the API for Seabird3."
+    ],
+    "reason": "The proposal omits that Riley implemented only the React form and that Lee wrote the API, both meaningful original details supported by the source."
+  }
+}

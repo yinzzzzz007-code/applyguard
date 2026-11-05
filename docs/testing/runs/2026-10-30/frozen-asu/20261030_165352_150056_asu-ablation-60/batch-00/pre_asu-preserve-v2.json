@@ -1,0 +1,14 @@
+{
+  "claim_en_offline_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal preserves all original details including the number of tests, offline passing status, and Morgan's non-deployment role, just rephrased for fluency.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_zh_correction_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal retains all original details about Chen He writing test cases, winning the school-level second prize in May 2026, and the correction of the earlier first prize record, only changing punctuation for style.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  }
+}

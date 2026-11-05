@@ -1,0 +1,208 @@
+[
+  {
+    "id": "en_offline_2",
+    "arm": "pre_asu",
+    "batch": 0,
+    "original": "Morgan wrote Python interface tests for Seabird2; 20 of 40 tests passed offline. Morgan did not deploy the service.",
+    "proposal": "Morgan wrote Python interface tests for Seabird2, with 20 of 40 tests passing offline, but did not deploy the service.",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal is a paraphrase of the original with all required facts preserved: Python interface tests, 20 of 40 tests passing offline, and no deployment by Morgan."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "Morgan wrote Python interface tests for Seabird2, with 20 of 40 tests passing offline, but did not deploy the service.",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_correction_1",
+    "arm": "pre_asu",
+    "batch": 0,
+    "original": "陈禾为星舟1编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+    "proposal": "陈禾为星舟1编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": true,
+      "errors": [
+        "Missing semicolon between '校级二等奖' and '早期一等奖记录已更正'"
+      ],
+      "reason": "The original uses a semicolon to separate two independent clauses, which is important for clarity and matches the source. The proposal replaces the semicolon with a comma, which is a punctuation change that alters the sentence structure and is not supported by the source."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "陈禾为星舟1编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "en_assist_1",
+    "arm": "pre_asu",
+    "batch": 0,
+    "original": "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries; Lee led the project and Avery did not own architecture.",
+    "proposal": "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries; Lee led the project and Avery did not own architecture.",
+    "changed": false,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "Unchanged supported original; no edit made."
+    },
+    "original_relation": "INSUFFICIENT",
+    "proposal_relation": "INSUFFICIENT",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries; Lee led the project and Avery did not own architecture.",
+    "new_final_relation": "INSUFFICIENT"
+  },
+  {
+    "id": "en_offline_2",
+    "arm": "asu_v1",
+    "batch": 0,
+    "original": "Morgan wrote Python interface tests for Seabird2; 20 of 40 tests passed offline. Morgan did not deploy the service.",
+    "proposal": "Morgan wrote Python interface tests for Seabird2, with 20 of 40 tests passing offline; Morgan did not deploy the service.",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal is a paraphrase that preserves all original facts and details without adding or omitting any information."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "Morgan wrote Python interface tests for Seabird2, with 20 of 40 tests passing offline; Morgan did not deploy the service.",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_correction_1",
+    "arm": "asu_v1",
+    "batch": 0,
+    "original": "陈禾为星舟1编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+    "proposal": "陈禾为星舟1编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": true,
+      "errors": [
+        "Changed semicolon to comma between '2026年5月获得校级二等奖' and '早期一等奖记录已更正'"
+      ],
+      "reason": "The original uses a semicolon to separate two independent clauses, indicating two distinct facts: the award and the correction of the earlier record. The proposal replaces the semicolon with a comma, which is grammatically incorrect and changes the sentence structure, potentially merging two separate facts into one. This is a meaningful change that alters the original supported detail."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "陈禾为星舟1编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "en_assist_1",
+    "arm": "asu_v1",
+    "batch": 0,
+    "original": "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries; Lee led the project and Avery did not own architecture.",
+    "proposal": "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries; Lee led the project and Avery did not own the architecture.",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal only adds the definite article 'the' before 'architecture', which does not change the meaning or factual content of the claim. All required facts are preserved."
+    },
+    "original_relation": "INSUFFICIENT",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": false,
+    "new_guard_accept": true,
+    "old_losses": [
+      "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries"
+    ],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries; Lee led the project and Avery did not own the architecture.",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "en_offline_2",
+    "arm": "asu_fixed",
+    "batch": 0,
+    "original": "Morgan wrote Python interface tests for Seabird2; 20 of 40 tests passed offline. Morgan did not deploy the service.",
+    "proposal": "Morgan wrote Python interface tests for Seabird2, with 20 of 40 tests passing offline; Morgan did not deploy the service.",
+    "changed": true,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "The proposal is a paraphrase of the original with equivalent meaning and all required facts preserved."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "Morgan wrote Python interface tests for Seabird2, with 20 of 40 tests passing offline; Morgan did not deploy the service.",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "zh_correction_1",
+    "arm": "asu_fixed",
+    "batch": 0,
+    "original": "陈禾为星舟1编写测试用例，2026年5月获得校级二等奖；早期一等奖记录已更正。",
+    "proposal": "陈禾为星舟1编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+    "changed": true,
+    "audit": {
+      "wrong_edit": true,
+      "errors": [
+        "Missing semicolon between '二等奖' and '早期一等奖记录已更正'"
+      ],
+      "reason": "The original uses a semicolon to separate two independent clauses, preserving the meaning that the early first prize record has been corrected. The proposal replaces the semicolon with a comma, which changes the sentence structure and may alter the intended meaning or clarity."
+    },
+    "original_relation": "SUPPORTED",
+    "proposal_relation": "SUPPORTED",
+    "old_guard_accept": true,
+    "new_guard_accept": true,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "陈禾为星舟1编写测试用例，2026年5月获得校级二等奖，早期一等奖记录已更正。",
+    "new_final_relation": "SUPPORTED"
+  },
+  {
+    "id": "en_assist_1",
+    "arm": "asu_fixed",
+    "batch": 0,
+    "original": "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries; Lee led the project and Avery did not own architecture.",
+    "proposal": "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries; Lee led the project and Avery did not own architecture.",
+    "changed": false,
+    "audit": {
+      "wrong_edit": false,
+      "errors": [],
+      "reason": "Unchanged supported original; no edit made."
+    },
+    "original_relation": "INSUFFICIENT",
+    "proposal_relation": "INSUFFICIENT",
+    "old_guard_accept": false,
+    "new_guard_accept": false,
+    "old_losses": [],
+    "new_losses": [],
+    "language_violations": [],
+    "new_final_text": "Avery assisted Lee on Seabird1 by reviewing 12 SQL queries; Lee led the project and Avery did not own architecture.",
+    "new_final_relation": "INSUFFICIENT"
+  }
+]

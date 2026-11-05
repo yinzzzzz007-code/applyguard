@@ -1,0 +1,8 @@
+{
+  "date": "2026-10-30T05:54:49.137Z",
+  "status": "FAIL",
+  "error": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '连接我的 Agent', exact: true })\u001b[22m\n",
+  "errors": [
+    "http://127.0.0.1:8897/assets/index-pi2VVh9a.js: net::ERR_CONNECTION_RESET"
+  ]
+}

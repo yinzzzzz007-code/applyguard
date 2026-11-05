@@ -1,0 +1,16 @@
+{
+  "claim_en_pending_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal combines all original details into a single sentence without losing any original information or changing meaning."
+  },
+  "claim_zh_alias_2": {
+    "lost_supported_details": [
+      "Redis缓存由林岚负责。"
+    ],
+    "reason": "The proposal changes 'Redis缓存由林岚负责' to 'Redis缓存由他人负责', removing the specific name '林岚' which is supported by the source."
+  },
+  "claim_zh_prototype_3": {
+    "lost_supported_details": [],
+    "reason": "The proposal retains all original details, combining them into a single sentence without loss of information."
+  }
+}

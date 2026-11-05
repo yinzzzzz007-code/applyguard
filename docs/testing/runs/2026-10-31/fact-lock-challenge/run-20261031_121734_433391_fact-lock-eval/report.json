@@ -1,0 +1,270 @@
+{
+  "date": "2026-10-31T12:17:34.433391+08:00",
+  "status": "COMPLETE_RULE_ONLY",
+  "split": "eval",
+  "dataset_sha256": "877b698a0df9d98e10dc8bf82dc4a4425029049af890611f10f188efc1b91bf2",
+  "baseline": "deterministic lost_qualifiers + proposal_violations",
+  "candidate": "baseline + locked_edit_findings",
+  "counts": {
+    "SAFE_cases": 10,
+    "WRONG_cases": 10,
+    "baseline_SAFE_pass": 10,
+    "baseline_WRONG_block": 6,
+    "baseline_WRONG_pass": 4,
+    "cases": 20,
+    "new_SAFE_block": 2,
+    "new_SAFE_pass": 8,
+    "new_WRONG_block": 10
+  },
+  "records": [
+    {
+      "id": "new-11-safe",
+      "category": "assistance",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "改变人物与技术的归属：avery / docker"
+      ],
+      "text_sha256": "255ff75fffbb33033f545dbf0f0e61d7227e232f807f5dfdf36a13ebefae99f1"
+    },
+    {
+      "id": "new-11-wrong",
+      "category": "assistance",
+      "expected": "WRONG",
+      "baseline_block": true,
+      "new_block": true,
+      "baseline_findings": [
+        "assisted"
+      ],
+      "new_findings": [
+        "遗漏已核验限定条件：assisted"
+      ],
+      "text_sha256": "08c67fb3e015ec6990affb8c3338ef7d22f92becc3a549db86eea69b62f5370a"
+    },
+    {
+      "id": "new-12-safe",
+      "category": "scheduled",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "bbdce89f13e8a763b417714d71babd5329afe48e6ce7c880e6eff19b849a86d7"
+    },
+    {
+      "id": "new-12-wrong",
+      "category": "scheduled",
+      "expected": "WRONG",
+      "baseline_block": true,
+      "new_block": true,
+      "baseline_findings": [
+        "has not started"
+      ],
+      "new_findings": [
+        "遗漏已核验限定条件：has not started"
+      ],
+      "text_sha256": "53a136c59730c9a95667944113e962d1756bd361c9682bfc87f5a2feeb830248"
+    },
+    {
+      "id": "new-13-safe",
+      "category": "attribution",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "4c600639f7e9a71a186eb55b0bddf21344b6f0c94620f69a6cd4e40ec8a1eeeb"
+    },
+    {
+      "id": "new-13-wrong",
+      "category": "attribution",
+      "expected": "WRONG",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "改变人物与技术的归属：周同学 / redis",
+        "改变人物与技术的归属：林岚 / react"
+      ],
+      "text_sha256": "dce0580190d8ec449a325563f44fab59cd564005cd5e61eed378a4ab1c2ecaa4"
+    },
+    {
+      "id": "new-14-safe",
+      "category": "negative_role",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "改变人物与技术的归属：未 / java"
+      ],
+      "text_sha256": "71d9e2c9363ed6764cb3ebcfbb535ea98ea939031042be4f05e08fbe12986956"
+    },
+    {
+      "id": "new-14-wrong",
+      "category": "negative_role",
+      "expected": "WRONG",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "改变人物与技术的归属：未 / java"
+      ],
+      "text_sha256": "32e76df5dc7e7363fe4123c9a4f899c88665456ab8b6a5ad713dcdf0292b9294"
+    },
+    {
+      "id": "new-15-safe",
+      "category": "prototype",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "d9207cf732a7ac58ae5b61ae2297c819bd260b835bd928a1df2bdc33d321b562"
+    },
+    {
+      "id": "new-15-wrong",
+      "category": "prototype",
+      "expected": "WRONG",
+      "baseline_block": true,
+      "new_block": true,
+      "baseline_findings": [
+        "prototype",
+        "not deployed"
+      ],
+      "new_findings": [
+        "遗漏已核验限定条件：prototype",
+        "遗漏已核验限定条件：not deployed"
+      ],
+      "text_sha256": "7fb12b7693393e690b156790f1515de96e54edc19fdd202a6fc84be4db49fc7a"
+    },
+    {
+      "id": "new-16-safe",
+      "category": "pilot_scope",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "67e07d94678a3788f0189f5c255a26f95650f972f2991683eb5b68e36cfe7778"
+    },
+    {
+      "id": "new-16-wrong",
+      "category": "pilot_scope",
+      "expected": "WRONG",
+      "baseline_block": true,
+      "new_block": true,
+      "baseline_findings": [
+        "试点"
+      ],
+      "new_findings": [
+        "遗漏已核验限定条件：试点",
+        "遗漏或改变原有数字／单位：2"
+      ],
+      "text_sha256": "601f6d22693e7c116cf6f5d301dbf7e9ba90eb4c809a61e3ea95f27fdec61e5d"
+    },
+    {
+      "id": "new-17-safe",
+      "category": "future_time",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "eea226bda490056850a43c4e403f9adb682fc02c1523e71028b52c16e0a326ad"
+    },
+    {
+      "id": "new-17-wrong",
+      "category": "future_time",
+      "expected": "WRONG",
+      "baseline_block": true,
+      "new_block": true,
+      "baseline_findings": [
+        "尚未执行"
+      ],
+      "new_findings": [
+        "遗漏已核验限定条件：尚未执行"
+      ],
+      "text_sha256": "25a5ff241c0a54b8caf0ebcbe90e7d0ea8f2c56cf65522465b54a535dad07713"
+    },
+    {
+      "id": "new-18-safe",
+      "category": "denominator",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "2ab2cb2f044410e9fae34b05e2058203c66e9909d5965829677cf3e6eae39101"
+    },
+    {
+      "id": "new-18-wrong",
+      "category": "denominator",
+      "expected": "WRONG",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "遗漏或改变原有数字／单位：30"
+      ],
+      "text_sha256": "b05659805983c2ac232f5fd9ff9b40fa7380bc08dcfc3da27e94b5cfa2a7fccd"
+    },
+    {
+      "id": "new-19-safe",
+      "category": "percentage_points",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "6cd1ea16e2d6a1687a4b47f697239baa2110355d0b323a0920afde897c207b7e"
+    },
+    {
+      "id": "new-19-wrong",
+      "category": "percentage_points",
+      "expected": "WRONG",
+      "baseline_block": false,
+      "new_block": true,
+      "baseline_findings": [],
+      "new_findings": [
+        "遗漏或改变原有数字／单位：70%",
+        "遗漏或改变原有数字／单位：75%",
+        "遗漏或改变原有数字／单位：5个百分点"
+      ],
+      "text_sha256": "ab044afff22dec1c3ee1d941bf56966f50be62e3c1685b5877b0129522acea9c"
+    },
+    {
+      "id": "new-20-safe",
+      "category": "measurement",
+      "expected": "SAFE",
+      "baseline_block": false,
+      "new_block": false,
+      "baseline_findings": [],
+      "new_findings": [],
+      "text_sha256": "f19b72159050b63564339f9e544e6d85c553385eace6a7ee428637e3dac7086c"
+    },
+    {
+      "id": "new-20-wrong",
+      "category": "measurement",
+      "expected": "WRONG",
+      "baseline_block": true,
+      "new_block": true,
+      "baseline_findings": [
+        "offline"
+      ],
+      "new_findings": [
+        "遗漏已核验限定条件：offline"
+      ],
+      "text_sha256": "3ba7f858cf9ca4ca06b444c415e283e3d169fe7b66ac36b0a72e5d9ad7197c6d"
+    }
+  ],
+  "limits": [
+    "Fictional author-labeled text, not independent human annotation.",
+    "Pairs were manually constructed; they are not model outputs.",
+    "Original source was stipulated by the fixture, not verified by SAG.",
+    "No LLM atomic judge or preservation judge was run on new cases.",
+    "Rates apply only to this rule-only challenge, not the full app."
+  ]
+}

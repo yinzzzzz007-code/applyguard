@@ -1,0 +1,20 @@
+{
+  "claim_en_offline_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal preserves all original details including the number of tests, offline passing count, and Morgan's non-deployment role.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_zh_correction_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal retains all original details about Chen He writing test cases, winning the May 2026 school-level second prize, and the correction of the earlier first prize record.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_en_assist_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal maintains all original details about Avery assisting Lee by reviewing 12 SQL queries, Lee leading the project, and Avery not owning architecture.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "date": "2026-10-30T05:16:42.742Z",
+  "status": "FAIL",
+  "error": "Error: page.goto: net::ERR_CONNECTION_TIMED_OUT at http://127.0.0.1:8872/evidence\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:8872/evidence\", waiting until \"load\"\u001b[22m\n",
+  "errors": []
+}

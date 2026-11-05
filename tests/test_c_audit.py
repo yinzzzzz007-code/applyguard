@@ -27,8 +27,8 @@ class FakeModel:
 
 class AuditTests(unittest.TestCase):
     def setUp(self):
-        self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text())['experiences']
-        self.mapping = json.loads((ROOT/'data/form-mapping.example.json').read_text())
+        self.experiences = json.loads((ROOT/'data/career-vault.seed.json').read_text(encoding='utf-8'))['experiences']
+        self.mapping = json.loads((ROOT/'data/form-mapping.example.json').read_text(encoding='utf-8'))
         self.claim = copy.deepcopy(self.experiences[0]['claims'][0])
         self.claim['evidence_support_score'] = .95
     def verify(self):

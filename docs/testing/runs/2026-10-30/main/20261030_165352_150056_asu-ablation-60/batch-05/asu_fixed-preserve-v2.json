@@ -1,0 +1,22 @@
+{
+  "claim_zh_pending_1": {
+    "lost_supported_details": [
+      "林岚是星舟1的负责人"
+    ],
+    "reason": "The proposal deletes the information that Lin Lan is the person in charge of Xingzhou 1, which is explicitly stated in the original and supported sources.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_zh_assist_2": {
+    "lost_supported_details": [],
+    "reason": "The proposal retains all original details about Xu Ning's role and responsibilities, just rephrased without loss of meaning.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_zh_prototype_1": {
+    "lost_supported_details": [],
+    "reason": "The proposal preserves all original details about Chen He’s Go importer prototype, including performance improvement and current status.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  }
+}

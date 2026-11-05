@@ -1,0 +1,1091 @@
+{
+  "started_at": "2026-10-30T16:11:47.186546+08:00",
+  "finished_at": "2026-10-30T16:13:23.167708+08:00",
+  "elapsed_seconds": 95.984,
+  "status": "COMPLETED_REQUIRES_REVIEW",
+  "model": "gpt-4.1-mini",
+  "cases": 3,
+  "usage": {
+    "calls": 6,
+    "prompt_tokens": 12011,
+    "completion_tokens": 2857,
+    "total_tokens": 14868
+  },
+  "attempts": 6,
+  "grounding": {
+    "mode": "sag_atomic",
+    "engine": "zleap-sag 0.15.0",
+    "snapshot": "ded03c8e4c97a8838432177111c659a516441350cec50225c5029c79f06ea267",
+    "prompt_version": "db2c980ba5339bf8b64fbeed72834bcaded9a65e91cec2c26dfdf004ed3b4d3d",
+    "polish_source": {
+      "name": "ASu-skills/great-resume",
+      "repository": "https://github.com/Hisn00w/ASu-skills",
+      "commit": "d27fd2a3864c48472a5c8ed942410098ba9cd35f",
+      "license": "MIT",
+      "resources": {
+        "skills/great-resume/SKILL.md": "82ccf4a504f0498072ea1a46a42b4b9bd035129ca27d132a66db244897b4067f",
+        "skills/great-resume/references/claim-evidence-ledger.md": "b478bf362024b910db084e8a238fae82c3af2298316bec98f070ef2647afce33",
+        "skills/great-resume/references/business-analysis-evidence.md": "f3fc5376e5a102c120f760c2053e8afe1f9fc10817887694441612915a11a91d"
+      },
+      "role": "rewrite_proposal_only",
+      "original_files_unchanged": true
+    },
+    "results": {
+      "claim_atlas": {
+        "atoms": [
+          {
+            "atom_id": "a1",
+            "text": "Alex编写了Atlas项目的Python接口测试。",
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_445917234b00e573610c6b61fa6d5eb0",
+                "evidence_id": "ev_atlas",
+                "source_sha256": "ff88d4f8d05ed45d632229f792ac0ec75c4ac6509dbcaaea5764579ef531b53e",
+                "quote": "Alex wrote Python interface tests for Atlas",
+                "start": 0,
+                "end": 43,
+                "experience_id": "exp_atlas",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The source explicitly states 'Alex wrote Python interface tests for Atlas'."
+          },
+          {
+            "atom_id": "a2",
+            "text": "Atlas项目的Python接口测试在离线环境运行。",
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_445917234b00e573610c6b61fa6d5eb0",
+                "evidence_id": "ev_atlas",
+                "source_sha256": "ff88d4f8d05ed45d632229f792ac0ec75c4ac6509dbcaaea5764579ef531b53e",
+                "quote": "the tests ran offline",
+                "start": 45,
+                "end": 66,
+                "experience_id": "exp_atlas",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The source states 'the tests ran offline', confirming the tests ran in an offline environment."
+          },
+          {
+            "atom_id": "a3",
+            "text": "Alex未负责Atlas项目的服务部署。",
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_445917234b00e573610c6b61fa6d5eb0",
+                "evidence_id": "ev_atlas",
+                "source_sha256": "ff88d4f8d05ed45d632229f792ac0ec75c4ac6509dbcaaea5764579ef531b53e",
+                "quote": "Alex did not deploy the service",
+                "start": 72,
+                "end": 103,
+                "experience_id": "exp_atlas",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The source states 'Alex did not deploy the service', confirming Alex was not responsible for service deployment."
+          }
+        ],
+        "full_claim_check": {
+          "relation": "SUPPORTED",
+          "citations": [
+            {
+              "source_id": "src_445917234b00e573610c6b61fa6d5eb0",
+              "evidence_id": "ev_atlas",
+              "source_sha256": "ff88d4f8d05ed45d632229f792ac0ec75c4ac6509dbcaaea5764579ef531b53e",
+              "quote": "Alex wrote Python interface tests for Atlas; the tests ran offline, and Alex did not deploy the service.",
+              "start": 0,
+              "end": 104,
+              "experience_id": "exp_atlas",
+              "source_version": "synthetic-v1",
+              "file_version": null,
+              "positions": []
+            }
+          ],
+          "reason": "The source states 'Alex wrote Python interface tests for Atlas; the tests ran offline, and Alex did not deploy the service.', which directly supports all parts of the claim."
+        },
+        "complete": true,
+        "relation": "SUPPORTED",
+        "coverage_missing": [],
+        "numeric_missing": [],
+        "coverage_repairs": 0,
+        "claim_text_sha256": "f6390f6907f22d[REDACTED_PHONE]c53e57140c2311bbc0e87075b21bc4f956ccc25",
+        "state": "VERIFIED",
+        "retrieved_sources": [
+          {
+            "source_id": "src_445917234b00e573610c6b61fa6d5eb0",
+            "evidence_id": "ev_atlas",
+            "candidate_id": "cand_synthetic",
+            "experience_id": "exp_atlas",
+            "title": "atlas",
+            "text": "Alex wrote Python interface tests for Atlas; the tests ran offline, and Alex did not deploy the service.",
+            "sha256": "ff88d4f8d05ed45d632229f792ac0ec75c4ac6509dbcaaea5764579ef531b53e",
+            "version": "synthetic-v1",
+            "positions": [],
+            "file_id": null,
+            "file_version": null,
+            "file_sha256": null,
+            "text_offset": 0,
+            "chunk_id": "",
+            "retrieval_channels": []
+          }
+        ],
+        "original_text": "Alex wrote Python interface tests for Atlas; the tests ran offline, and Alex did not deploy the service.",
+        "final_text": "Alex编写了Atlas项目的Python接口测试，测试在离线环境运行，未负责服务部署。",
+        "reused_current_run_original_check": false,
+        "proposed_text": "Alex编写了Atlas项目的Python接口测试，测试在离线环境运行，未负责服务部署。",
+        "proposal_check": {
+          "atoms": [
+            {
+              "atom_id": "a1",
+              "text": "Alex编写了Atlas项目的Python接口测试。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_445917234b00e573610c6b61fa6d5eb0",
+                  "evidence_id": "ev_atlas",
+                  "source_sha256": "ff88d4f8d05ed45d632229f792ac0ec75c4ac6509dbcaaea5764579ef531b53e",
+                  "quote": "Alex wrote Python interface tests for Atlas",
+                  "start": 0,
+                  "end": 43,
+                  "experience_id": "exp_atlas",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source explicitly states 'Alex wrote Python interface tests for Atlas'."
+            },
+            {
+              "atom_id": "a2",
+              "text": "Atlas项目的Python接口测试在离线环境运行。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_445917234b00e573610c6b61fa6d5eb0",
+                  "evidence_id": "ev_atlas",
+                  "source_sha256": "ff88d4f8d05ed45d632229f792ac0ec75c4ac6509dbcaaea5764579ef531b53e",
+                  "quote": "the tests ran offline",
+                  "start": 45,
+                  "end": 66,
+                  "experience_id": "exp_atlas",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states 'the tests ran offline', confirming the tests ran in an offline environment."
+            },
+            {
+              "atom_id": "a3",
+              "text": "Alex未负责Atlas项目的服务部署。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_445917234b00e573610c6b61fa6d5eb0",
+                  "evidence_id": "ev_atlas",
+                  "source_sha256": "ff88d4f8d05ed45d632229f792ac0ec75c4ac6509dbcaaea5764579ef531b53e",
+                  "quote": "Alex did not deploy the service",
+                  "start": 72,
+                  "end": 103,
+                  "experience_id": "exp_atlas",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states 'Alex did not deploy the service', confirming Alex was not responsible for service deployment."
+            }
+          ],
+          "full_claim_check": {
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_445917234b00e573610c6b61fa6d5eb0",
+                "evidence_id": "ev_atlas",
+                "source_sha256": "ff88d4f8d05ed45d632229f792ac0ec75c4ac6509dbcaaea5764579ef531b53e",
+                "quote": "Alex wrote Python interface tests for Atlas; the tests ran offline, and Alex did not deploy the service.",
+                "start": 0,
+                "end": 104,
+                "experience_id": "exp_atlas",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The source states 'Alex wrote Python interface tests for Atlas; the tests ran offline, and Alex did not deploy the service.', which directly supports all parts of the claim."
+          },
+          "complete": true,
+          "relation": "SUPPORTED",
+          "coverage_missing": [],
+          "numeric_missing": [],
+          "coverage_repairs": 0,
+          "claim_text_sha256": "f6390f6907f22d[REDACTED_PHONE]c53e57140c2311bbc0e87075b21bc4f956ccc25"
+        },
+        "original_check": {
+          "atoms": [
+            {
+              "atom_id": "a1",
+              "text": "Alex wrote Python interface tests for Atlas.",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_445917234b00e573610c6b61fa6d5eb0",
+                  "evidence_id": "ev_atlas",
+                  "source_sha256": "ff88d4f8d05ed45d632229f792ac0ec75c4ac6509dbcaaea5764579ef531b53e",
+                  "quote": "Alex wrote Python interface tests for Atlas; the tests ran offline, and Alex did not deploy the service.",
+                  "start": 0,
+                  "end": 104,
+                  "experience_id": "exp_atlas",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states: 'Alex wrote Python interface tests for Atlas.'"
+            },
+            {
+              "atom_id": "a2",
+              "text": "The tests ran offline.",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_445917234b00e573610c6b61fa6d5eb0",
+                  "evidence_id": "ev_atlas",
+                  "source_sha256": "ff88d4f8d05ed45d632229f792ac0ec75c4ac6509dbcaaea5764579ef531b53e",
+                  "quote": "Alex wrote Python interface tests for Atlas; the tests ran offline, and Alex did not deploy the service.",
+                  "start": 0,
+                  "end": 104,
+                  "experience_id": "exp_atlas",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states: 'the tests ran offline'."
+            },
+            {
+              "atom_id": "a3",
+              "text": "Alex did not deploy the service.",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_445917234b00e573610c6b61fa6d5eb0",
+                  "evidence_id": "ev_atlas",
+                  "source_sha256": "ff88d4f8d05ed45d632229f792ac0ec75c4ac6509dbcaaea5764579ef531b53e",
+                  "quote": "Alex wrote Python interface tests for Atlas; the tests ran offline, and Alex did not deploy the service.",
+                  "start": 0,
+                  "end": 104,
+                  "experience_id": "exp_atlas",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states: 'Alex did not deploy the service.'"
+            }
+          ],
+          "full_claim_check": {
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_445917234b00e573610c6b61fa6d5eb0",
+                "evidence_id": "ev_atlas",
+                "source_sha256": "ff88d4f8d05ed45d632229f792ac0ec75c4ac6509dbcaaea5764579ef531b53e",
+                "quote": "Alex wrote Python interface tests for Atlas; the tests ran offline, and Alex did not deploy the service.",
+                "start": 0,
+                "end": 104,
+                "experience_id": "exp_atlas",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The full claim is exactly stated in the source text: 'Alex wrote Python interface tests for Atlas; the tests ran offline, and Alex did not deploy the service.'"
+          },
+          "complete": true,
+          "relation": "SUPPORTED",
+          "coverage_missing": [],
+          "numeric_missing": [],
+          "coverage_repairs": 0,
+          "claim_text_sha256": "ff88d4f8d05ed45d632229f792ac0ec75c4ac6509dbcaaea5764579ef531b53e"
+        },
+        "preservation": {
+          "lost_supported_details": [],
+          "reason": "The proposal conveys all original details accurately, including scope, environment, and roles."
+        },
+        "change_audit": {
+          "changes": [
+            {
+              "before": " wro",
+              "after": "编写了A"
+            },
+            {
+              "before": "e ",
+              "after": "las项目的"
+            },
+            {
+              "before": " interface tests for Atlas; the tests ran offline, and Alex did not deploy the service.",
+              "after": "接口测试，测试在离线环境运行，未负责服务部署。"
+            }
+          ],
+          "sensitive_change": true
+        },
+        "proposal_applied": true,
+        "proposal_rejected": false,
+        "proposal_notice": ""
+      },
+      "claim_maple": {
+        "atoms": [
+          {
+            "atom_id": "a1",
+            "text": "林同学在枫叶项目中负责SQL分析与方案测算。",
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_0b4d641710f06a081443311fee40623e",
+                "evidence_id": "ev_maple",
+                "source_sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4",
+                "quote": "林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。",
+                "start": 0,
+                "end": 48,
+                "experience_id": "exp_maple",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The source states: '林同学在枫叶项目中负责SQL分析与方案测算'"
+          },
+          {
+            "atom_id": "a2",
+            "text": "测算预计成本下降12%。",
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_0b4d641710f06a081443311fee40623e",
+                "evidence_id": "ev_maple",
+                "source_sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4",
+                "quote": "林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。",
+                "start": 0,
+                "end": 48,
+                "experience_id": "exp_maple",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The source states: '测算预计成本下降12%'"
+          },
+          {
+            "atom_id": "a3",
+            "text": "测算尚未实施。",
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_0b4d641710f06a081443311fee40623e",
+                "evidence_id": "ev_maple",
+                "source_sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4",
+                "quote": "林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。",
+                "start": 0,
+                "end": 48,
+                "experience_id": "exp_maple",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The source states: '尚未实施'"
+          },
+          {
+            "atom_id": "a4",
+            "text": "项目由周同学负责。",
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_0b4d641710f06a081443311fee40623e",
+                "evidence_id": "ev_maple",
+                "source_sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4",
+                "quote": "林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。",
+                "start": 0,
+                "end": 48,
+                "experience_id": "exp_maple",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The source states: '项目由周同学负责'"
+          }
+        ],
+        "full_claim_check": {
+          "relation": "SUPPORTED",
+          "citations": [
+            {
+              "source_id": "src_0b4d641710f06a081443311fee40623e",
+              "evidence_id": "ev_maple",
+              "source_sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4",
+              "quote": "林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。",
+              "start": 0,
+              "end": 48,
+              "experience_id": "exp_maple",
+              "source_version": "synthetic-v1",
+              "file_version": null,
+              "positions": []
+            }
+          ],
+          "reason": "The full claim is exactly stated in the source text: '林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。'"
+        },
+        "complete": true,
+        "relation": "SUPPORTED",
+        "coverage_missing": [],
+        "numeric_missing": [],
+        "coverage_repairs": 0,
+        "claim_text_sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4",
+        "state": "VERIFIED",
+        "retrieved_sources": [
+          {
+            "source_id": "src_0b4d641710f06a081443311fee40623e",
+            "evidence_id": "ev_maple",
+            "candidate_id": "cand_synthetic",
+            "experience_id": "exp_maple",
+            "title": "maple",
+            "text": "林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。",
+            "sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4",
+            "version": "synthetic-v1",
+            "positions": [],
+            "file_id": null,
+            "file_version": null,
+            "file_sha256": null,
+            "text_offset": 0,
+            "chunk_id": "",
+            "retrieval_channels": []
+          }
+        ],
+        "original_text": "林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。",
+        "final_text": "林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。",
+        "reused_current_run_original_check": true,
+        "proposed_text": "林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，项目由周同学负责实施。",
+        "proposal_check": {
+          "atoms": [
+            {
+              "atom_id": "a1",
+              "text": "林同学在枫叶项目中负责SQL分析。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_0b4d641710f06a081443311fee40623e",
+                  "evidence_id": "ev_maple",
+                  "source_sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4",
+                  "quote": "林同学在枫叶项目中负责SQL分析",
+                  "start": 0,
+                  "end": 16,
+                  "experience_id": "exp_maple",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states '林同学在枫叶项目中负责SQL分析'."
+            },
+            {
+              "atom_id": "a2",
+              "text": "林同学在枫叶项目中负责方案测算。",
+              "relation": "INSUFFICIENT",
+              "citations": [],
+              "reason": "The source states '林同学在枫叶项目中负责方案测算'."
+            },
+            {
+              "atom_id": "a3",
+              "text": "林同学测算预计成本下降12%。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_0b4d641710f06a081443311fee40623e",
+                  "evidence_id": "ev_maple",
+                  "source_sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4",
+                  "quote": "测算预计成本下降12%",
+                  "start": 22,
+                  "end": 33,
+                  "experience_id": "exp_maple",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states '测算预计成本下降12%'."
+            },
+            {
+              "atom_id": "a4",
+              "text": "枫叶项目由周同学负责实施。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_0b4d641710f06a081443311fee40623e",
+                  "evidence_id": "ev_maple",
+                  "source_sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4",
+                  "quote": "项目由周同学负责",
+                  "start": 39,
+                  "end": 47,
+                  "experience_id": "exp_maple",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states '项目由周同学负责', confirming 周同学 is responsible for implementation."
+            }
+          ],
+          "full_claim_check": {
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_0b4d641710f06a081443311fee40623e",
+                "evidence_id": "ev_maple",
+                "source_sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4",
+                "quote": "林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。",
+                "start": 0,
+                "end": 48,
+                "experience_id": "exp_maple",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The source states '林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。' which supports all parts of the claim including responsibility, estimated cost reduction, and project implementation by 周同学."
+          },
+          "complete": true,
+          "relation": "INSUFFICIENT",
+          "coverage_missing": [],
+          "numeric_missing": [],
+          "coverage_repairs": 0,
+          "claim_text_sha256": "6c650724479f31264fa0fe701f5a289960405e28ecc894313ea684d84365e1ee"
+        },
+        "original_check": {
+          "atoms": [
+            {
+              "atom_id": "a1",
+              "text": "林同学在枫叶项目中负责SQL分析与方案测算。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_0b4d641710f06a081443311fee40623e",
+                  "evidence_id": "ev_maple",
+                  "source_sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4",
+                  "quote": "林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。",
+                  "start": 0,
+                  "end": 48,
+                  "experience_id": "exp_maple",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states: '林同学在枫叶项目中负责SQL分析与方案测算'"
+            },
+            {
+              "atom_id": "a2",
+              "text": "测算预计成本下降12%。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_0b4d641710f06a081443311fee40623e",
+                  "evidence_id": "ev_maple",
+                  "source_sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4",
+                  "quote": "林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。",
+                  "start": 0,
+                  "end": 48,
+                  "experience_id": "exp_maple",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states: '测算预计成本下降12%'"
+            },
+            {
+              "atom_id": "a3",
+              "text": "测算尚未实施。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_0b4d641710f06a081443311fee40623e",
+                  "evidence_id": "ev_maple",
+                  "source_sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4",
+                  "quote": "林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。",
+                  "start": 0,
+                  "end": 48,
+                  "experience_id": "exp_maple",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states: '尚未实施'"
+            },
+            {
+              "atom_id": "a4",
+              "text": "项目由周同学负责。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_0b4d641710f06a081443311fee40623e",
+                  "evidence_id": "ev_maple",
+                  "source_sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4",
+                  "quote": "林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。",
+                  "start": 0,
+                  "end": 48,
+                  "experience_id": "exp_maple",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states: '项目由周同学负责'"
+            }
+          ],
+          "full_claim_check": {
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_0b4d641710f06a081443311fee40623e",
+                "evidence_id": "ev_maple",
+                "source_sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4",
+                "quote": "林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。",
+                "start": 0,
+                "end": 48,
+                "experience_id": "exp_maple",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The full claim is exactly stated in the source text: '林同学在枫叶项目中负责SQL分析与方案测算，测算预计成本下降12%，尚未实施；项目由周同学负责。'"
+          },
+          "complete": true,
+          "relation": "SUPPORTED",
+          "coverage_missing": [],
+          "numeric_missing": [],
+          "coverage_repairs": 0,
+          "claim_text_sha256": "3e9794b91f7e72ee47753023e85ef6e89d5083d22c820009ddbdb65854ae54d4"
+        },
+        "preservation": {
+          "lost_supported_details": [
+            "测算尚未实施。"
+          ],
+          "reason": "The proposal omits the detail that the cost reduction measurement has not yet been implemented, which is explicitly stated in the original source."
+        },
+        "change_audit": {
+          "changes": [
+            {
+              "before": "尚未实施；",
+              "after": ""
+            },
+            {
+              "before": "",
+              "after": "实施"
+            }
+          ],
+          "sensitive_change": true
+        },
+        "proposal_applied": false,
+        "proposal_rejected": true,
+        "proposal_notice": "建议未通过核验或信息保留检查，已保留原文；原文状态单独核验。"
+      },
+      "claim_mosaic": {
+        "atoms": [
+          {
+            "atom_id": "a1",
+            "text": "苏同学负责拼图项目的评测。",
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_403a9539133b183f360b931b57118d5e",
+                "evidence_id": "ev_mosaic",
+                "source_sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1",
+                "quote": "苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。",
+                "start": 0,
+                "end": 43,
+                "experience_id": "exp_mosaic",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The source states: '苏同学负责拼图项目的评测'"
+          },
+          {
+            "atom_id": "a2",
+            "text": "准确率从80%变为84%。",
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_403a9539133b183f360b931b57118d5e",
+                "evidence_id": "ev_mosaic",
+                "source_sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1",
+                "quote": "苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。",
+                "start": 0,
+                "end": 43,
+                "experience_id": "exp_mosaic",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The source states: '准确率从80%变为84%'"
+          },
+          {
+            "atom_id": "a3",
+            "text": "准确率提高了4个百分点。",
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_403a9539133b183f360b931b57118d5e",
+                "evidence_id": "ev_mosaic",
+                "source_sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1",
+                "quote": "苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。",
+                "start": 0,
+                "end": 43,
+                "experience_id": "exp_mosaic",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The source states: '即提高4个百分点'"
+          },
+          {
+            "atom_id": "a4",
+            "text": "苏同学未参与模型训练。",
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_403a9539133b183f360b931b57118d5e",
+                "evidence_id": "ev_mosaic",
+                "source_sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1",
+                "quote": "苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。",
+                "start": 0,
+                "end": 43,
+                "experience_id": "exp_mosaic",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The source states: '未参与模型训练'"
+          }
+        ],
+        "full_claim_check": {
+          "relation": "SUPPORTED",
+          "citations": [
+            {
+              "source_id": "src_403a9539133b183f360b931b57118d5e",
+              "evidence_id": "ev_mosaic",
+              "source_sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1",
+              "quote": "苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。",
+              "start": 0,
+              "end": 43,
+              "experience_id": "exp_mosaic",
+              "source_version": "synthetic-v1",
+              "file_version": null,
+              "positions": []
+            }
+          ],
+          "reason": "The full claim is exactly stated in the source text: '苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。'"
+        },
+        "complete": true,
+        "relation": "SUPPORTED",
+        "coverage_missing": [],
+        "numeric_missing": [],
+        "coverage_repairs": 0,
+        "claim_text_sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1",
+        "state": "VERIFIED",
+        "retrieved_sources": [
+          {
+            "source_id": "src_403a9539133b183f360b931b57118d5e",
+            "evidence_id": "ev_mosaic",
+            "candidate_id": "cand_synthetic",
+            "experience_id": "exp_mosaic",
+            "title": "mosaic",
+            "text": "苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。",
+            "sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1",
+            "version": "synthetic-v1",
+            "positions": [],
+            "file_id": null,
+            "file_version": null,
+            "file_sha256": null,
+            "text_offset": 0,
+            "chunk_id": "",
+            "retrieval_channels": []
+          }
+        ],
+        "original_text": "苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。",
+        "final_text": "苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。",
+        "reused_current_run_original_check": true,
+        "proposed_text": "苏同学负责拼图项目的评测工作，准确率从80%提升至84%，未参与模型训练。",
+        "proposal_check": {
+          "atoms": [
+            {
+              "atom_id": "a1",
+              "text": "苏同学负责拼图项目的评测工作。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_403a9539133b183f360b931b57118d5e",
+                  "evidence_id": "ev_mosaic",
+                  "source_sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1",
+                  "quote": "苏同学负责拼图项目的评测",
+                  "start": 0,
+                  "end": 12,
+                  "experience_id": "exp_mosaic",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states '苏同学负责拼图项目的评测'."
+            },
+            {
+              "atom_id": "a2",
+              "text": "拼图项目的准确率从80%提升至84%。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_403a9539133b183f360b931b57118d5e",
+                  "evidence_id": "ev_mosaic",
+                  "source_sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1",
+                  "quote": "准确率从80%变为84%",
+                  "start": 13,
+                  "end": 25,
+                  "experience_id": "exp_mosaic",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states '准确率从80%变为84%'."
+            },
+            {
+              "atom_id": "a3",
+              "text": "苏同学未参与拼图项目的模型训练。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_403a9539133b183f360b931b57118d5e",
+                  "evidence_id": "ev_mosaic",
+                  "source_sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1",
+                  "quote": "未参与模型训练",
+                  "start": 35,
+                  "end": 42,
+                  "experience_id": "exp_mosaic",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states '未参与模型训练'."
+            }
+          ],
+          "full_claim_check": {
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_403a9539133b183f360b931b57118d5e",
+                "evidence_id": "ev_mosaic",
+                "source_sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1",
+                "quote": "苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。",
+                "start": 0,
+                "end": 43,
+                "experience_id": "exp_mosaic",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The source states '苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。' which supports all parts of the claim about responsibility, accuracy improvement, and non-participation in model training."
+          },
+          "complete": true,
+          "relation": "SUPPORTED",
+          "coverage_missing": [],
+          "numeric_missing": [],
+          "coverage_repairs": 0,
+          "claim_text_sha256": "bb83ae94b68a5e45c2f5b17da84e24f067ce4145a7c14639a57bfa7f3e2533c5"
+        },
+        "original_check": {
+          "atoms": [
+            {
+              "atom_id": "a1",
+              "text": "苏同学负责拼图项目的评测。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_403a9539133b183f360b931b57118d5e",
+                  "evidence_id": "ev_mosaic",
+                  "source_sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1",
+                  "quote": "苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。",
+                  "start": 0,
+                  "end": 43,
+                  "experience_id": "exp_mosaic",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states: '苏同学负责拼图项目的评测'"
+            },
+            {
+              "atom_id": "a2",
+              "text": "准确率从80%变为84%。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_403a9539133b183f360b931b57118d5e",
+                  "evidence_id": "ev_mosaic",
+                  "source_sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1",
+                  "quote": "苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。",
+                  "start": 0,
+                  "end": 43,
+                  "experience_id": "exp_mosaic",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states: '准确率从80%变为84%'"
+            },
+            {
+              "atom_id": "a3",
+              "text": "准确率提高了4个百分点。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_403a9539133b183f360b931b57118d5e",
+                  "evidence_id": "ev_mosaic",
+                  "source_sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1",
+                  "quote": "苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。",
+                  "start": 0,
+                  "end": 43,
+                  "experience_id": "exp_mosaic",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states: '即提高4个百分点'"
+            },
+            {
+              "atom_id": "a4",
+              "text": "苏同学未参与模型训练。",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_403a9539133b183f360b931b57118d5e",
+                  "evidence_id": "ev_mosaic",
+                  "source_sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1",
+                  "quote": "苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。",
+                  "start": 0,
+                  "end": 43,
+                  "experience_id": "exp_mosaic",
+                  "source_version": "synthetic-v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source states: '未参与模型训练'"
+            }
+          ],
+          "full_claim_check": {
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_403a9539133b183f360b931b57118d5e",
+                "evidence_id": "ev_mosaic",
+                "source_sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1",
+                "quote": "苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。",
+                "start": 0,
+                "end": 43,
+                "experience_id": "exp_mosaic",
+                "source_version": "synthetic-v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The full claim is exactly stated in the source text: '苏同学负责拼图项目的评测，准确率从80%变为84%，即提高4个百分点；未参与模型训练。'"
+          },
+          "complete": true,
+          "relation": "SUPPORTED",
+          "coverage_missing": [],
+          "numeric_missing": [],
+          "coverage_repairs": 0,
+          "claim_text_sha256": "bb10c26ca708cb5e510301c4a78f8a1b3c84c5a38d9229c354e3c3eb062ca7e1"
+        },
+        "preservation": {
+          "lost_supported_details": [
+            "准确率提高了4个百分点。"
+          ],
+          "reason": "The proposal paraphrases the accuracy improvement but omits the explicit statement that the increase is 4 percentage points, which is a meaningful quantitative detail in the original."
+        },
+        "change_audit": {
+          "changes": [
+            {
+              "before": "",
+              "after": "工作"
+            },
+            {
+              "before": "变为",
+              "after": "提升至"
+            },
+            {
+              "before": "即提高4个百分点；",
+              "after": ""
+            }
+          ],
+          "sensitive_change": true
+        },
+        "proposal_applied": false,
+        "proposal_rejected": true,
+        "proposal_notice": "建议未通过核验或信息保留检查，已保留原文；原文状态单独核验。"
+      }
+    },
+    "error": null,
+    "export_requires_atomic": true
+  },
+  "checks": [
+    {
+      "claim_id": "claim_atlas",
+      "state": "VERIFIED",
+      "grounded": true,
+      "support_score": 1.0,
+      "unsupported_fragments": [],
+      "explanation": "所有已拆分事实及完整性检查通过，逐字引文来自当前经历原件；请人工核对后使用。"
+    },
+    {
+      "claim_id": "claim_maple",
+      "state": "VERIFIED",
+      "grounded": true,
+      "support_score": 1.0,
+      "unsupported_fragments": [],
+      "explanation": "所有已拆分事实及完整性检查通过，逐字引文来自当前经历原件；请人工核对后使用。"
+    },
+    {
+      "claim_id": "claim_mosaic",
+      "state": "VERIFIED",
+      "grounded": true,
+      "support_score": 1.0,
+      "unsupported_fragments": [],
+      "explanation": "所有已拆分事实及完整性检查通过，逐字引文来自当前经历原件；请人工核对后使用。"
+    }
+  ],
+  "limitations": [
+    "Synthetic only; manual inspection is descriptive, not independent benchmark accuracy.",
+    "AllSources fixture isolates writing/verification; no SAG engine or Harness evaluated here."
+  ]
+}

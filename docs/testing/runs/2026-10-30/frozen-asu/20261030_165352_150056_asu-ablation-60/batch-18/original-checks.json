@@ -1,0 +1,286 @@
+{
+  "claim_zh_sample_2": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "许宁对星舟2做可用性访谈。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_f4625ae51ae41a7ecb36c10af41ae092",
+            "evidence_id": "ev_zh_sample_2",
+            "source_sha256": "dc0bc713eb066df61ec679eb2b4319e2c05ff3117d7ddb5d20a43a7105685713",
+            "quote": "许宁对星舟2做可用性访谈",
+            "start": 8,
+            "end": 20,
+            "experience_id": "exp_zh_sample_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '许宁对星舟2做可用性访谈' directly."
+      },
+      {
+        "atom_id": "a2",
+        "text": "许宁对星舟2做便利抽样20人的可用性访谈。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_f4625ae51ae41a7ecb36c10af41ae092",
+            "evidence_id": "ev_zh_sample_2",
+            "source_sha256": "dc0bc713eb066df61ec679eb2b4319e2c05ff3117d7ddb5d20a43a7105685713",
+            "quote": "便利抽样20人",
+            "start": 21,
+            "end": 28,
+            "experience_id": "exp_zh_sample_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '便利抽样20人' which confirms the sampling method and number of people."
+      },
+      {
+        "atom_id": "a3",
+        "text": "在便利抽样的20人中，有8人完成操作。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_f4625ae51ae41a7ecb36c10af41ae092",
+            "evidence_id": "ev_zh_sample_2",
+            "source_sha256": "dc0bc713eb066df61ec679eb2b4319e2c05ff3117d7ddb5d20a43a7105685713",
+            "quote": "其中8人完成操作",
+            "start": 29,
+            "end": 37,
+            "experience_id": "exp_zh_sample_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '其中8人完成操作' confirming 8 people completed the operation."
+      },
+      {
+        "atom_id": "a4",
+        "text": "可用性访谈的结果不代表总体用户。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_f4625ae51ae41a7ecb36c10af41ae092",
+            "evidence_id": "ev_zh_sample_2",
+            "source_sha256": "dc0bc713eb066df61ec679eb2b4319e2c05ff3117d7ddb5d20a43a7105685713",
+            "quote": "结果不代表总体用户",
+            "start": 38,
+            "end": 47,
+            "experience_id": "exp_zh_sample_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '结果不代表总体用户' confirming the results do not represent the overall user population."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_f4625ae51ae41a7ecb36c10af41ae092",
+          "evidence_id": "ev_zh_sample_2",
+          "source_sha256": "dc0bc713eb066df61ec679eb2b4319e2c05ff3117d7ddb5d20a43a7105685713",
+          "quote": "已签字项目记录：许宁对星舟2做可用性访谈，便利抽样20人，其中8人完成操作；结果不代表总体用户。",
+          "start": 0,
+          "end": 48,
+          "experience_id": "exp_zh_sample_2",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source text explicitly states: '许宁对星舟2做可用性访谈，便利抽样20人，其中8人完成操作；结果不代表总体用户。' This matches the full claim exactly in all aspects: person (许宁), project (星舟2), method (可用性访谈), sampling method (便利抽样20人), number completed operation (8人), and the conclusion about representativeness (结果不代表总体用户)."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "cbf417ab90f7f16f1606a84d73bd40c53a81f6c820c1c90cdb8a4fd28dd19a3b"
+  },
+  "claim_en_pilot_3": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "Riley built the Seabird3 dashboard for a pilot in two stores.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_d2d0c7119a960af62c93306a22f915b0",
+            "evidence_id": "ev_en_pilot_3",
+            "source_sha256": "8e65564aca935215312511aeb4e17e07bbfae079f3d9d1003a50fe7ee228d3ab",
+            "quote": "Riley built the Seabird3 dashboard for a pilot in two stores",
+            "start": 23,
+            "end": 83,
+            "experience_id": "exp_en_pilot_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'Riley built the Seabird3 dashboard for a pilot in two stores' directly."
+      },
+      {
+        "atom_id": "a2",
+        "text": "Riley summarized 32 feedback items from the pilot.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_d2d0c7119a960af62c93306a22f915b0",
+            "evidence_id": "ev_en_pilot_3",
+            "source_sha256": "8e65564aca935215312511aeb4e17e07bbfae079f3d9d1003a50fe7ee228d3ab",
+            "quote": "summarized 32 feedback items",
+            "start": 88,
+            "end": 116,
+            "experience_id": "exp_en_pilot_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'summarized 32 feedback items' confirming the number of feedback items summarized."
+      },
+      {
+        "atom_id": "a3",
+        "text": "The pilot was not a company-wide launch.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_d2d0c7119a960af62c93306a22f915b0",
+            "evidence_id": "ev_en_pilot_3",
+            "source_sha256": "8e65564aca935215312511aeb4e17e07bbfae079f3d9d1003a50fe7ee228d3ab",
+            "quote": "the pilot was not a company-wide launch",
+            "start": 118,
+            "end": 157,
+            "experience_id": "exp_en_pilot_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'the pilot was not a company-wide launch' confirming the pilot was limited in scope."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_d2d0c7119a960af62c93306a22f915b0",
+          "evidence_id": "ev_en_pilot_3",
+          "source_sha256": "8e65564aca935215312511aeb4e17e07bbfae079f3d9d1003a50fe7ee228d3ab",
+          "quote": "Signed project record: Riley built the Seabird3 dashboard for a pilot in two stores and summarized 32 feedback items; the pilot was not a company-wide launch.",
+          "start": 0,
+          "end": 158,
+          "experience_id": "exp_en_pilot_3",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source text states: 'Riley built the Seabird3 dashboard for a pilot in two stores and summarized 32 feedback items; the pilot was not a company-wide launch.' This matches the full claim exactly in all details: person (Riley), project (Seabird3 dashboard), pilot scope (two stores), feedback items summarized (32), and pilot status (not company-wide launch)."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "3e80d5d2ee203046ec55d2c864b6730790c40af8bdcdb052bd8a00eb2cce1967"
+  },
+  "claim_zh_offline_2": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "许宁负责星舟2的离线图像分类评测。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_a6aae4f62e0c8191cf79eb8f4cc62724",
+            "evidence_id": "ev_zh_offline_2",
+            "source_sha256": "fcc089772357a8c7d4c42e9825f2c7ea6e070a937da3090e2dadda97b7f9cfff",
+            "quote": "许宁负责星舟2的离线图像分类评测",
+            "start": 8,
+            "end": 24,
+            "experience_id": "exp_zh_offline_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '许宁负责星舟2的离线图像分类评测' directly."
+      },
+      {
+        "atom_id": "a2",
+        "text": "在固定的100张图片中，有20张被正确分类。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_a6aae4f62e0c8191cf79eb8f4cc62724",
+            "evidence_id": "ev_zh_offline_2",
+            "source_sha256": "fcc089772357a8c7d4c42e9825f2c7ea6e070a937da3090e2dadda97b7f9cfff",
+            "quote": "固定100张图片中有20张正确",
+            "start": 25,
+            "end": 40,
+            "experience_id": "exp_zh_offline_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '固定100张图片中有20张正确' confirming 20 out of 100 images were correctly classified."
+      },
+      {
+        "atom_id": "a3",
+        "text": "星舟2的离线图像分类评测没有生产部署。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_a6aae4f62e0c8191cf79eb8f4cc62724",
+            "evidence_id": "ev_zh_offline_2",
+            "source_sha256": "fcc089772357a8c7d4c42e9825f2c7ea6e070a937da3090e2dadda97b7f9cfff",
+            "quote": "没有生产部署",
+            "start": 41,
+            "end": 47,
+            "experience_id": "exp_zh_offline_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '没有生产部署' confirming no production deployment."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_a6aae4f62e0c8191cf79eb8f4cc62724",
+          "evidence_id": "ev_zh_offline_2",
+          "source_sha256": "fcc089772357a8c7d4c42e9825f2c7ea6e070a937da3090e2dadda97b7f9cfff",
+          "quote": "已签字项目记录：许宁负责星舟2的离线图像分类评测，固定100张图片中有20张正确；没有生产部署。",
+          "start": 0,
+          "end": 48,
+          "experience_id": "exp_zh_offline_2",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source text states: '许宁负责星舟2的离线图像分类评测，固定100张图片中有20张正确；没有生产部署。' This matches the full claim exactly in all aspects: person (许宁), project (星舟2), task (离线图像分类评测), dataset size (固定100张图片), correct count (20张正确), and deployment status (没有生产部署)."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "a1651a5a75f61f78bba30546b55d620bc946838330dc26d69329c8f768a52635"
+  }
+}

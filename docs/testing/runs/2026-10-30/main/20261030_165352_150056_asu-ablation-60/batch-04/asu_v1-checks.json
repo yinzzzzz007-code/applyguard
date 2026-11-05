@@ -1,0 +1,286 @@
+{
+  "claim_en_pending_2": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "Morgan completed a Kubernetes migration plan for Seabird2.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_d67c456bbcbdbee92c6f168935cbc71b",
+            "evidence_id": "ev_en_pending_2",
+            "source_sha256": "a77b3283406e14b529b5f2979aa5259b1fd9daa99f12912ea9d5246853d9a208",
+            "quote": "Morgan completed a Kubernetes migration plan for Seabird2",
+            "start": 23,
+            "end": 80,
+            "experience_id": "exp_en_pending_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'Morgan completed a Kubernetes migration plan for Seabird2'."
+      },
+      {
+        "atom_id": "a2",
+        "text": "Morgan estimated a 20% cost reduction from the Kubernetes migration plan for Seabird2.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_d67c456bbcbdbee92c6f168935cbc71b",
+            "evidence_id": "ev_en_pending_2",
+            "source_sha256": "a77b3283406e14b529b5f2979aa5259b1fd9daa99f12912ea9d5246853d9a208",
+            "quote": "Morgan estimated a 20% cost reduction.",
+            "start": 140,
+            "end": 178,
+            "experience_id": "exp_en_pending_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'Morgan estimated a 20% cost reduction'."
+      },
+      {
+        "atom_id": "a3",
+        "text": "The implementation of the Kubernetes migration plan for Seabird2 is scheduled for 2027.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_d67c456bbcbdbee92c6f168935cbc71b",
+            "evidence_id": "ev_en_pending_2",
+            "source_sha256": "a77b3283406e14b529b5f2979aa5259b1fd9daa99f12912ea9d5246853d9a208",
+            "quote": "implementation is scheduled for 2027",
+            "start": 82,
+            "end": 118,
+            "experience_id": "exp_en_pending_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'implementation is scheduled for 2027'."
+      },
+      {
+        "atom_id": "a4",
+        "text": "The implementation of the Kubernetes migration plan for Seabird2 has not started.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_d67c456bbcbdbee92c6f168935cbc71b",
+            "evidence_id": "ev_en_pending_2",
+            "source_sha256": "a77b3283406e14b529b5f2979aa5259b1fd9daa99f12912ea9d5246853d9a208",
+            "quote": "implementation is scheduled for 2027 and has not started.",
+            "start": 82,
+            "end": 139,
+            "experience_id": "exp_en_pending_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'implementation ... has not started'."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_d67c456bbcbdbee92c6f168935cbc71b",
+          "evidence_id": "ev_en_pending_2",
+          "source_sha256": "a77b3283406e14b529b5f2979aa5259b1fd9daa99f12912ea9d5246853d9a208",
+          "quote": "Signed project record: Morgan completed a Kubernetes migration plan for Seabird2; implementation is scheduled for 2027 and has not started. Morgan estimated a 20% cost reduction.",
+          "start": 0,
+          "end": 178,
+          "experience_id": "exp_en_pending_2",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source text explicitly states that Morgan completed a Kubernetes migration plan for Seabird2, estimated a 20% cost reduction, and that implementation is scheduled for 2027 and has not started."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "84edc0b181a1af18c16a226d9779823a8b69c6cd72e01b250d503fe0fe447938"
+  },
+  "claim_zh_alias_2": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "许宁负责星舟2（内部编号Q20）的PostgreSQL恢复测试。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_75fa10101db3e0ad764ce7223ab4c306",
+            "evidence_id": "ev_zh_alias_2",
+            "source_sha256": "47e7d4a15faa9e85a521612be587e31cb42eb8d022e08050891814b3e82e98dc",
+            "quote": "许宁在星舟2（内部编号Q20）负责PostgreSQL恢复测试",
+            "start": 8,
+            "end": 39,
+            "experience_id": "exp_zh_alias_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '许宁在星舟2（内部编号Q20）负责PostgreSQL恢复测试'."
+      },
+      {
+        "atom_id": "a2",
+        "text": "Redis缓存由他人负责。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_75fa10101db3e0ad764ce7223ab4c306",
+            "evidence_id": "ev_zh_alias_2",
+            "source_sha256": "47e7d4a15faa9e85a521612be587e31cb42eb8d022e08050891814b3e82e98dc",
+            "quote": "Redis缓存由林岚负责",
+            "start": 40,
+            "end": 52,
+            "experience_id": "exp_zh_alias_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states 'Redis缓存由林岚负责', indicating Redis cache was handled by another person."
+      },
+      {
+        "atom_id": "a3",
+        "text": "许宁未主导星舟2（内部编号Q20）项目。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_75fa10101db3e0ad764ce7223ab4c306",
+            "evidence_id": "ev_zh_alias_2",
+            "source_sha256": "47e7d4a15faa9e85a521612be587e31cb42eb8d022e08050891814b3e82e98dc",
+            "quote": "未主导项目",
+            "start": 53,
+            "end": 58,
+            "experience_id": "exp_zh_alias_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '未主导项目', indicating Xu Ning did not lead the project."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_75fa10101db3e0ad764ce7223ab4c306",
+          "evidence_id": "ev_zh_alias_2",
+          "source_sha256": "47e7d4a15faa9e85a521612be587e31cb42eb8d022e08050891814b3e82e98dc",
+          "quote": "已签字项目记录：许宁在星舟2（内部编号Q20）负责PostgreSQL恢复测试，Redis缓存由林岚负责；未主导项目。",
+          "start": 0,
+          "end": 59,
+          "experience_id": "exp_zh_alias_2",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source explicitly states that Xu Ning was responsible for PostgreSQL recovery testing for Starship 2 (internal code Q20), Redis cache was handled by Lin Lan (another person), and Xu Ning did not lead the project."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "459a3a785ff44de1c64380b26041f5a1ea4e3a4e66e1cccffd5b1f6668b93399"
+  },
+  "claim_zh_prototype_3": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "唐遥为星舟3编写了Go导入器原型。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_ea0a56818d1764d7b245064e9cc78670",
+            "evidence_id": "ev_zh_prototype_3",
+            "source_sha256": "cf76ba5749636ec8eb5d1702df09bda5dca196bdfb3be7c8618431c9f3cc5164",
+            "quote": "唐遥为星舟3编写Go导入器原型",
+            "start": 8,
+            "end": 23,
+            "experience_id": "exp_zh_prototype_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '唐遥为星舟3编写Go导入器原型'."
+      },
+      {
+        "atom_id": "a2",
+        "text": "在本机相同负载下，Go导入器原型将中位耗时从200毫秒降至140毫秒。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_ea0a56818d1764d7b245064e9cc78670",
+            "evidence_id": "ev_zh_prototype_3",
+            "source_sha256": "cf76ba5749636ec8eb5d1702df09bda5dca196bdfb3be7c8618431c9f3cc5164",
+            "quote": "在本机相同负载下把中位耗时从200毫秒降至140毫秒",
+            "start": 24,
+            "end": 50,
+            "experience_id": "exp_zh_prototype_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '在本机相同负载下把中位耗时从200毫秒降至140毫秒'."
+      },
+      {
+        "atom_id": "a3",
+        "text": "Go导入器原型尚未上线。",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_ea0a56818d1764d7b245064e9cc78670",
+            "evidence_id": "ev_zh_prototype_3",
+            "source_sha256": "cf76ba5749636ec8eb5d1702df09bda5dca196bdfb3be7c8618431c9f3cc5164",
+            "quote": "尚未上线",
+            "start": 51,
+            "end": 55,
+            "experience_id": "exp_zh_prototype_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states '尚未上线', indicating the prototype has not been deployed yet."
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_ea0a56818d1764d7b245064e9cc78670",
+          "evidence_id": "ev_zh_prototype_3",
+          "source_sha256": "cf76ba5749636ec8eb5d1702df09bda5dca196bdfb3be7c8618431c9f3cc5164",
+          "quote": "已签字项目记录：唐遥为星舟3编写Go导入器原型，在本机相同负载下把中位耗时从200毫秒降至140毫秒，尚未上线。",
+          "start": 0,
+          "end": 56,
+          "experience_id": "exp_zh_prototype_3",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The source explicitly states that Tang Yao wrote a Go importer prototype for Starship 3, which reduced median latency from 200ms to 140ms under the same load on the local machine, and that it has not been deployed yet."
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "f98e31e8551e4a5768796bdf3ec1a13c679ef1f8a0f2f91584dc74ed916867c7"
+  }
+}

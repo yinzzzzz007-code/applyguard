@@ -1,0 +1,89 @@
+test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix) ... 
+  test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix) (value='2024.09 - 2026.13') ... FAIL
+  test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix) (value='2024.09 - 2026.00') ... FAIL
+  test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix) (value='2026.06 - 2024.09') ... FAIL
+  test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix) (value='2025.13 示例竞赛银奖') ... FAIL
+test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix) ... FAIL
+
+======================================================================
+FAIL: test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix) (value='2024.09 - 2026.13')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "[LOCAL_USER]\.codex\visualizations\2026\10\29\01a18641-01a9-7e31-85a7-f651b4b504af\applyguard-sag-app\tests\test_resume_abnormal.py", line 33, in test_invalid_month_is_not_reinterpreted_as_valid_prefix
+    with self.subTest(value=value):self.assertEqual(dates(value),('',''))
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Tuples differ: ('2024-09', '2026-01') != ('', '')
+
+First differing element 0:
+'2024-09'
+''
+
+- ('2024-09', '2026-01')
++ ('', '')
+
+======================================================================
+FAIL: test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix) (value='2024.09 - 2026.00')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "[LOCAL_USER]\.codex\visualizations\2026\10\29\01a18641-01a9-7e31-85a7-f651b4b504af\applyguard-sag-app\tests\test_resume_abnormal.py", line 33, in test_invalid_month_is_not_reinterpreted_as_valid_prefix
+    with self.subTest(value=value):self.assertEqual(dates(value),('',''))
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Tuples differ: ('2024-09', '2026') != ('', '')
+
+First differing element 0:
+'2024-09'
+''
+
+- ('2024-09', '2026')
++ ('', '')
+
+======================================================================
+FAIL: test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix) (value='2026.06 - 2024.09')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "[LOCAL_USER]\.codex\visualizations\2026\10\29\01a18641-01a9-7e31-85a7-f651b4b504af\applyguard-sag-app\tests\test_resume_abnormal.py", line 33, in test_invalid_month_is_not_reinterpreted_as_valid_prefix
+    with self.subTest(value=value):self.assertEqual(dates(value),('',''))
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Tuples differ: ('2026-06', '2024-09') != ('', '')
+
+First differing element 0:
+'2026-06'
+''
+
+- ('2026-06', '2024-09')
++ ('', '')
+
+======================================================================
+FAIL: test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix) (value='2025.13 示例竞赛银奖')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "[LOCAL_USER]\.codex\visualizations\2026\10\29\01a18641-01a9-7e31-85a7-f651b4b504af\applyguard-sag-app\tests\test_resume_abnormal.py", line 35, in test_invalid_month_is_not_reinterpreted_as_valid_prefix
+    with self.subTest(value=value):self.assertEqual(award_entry(value)['date'],'')
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '2025-01' != ''
+- 2025-01
+
+
+======================================================================
+FAIL: test_invalid_month_is_not_reinterpreted_as_valid_prefix (tests.test_resume_abnormal.ResumeAbnormalUnitTests.test_invalid_month_is_not_reinterpreted_as_valid_prefix)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "[LOCAL_USER]\.codex\visualizations\2026\10\29\01a18641-01a9-7e31-85a7-f651b4b504af\applyguard-sag-app\tests\test_resume_abnormal.py", line 37, in test_invalid_month_is_not_reinterpreted_as_valid_prefix
+    self.assertEqual(dates('2024.12 - 2026.11'),('2024-12','2026-11'))
+AssertionError: Tuples differ: ('2024-12', '2026-01') != ('2024-12', '2026-11')
+
+First differing element 1:
+'2026-01'
+'2026-11'
+
+- ('2024-12', '2026-01')
+?                   ^
+
++ ('2024-12', '2026-11')
+?                   ^
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.002s
+
+FAILED (failures=5)

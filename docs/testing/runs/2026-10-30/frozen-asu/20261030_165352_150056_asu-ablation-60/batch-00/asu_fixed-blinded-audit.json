@@ -1,0 +1,14 @@
+{
+  "claim_en_offline_2": {
+    "wrong_edit": false,
+    "errors": [],
+    "reason": "The proposal is a paraphrase of the original with equivalent meaning and all required facts preserved."
+  },
+  "claim_zh_correction_1": {
+    "wrong_edit": true,
+    "errors": [
+      "Missing semicolon between '二等奖' and '早期一等奖记录已更正'"
+    ],
+    "reason": "The original uses a semicolon to separate two independent clauses, preserving the meaning that the early first prize record has been corrected. The proposal replaces the semicolon with a comma, which changes the sentence structure and may alter the intended meaning or clarity."
+  }
+}

@@ -1,0 +1,23 @@
+test_background_never_imports (tests.test_agent_bridge.AgentBridgeTests.test_background_never_imports) ... ok
+test_changed_source_invalidates_confirmation (tests.test_agent_bridge.AgentBridgeTests.test_changed_source_invalidates_confirmation) ... ok
+test_confirmed_numbers_required (tests.test_agent_bridge.AgentBridgeTests.test_confirmed_numbers_required) ... ok
+test_expiry_and_revocation (tests.test_agent_bridge.AgentBridgeTests.test_expiry_and_revocation) ... ok
+test_fabricated_quote_or_hash_refused (tests.test_agent_bridge.AgentBridgeTests.test_fabricated_quote_or_hash_refused) ... ok
+test_github_immutable_scope (tests.test_agent_bridge.AgentBridgeTests.test_github_immutable_scope) ... ok
+test_injection_is_data (tests.test_agent_bridge.AgentBridgeTests.test_injection_is_data) ... ok
+test_materials_scattered_and_no_secret (tests.test_agent_bridge.AgentBridgeTests.test_materials_scattered_and_no_secret) ... ok
+test_pair_and_split_capabilities (tests.test_agent_bridge.AgentBridgeTests.test_pair_and_split_capabilities) ... ok
+test_path_boundaries (tests.test_agent_bridge.AgentBridgeTests.test_path_boundaries) ... ok
+test_pre_read_disclosure_required (tests.test_agent_bridge.AgentBridgeTests.test_pre_read_disclosure_required) ... ok
+test_private_auth_not_implicit (tests.test_agent_bridge.AgentBridgeTests.test_private_auth_not_implicit) ... ok
+test_real_workspace_import_stays_unreviewed (tests.test_agent_bridge.AgentBridgeTests.test_real_workspace_import_stays_unreviewed) ... ok
+test_revoke_during_search_discards_inflight_results (tests.test_agent_bridge.AgentBridgeTests.test_revoke_during_search_discards_inflight_results) ... ok
+test_scope_modes (tests.test_agent_bridge.AgentBridgeTests.test_scope_modes) ... ok
+test_secret_like_text_is_not_disclosed (tests.test_agent_bridge.AgentBridgeTests.test_secret_like_text_is_not_disclosed) ... ok
+test_summary_is_candidate_not_verified (tests.test_agent_bridge.AgentBridgeTests.test_summary_is_candidate_not_verified) ... ok
+test_symlink_escape (tests.test_agent_bridge.AgentBridgeTests.test_symlink_escape) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.143s
+
+OK

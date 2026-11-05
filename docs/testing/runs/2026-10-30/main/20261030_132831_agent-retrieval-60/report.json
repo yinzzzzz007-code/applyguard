@@ -1,0 +1,493 @@
+{
+  "date": "2026-10-30T13:28:34.770656+08:00",
+  "cases": 60,
+  "documents": 180,
+  "recalled": 180,
+  "expected": 180,
+  "wrong_project_hits": 0,
+  "median_seconds": 0.06199999999807915,
+  "p95_seconds": 0.07800000000133878,
+  "rows": [
+    {
+      "query": "Project000",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.20300000000133878,
+      "errors": []
+    },
+    {
+      "query": "Project001",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.09399999999732245,
+      "errors": []
+    },
+    {
+      "query": "Project002",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.07800000000133878,
+      "errors": []
+    },
+    {
+      "query": "Project003",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.07800000000133878,
+      "errors": []
+    },
+    {
+      "query": "Project004",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.07899999999790452,
+      "errors": []
+    },
+    {
+      "query": "Project005",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.046000000002095476,
+      "errors": []
+    },
+    {
+      "query": "Project006",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.0629999999946449,
+      "errors": []
+    },
+    {
+      "query": "Project007",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.062000000005355105,
+      "errors": []
+    },
+    {
+      "query": "Project008",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.0629999999946449,
+      "errors": []
+    },
+    {
+      "query": "Project009",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.04700000000593718,
+      "errors": []
+    },
+    {
+      "query": "Project010",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06199999999807915,
+      "errors": []
+    },
+    {
+      "query": "Project011",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.046999999998661224,
+      "errors": []
+    },
+    {
+      "query": "Project012",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.046999999998661224,
+      "errors": []
+    },
+    {
+      "query": "Project013",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06300000000192085,
+      "errors": []
+    },
+    {
+      "query": "Project014",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06199999999807915,
+      "errors": []
+    },
+    {
+      "query": "Project015",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06300000000192085,
+      "errors": []
+    },
+    {
+      "query": "Project016",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06199999999807915,
+      "errors": []
+    },
+    {
+      "query": "Project017",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06300000000192085,
+      "errors": []
+    },
+    {
+      "query": "Project018",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06199999999807915,
+      "errors": []
+    },
+    {
+      "query": "Project019",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.046999999998661224,
+      "errors": []
+    },
+    {
+      "query": "Project020",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.04700000000593718,
+      "errors": []
+    },
+    {
+      "query": "Project021",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06199999999807915,
+      "errors": []
+    },
+    {
+      "query": "Project022",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.046999999998661224,
+      "errors": []
+    },
+    {
+      "query": "Project023",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06300000000192085,
+      "errors": []
+    },
+    {
+      "query": "Project024",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06199999999807915,
+      "errors": []
+    },
+    {
+      "query": "Project025",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06300000000192085,
+      "errors": []
+    },
+    {
+      "query": "Project026",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.046999999998661224,
+      "errors": []
+    },
+    {
+      "query": "Project027",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06199999999807915,
+      "errors": []
+    },
+    {
+      "query": "Project028",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06300000000192085,
+      "errors": []
+    },
+    {
+      "query": "Project029",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06199999999807915,
+      "errors": []
+    },
+    {
+      "query": "Project030",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06300000000192085,
+      "errors": []
+    },
+    {
+      "query": "Project031",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06199999999807915,
+      "errors": []
+    },
+    {
+      "query": "Project032",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06300000000192085,
+      "errors": []
+    },
+    {
+      "query": "Project033",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.046000000002095476,
+      "errors": []
+    },
+    {
+      "query": "Project034",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.0629999999946449,
+      "errors": []
+    },
+    {
+      "query": "Project035",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.062000000005355105,
+      "errors": []
+    },
+    {
+      "query": "Project036",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.046999999998661224,
+      "errors": []
+    },
+    {
+      "query": "Project037",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.046999999998661224,
+      "errors": []
+    },
+    {
+      "query": "Project038",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06300000000192085,
+      "errors": []
+    },
+    {
+      "query": "Project039",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06199999999807915,
+      "errors": []
+    },
+    {
+      "query": "Project040",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.046999999998661224,
+      "errors": []
+    },
+    {
+      "query": "Project041",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06300000000192085,
+      "errors": []
+    },
+    {
+      "query": "Project042",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06199999999807915,
+      "errors": []
+    },
+    {
+      "query": "Project043",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.046999999998661224,
+      "errors": []
+    },
+    {
+      "query": "Project044",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.062000000005355105,
+      "errors": []
+    },
+    {
+      "query": "Project045",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.0629999999946449,
+      "errors": []
+    },
+    {
+      "query": "Project046",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.04700000000593718,
+      "errors": []
+    },
+    {
+      "query": "Project047",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06199999999807915,
+      "errors": []
+    },
+    {
+      "query": "Project048",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06300000000192085,
+      "errors": []
+    },
+    {
+      "query": "Project049",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.046999999998661224,
+      "errors": []
+    },
+    {
+      "query": "Project050",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06199999999807915,
+      "errors": []
+    },
+    {
+      "query": "Project051",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.046999999998661224,
+      "errors": []
+    },
+    {
+      "query": "Project052",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06300000000192085,
+      "errors": []
+    },
+    {
+      "query": "Project053",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.046000000002095476,
+      "errors": []
+    },
+    {
+      "query": "Project054",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.0629999999946449,
+      "errors": []
+    },
+    {
+      "query": "Project055",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.062000000005355105,
+      "errors": []
+    },
+    {
+      "query": "Project056",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.046999999998661224,
+      "errors": []
+    },
+    {
+      "query": "Project057",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06300000000192085,
+      "errors": []
+    },
+    {
+      "query": "Project058",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06199999999807915,
+      "errors": []
+    },
+    {
+      "query": "Project059",
+      "recalled": 3,
+      "expected": 3,
+      "wrong_project": 0,
+      "seconds": 0.06300000000192085,
+      "errors": []
+    }
+  ],
+  "limitation": "Exact project names; no synonym/multihop/large-tree benchmark; wrong-project retrieval is not personal-attribution error."
+}

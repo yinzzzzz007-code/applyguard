@@ -1,0 +1,17 @@
+TASTESKILL · LINT   4 file(s)
+
+WARN
+  [framework-colour] A framework default colour (Tailwind blue, green, red, amber). Take the accent and status colours from the dealt style.  (9×)
+      frontend/src/workspace.css:4  #2563eb
+      frontend/src/workspace.css:5  #2563eb
+      frontend/src/workspace.css:6  #2563eb
+      frontend/src/workspace.css:21  #2563eb
+      frontend/src/workspace.css:90  #1d4ed8
+      frontend/src/workspace.css:105  #1d4ed8
+      … 3 more
+  [shadow] Shadow. Elements at rest carry none; only real overlays (menu, dialog, sticky bar) may.  (2×)
+      frontend/src/workspace.css:64  box-shadow:
+      frontend/src/workspace.css:184  box-shadow:
+
+RESULT: 0 FAIL, 11 WARN
+Interface fragments marked data-ui keep their own borders and shadows. Any other line that must keep a flagged pattern for a real reason can carry the comment taste-skill-ignore.

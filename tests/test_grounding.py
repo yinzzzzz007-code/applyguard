@@ -111,6 +111,9 @@ class GroundingPolicyTests(unittest.TestCase):
 
     def test_three_search_channels_and_atomic_server_floor(self):
         self.assertEqual([q[0] for q in search_queries(TEXT)],['support','refutation','correction'])
+        with patch.dict(os.environ,{},clear=True):
+            self.assertEqual(grounding_mode({}),'sag_atomic')
+            self.assertEqual(grounding_mode({'grounding_mode':'off'}),'sag_atomic')
         with patch.dict(os.environ,{'APPLYGUARD_GROUNDING_MODE':'sag_atomic'}):
             self.assertEqual(grounding_mode({'grounding_mode':'off'}),'sag_atomic')
 

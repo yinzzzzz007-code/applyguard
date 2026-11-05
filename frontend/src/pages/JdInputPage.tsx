@@ -118,7 +118,7 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
       <header className="panel-head">
         <h2>岗位说明</h2>
         <p>
-          粘贴目标岗位，找出与经历匹配的要求。岗位解析可使用离线规则；SAG 单独按服务端配置启用，启用后会发送相关材料给模型服务。
+          粘贴目标岗位，找出与经历匹配的要求。岗位解析可使用离线规则；陈述核验默认使用 SAG 与原子事实检查，并向配置的模型服务发送相关材料。
         </p>
       </header>
       <p><Link className="btn secondary" to="/jobs">从岗位雷达选择岗位</Link></p>

@@ -1,0 +1,34 @@
+
+> applyguard-frontend@1.0.0 smoke
+> node scripts/smoke-mock.mjs && node --test scripts/copy-rules.test.mjs scripts/history.test.mjs scripts/materials.test.mjs scripts/jobs.test.mjs
+
+SMOKE_MOCK_PASSED
+✔ grounded copying binds final text, atomic mode and complete result (1.9514ms)
+✔ text history preserves wording but never stores verification credentials (5.11ms)
+✔ rollback restores deleted wording and records a new version without restoring approval (1.0206ms)
+✔ state-only changes and rejected suggestions are retained in history (0.2539ms)
+✔ verified claim is copyable, blocked and edited claims are not (0.1522ms)
+✔ blocked field cannot be copied, and confirmation is required for a normal field (0.194ms)
+✔ unsupported manual claims remain uncopyable even after confirmation (0.1721ms)
+✔ draft placeholders and pending revalidation never unlock copying (0.1417ms)
+✔ legacy drafts with missing basic fields remain editable (2.4044ms)
+✔ local history stores only a simulation summary and can remove it (4.5164ms)
+✔ imports JSON arrays/envelopes and JSONL, and rejects partial/oversized input (3.9753ms)
+✔ reference, closed and archived opportunities cannot prepare applications (0.5389ms)
+✔ application summary retains opportunity version without saving JD or evidence (6.0901ms)
+✔ job search combines words across fields and normalizes whitespace and case (0.3428ms)
+✔ job views separate preparing, archived and source status without changing eligibility (0.2292ms)
+✔ job sorting is deterministic and does not reorder the stored collection (6.8943ms)
+✔ recognition saved does not imply human review or an experience link (0.6982ms)
+✔ failed or stale content does not retain a reviewed display (0.1107ms)
+✔ a placeholder OCR span still needs manual inspection (0.0926ms)
+✔ duplicate basenames remain distinguishable by their folders (0.1207ms)
+✔ text follows page and line order without changing the source array (0.5658ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 155.7451

@@ -1,0 +1,94 @@
+test_absent_assets_preserve_original_and_review (tests.test_asu_resume.ASuReuseTests.test_absent_assets_preserve_original_and_review) ... ERROR
+test_business_reference_is_loaded_only_when_relevant (tests.test_asu_resume.ASuReuseTests.test_business_reference_is_loaded_only_when_relevant) ... ok
+test_changed_upstream_asset_never_silently_runs (tests.test_asu_resume.ASuReuseTests.test_changed_upstream_asset_never_silently_runs) ... ERROR
+test_chinese_english_and_uncertain_language_boundaries (tests.test_asu_resume.ASuReuseTests.test_chinese_english_and_uncertain_language_boundaries) ... ok
+test_original_skill_and_ledger_reach_proposal_call (tests.test_asu_resume.ASuReuseTests.test_original_skill_and_ledger_reach_proposal_call) ... ok
+test_six_original_files_match_upstream_blob_and_sha256 (tests.test_asu_resume.ASuReuseTests.test_six_original_files_match_upstream_blob_and_sha256) ... ok
+test_unsolicited_translation_is_not_applied_even_if_judge_supports_it (tests.test_asu_resume.ASuReuseTests.test_unsolicited_translation_is_not_applied_even_if_judge_supports_it) ... ok
+test_unsupported_asu_proposal_does_not_override_guard_or_original (tests.test_asu_resume.ASuReuseTests.test_unsupported_asu_proposal_does_not_override_guard_or_original) ... ok
+test_verification_alone_does_not_load_writing_skill (tests.test_asu_resume.ASuReuseTests.test_verification_alone_does_not_load_writing_skill) ... ok
+
+======================================================================
+ERROR: test_absent_assets_preserve_original_and_review (tests.test_asu_resume.ASuReuseTests.test_absent_assets_preserve_original_and_review)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\shutil.py", line 637, in _rmtree_unsafe
+    os.rmdir(path)
+PermissionError: [WinError 5] 拒绝访问。: '[LOCAL_USER]\\AppData\\Local\\Packages\\sandbox.{3c7195b5-fe65-489c-a340-37e89e15afb0}\\AC\\Temp\\tmp3v6tuyf1'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "[APPLYGUARD_ROOT]\tests\test_asu_resume.py", line 56, in test_absent_assets_preserve_original_and_review
+    with tempfile.TemporaryDirectory() as folder,patch.object(a,'DIRECTORY',Path(folder)):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py", line 950, in __exit__
+    self.cleanup()
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py", line 954, in cleanup
+    self._rmtree(self.name, ignore_errors=self._ignore_cleanup_errors)
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py", line 934, in _rmtree
+    _shutil.rmtree(name, onexc=onexc)
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\shutil.py", line 781, in rmtree
+    return _rmtree_unsafe(path, onexc)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\shutil.py", line 639, in _rmtree_unsafe
+    onexc(os.rmdir, path, err)
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py", line 906, in onexc
+    _resetperms(path)
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py", line 286, in _resetperms
+    _dont_follow_symlinks(_os.chmod, path, 0o700)
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py", line 277, in _dont_follow_symlinks
+    func(path, *args)
+PermissionError: [WinError 5] 拒绝访问。: '[LOCAL_USER]\\AppData\\Local\\Packages\\sandbox.{3c7195b5-fe65-489c-a340-37e89e15afb0}\\AC\\Temp\\tmp3v6tuyf1'
+
+======================================================================
+ERROR: test_changed_upstream_asset_never_silently_runs (tests.test_asu_resume.ASuReuseTests.test_changed_upstream_asset_never_silently_runs)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "[APPLYGUARD_ROOT]\tests\test_asu_resume.py", line 64, in test_changed_upstream_asset_never_silently_runs
+    destination=Path(folder)/'asu';shutil.copytree(a.DIRECTORY,destination)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\shutil.py", line 600, in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\shutil.py", line 498, in _copytree
+    os.makedirs(dst, exist_ok=dirs_exist_ok)
+  File "<frozen os>", line 225, in makedirs
+PermissionError: [WinError 5] 拒绝访问。: '[LOCAL_USER]\\AppData\\Local\\Packages\\sandbox.{3c7195b5-fe65-489c-a340-37e89e15afb0}\\AC\\Temp\\tmpcn4axxe7\\asu'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\shutil.py", line 637, in _rmtree_unsafe
+    os.rmdir(path)
+PermissionError: [WinError 5] 拒绝访问。: '[LOCAL_USER]\\AppData\\Local\\Packages\\sandbox.{3c7195b5-fe65-489c-a340-37e89e15afb0}\\AC\\Temp\\tmpcn4axxe7'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "[APPLYGUARD_ROOT]\tests\test_asu_resume.py", line 63, in test_changed_upstream_asset_never_silently_runs
+    with tempfile.TemporaryDirectory() as folder:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py", line 950, in __exit__
+    self.cleanup()
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py", line 954, in cleanup
+    self._rmtree(self.name, ignore_errors=self._ignore_cleanup_errors)
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py", line 934, in _rmtree
+    _shutil.rmtree(name, onexc=onexc)
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\shutil.py", line 781, in rmtree
+    return _rmtree_unsafe(path, onexc)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\shutil.py", line 639, in _rmtree_unsafe
+    onexc(os.rmdir, path, err)
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py", line 906, in onexc
+    _resetperms(path)
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py", line 286, in _resetperms
+    _dont_follow_symlinks(_os.chmod, path, 0o700)
+  File "[LOCAL_USER]\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py", line 277, in _dont_follow_symlinks
+    func(path, *args)
+PermissionError: [WinError 5] 拒绝访问。: '[LOCAL_USER]\\AppData\\Local\\Packages\\sandbox.{3c7195b5-fe65-489c-a340-37e89e15afb0}\\AC\\Temp\\tmpcn4axxe7'
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.065s
+
+FAILED (errors=2)

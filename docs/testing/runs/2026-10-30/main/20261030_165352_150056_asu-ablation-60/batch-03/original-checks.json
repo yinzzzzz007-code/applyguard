@@ -1,0 +1,246 @@
+{
+  "claim_en_privacy_3": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "Riley analyzed 32 anonymized records for Seabird3 using SQL during a two-week internship.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_9fce43ba36a55c378351667344051383",
+            "evidence_id": "ev_en_privacy_3",
+            "source_sha256": "da69b5162b523b1be2cd62e0065de54a2912748ef66034c5027850672ace9ccd",
+            "quote": "Riley analyzed 32 anonymized records for Seabird3 using SQL during a two-week internship; no raw personal records were accessed.",
+            "start": 23,
+            "end": 151,
+            "experience_id": "exp_en_privacy_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: 'Riley analyzed 32 anonymized records for Seabird3 using SQL during a two-week internship.'"
+      },
+      {
+        "atom_id": "a2",
+        "text": "No raw personal records were accessed by Riley.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_9fce43ba36a55c378351667344051383",
+            "evidence_id": "ev_en_privacy_3",
+            "source_sha256": "da69b5162b523b1be2cd62e0065de54a2912748ef66034c5027850672ace9ccd",
+            "quote": "Riley analyzed 32 anonymized records for Seabird3 using SQL during a two-week internship; no raw personal records were accessed.",
+            "start": 23,
+            "end": 151,
+            "experience_id": "exp_en_privacy_3",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: 'no raw personal records were accessed.'"
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_9fce43ba36a55c378351667344051383",
+          "evidence_id": "ev_en_privacy_3",
+          "source_sha256": "da69b5162b523b1be2cd62e0065de54a2912748ef66034c5027850672ace9ccd",
+          "quote": "Riley analyzed 32 anonymized records for Seabird3 using SQL during a two-week internship; no raw personal records were accessed.",
+          "start": 23,
+          "end": 151,
+          "experience_id": "exp_en_privacy_3",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The full claim is exactly supported by the source text: 'Riley analyzed 32 anonymized records for Seabird3 using SQL during a two-week internship; no raw personal records were accessed.'"
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "b6dae9ae13cdc06b5a16155ead404bf01fcba498086238e4e3c6a2200ed2f7f2"
+  },
+  "claim_en_sample_2": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "Morgan interviewed a convenience sample of 20 users about Seabird2.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_797ee4c2bf3e76b8da1b655355ebc274",
+            "evidence_id": "ev_en_sample_2",
+            "source_sha256": "62a666fe782db6a8b16a246a95812090533411ae0629887a7ac39e83233f8983",
+            "quote": "Morgan interviewed a convenience sample of 20 users about Seabird2; eight completed the task. The sample was not representative.",
+            "start": 23,
+            "end": 151,
+            "experience_id": "exp_en_sample_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: 'Morgan interviewed a convenience sample of 20 users about Seabird2.'"
+      },
+      {
+        "atom_id": "a2",
+        "text": "Eight users completed the task in Morgan's interview.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_797ee4c2bf3e76b8da1b655355ebc274",
+            "evidence_id": "ev_en_sample_2",
+            "source_sha256": "62a666fe782db6a8b16a246a95812090533411ae0629887a7ac39e83233f8983",
+            "quote": "Morgan interviewed a convenience sample of 20 users about Seabird2; eight completed the task. The sample was not representative.",
+            "start": 23,
+            "end": 151,
+            "experience_id": "exp_en_sample_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: 'eight completed the task.'"
+      },
+      {
+        "atom_id": "a3",
+        "text": "The sample Morgan used was not representative.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_797ee4c2bf3e76b8da1b655355ebc274",
+            "evidence_id": "ev_en_sample_2",
+            "source_sha256": "62a666fe782db6a8b16a246a95812090533411ae0629887a7ac39e83233f8983",
+            "quote": "Morgan interviewed a convenience sample of 20 users about Seabird2; eight completed the task. The sample was not representative.",
+            "start": 23,
+            "end": 151,
+            "experience_id": "exp_en_sample_2",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: 'The sample was not representative.'"
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_797ee4c2bf3e76b8da1b655355ebc274",
+          "evidence_id": "ev_en_sample_2",
+          "source_sha256": "62a666fe782db6a8b16a246a95812090533411ae0629887a7ac39e83233f8983",
+          "quote": "Morgan interviewed a convenience sample of 20 users about Seabird2; eight completed the task. The sample was not representative.",
+          "start": 23,
+          "end": 151,
+          "experience_id": "exp_en_sample_2",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The full claim is exactly supported by the source text: 'Morgan interviewed a convenience sample of 20 users about Seabird2; eight completed the task. The sample was not representative.'"
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "8ab56dc9e9cb1cbeae5b9e50c7fc5f163f0b89b6862e8b63f485cf6ab27ef3b8"
+  },
+  "claim_en_offline_1": {
+    "atoms": [
+      {
+        "atom_id": "a1",
+        "text": "Avery wrote Python interface tests for Seabird1.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_2234996d9a8cc0d3bdc29cd03e6fd609",
+            "evidence_id": "ev_en_offline_1",
+            "source_sha256": "e1c408a8a3a636561bfa69adf5d450bb9ed144339091a6c2352723e6cdeda111",
+            "quote": "Avery wrote Python interface tests for Seabird1; 12 of 40 tests passed offline. Avery did not deploy the service.",
+            "start": 23,
+            "end": 136,
+            "experience_id": "exp_en_offline_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: 'Avery wrote Python interface tests for Seabird1.'"
+      },
+      {
+        "atom_id": "a2",
+        "text": "12 of 40 tests passed offline.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_2234996d9a8cc0d3bdc29cd03e6fd609",
+            "evidence_id": "ev_en_offline_1",
+            "source_sha256": "e1c408a8a3a636561bfa69adf5d450bb9ed144339091a6c2352723e6cdeda111",
+            "quote": "Avery wrote Python interface tests for Seabird1; 12 of 40 tests passed offline. Avery did not deploy the service.",
+            "start": 23,
+            "end": 136,
+            "experience_id": "exp_en_offline_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: '12 of 40 tests passed offline.'"
+      },
+      {
+        "atom_id": "a3",
+        "text": "Avery did not deploy the service.",
+        "relation": "SUPPORTED",
+        "citations": [
+          {
+            "source_id": "src_2234996d9a8cc0d3bdc29cd03e6fd609",
+            "evidence_id": "ev_en_offline_1",
+            "source_sha256": "e1c408a8a3a636561bfa69adf5d450bb9ed144339091a6c2352723e6cdeda111",
+            "quote": "Avery wrote Python interface tests for Seabird1; 12 of 40 tests passed offline. Avery did not deploy the service.",
+            "start": 23,
+            "end": 136,
+            "experience_id": "exp_en_offline_1",
+            "source_version": "frozen-v1",
+            "file_version": null,
+            "positions": []
+          }
+        ],
+        "reason": "The source states: 'Avery did not deploy the service.'"
+      }
+    ],
+    "full_claim_check": {
+      "relation": "SUPPORTED",
+      "citations": [
+        {
+          "source_id": "src_2234996d9a8cc0d3bdc29cd03e6fd609",
+          "evidence_id": "ev_en_offline_1",
+          "source_sha256": "e1c408a8a3a636561bfa69adf5d450bb9ed144339091a6c2352723e6cdeda111",
+          "quote": "Avery wrote Python interface tests for Seabird1; 12 of 40 tests passed offline. Avery did not deploy the service.",
+          "start": 23,
+          "end": 136,
+          "experience_id": "exp_en_offline_1",
+          "source_version": "frozen-v1",
+          "file_version": null,
+          "positions": []
+        }
+      ],
+      "reason": "The full claim is exactly supported by the source text: 'Avery wrote Python interface tests for Seabird1; 12 of 40 tests passed offline. Avery did not deploy the service.'"
+    },
+    "complete": true,
+    "relation": "SUPPORTED",
+    "coverage_missing": [],
+    "numeric_missing": [],
+    "coverage_repairs": 0,
+    "claim_text_sha256": "b616284a1657d10a52b5f63de81aaa2f7d09136f60e351b7015d037a9165e4e6"
+  }
+}

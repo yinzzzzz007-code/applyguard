@@ -1,0 +1,29 @@
+{
+  "claim_en_pending_2": {
+    "lost_supported_details": [
+      "estimated"
+    ],
+    "reason": "The proposal combines the original sentences without omitting any original detail; all details about Morgan's role, the project, schedule, and cost reduction estimate are preserved.",
+    "resolved_equivalences": [],
+    "qualifier_findings": [
+      {
+        "category": "estimated",
+        "detail": "estimated"
+      }
+    ]
+  },
+  "claim_zh_alias_2": {
+    "lost_supported_details": [
+      "Redis缓存由林岚负责。"
+    ],
+    "reason": "The proposal changes 'Redis缓存由林岚负责' to 'Redis缓存由他人负责', removing the specific name '林岚' who is responsible for Redis caching, thus losing that original detail.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  },
+  "claim_zh_prototype_3": {
+    "lost_supported_details": [],
+    "reason": "The proposal paraphrases the original text without losing any original detail; all information about Tang Yao's prototype, performance improvement, and deployment status is preserved.",
+    "resolved_equivalences": [],
+    "qualifier_findings": []
+  }
+}
