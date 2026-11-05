@@ -342,3 +342,18 @@ button:focus-visible,a:focus-visible,summary:focus-visible { scroll-margin:80px;
 .agent-evidence { padding-block: 24px; border-bottom: 1px solid #cbd5e1; }
 .agent-evidence p { overflow-wrap: anywhere; }
 .agent-evidence blockquote { margin: 16px 0; padding: 16px; background: #f1f5f9; white-space: pre-wrap; }
+
+/* Sentence review: facts and user decisions are independent, with no modal interruption. */
+.review-sentence { border: 1px solid #dbe2ea; border-radius: 14px; padding: 18px; margin: 14px 0; background: white; min-width: 0; }
+.review-sentence .jd-input { width: 100%; box-sizing: border-box; min-height: 100px; font: inherit; line-height: 1.7; resize: vertical; }
+.review-labels { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: #475569; margin-bottom: 12px; }
+.review-labels span { border-radius: 6px; background: #f1f5f9; padding: 4px 8px; }
+.review-proposal { border-top: 1px solid #e2e8f0; margin-top: 12px; padding-top: 10px; overflow-wrap: anywhere; }
+.review-proposal mark { background: #fef3c7; color: #78350f; border-radius: 3px; }
+.review-rest, .review-editor details { margin: 16px 0; }
+.review-editor summary { cursor: pointer; padding: 10px 0; }
+.review-export { border-top: 1px solid #cbd5e1; margin-top: 24px; padding-top: 20px; }
+.review-export label { display: flex; align-items: flex-start; gap: 10px; margin: 16px 0; }
+.review-export input { flex-shrink: 0; margin-top: 4px; }
+.review-editor, .review-workspace > * { min-width: 0; }
+@media (max-width: 640px) { .review-sentence { padding: 12px; } .review-sentence .btn { flex: 1 1 auto; } }

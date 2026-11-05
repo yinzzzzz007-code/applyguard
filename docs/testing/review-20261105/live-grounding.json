@@ -1,0 +1,559 @@
+[
+  {
+    "model": "gpt-4o-mini",
+    "claims": [
+      {
+        "claim_id": "claim_atlas",
+        "text": "Alex wrote Python interface tests for Atlas.",
+        "evidence_ids": [
+          "ev_proof"
+        ],
+        "status": "DRAFT"
+      }
+    ],
+    "checks": [
+      {
+        "claim_id": "claim_atlas",
+        "state": "VERIFIED",
+        "grounded": true,
+        "support_score": 1.0,
+        "unsupported_fragments": [],
+        "explanation": "所有已拆分事实及完整性检查通过，逐字引文来自当前经历原件；请人工核对后使用。"
+      }
+    ],
+    "report": {
+      "mode": "sag_atomic",
+      "engine": "zleap-sag 0.15.0",
+      "snapshot": "d0aadea32c159e27280bc876e5f89536bcae1f02fe6d1745b6b3c3010868b1ab",
+      "prompt_version": "6a69518754684c5b578006d186120a85bf670f28343cc037be1308a1b43411d4",
+      "polish_source": {
+        "name": "ASu-skills/great-resume",
+        "repository": "https://github.com/Hisn00w/ASu-skills",
+        "commit": "d27fd2a3864c48472a5c8ed942410098ba9cd35f",
+        "license": "MIT",
+        "resources": {
+          "skills/great-resume/SKILL.md": "82ccf4a504f0498072ea1a46a42b4b9bd035129ca27d132a66db244897b4067f",
+          "skills/great-resume/references/claim-evidence-ledger.md": "b478bf362024b910db084e8a238fae82c3af2298316bec98f070ef2647afce33"
+        },
+        "adapter_policy_sha256": "3ef6b6a0efc296a2ad5b086c0f7a7067446f506b8a4fd5075ce7bf2a0a575b5f",
+        "role": "rewrite_proposal_only",
+        "original_files_unchanged": true,
+        "edit_policy_sha256": "6e1870ddf6353f6d46513273d7f67e0af6b068dd6e64fb5a838cdbaae59831af"
+      },
+      "results": {
+        "claim_atlas": {
+          "atoms": [
+            {
+              "atom_id": "a1",
+              "text": "Alex wrote Python interface tests.",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+                  "evidence_id": "ev_proof",
+                  "source_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+                  "quote": "Alex wrote Python interface tests for Atlas.",
+                  "quote_punctuation_aligned": false,
+                  "start": 0,
+                  "end": 44,
+                  "experience_id": "exp_atlas",
+                  "source_version": "v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The assertion is directly supported by the source text."
+            },
+            {
+              "atom_id": "a2",
+              "text": "The tests were for Atlas.",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+                  "evidence_id": "ev_proof",
+                  "source_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+                  "quote": "Alex wrote Python interface tests for Atlas.",
+                  "quote_punctuation_aligned": false,
+                  "start": 0,
+                  "end": 44,
+                  "experience_id": "exp_atlas",
+                  "source_version": "v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The assertion is directly supported by the source text."
+            }
+          ],
+          "full_claim_check": {
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+                "evidence_id": "ev_proof",
+                "source_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+                "quote": "Alex wrote Python interface tests for Atlas.",
+                "quote_punctuation_aligned": false,
+                "start": 0,
+                "end": 44,
+                "experience_id": "exp_atlas",
+                "source_version": "v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The full claim is directly supported by the source text."
+          },
+          "complete": true,
+          "relation": "SUPPORTED",
+          "coverage_missing": [],
+          "numeric_missing": [],
+          "coverage_repairs": 0,
+          "claim_text_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+          "state": "VERIFIED",
+          "verification_scope": "experience",
+          "scope_notice": "",
+          "retrieved_sources": [
+            {
+              "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+              "evidence_id": "ev_proof",
+              "candidate_id": "cand_test",
+              "experience_id": "exp_atlas",
+              "title": "Atlas",
+              "text": "Alex wrote Python interface tests for Atlas.",
+              "sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+              "version": "v1",
+              "positions": [],
+              "file_id": null,
+              "file_version": null,
+              "file_sha256": null,
+              "text_offset": 0,
+              "chunk_id": "",
+              "retrieval_channels": []
+            }
+          ],
+          "original_text": "Alex wrote Python interface tests for Atlas.",
+          "final_text": "Alex wrote Python interface tests for Atlas.",
+          "reused_current_run_original_check": true,
+          "proposed_text": "Alex wrote Python interface tests for Atlas.",
+          "proposal_check": {
+            "atoms": [
+              {
+                "atom_id": "a1",
+                "text": "Alex wrote Python interface tests.",
+                "relation": "SUPPORTED",
+                "citations": [
+                  {
+                    "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+                    "evidence_id": "ev_proof",
+                    "source_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+                    "quote": "Alex wrote Python interface tests for Atlas.",
+                    "quote_punctuation_aligned": false,
+                    "start": 0,
+                    "end": 44,
+                    "experience_id": "exp_atlas",
+                    "source_version": "v1",
+                    "file_version": null,
+                    "positions": []
+                  }
+                ],
+                "reason": "The assertion is directly supported by the source text."
+              },
+              {
+                "atom_id": "a2",
+                "text": "The tests were for Atlas.",
+                "relation": "SUPPORTED",
+                "citations": [
+                  {
+                    "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+                    "evidence_id": "ev_proof",
+                    "source_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+                    "quote": "Alex wrote Python interface tests for Atlas.",
+                    "quote_punctuation_aligned": false,
+                    "start": 0,
+                    "end": 44,
+                    "experience_id": "exp_atlas",
+                    "source_version": "v1",
+                    "file_version": null,
+                    "positions": []
+                  }
+                ],
+                "reason": "The assertion is directly supported by the source text."
+              }
+            ],
+            "full_claim_check": {
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+                  "evidence_id": "ev_proof",
+                  "source_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+                  "quote": "Alex wrote Python interface tests for Atlas.",
+                  "quote_punctuation_aligned": false,
+                  "start": 0,
+                  "end": 44,
+                  "experience_id": "exp_atlas",
+                  "source_version": "v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The full claim is directly supported by the source text."
+            },
+            "complete": true,
+            "relation": "SUPPORTED",
+            "coverage_missing": [],
+            "numeric_missing": [],
+            "coverage_repairs": 0,
+            "claim_text_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909"
+          },
+          "original_check": {
+            "atoms": [
+              {
+                "atom_id": "a1",
+                "text": "Alex wrote Python interface tests.",
+                "relation": "SUPPORTED",
+                "citations": [
+                  {
+                    "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+                    "evidence_id": "ev_proof",
+                    "source_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+                    "quote": "Alex wrote Python interface tests for Atlas.",
+                    "quote_punctuation_aligned": false,
+                    "start": 0,
+                    "end": 44,
+                    "experience_id": "exp_atlas",
+                    "source_version": "v1",
+                    "file_version": null,
+                    "positions": []
+                  }
+                ],
+                "reason": "The assertion is directly supported by the source text."
+              },
+              {
+                "atom_id": "a2",
+                "text": "The tests were for Atlas.",
+                "relation": "SUPPORTED",
+                "citations": [
+                  {
+                    "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+                    "evidence_id": "ev_proof",
+                    "source_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+                    "quote": "Alex wrote Python interface tests for Atlas.",
+                    "quote_punctuation_aligned": false,
+                    "start": 0,
+                    "end": 44,
+                    "experience_id": "exp_atlas",
+                    "source_version": "v1",
+                    "file_version": null,
+                    "positions": []
+                  }
+                ],
+                "reason": "The assertion is directly supported by the source text."
+              }
+            ],
+            "full_claim_check": {
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+                  "evidence_id": "ev_proof",
+                  "source_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+                  "quote": "Alex wrote Python interface tests for Atlas.",
+                  "quote_punctuation_aligned": false,
+                  "start": 0,
+                  "end": 44,
+                  "experience_id": "exp_atlas",
+                  "source_version": "v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The full claim is directly supported by the source text."
+            },
+            "complete": true,
+            "relation": "SUPPORTED",
+            "coverage_missing": [],
+            "numeric_missing": [],
+            "coverage_repairs": 0,
+            "claim_text_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909"
+          },
+          "proposal_constraint_violations": [],
+          "risk_escalation": null,
+          "preservation": null,
+          "change_audit": {
+            "changes": [],
+            "sensitive_change": false
+          },
+          "proposal_applied": true,
+          "proposal_rejected": false,
+          "proposal_notice": ""
+        }
+      },
+      "error": null,
+      "export_requires_atomic": true,
+      "model_routing": {
+        "requested_model": "gpt-4o-mini",
+        "response_models": [
+          "gpt-4o-mini-2024-07-18"
+        ],
+        "max_output_tokens": 6000
+      }
+    },
+    "seconds": 8.65,
+    "usage": {
+      "calls": 3,
+      "prompt_tokens": 4465,
+      "completion_tokens": 222,
+      "total_tokens": 4687
+    }
+  },
+  {
+    "model": "gemini-3.1-flash-lite-preview",
+    "claims": [
+      {
+        "claim_id": "claim_atlas",
+        "text": "Alex wrote Python interface tests for Atlas.",
+        "evidence_ids": [
+          "ev_proof"
+        ],
+        "status": "DRAFT"
+      }
+    ],
+    "checks": [
+      {
+        "claim_id": "claim_atlas",
+        "state": "VERIFIED",
+        "grounded": true,
+        "support_score": 1.0,
+        "unsupported_fragments": [],
+        "explanation": "所有已拆分事实及完整性检查通过，逐字引文来自当前经历原件；请人工核对后使用。"
+      }
+    ],
+    "report": {
+      "mode": "sag_atomic",
+      "engine": "zleap-sag 0.15.0",
+      "snapshot": "d0aadea32c159e27280bc876e5f89536bcae1f02fe6d1745b6b3c3010868b1ab",
+      "prompt_version": "6a69518754684c5b578006d186120a85bf670f28343cc037be1308a1b43411d4",
+      "polish_source": {
+        "name": "ASu-skills/great-resume",
+        "repository": "https://github.com/Hisn00w/ASu-skills",
+        "commit": "d27fd2a3864c48472a5c8ed942410098ba9cd35f",
+        "license": "MIT",
+        "resources": {
+          "skills/great-resume/SKILL.md": "82ccf4a504f0498072ea1a46a42b4b9bd035129ca27d132a66db244897b4067f",
+          "skills/great-resume/references/claim-evidence-ledger.md": "b478bf362024b910db084e8a238fae82c3af2298316bec98f070ef2647afce33"
+        },
+        "adapter_policy_sha256": "3ef6b6a0efc296a2ad5b086c0f7a7067446f506b8a4fd5075ce7bf2a0a575b5f",
+        "role": "rewrite_proposal_only",
+        "original_files_unchanged": true,
+        "edit_policy_sha256": "6e1870ddf6353f6d46513273d7f67e0af6b068dd6e64fb5a838cdbaae59831af"
+      },
+      "results": {
+        "claim_atlas": {
+          "atoms": [
+            {
+              "atom_id": "a1",
+              "text": "Alex wrote Python interface tests for Atlas.",
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+                  "evidence_id": "ev_proof",
+                  "source_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+                  "quote": "Alex wrote Python interface tests for Atlas.",
+                  "quote_punctuation_aligned": false,
+                  "start": 0,
+                  "end": 44,
+                  "experience_id": "exp_atlas",
+                  "source_version": "v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The atomic assertion is identical to the provided source text."
+            }
+          ],
+          "full_claim_check": {
+            "relation": "SUPPORTED",
+            "citations": [
+              {
+                "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+                "evidence_id": "ev_proof",
+                "source_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+                "quote": "Alex wrote Python interface tests for Atlas.",
+                "quote_punctuation_aligned": false,
+                "start": 0,
+                "end": 44,
+                "experience_id": "exp_atlas",
+                "source_version": "v1",
+                "file_version": null,
+                "positions": []
+              }
+            ],
+            "reason": "The source text directly and fully supports the claim that Alex wrote Python interface tests for Atlas."
+          },
+          "complete": true,
+          "relation": "SUPPORTED",
+          "coverage_missing": [],
+          "numeric_missing": [],
+          "coverage_repairs": 0,
+          "claim_text_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+          "state": "VERIFIED",
+          "verification_scope": "experience",
+          "scope_notice": "",
+          "retrieved_sources": [
+            {
+              "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+              "evidence_id": "ev_proof",
+              "candidate_id": "cand_test",
+              "experience_id": "exp_atlas",
+              "title": "Atlas",
+              "text": "Alex wrote Python interface tests for Atlas.",
+              "sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+              "version": "v1",
+              "positions": [],
+              "file_id": null,
+              "file_version": null,
+              "file_sha256": null,
+              "text_offset": 0,
+              "chunk_id": "",
+              "retrieval_channels": []
+            }
+          ],
+          "original_text": "Alex wrote Python interface tests for Atlas.",
+          "final_text": "Alex wrote Python interface tests for Atlas.",
+          "reused_current_run_original_check": true,
+          "proposed_text": "Alex wrote Python interface tests for Atlas.",
+          "proposal_check": {
+            "atoms": [
+              {
+                "atom_id": "a1",
+                "text": "Alex wrote Python interface tests for Atlas.",
+                "relation": "SUPPORTED",
+                "citations": [
+                  {
+                    "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+                    "evidence_id": "ev_proof",
+                    "source_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+                    "quote": "Alex wrote Python interface tests for Atlas.",
+                    "quote_punctuation_aligned": false,
+                    "start": 0,
+                    "end": 44,
+                    "experience_id": "exp_atlas",
+                    "source_version": "v1",
+                    "file_version": null,
+                    "positions": []
+                  }
+                ],
+                "reason": "The atomic assertion is identical to the provided source text."
+              }
+            ],
+            "full_claim_check": {
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+                  "evidence_id": "ev_proof",
+                  "source_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+                  "quote": "Alex wrote Python interface tests for Atlas.",
+                  "quote_punctuation_aligned": false,
+                  "start": 0,
+                  "end": 44,
+                  "experience_id": "exp_atlas",
+                  "source_version": "v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source text directly and fully supports the claim that Alex wrote Python interface tests for Atlas."
+            },
+            "complete": true,
+            "relation": "SUPPORTED",
+            "coverage_missing": [],
+            "numeric_missing": [],
+            "coverage_repairs": 0,
+            "claim_text_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909"
+          },
+          "original_check": {
+            "atoms": [
+              {
+                "atom_id": "a1",
+                "text": "Alex wrote Python interface tests for Atlas.",
+                "relation": "SUPPORTED",
+                "citations": [
+                  {
+                    "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+                    "evidence_id": "ev_proof",
+                    "source_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+                    "quote": "Alex wrote Python interface tests for Atlas.",
+                    "quote_punctuation_aligned": false,
+                    "start": 0,
+                    "end": 44,
+                    "experience_id": "exp_atlas",
+                    "source_version": "v1",
+                    "file_version": null,
+                    "positions": []
+                  }
+                ],
+                "reason": "The atomic assertion is identical to the provided source text."
+              }
+            ],
+            "full_claim_check": {
+              "relation": "SUPPORTED",
+              "citations": [
+                {
+                  "source_id": "src_0dac091d07d78381ab11bd468713aa63",
+                  "evidence_id": "ev_proof",
+                  "source_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909",
+                  "quote": "Alex wrote Python interface tests for Atlas.",
+                  "quote_punctuation_aligned": false,
+                  "start": 0,
+                  "end": 44,
+                  "experience_id": "exp_atlas",
+                  "source_version": "v1",
+                  "file_version": null,
+                  "positions": []
+                }
+              ],
+              "reason": "The source text directly and fully supports the claim that Alex wrote Python interface tests for Atlas."
+            },
+            "complete": true,
+            "relation": "SUPPORTED",
+            "coverage_missing": [],
+            "numeric_missing": [],
+            "coverage_repairs": 0,
+            "claim_text_sha256": "5df1e777e3c7b1b789919b3a525e0438521298eed7c2be2ccdf2dcd7e2cca909"
+          },
+          "proposal_constraint_violations": [],
+          "risk_escalation": null,
+          "preservation": null,
+          "change_audit": {
+            "changes": [],
+            "sensitive_change": false
+          },
+          "proposal_applied": true,
+          "proposal_rejected": false,
+          "proposal_notice": ""
+        }
+      },
+      "error": null,
+      "export_requires_atomic": true,
+      "model_routing": {
+        "requested_model": "gemini-3.1-flash-lite-preview",
+        "response_models": [
+          "gemini-3.1-flash-lite-preview"
+        ],
+        "max_output_tokens": 6000
+      }
+    },
+    "seconds": 19.24,
+    "usage": {
+      "calls": 3,
+      "prompt_tokens": 5133,
+      "completion_tokens": 294,
+      "total_tokens": 5427
+    }
+  }
+]

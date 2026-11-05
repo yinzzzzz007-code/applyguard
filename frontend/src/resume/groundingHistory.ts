@@ -6,9 +6,11 @@ export interface TextVersion {
   createdAt: string
   label: string
   claims: Array<{claim_id: string; text: string}>
+  applicationId?: string
   candidateId?: string
   restoredFrom?: string
   stateSnapshot?: {
+    userChoices?: Array<{claim_id: string; text: string; action: string}>
     workflowStatus: string
     requiresReverification: boolean
     claimStates: Array<{claim_id: string; state: string}>
@@ -34,6 +36,7 @@ export function saveTextVersion(workflow: WorkflowResponse, label: string,
   const rows = loadTextVersions(workflow.candidate_id,storage)
   const claims = workflow.resume_claims.map(({claim_id,text}) => ({claim_id,text}))
   const stateSnapshot = {
+    userChoices:Object.entries(workflow.review_session?.choices ?? {}).map(([claim_id,choice]) => ({claim_id,text:choice.text,action:choice.action})),
     workflowStatus: workflow.workflow_status,
     requiresReverification: Boolean(workflow.requires_reverification),
     claimStates: workflow.claim_verification.map(({claim_id,state}) => ({claim_id,state})),
@@ -41,17 +44,18 @@ export function saveTextVersion(workflow: WorkflowResponse, label: string,
     proposals: Object.entries(workflow.grounding?.results ?? {}).filter(([,r]) => r.proposed_text)
       .map(([claim_id,r]) => ({claim_id,text:r.proposed_text!,rejected:Boolean(r.proposal_rejected)})),
   }
-  if (!restoredFrom && JSON.stringify(rows[0]?.claims) === JSON.stringify(claims) &&
+  if (!restoredFrom && rows[0]?.applicationId === workflow.application_id && JSON.stringify(rows[0]?.claims) === JSON.stringify(claims) &&
     JSON.stringify(rows[0]?.stateSnapshot) === JSON.stringify(stateSnapshot)) return
   storage.setItem(key(workflow.candidate_id),JSON.stringify([{id:crypto.randomUUID(),
-    createdAt:new Date().toISOString(),label,claims,stateSnapshot,candidateId:workflow.candidate_id,restoredFrom},...rows].slice(0,20)))
+    createdAt:new Date().toISOString(),label,claims,stateSnapshot,candidateId:workflow.candidate_id,applicationId:workflow.application_id,restoredFrom},...rows].slice(0,20)))
 }
 
 export function restoreTextVersion(workflow: WorkflowResponse, version: TextVersion): WorkflowResponse {
   if (version.candidateId && version.candidateId !== workflow.candidate_id) throw new Error('不能恢复其他候选人的版本')
+  if (version.applicationId && version.applicationId !== workflow.application_id) throw new Error('不能恢复其他申请的版本')
   const claims = version.claims.map(c => ({claim_id:c.claim_id,text:c.text,application_id:workflow.application_id,
     evidence_ids:[],requirement_ids:[],evidence_support_score:0,selection_reason:'历史版本恢复，须重新核验',status:'DRAFT' as const}))
-  return {...workflow,resume_claims:claims,requires_reverification:true,workflow_status:'AWAITING_HUMAN_CONFIRMATION',
+  return {...workflow,review_session:workflow.review_session ? {...workflow.review_session,actions:workflow.review_session.actions+1,choices:{}} : undefined,resume_claims:claims,requires_reverification:true,workflow_status:'AWAITING_HUMAN_CONFIRMATION',
     resume_selection:{...workflow.resume_selection,removed_claims:Array.isArray(version.stateSnapshot?.removedClaims)
       ? version.stateSnapshot.removedClaims : []},
     claim_verification:claims.map(c => ({claim_id:c.claim_id,state:'NEEDS_REVIEW' as const,grounded:false,

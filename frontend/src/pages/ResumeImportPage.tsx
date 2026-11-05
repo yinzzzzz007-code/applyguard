@@ -18,6 +18,7 @@ export function ResumeImportPage() {
   const [parseMode, setParseMode] = useState<WorkflowParseMode>('offline')
 
   async function runParse(target: File) {
+    try {sessionStorage.setItem('applyguard.review.importStartedAt',String(Date.now()))} catch { /* optional local timing */ }
     setStatus('loading')
     setErrorMsg('')
     setParsed(null)

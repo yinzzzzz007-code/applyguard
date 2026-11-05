@@ -90,7 +90,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   const setWorkflow = useCallback((w: WorkflowResponse | null) => {
     revision.current += 1
-    setWorkflowState(w)
+    let startedAt=Date.now()
+    try {const imported=Number(sessionStorage.getItem('applyguard.review.importStartedAt'));if (imported > 0 && imported <= startedAt) startedAt=imported} catch { /* optional local timing */ }
+    setWorkflowState(w ? {...w,review_session:w.review_session ?? {startedAt,actions:0,interruptions:0,choices:{}}} : null)
     setClaimDecisions({})
     setFieldDecisions({})
     setSimulatedConfirmed(false)

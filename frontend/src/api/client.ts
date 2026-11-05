@@ -395,7 +395,7 @@ export class ApplyGuardApiClient implements ApiClient {
           jd_text: trimmed,
           target_job: options?.targetJob,
           parse_mode: parseMode,
-          application_id: options?.targetJob ? `app_${crypto.randomUUID().replaceAll('-', '').slice(0, 16)}` : 'app_demo_001',
+          application_id: `app_${crypto.randomUUID().replaceAll('-', '').slice(0, 16)}`,
           resume_draft: resumeDraft ?? undefined,
         }),
       })

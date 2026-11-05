@@ -32,7 +32,10 @@ def _ym(value: Any) -> str | None:
 def _claim_text(organization: str, title: str, role: str, description: str) -> str:
     desc = (description or "").strip()
     if desc:
-        # Prefer first non-empty paragraph / bullet as the resume sentence
+        # Keep short multi-line descriptions intact: later lines often contain scope or negation.
+        if len(desc) <= 420:
+            return desc
+        # Longer source material stays in the vault; use the first bounded paragraph.
         for line in re.split(r"[\n\r]+", desc):
             line = line.strip().lstrip("•-*·、 ").strip()
             if len(line) >= 8:

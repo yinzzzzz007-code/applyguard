@@ -157,7 +157,7 @@ class GroundingService:
     def model(self):
         if self._model is None:
             self._model = HttpModelClient(
-                max_tokens=int(os.getenv('APPLYGUARD_GROUNDING_MAX_TOKENS','6000')), require_complete=True)
+                max_tokens=int(os.getenv('APPLYGUARD_GROUNDING_MAX_TOKENS','6000')), require_complete=True, task='complex')
         return self._model
 
     @model.setter
@@ -326,7 +326,10 @@ class GroundingService:
         return claims, verifications, {'mode':mode,'engine':'zleap-sag 0.15.0','snapshot':snapshot,
             'prompt_version':fingerprint([ATOM_PROMPT,JUDGE_PROMPT,SPLIT_PROMPT,CHECK_PROMPT,PRESERVE_PROMPT,POLISH_PROMPT,polish_source]),
             'polish_source':polish_source,'results':results,'error':error,
-            'export_requires_atomic':True}
+            'export_requires_atomic':True, 'model_routing':{
+                'requested_model':getattr(self._model,'model',None),
+                'response_models':sorted(getattr(self._model,'response_models',[])),
+                'max_output_tokens':getattr(self._model,'max_tokens',None)}}
 
 
 def apply_grounding(vault_path, request, response, *, polish=False):
@@ -385,6 +388,12 @@ def export_grounded(vault_path, request):
     from backend.services.reverification import reverify_workflow
     if request.get('human_confirmed') is not True:
         raise ValueError('导出前请明确确认已核对最终正文与证据')
+    policy = request.get('export_policy', 'verified')
+    if policy == 'user_confirmed':
+        from backend.services.review_export import export_user_draft
+        return export_user_draft(vault_path, request)
+    if policy != 'verified':
+        raise ValueError('未知导出策略')
     result = reverify_workflow(vault_path,{**request,'grounding_mode':'sag_atomic'})
     verified = result['claim_verification']
     if (not verified or result['grounding'].get('error') or result['risk_result']['action'] == 'BLOCKED'

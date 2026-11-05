@@ -91,4 +91,14 @@ class ResumeSectionsTests(unittest.TestCase):
         self.assertEqual(len(response['form']['projects']),10)
         self.assertEqual(response['extractor'],'规则抽取')
 
+class EnglishSentenceBoundaryTests(unittest.TestCase):
+    def test_capitalized_technical_sentence_is_not_a_new_project(self):
+        from backend.services.resume_sections import project_entries
+        entries = project_entries(['Atlas API - 2025.01 - 2025.06',
+            'Built Python HTTP API tests in an offline prototype.',
+            'Reduced latency by approximately 30 percent in offline tests only.',
+            'No production deployment.'], 'projects')
+        self.assertEqual(len(entries), 1)
+        self.assertIn('No production deployment.', entries[0]['description'])
+
 if __name__=='__main__':unittest.main()

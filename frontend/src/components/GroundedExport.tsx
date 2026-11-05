@@ -1,36 +1,58 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { groundingRequest } from '../api/client'
 import { useDemo } from '../context/DemoContext'
+import { session } from '../resume/review'
 
-export function GroundedExport() {
-  const {workflow,resumeForm,claimDecisions,canSubmitAts} = useDemo()
+function download(text: string, filename: string, type: string) {
+  const url=URL.createObjectURL(new Blob([text],{type}))
+  const link=document.createElement('a');link.href=url;link.download=filename;link.click()
+  setTimeout(() => URL.revokeObjectURL(url),1000)
+}
+export function GroundedExport({editing = false}: {editing?: boolean}) {
+  const {workflow,resumeForm,claimDecisions} = useDemo()
   const [confirmed,setConfirmed] = useState('')
   const [busy,setBusy] = useState(false)
-  const [notice,setNotice] = useState('')
+  const [notice,setNoticeState] = useState({signature:'',text:''})
+  const [record,setRecord] = useState<{signature:string; report:unknown} | null>(null)
   const signature = JSON.stringify([workflow,resumeForm,claimDecisions])
   const current = useRef(signature)
-  useLayoutEffect(() => {current.current = signature},[signature])
-  if (!workflow?.grounding) return null
-  return <div className="item-block">
-    <h3>导出核验后的陈述</h3>
-    <label><input type="checkbox" checked={confirmed === signature} disabled={busy || !canSubmitAts()}
-      onChange={e => setConfirmed(e.target.checked ? signature : '')} />我已核对最终正文、个人贡献及引用原件</label>
-    <button type="button" className="btn primary" disabled={busy || confirmed !== signature || !canSubmitAts()}
+  useLayoutEffect(() => {current.current = signature;return () => {current.current = ''}},[signature])
+  const setNotice = (text: string) => setNoticeState({signature:current.current,text})
+  if (!workflow) return null
+  const claims=workflow.resume_claims.filter(c => claimDecisions[c.claim_id]?.decision !== 'reject')
+    .map(c => ({claim_id:c.claim_id,text:(claimDecisions[c.claim_id]?.editedText ?? c.text).trim()}))
+  return <div className="review-export">
+    <h3>确认最终稿并导出</h3>
+    <p>你决定最终正文。材料不足、冲突或尚未核验会保留记录，不会因确认而变成“材料支持”。</p>
+    {editing && <p role="status">请先保存或取消正在编辑的句子，再确认导出。</p>}
+    <details><summary>预览将导出的正文（{claims.length} 条）</summary><p style={{whiteSpace:'pre-wrap'}}>{claims.map(c => c.text).join('\n')}</p></details>
+    <label><input type="checkbox" checked={!editing && confirmed === signature} disabled={busy || editing || !claims.length}
+      onChange={e => setConfirmed(e.target.checked ? signature : '')} />我确认最终正文，并知晓尚未获得材料支持或存在冲突的内容仍由我决定是否使用。</label>
+    <button type="button" className="btn primary" disabled={busy || editing || confirmed !== signature || !claims.length}
       onClick={async () => {
-        setBusy(true);setNotice('');const started = current.current
+        setBusy(true);setNotice('');const started=current.current
         try {
-          const result = await groundingRequest<{text:string}>('export',workflow,resumeForm,{
-            human_confirmed:true,claims:workflow.resume_claims.filter(c => claimDecisions[c.claim_id]?.decision !== 'reject')
-              .map(({claim_id,text}) => ({claim_id,text})),
+          const text=claims.map(c => c.text).join('\n')
+          const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text))
+          const sha=Array.from(new Uint8Array(bytes),x => x.toString(16).padStart(2,'0')).join('')
+          const result=await groundingRequest<{text:string;sha256:string;notice:string;review_record:unknown}>('export',workflow,resumeForm,{
+            export_policy:'user_confirmed', human_confirmed:true, acknowledge_unverified:true, confirmed_text_sha256:sha, claims,
           })
-          if (started !== current.current) {setNotice('内容已变化，本次导出已取消。');return}
+          if (started !== current.current) {setNotice('草稿已变化，本次导出已取消，请确认最新正文。');return}
           if (!result.data || result.error) {setNotice(result.error?.message ?? '导出失败');return}
-          const url=URL.createObjectURL(new Blob([result.data.text],{type:'text/plain;charset=utf-8'}))
-          const link=document.createElement('a');link.href=url;link.download='ApplyGuard-核验陈述.txt';link.click()
-          setTimeout(() => URL.revokeObjectURL(url),1000)
-          setNotice('已重新核验并导出文本，没有向招聘平台投递。')
-        } finally {setBusy(false)}
-      }}>{busy ? '正在复查当前原件…' : '重新核验并导出 TXT'}</button>
-    {notice && <p role="status">{notice}</p>}
+          if (result.data.sha256 !== sha || result.data.text !== text) {setNotice('导出正文与确认稿不一致，已停止下载。');return}
+          const metrics=session(workflow)
+          setRecord({signature:started,report:{...result.data, review_session:{...metrics,
+            elapsed_seconds:Math.round((Date.now()-metrics.startedAt)/1000),
+            metric_notice:'从本次导入开始（未导入时从工作流载入）到导出，包括等待与离开时间；不是人工可用性测评。'},
+            prior_model_checks:workflow.grounding ? {snapshot:workflow.grounding.snapshot,
+              results:workflow.grounding.results,notice:'历史模型记录；不代表导出时再次核验，须逐句比对 final_text。'} : null}})
+          download(result.data.text,'ApplyGuard-最终草稿.txt','text/plain;charset=utf-8')
+          setNotice(result.data.notice)
+        } catch {setNotice('导出未完成，请检查连接后重试。草稿已保留。')}
+        finally {setBusy(false)}
+      }}>{busy ? '正在准备导出…' : '导出最终草稿 TXT'}</button>
+    {record?.signature === signature && <button className="btn secondary" onClick={() => download(JSON.stringify(record.report,null,2),'ApplyGuard-审核记录.json','application/json')}>下载审核记录</button>}
+    {!editing && notice.signature === signature && notice.text && <p role="status">{notice.text}</p>}
   </div>
 }

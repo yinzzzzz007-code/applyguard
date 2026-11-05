@@ -1,0 +1,15 @@
+{
+  "notice": "Fictional pairs authored before the model run, five equivalent and five fact-changing. Expected labels are withheld from models. Not independent human validation.",
+  "cases": [
+    {"id":"safe_approx","original":"在离线回放中，查询延迟降低约30%，尚未上线。","proposal":"离线回放显示查询延迟约降低30%，目前尚未上线。","equivalent":true},
+    {"id":"safe_role","original":"协助负责人整理了18份访谈记录。","proposal":"配合负责人完成18份访谈记录的整理。","equivalent":true},
+    {"id":"safe_points","original":"离线测试准确率由80%升至84%，提高4个百分点。","proposal":"离线测试准确率从80%提高到84%。","equivalent":true},
+    {"id":"safe_future","original":"计划在下季度试点，当前只完成原型验证。","proposal":"目前仅完成原型验证，计划下季度开展试点。","equivalent":true},
+    {"id":"safe_team","original":"三人团队完成系统，我负责测试，没有负责部署。","proposal":"系统由三人团队完成，我承担测试工作，未参与部署。","equivalent":true},
+    {"id":"bad_scope","original":"仅在离线回放中观察到约30%的延迟下降，尚未上线。","proposal":"线上系统查询延迟降低30%。","equivalent":false},
+    {"id":"bad_role","original":"参与后端模块开发，负责人为王琳。","proposal":"主导后端模块开发。","equivalent":false},
+    {"id":"bad_percent","original":"准确率由80%升至84%，提高4个百分点。","proposal":"准确率在80%的基础上相对提升4%，达到84%。","equivalent":false},
+    {"id":"bad_time","original":"计划下季度试点，当前只完成原型验证。","proposal":"已完成试点并投入使用。","equivalent":false},
+    {"id":"bad_owner","original":"团队共整理50份数据，我独立检查其中8份。","proposal":"我独立整理并检查50份数据。","equivalent":false}
+  ]
+}

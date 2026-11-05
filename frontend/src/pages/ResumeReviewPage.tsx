@@ -7,10 +7,11 @@ import type {
   ResumeClaim,
 } from '../api/types'
 import { EmptyState } from '../components/States'
+import { ReviewDraft } from '../components/ReviewDraft'
 import { SAGPolishPanel } from '../components/SAGPolishPanel'
 import { saveTextVersion } from '../resume/groundingHistory'
 import { useDemo } from '../context/DemoContext'
-import { ZH_CLAIM_STATUS, zhLookup, zhText } from '../i18n'
+import { zhText } from '../i18n'
 import { Icon } from '../components/Icon'
 
 type DraftClaim = {
@@ -51,7 +52,7 @@ function claimsFromResumeForm(form: EditableResumeForm | null): DraftClaim[] {
       .split(/\r?\n/)
       .map((l) => l.trim().replace(/^[-*•·、]\s*/, ''))
       .filter(Boolean)
-    const text = (lines.find((l) => l.length >= 8) || lines[0] || [org, label].filter(Boolean).join(' · ')).trim()
+    const text = (description.trim().length <= 420 && description.trim() ? description.trim() : lines.find((l) => l.length >= 8) || lines[0] || [org, label].filter(Boolean).join(' · ')).trim()
     if (!text) return
     out.push({
       claim_id: safeClaimId(id.replace(/^exp_/, '')),
@@ -173,6 +174,7 @@ export function ResumeReviewPage() {
     support?: number
   }) {
     if (workflow) {
+      if (workflow.resume_claims.length >= 20) {setHistoryError('每份草稿最多 20 条，请先移出不需要的条目。');return}
       try {saveTextVersion(workflow,'增加陈述前')} catch {setHistoryError('历史保存失败，尚未修改草稿。');return}
     }
     patchWorkflow((prev) => {
@@ -303,7 +305,7 @@ export function ResumeReviewPage() {
       <header className="panel-head">
         <h2>让经历，表达得更准确。</h2>
         <p>
-          在左侧整理草稿，在右侧生成建议。每次修改，都需要重新核验。
+          直接修改草稿，优先处理最值得看的三处。用户确认与材料支持分别记录。
         </p>
       </header>
 
@@ -344,45 +346,8 @@ export function ResumeReviewPage() {
 
       <div className="review-workspace"><div className="review-draft">
       {historyError && <p className="danger-text" role="alert">{historyError}</p>}
-      <h3 className="em-section-title">已加入草稿</h3>
-      {!claims.length ? (
-        <p className="muted rr-empty">还没有句子。从下方卡片点「加入」，或自己写一条。</p>
-      ) : (
-        <div className="rr-grid">
-          {claims.map((c) => {
-            const draftHit = draftById.get(c.claim_id)
-            return (
-              <article
-                key={c.claim_id}
-                className={`rr-card rr-card-in${hoveredId === c.claim_id ? ' on' : ''}`}
-                onMouseEnter={() => setHoveredId(c.claim_id)}
-                onMouseLeave={() => setHoveredId(null)}
-              >
-                <div className="rr-card-top">
-                  <span className="em-chip strong compact">{zhLookup(ZH_CLAIM_STATUS, c.status)}</span>
-                  <span className="em-req-id">{c.claim_id.replace(/^claim_/, '陈述·')}</span>
-                </div>
-                <p className="rr-card-text">{c.text}</p>
-                {draftHit ? <p className="muted rr-card-org">{draftHit.experienceTitle}</p> : null}
-                <div className="rr-card-actions">
-                  <button type="button" className="btn secondary" onClick={() => removeClaim(c)}>
-                    移出
-                  </button>
-                </div>
-                {cardDetail({
-                  claimId: c.claim_id,
-                  text: c.text,
-                  reason: c.selection_reason,
-                  evidenceIds: c.evidence_ids,
-                  requirementIds: c.requirement_ids,
-                  support: c.evidence_support_score,
-                  experienceTitle: draftHit?.experienceTitle,
-                })}
-              </article>
-            )
-          })}
-        </div>
-      )}
+      <ReviewDraft key={workflow.application_id} />
+      <details><summary>管理草稿条目</summary>{claims.map(c => <div className="btn-row" key={c.claim_id}><span>{c.text}</span><button className="btn secondary" onClick={() => removeClaim(c)}>移出</button></div>)}</details>
 
       <div className="rr-add">
         <label className="field-label" htmlFor="rr-manual">
@@ -390,6 +355,7 @@ export function ResumeReviewPage() {
         </label>
         <textarea
           id="rr-manual"
+          maxLength={420}
           className="jd-input"
           rows={3}
           value={draftText}
@@ -397,7 +363,7 @@ export function ResumeReviewPage() {
           placeholder="写一条要放进简历草稿的经历描述…"
         />
         <div className="btn-row">
-          <button type="button" className="btn primary" disabled={!draftText.trim()} onClick={addCustom}>
+          <button type="button" className="btn primary" disabled={!draftText.trim() || claims.length >= 20} onClick={addCustom}>
             加入草稿
           </button>
         </div>

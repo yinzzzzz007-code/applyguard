@@ -86,7 +86,7 @@ def _title_line(line):
     if re.search(r'\s[—–]+\s|\s-\s',line):return True
     # Capitalized English titles; continuation prose with punctuation stays in the body.
     return bool(re.match(r'^[A-Z][A-Za-z0-9-]*(?:\s+[A-Z0-9][A-Za-z0-9/&-]*){1,}',line)
-        and not re.search(r'[:：。、]',line))
+        and not re.search(r'[:：。、.!?]',line))
 
 def project_entries(lines,kind):
     groups=[];current=[]

@@ -6,7 +6,7 @@ export function GroundingHistory() {
   const {workflow,patchWorkflow} = useDemo()
   const [notice,setNotice] = useState('')
   if (!workflow) return null
-  const versions = loadTextVersions(workflow.candidate_id)
+  const versions = loadTextVersions(workflow.candidate_id).filter(v => v.applicationId === workflow.application_id)
   return <details className="grounding-history"><summary>历史版本与状态回滚（本浏览器最近20版）</summary>
     <p>保存正文、删改记录及当时的核验状态。回滚创建新版本，历史通过状态只供查阅，恢复后须重新核验。清除浏览器存储会失去历史。</p>
     <button className="btn secondary" type="button" onClick={() => {
@@ -20,6 +20,7 @@ export function GroundingHistory() {
       {version.stateSnapshot && <p className="muted">当时状态：{version.stateSnapshot.workflowStatus} ·
         {version.stateSnapshot.claimStates.map(c => `${c.claim_id}: ${c.state}`).join('；')}
         {version.stateSnapshot.requiresReverification && ' · 当时待重新核验'}</p>}
+      {version.stateSnapshot?.userChoices?.map(choice => <p className="muted" key={choice.claim_id}>当时用户选择：{({original:'用原句',edit:'自己改',accept:'确认采用'} as Record<string,string>)[choice.action] ?? choice.action} · {choice.text}</p>)}
       {version.stateSnapshot?.proposals?.map(p => <p className="muted" key={p.claim_id}>历史建议{p.rejected ? '（未采用）' : ''}：{p.text}</p>)}
       <button className="btn secondary" type="button" onClick={() => {
         try {
