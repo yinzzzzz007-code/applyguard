@@ -1027,6 +1027,29 @@ textarea.resume-input {
 }
 
 /* Evidence Match: JD + colored requirements + detail modal */
+.em-scope {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0 0.75rem;
+}
+
+.em-scope-btn {
+  cursor: pointer;
+  color: var(--slate);
+  background: var(--surface);
+  border-color: var(--hairline);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.em-scope-btn.on {
+  color: var(--ink);
+  background: var(--ok-bg);
+  border-color: rgba(0, 180, 138, 0.45);
+}
+
 .em-legend {
   display: flex;
   flex-wrap: wrap;

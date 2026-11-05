@@ -86,6 +86,81 @@ class ChineseOfflineJDTests(unittest.TestCase):
         self.assertEqual(rejected_mode, "RULE_FALLBACK")
         self.assertIn("not grounded", rejected_reason)
 
+    def test_model_keeps_grounded_items_when_some_fail(self):
+        source = (
+            "大模型评测实习生\n任职要求\n"
+            "本科及以上在读，计算机、人工智能、软件工程或相关专业优先；\n"
+            "熟悉 Python，具备良好的编程习惯和基础工程能力。\n"
+            "能够保证稳定的实习时间，连续实习 3 个月及以上者优先。\n"
+            "加分项\n了解 PyTorch。"
+        )
+        intern_quote = "能够保证稳定的实习时间，连续实习 3 个月及以上者优先"
+
+        class FakeModel:
+            def complete_json(self, *_):
+                return {
+                    "title": "大模型评测实习生",
+                    "company": "UNKNOWN",
+                    "requirements": [
+                        {
+                            "text": "本科及以上在读，计算机、人工智能、软件工程或相关专业优先",
+                            "type": "HARD",
+                            "category": "EDUCATION",
+                            "normalized_terms": ["本科及以上在读", "计算机", "人工智能", "软件工程"],
+                            "evidence_text": "本科及以上在读，计算机、人工智能、软件工程或相关专业优先",
+                            "confidence": 0.9,
+                        },
+                        {
+                            "text": "熟悉 Python",
+                            "type": "HARD",
+                            "category": "SKILL",
+                            "normalized_terms": ["Python"],
+                            "evidence_text": "熟悉 Python，具备良好的编程习惯和基础工程能力",
+                            "confidence": 0.9,
+                        },
+                        {
+                            "text": "了解 PyTorch",
+                            "type": "HARD",
+                            "category": "SKILL",
+                            "normalized_terms": ["PyTorch"],
+                            "evidence_text": "了解 PyTorch",
+                            "confidence": 0.8,
+                        },
+                        {
+                            "text": "需要 CUDA",
+                            "type": "HARD",
+                            "category": "SKILL",
+                            "normalized_terms": ["CUDA"],
+                            "evidence_text": "需要 CUDA",
+                            "confidence": 0.9,
+                        },
+                        {
+                            "text": intern_quote,
+                            "type": "PREFERRED",
+                            "category": "OTHER",
+                            "normalized_terms": ["稳定实习时间", "连续实习3个月"],
+                            "evidence_text": intern_quote,
+                            "confidence": 0.7,
+                        },
+                    ],
+                }
+
+        parsed, mode, failure = JDParser(FakeModel()).parse(source)
+        self.assertIsNone(failure)
+        self.assertIn(mode, {"MODEL", "MODEL_SPAN_REPAIRED"})
+        texts = [item["text"] for item in parsed["requirements"]]
+        self.assertTrue(any("Python" in text for text in texts))
+        self.assertTrue(any("PyTorch" in text for text in texts))
+        self.assertTrue(any("实习" in text for text in texts))
+        self.assertFalse(any(
+            "CUDA" in item["text"] or "CUDA" in str(item["normalized_terms"])
+            for item in parsed["requirements"]
+        ))
+        pytorch = next(item for item in parsed["requirements"] if "PyTorch" in item["text"])
+        self.assertEqual(pytorch["type"], "PREFERRED")
+        edu = next(item for item in parsed["requirements"] if "本科" in item["text"])
+        self.assertEqual(edu["type"], "HARD")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -41,6 +41,7 @@ export interface JobAnalysis {
   has_resume: boolean
   total: number
   supported: number
+  excluded?: number
   requirements: Array<ParsedRequirement & { coverage: 'SUPPORTED' | 'NEEDS_EVIDENCE' | 'NO_MATCH'; evidence_ids: string[]; experience_ids: string[]; notes: string[] }>
   notice: string
 }

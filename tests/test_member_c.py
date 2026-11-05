@@ -1,6 +1,7 @@
 import copy
 import json
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from backend.app import build_mock_workflow
@@ -111,6 +112,12 @@ class CParserTests(unittest.TestCase):
 
 
 class CClaimAndRiskTests(unittest.TestCase):
+    def setUp(self):
+        # The scripted model answers JD parsing only; AI scoring has its own suite.
+        matching = patch.dict('os.environ', {'APPLYGUARD_AI_MATCH': 'off'})
+        matching.start()
+        self.addCleanup(matching.stop)
+
     @classmethod
     def setUpClass(cls):
         with (ROOT / "data" / "career-vault.seed.json").open(encoding='utf-8') as stream:

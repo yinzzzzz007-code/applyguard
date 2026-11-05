@@ -59,6 +59,11 @@ def _grounded_text(text: str, evidence: str) -> bool:
                else word in _words(evidence) for word in words)
 
 
+def _compact_cjk(value: str) -> str:
+    """Strip spaces/particles so near-literal CJK terms still ground."""
+    return re.sub(r"[\s的了着与及和]", "", value.casefold())
+
+
 def _term_in_evidence(term: str, evidence: str) -> bool:
     """Accept exact substrings; keep English multi-word grounding via tokens."""
     if not isinstance(term, str) or not term.strip():
@@ -67,8 +72,9 @@ def _term_in_evidence(term: str, evidence: str) -> bool:
     if cleaned.casefold() in evidence.casefold():
         return True
     if re.search(r"[\u3400-\u9fff]", cleaned):
-        # Reject invented CJK compounds that are not contiguous in the quote.
-        return False
+        compact = _compact_cjk(cleaned)
+        # Near-literal only: reject invented compounds that are not in the quote.
+        return len(compact) >= 2 and compact in _compact_cjk(evidence)
     return _grounded_text(cleaned, evidence)
 
 
@@ -122,7 +128,8 @@ def _source_supported(item: dict[str, Any], source: str) -> bool:
     )
 
 
-def _preferred_context(evidence: str, source: str) -> bool:
+def _section_preferred(evidence: str, source: str) -> bool:
+    """True only when the quote sits under a Preferred / 加分项 heading."""
     preferred = False
     contexts = []
     for span in _spans(source):
@@ -139,8 +146,16 @@ def _preferred_context(evidence: str, source: str) -> bool:
         ):
             preferred = False
         if evidence in span or span in evidence:
-            contexts.append(preferred or bool(_PREFERRED.search(span)))
+            contexts.append(preferred)
     return bool(contexts) and all(contexts)
+
+
+def _preferred_context(evidence: str, source: str) -> bool:
+    """Section preferred, or the quote itself is a preference cue (inline 优先)."""
+    if _section_preferred(evidence, source):
+        return True
+    contexts = [span for span in _spans(source) if evidence in span or span in evidence]
+    return bool(contexts) and all(bool(_PREFERRED.search(span)) for span in contexts)
 
 
 def _repair_quote(item: dict[str, Any], source: str) -> dict[str, Any] | None:
@@ -224,12 +239,15 @@ class JDParser:
             raise JDParseError("Company was not present in JD")
         requirements = []
         repaired_any = False
-        for number, item in enumerate(raw["requirements"], 1):
+        dropped = 0
+        for item in raw["requirements"]:
             if not isinstance(item, dict):
                 raise JDParseError("Requirement is not an object")
             coerced = _coerce_grounded_terms(item)
             if coerced is None:
-                raise JDParseError("Requirement is not grounded in JD")
+                dropped += 1
+                repaired_any = True
+                continue
             if coerced.get("normalized_terms") != item.get("normalized_terms"):
                 repaired_any = True
             item = coerced
@@ -240,7 +258,9 @@ class JDParser:
                 # Source and term safety still go through _source_supported below.
                 confidence = item.get("confidence")
                 if isinstance(confidence, bool) or not isinstance(confidence, (int, float)) or not math.isfinite(confidence):
-                    raise JDParseError("Invalid confidence")
+                    dropped += 1
+                    repaired_any = True
+                    continue
                 item = {**item, "text": evidence, "confidence": min(confidence, 0.7)}
                 repaired_any = True
             if not _source_supported(item, source):
@@ -248,16 +268,27 @@ class JDParser:
                 if repaired is not None:
                     repaired = _coerce_grounded_terms(repaired) or repaired
                 if repaired is None or not _source_supported(repaired, source):
-                    raise JDParseError("Requirement is not grounded in JD")
+                    dropped += 1
+                    repaired_any = True
+                    continue
                 item = repaired
                 repaired_any = True
-            if item.get("type") == "HARD" and _preferred_context(item["evidence_text"], source):
-                raise JDParseError("Requirement is not grounded in JD")
-            terms = _canonical_terms(_validate_string_list_field(item, "normalized_terms"), item["evidence_text"])
-            requirements.append({"requirement_id": f"req_{number:03d}", "type": item.get("type"),
+            # Prefer demotion over rejecting: models often mark 加分项 lines as HARD.
+            if item.get("type") == "HARD" and _section_preferred(item["evidence_text"], source):
+                item = {**item, "type": "PREFERRED"}
+                repaired_any = True
+            try:
+                terms = _canonical_terms(_validate_string_list_field(item, "normalized_terms"), item["evidence_text"])
+            except (ValueError, TypeError, KeyError):
+                dropped += 1
+                repaired_any = True
+                continue
+            requirements.append({"requirement_id": f"req_{len(requirements) + 1:03d}", "type": item.get("type"),
                                  "category": item.get("category"), "text": item["text"],
                                  "normalized_terms": terms,
                                  "evidence_text": item["evidence_text"], "confidence": item.get("confidence")})
+        if not requirements:
+            raise JDParseError("Requirement is not grounded in JD")
         result = {"jd_id": "jd_" + hashlib.sha256(source.encode()).hexdigest()[:12],
                   "title": title, "company": company, "source_text": source, "requirements": requirements}
         validate_contract("parsed-jd", result)

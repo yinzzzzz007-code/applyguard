@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import os
 import re
 import uuid
 from datetime import datetime, timezone
@@ -11,11 +12,12 @@ from typing import Any, Callable
 from backend.services.career_vault import CareerVault
 from backend.services.local_evidence import attach_local_evidence
 from backend.services.claim_validator import ClaimValidator
+from backend.services.ai_evidence_matcher import augment_match_with_ai
 from backend.services.evidence_matcher import EvidenceMatcher
 from backend.services.sag_auxiliary import augment_match_with_sag
 from backend.services.jd_parser import JDParser, JDParseError
-from backend.services.model_client import ModelClient
-from backend.services.prompts import JD_PARSE_PROMPT_VERSION
+from backend.services.model_client import HttpModelClient, ModelClient
+from backend.services.prompts import EVIDENCE_MATCH_PROMPT_VERSION, JD_PARSE_PROMPT_VERSION
 from backend.services.resume_draft_vault import experiences_from_resume_draft
 from backend.services.resume_selector import ResumeSelector
 from backend.services.risk_engine import RiskEngine
@@ -57,6 +59,7 @@ class SkillRouter:
                  "ats_form_mapper": "FIXTURE", "risk_check": "DETERMINISTIC",
                  "human_confirmation": "STOP_ONLY", "audit_record": "IN_MEMORY",
                  "jd_prompt_version": JD_PARSE_PROMPT_VERSION,
+                 "evidence_match_prompt_version": EVIDENCE_MATCH_PROMPT_VERSION,
                  "requested_parse_mode": str(request.get("parse_mode") or "dynamic").upper()}
 
         def audit(event: str) -> dict[str, Any]:
@@ -111,14 +114,39 @@ class SkillRouter:
             trace[-1]["fallback_reason"] = failure
         modes["jd_parser"] = parser_mode
 
+        def match_model() -> ModelClient | None:
+            if self.model is not None:
+                return self.model
+            # Offline JD parse still uses AI matching when a key is configured.
+            if not os.getenv("APPLYGUARD_AI_API_KEY"):
+                return None
+            flag = (os.getenv("APPLYGUARD_AI_MATCH") or "on").strip().lower()
+            if flag in {"0", "false", "off", "disabled", "no"}:
+                return None
+            try:
+                return HttpModelClient()
+            except ValueError:
+                return None
+
         def match():
-            result = EvidenceMatcher().match(parsed, experiences)
+            baseline = EvidenceMatcher().match(parsed, experiences)
+            result = augment_match_with_ai(parsed, experiences, baseline, match_model())
             result = augment_match_with_sag(parsed, experiences, result)
             validate_contract("evidence-match", result)
             return result
         matched = execute("Evidence Matcher", match)
+        ai_mode = (matched.get("ai_match") or {}).get("mode")
+        if ai_mode == "MODEL":
+            modes["evidence_matcher"] = "AI_SEMANTIC"
+        elif ai_mode == "RULE_FALLBACK":
+            modes["evidence_matcher"] = "RULE_FALLBACK"
+            for step in reversed(trace):
+                if step.get("step") == "Evidence Matcher":
+                    step["fallback_reason"] = matched["ai_match"].get("failure") or "AI match failed"
+                    break
         if "sag_auxiliary" in matched:
-            modes["evidence_matcher"] = f"DETERMINISTIC+SAG_{matched['sag_auxiliary']['mode'].upper()}"
+            base = modes.get("evidence_matcher") or "DETERMINISTIC"
+            modes["evidence_matcher"] = f"{base}+SAG_{matched['sag_auxiliary']['mode'].upper()}"
 
         def select():
             result = self.selector.select(matched, experiences, application_id, max_claims=3)
@@ -187,7 +215,7 @@ class SkillRouter:
             for row in selection.removed_claims
         ]
         notice = (
-            "已使用本机经历库草稿作为陈述来源；ATS 映射仍为模拟夹具。"
+            "已使用本机经历库草稿作为陈述来源；个人资料与教育信息按填写使用，项目、实习与竞赛/获奖须证据核验。ATS 映射仍为模拟夹具。"
             if modes.get("career_vault") == "LOCAL_RESUME_DRAFT"
             else "C results are computed; ATS mapping is a simulator fixture and audit storage is in-memory."
         )

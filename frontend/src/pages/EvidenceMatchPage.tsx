@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import type { EvidenceMatchItem, ParsedRequirement } from '../api/types'
 import { EmptyState } from '../components/States'
 import { useDemo } from '../context/DemoContext'
-import { ZH_CATEGORY, ZH_REQ_TYPE, ZH_STRENGTH, zhLookup, zhText } from '../i18n'
+import { ZH_CATEGORY, ZH_MATCHER, ZH_REQ_TYPE, ZH_STRENGTH, zhLookup, zhText } from '../i18n'
+import { indexesInScope, quoteKind, type QualificationKind } from '../jdMatchScope'
 
 type MatchTone = 'strong' | 'medium' | 'conflict' | 'uncovered'
+
+type ScopeFilter = 'all' | QualificationKind
 
 type ReqView = {
   requirement: ParsedRequirement
@@ -13,6 +16,7 @@ type ReqView = {
   label: string
   best?: EvidenceMatchItem
   uncoveredReason?: string
+  section: QualificationKind
 }
 
 type HlSpan = {
@@ -46,6 +50,16 @@ function toneLabel(tone: MatchTone): string {
   }
 }
 
+function scoreOutOfTen(match: EvidenceMatchItem): string {
+  const fromModel = match.score_breakdown?.ai_score_10
+  const value =
+    typeof fromModel === 'number' && Number.isFinite(fromModel)
+      ? Math.max(0, Math.min(10, fromModel))
+      : Math.max(0, Math.min(10, match.relevance_score * 10))
+  const text = Number.isInteger(value) ? String(value) : value.toFixed(1)
+  return `${text}/10`
+}
+
 function pickNeedle(jdText: string, req: ParsedRequirement): string | null {
   const candidates = [req.evidence_text, req.text].filter(
     (s): s is string => typeof s === 'string' && s.trim().length >= 4,
@@ -57,22 +71,22 @@ function pickNeedle(jdText: string, req: ParsedRequirement): string | null {
 }
 
 /** Longest-first, non-overlapping spans inside JD source. */
-function buildHighlights(jdText: string, views: ReqView[]): HlSpan[] {
+function buildHighlights(
+  jdText: string,
+  views: ReqView[],
+  kinds: QualificationKind[] | null,
+): HlSpan[] {
   const raw: HlSpan[] = []
   for (const v of views) {
     const needle = pickNeedle(jdText, v.requirement)
     if (!needle) continue
-    let from = 0
-    while (from < jdText.length) {
-      const idx = jdText.indexOf(needle, from)
-      if (idx < 0) break
+    for (const idx of indexesInScope(jdText, needle, kinds)) {
       raw.push({
         start: idx,
         end: idx + needle.length,
         reqId: v.requirement.requirement_id,
         tone: v.tone,
       })
-      from = idx + needle.length
     }
   }
   raw.sort((a, b) => b.end - b.start - (a.end - a.start) || a.start - b.start)
@@ -112,10 +126,19 @@ function renderHighlightedJd(
   return nodes
 }
 
+function sectionOf(jdText: string, requirement: ParsedRequirement): QualificationKind | 'out' {
+  const quote = requirement.evidence_text || requirement.text || ''
+  const kind = quoteKind(jdText, quote)
+  if (kind === 'out') return 'out'
+  if (kind === 'requirement' || kind === 'bonus') return kind
+  return requirement.type === 'PREFERRED' ? 'bonus' : 'requirement'
+}
+
 export function EvidenceMatchPage() {
   const navigate = useNavigate()
   const { workflow, jdRawInput } = useDemo()
   const [activeReqId, setActiveReqId] = useState<string | null>(null)
+  const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all')
 
   const views = useMemo(() => {
     if (!workflow) return [] as ReqView[]
@@ -129,34 +152,50 @@ export function EvidenceMatchPage() {
       list.push(item)
       byReq.set(item.requirement_id, list)
     }
-    return jd.requirements.map((requirement) => {
+    return jd.requirements.flatMap((requirement) => {
       const candidates = byReq.get(requirement.requirement_id) ?? []
       const best = [...candidates].sort((a, b) => b.relevance_score - a.relevance_score)[0]
       const uncoveredReason = uncovered.get(requirement.requirement_id)
       const tone = toneForMatch(best)
-      return {
+      const section = sectionOf((jd.source_text || jdRawInput || '').trim(), requirement)
+      if (section === 'out') return []
+      return [{
         requirement,
         tone,
         label: toneLabel(tone),
         best,
         uncoveredReason,
-
-      }
+        section,
+      }]
     })
-  }, [workflow])
+  }, [workflow, jdRawInput])
 
   const jdText = useMemo(
     () => (jdRawInput || workflow?.parsed_jd.source_text || '').trim(),
     [jdRawInput, workflow],
   )
 
-  const highlights = useMemo(() => buildHighlights(jdText, views), [jdText, views])
+  const visible = useMemo(
+    () => (scopeFilter === 'all' ? views : views.filter((view) => view.section === scopeFilter)),
+    [views, scopeFilter],
+  )
 
-  const active = views.find((v) => v.requirement.requirement_id === activeReqId) ?? null
+  const highlights = useMemo(() => {
+    const kinds = scopeFilter === 'all' ? (['requirement', 'bonus'] as QualificationKind[]) : [scopeFilter]
+    return buildHighlights(jdText, visible, kinds)
+  }, [jdText, visible, scopeFilter])
+
+  const active = visible.find((v) => v.requirement.requirement_id === activeReqId) ?? null
   const counts = useMemo(() => {
     const init = { strong: 0, medium: 0, conflict: 0, uncovered: 0 }
-    for (const v of views) init[v.tone] += 1
+    for (const v of visible) init[v.tone] += 1
     return init
+  }, [visible])
+  const scopeCounts = useMemo(() => {
+    return {
+      requirement: views.filter((view) => view.section === 'requirement').length,
+      bonus: views.filter((view) => view.section === 'bonus').length,
+    }
   }, [views])
 
   if (!workflow) {
@@ -185,8 +224,47 @@ export function EvidenceMatchPage() {
     <section className="panel">
       <header className="panel-head">
         <h2>证据匹配</h2>
-        <p>岗位原文按匹配结果着色；点击彩色片段查看经历与证据明细。</p>
+        <p>只对照任职要求与加分项；职位描述不参与匹配。点击彩色片段查看经历与证据明细。</p>
+        {(() => {
+          const matcherMode = workflow.component_modes?.evidence_matcher
+          const label = matcherMode
+            ? zhLookup(ZH_MATCHER, matcherMode.split('+')[0], matcherMode)
+            : null
+          const ai = workflow.evidence_match.ai_match
+          if (!label && !ai) return null
+          return (
+            <p className="muted">
+              匹配方式：{label || '规则匹配'}
+              {ai?.mode === 'MODEL' && typeof ai.scored_rows === 'number'
+                ? ` · 模型评分 ${ai.scored_rows} 条`
+                : ''}
+              {ai?.mode === 'RULE_FALLBACK' && ai.failure
+                ? ` · 模型失败已回退（${zhText(ai.failure)}）`
+                : ''}
+            </p>
+          )
+        })()}
       </header>
+
+      <div className="em-scope" role="group" aria-label="匹配范围">
+        {(
+          [
+            ['all', '全部', views.length],
+            ['requirement', '任职要求', scopeCounts.requirement],
+            ['bonus', '加分项', scopeCounts.bonus],
+          ] as const
+        ).map(([id, label, count]) => (
+          <button
+            key={id}
+            type="button"
+            className={`em-chip em-scope-btn ${scopeFilter === id ? 'on' : ''}`}
+            aria-pressed={scopeFilter === id}
+            onClick={() => setScopeFilter(id)}
+          >
+            {label} {count}
+          </button>
+        ))}
+      </div>
 
       <div className="em-legend" aria-label="匹配图例">
         <span className="em-chip strong">强匹配 {counts.strong}</span>
@@ -201,28 +279,42 @@ export function EvidenceMatchPage() {
           <p className="muted em-jd-meta">
             {workflow.parsed_jd.title === 'UNKNOWN' ? '未知岗位' : workflow.parsed_jd.title} @{' '}
             {workflow.parsed_jd.company === 'UNKNOWN' ? '未知公司' : workflow.parsed_jd.company} ·{' '}
-            {workflow.parsed_jd.requirements.length} 条要求
+            {views.length} 条参与匹配
+            {workflow.parsed_jd.requirements.length > views.length
+              ? ` · 已排除职位描述等 ${workflow.parsed_jd.requirements.length - views.length} 条`
+              : ''}
           </p>
           <div className="em-jd-body" role="article">
             {renderHighlightedJd(jdText, highlights, setActiveReqId)}
           </div>
           <p className="muted em-jd-hint">
             {highlights.length
-              ? '彩色片段可点击；未高亮的段落暂无对应解析要求。'
-              : '未能在原文中定位要求片段，可点下方条目查看详情。'}
+              ? '彩色片段来自任职要求或加分项，可点击查看。职位描述不会着色。'
+              : '未能在任职要求或加分项中定位片段，可点下方条目查看详情。'}
           </p>
         </section>
 
         {!views.length ? (
           <EmptyState
-            title="无要求"
-            detail="parsed_jd 未返回 requirements。"
-              actionLabel="回退岗位说明"
+            title={workflow.parsed_jd.requirements.length ? '没有可匹配条目' : '无要求'}
+            detail={
+              workflow.parsed_jd.requirements.length
+                ? '证据匹配只看任职要求与加分项。当前原文里没有识别到这两段中的条目。'
+                : 'parsed_jd 未返回 requirements。'
+            }
+            actionLabel="回退岗位说明"
             onAction={() => navigate('/jd')}
+          />
+        ) : !visible.length ? (
+          <EmptyState
+            title="当前筛选下没有条目"
+            detail="换到「全部」，或查看另一段。"
+            actionLabel="查看全部"
+            onAction={() => setScopeFilter('all')}
           />
         ) : (
           <ul className="em-req-list">
-            {views.map((v) => (
+            {visible.map((v) => (
               <li key={v.requirement.requirement_id}>
                 <button
                   type="button"
@@ -230,14 +322,14 @@ export function EvidenceMatchPage() {
                   onClick={() => setActiveReqId(v.requirement.requirement_id)}
                 >
                   <span className="em-req-top">
+                    <span className="em-chip compact">{v.section === 'bonus' ? '加分项' : '任职要求'}</span>
                     <span className="em-chip compact">{v.label}</span>
                     <span className="em-req-id">
                       {v.requirement.requirement_id.replace(/^req_0*/, '要求 ')}
                     </span>
                     {v.best ? (
                       <span className="em-req-score">
-                        {(v.best.relevance_score * 100).toFixed(0)}% ·{' '}
-                        {zhLookup(ZH_STRENGTH, v.best.evidence_strength)}
+                        {scoreOutOfTen(v.best)} · {zhLookup(ZH_STRENGTH, v.best.evidence_strength)}
                       </span>
                     ) : (
                       <span className="em-req-score">无可用经历</span>
@@ -304,8 +396,7 @@ export function EvidenceMatchPage() {
                     <div className="item-head">
                       <h4>{m.experience_id.replace(/^exp_/, '经历·').replaceAll('_', ' ')}</h4>
                       <span className="score">
-                        {(m.relevance_score * 100).toFixed(0)}% ·{' '}
-                        {zhLookup(ZH_STRENGTH, m.evidence_strength)}
+                        {scoreOutOfTen(m)} · {zhLookup(ZH_STRENGTH, m.evidence_strength)}
                       </span>
                     </div>
                     <p>

@@ -157,7 +157,10 @@ export function ClaimVerificationPage() {
         <h2>陈述核验</h2>
         <p>把每一句话，与支持它的原始材料放在一起核对。</p>
       </header>
-      <div className="claim-summary" aria-label="核验结果汇总">{(['VERIFIED','NEEDS_REVIEW','BLOCKED'] as const).map(state => <div key={state}><strong>{workflow.claim_verification.filter(v => v.state === state).length}</strong><ClaimBadge status={state} /></div>)}</div>
+      <div className="claim-summary" aria-label="核验结果汇总">{(['VERIFIED','NEEDS_REVIEW','BLOCKED'] as const).map(state => <div key={state}><strong>{workflow.claim_verification.filter(v => v.state === state &&
+        !(v.state === 'VERIFIED' && workflow.grounding?.results[v.claim_id]?.verification_scope === 'personal')).length}</strong><ClaimBadge status={state} /></div>)}
+        <div><strong>{workflow.claim_verification.filter(v => v.state === 'VERIFIED' && workflow.grounding?.results[v.claim_id]?.verification_scope === 'personal').length}</strong><ClaimBadge status="VERIFIED" personal /></div>
+      </div>
       <div className="btn-row">
         <button type="button" className="btn primary" disabled={rechecking} onClick={() => {
           setRechecking(true)
@@ -199,7 +202,7 @@ export function ClaimVerificationPage() {
               }
             >
               <div className="item-head">
-                <ClaimBadge status={v.state} />
+                <ClaimBadge status={v.state} personal={workflow.grounding?.results[v.claim_id]?.verification_scope === 'personal'} />
                 <span>
                   {v.claim_id.replace(/^claim_/, '陈述·')}: {displayText ?? '（草稿中缺失）'}
                 </span>
@@ -371,7 +374,7 @@ export function ClaimVerificationPage() {
 
       {!proceedOk && (
         <div className="callout warn">
-          请处理全部待复核项；拒绝全部已阻断项；不要把已编辑未重核验的内容当作通过。工作流状态：
+          请处理全部待复核项；对项目/竞赛/实习等已阻断项点「拒绝并排除」；个人教育资料按填写使用。不要把已编辑未重核验的内容当作通过。工作流状态：
           {workflow.workflow_status === 'BLOCKED' ? '已阻断' : '等待人工确认'}
         </div>
       )}

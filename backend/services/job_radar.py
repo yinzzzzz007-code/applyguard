@@ -318,6 +318,7 @@ def validate_target(request: dict[str, Any]) -> dict[str, Any] | None:
 
 def analyze_job(job_id: str, request: dict[str, Any]) -> dict[str, Any]:
     from backend.services.jd_parser import JDParser
+    from backend.services.jd_match_scope import select_requirements_for_matching
     from backend.services.evidence_matcher import EvidenceMatcher
     from backend.services.local_evidence import attach_local_evidence
     from backend.services.resume_draft_vault import experiences_from_resume_draft
@@ -329,9 +330,11 @@ def analyze_job(job_id: str, request: dict[str, Any]) -> dict[str, Any]:
     if draft is not None and not isinstance(draft, dict):
         raise ValueError("resume_draft 必须是对象")
     experiences = attach_local_evidence(experiences_from_resume_draft(draft), draft) if draft else []
+    scoped = select_requirements_for_matching(parsed)
+    excluded = len(parsed["requirements"]) - len(scoped)
     matched = EvidenceMatcher().match(parsed, experiences) if experiences else {"matches": []}
     requirements = []
-    for req in parsed["requirements"]:
+    for req in scoped:
         candidates = sorted([m for m in matched["matches"] if m["requirement_id"] == req["requirement_id"]],
                             key=lambda m: (m["ready_for_selection"], m["relevance_score"]), reverse=True)
         supported = []
@@ -349,10 +352,13 @@ def analyze_job(job_id: str, request: dict[str, Any]) -> dict[str, Any]:
             "evidence_ids": best["evidence_ids"] if supported else [],
             "experience_ids": [m["experience_id"] for m in supported],
             "notes": best["missing_evidence"] if best else ["本次经历中未找到可用证据；这不等于不具备此能力。"]})
+    notice = "离线预检查，不生成或修改经历；缺证不等于不合格，也不是录用概率。正式申请仍需完整校验。"
+    if excluded:
+        notice += f" 证据匹配只统计任职要求与加分项，已排除职位描述等其余 {excluded} 条。"
     return {"job_id": job_id, "content_hash": job["content_hash"], "analyzed_at": now(),
             "mode": mode, "has_resume": bool(experiences), "requirements": requirements,
             "supported": sum(r["coverage"] == "SUPPORTED" for r in requirements), "total": len(requirements),
-            "factors": job["factors"], "notice": "离线预检查，不生成或修改经历；缺证不等于不合格，也不是录用概率。正式申请仍需完整校验。"}
+            "excluded": excluded, "factors": job["factors"], "notice": notice}
 
 
 def _radar_get(path: str) -> dict[str, Any]:

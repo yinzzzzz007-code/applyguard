@@ -4,6 +4,7 @@ const LABEL = {SUPPORTED:'支持',CONTRADICTED:'矛盾',INSUFFICIENT:'证据不�
 
 export function AtomicEvidence({result}: {result?: GroundingClaimResult}) {
   if (!result) return null
+  if (result.verification_scope === 'personal') return <div className="evidence-box"><p>{result.scope_notice || '个人资料按填写使用，不进行SAG核验或AI润色。'}</p></div>
   return <div className="evidence-box atomic-evidence">
     <h4>逐事实依据</h4>
     {result.atoms.length > 0 && !result.complete && <p className="warn-text">整句覆盖检查未通过；即使部分事实有支持，也不能通过整句核验。</p>}

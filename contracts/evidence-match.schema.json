@@ -18,6 +18,17 @@
         "source_id": {"type": "string", "minLength": 1}
       }
     },
+    "ai_match": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "prompt_version"],
+      "properties": {
+        "mode": {"type": "string", "enum": ["MODEL", "RULE_FALLBACK"]},
+        "prompt_version": {"type": "string", "minLength": 1},
+        "scored_rows": {"type": "integer", "minimum": 0},
+        "failure": {"type": "string", "minLength": 1}
+      }
+    },
     "uncovered_requirements": {
       "type": "array",
       "items": {
@@ -75,7 +86,9 @@
               "metric_bonus": {"type": "number", "minimum": 0, "maximum": 1},
               "conflict_penalty": {"type": "number", "minimum": 0, "maximum": 1},
               "missing_evidence_penalty": {"type": "number", "minimum": 0, "maximum": 1},
-              "sag_bonus": {"type": "number", "minimum": 0, "maximum": 0.06}
+              "sag_bonus": {"type": "number", "minimum": 0, "maximum": 0.06},
+              "ai_semantic_score": {"type": "number", "minimum": 0, "maximum": 1},
+              "ai_score_10": {"type": "number", "minimum": 0, "maximum": 10}
             }
           }
         }
