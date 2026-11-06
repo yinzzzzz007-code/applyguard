@@ -3,6 +3,8 @@
 """Local, version-scoped retrieval using the real optional zleap-sag engine."""
 from __future__ import annotations
 
+from backend.services.model_client import DEFAULT_TEXT_MODEL
+
 import asyncio
 import hashlib
 import json
@@ -58,7 +60,7 @@ class SAGRetriever:
         directory = Path(os.getenv('APPLYGUARD_GROUNDING_DIR', str(ROOT / 'data/local/grounding')))
         settings = [os.getenv(name,'') for name in ['APPLYGUARD_AI_MODEL','APPLYGUARD_AI_BASE_URL',
             'APPLYGUARD_EMBEDDING_MODEL','APPLYGUARD_EMBEDDING_DIMENSIONS']]
-        directory = directory / fingerprint(candidate_id)[:20] / digest / fingerprint(['0.15.0','minimal',settings])[:20]
+        directory = directory / fingerprint(candidate_id)[:20] / digest / fingerprint(['0.15.0','minimal',os.getenv('APPLYGUARD_AI_MODEL', DEFAULT_TEXT_MODEL),settings])[:20]
         with _LOCK:
             lock = _LOCKS.setdefault(str(directory.resolve()), threading.Lock())
         # DataEngine has an event-loop lifecycle; never share it across HTTP threads.
@@ -96,7 +98,7 @@ class SAGRetriever:
         timeout = float(os.getenv('APPLYGUARD_GROUNDING_TIMEOUT', '110'))
         config = EngineConfig(
             storage_mode='normal', data_dir=str(directory / 'index'), language='en', log_level='ERROR',
-            llm=LLMConfig(api_key=key, model=os.getenv('APPLYGUARD_AI_MODEL', 'gpt-4o-mini'),
+            llm=LLMConfig(api_key=key, model=os.getenv('APPLYGUARD_AI_MODEL', DEFAULT_TEXT_MODEL),
                 base_url=os.getenv('APPLYGUARD_AI_BASE_URL', 'https://api.chatanywhere.tech/v1'),
                 temperature=0, max_tokens=4000, timeout=timeout, max_retries=0,
                 structured_output_mode='json_schema'),

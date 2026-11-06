@@ -1,0 +1,102 @@
+{
+  "date": "2026-11-05",
+  "notice": "Fictional prose cases authored after the repair; scored separately, without tuning after first evaluation. Not independent human labels.",
+  "cases": [
+    {
+      "id": "quant-dir-safe",
+      "original": "报告记载，平均延迟由95毫秒降至72毫秒。",
+      "proposal": "报告记载，平均延迟从95毫秒降低到72毫秒。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "quant-dir-wrong",
+      "original": "报告记载，平均延迟由95毫秒降至72毫秒。",
+      "proposal": "报告记载，平均延迟从72毫秒降低到95毫秒。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "role-safe",
+      "original": "I assisted the analyst with invoice reconciliation; Sam led the audit.",
+      "proposal": "I helped the analyst reconcile invoices; Sam led the audit.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "role-wrong",
+      "original": "I assisted the analyst with invoice reconciliation; Sam led the audit.",
+      "proposal": "I led the invoice reconciliation and Sam assisted the audit.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "number-context-safe",
+      "original": "回放中，约18%的请求重试，4%的请求超时。",
+      "proposal": "回放中，4%的请求超时，约18%的请求重试。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "number-context-wrong",
+      "original": "回放中，约18%的请求重试，4%的请求超时。",
+      "proposal": "回放中，约4%的请求超时，18%的请求重试。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "interview-safe",
+      "original": "Nia interviewed Omar about the handover.",
+      "proposal": "Nia conducted the handover interview with Omar.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "interview-wrong",
+      "original": "Nia interviewed Omar about the handover.",
+      "proposal": "Omar interviewed Nia about the handover.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "spend-safe",
+      "original": "团队提交了12万元预算，实际开支待核定。",
+      "proposal": "实际开支待核定，团队提交的预算为12万元。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "spend-wrong",
+      "original": "团队提交了12万元预算，实际开支待核定。",
+      "proposal": "团队提交了预算，实际开支为12万元。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "equivalent-units-safe",
+      "original": "The mock service responded in 0.2 seconds.",
+      "proposal": "The mock service responded in 200 milliseconds.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "equivalent-units-wrong",
+      "original": "The mock service responded in 0.2 seconds.",
+      "proposal": "The mock service responded in 20 milliseconds.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "range-safe",
+      "original": "Coverage moved from 71% up to 83% in staging.",
+      "proposal": "In staging, coverage moved to 83% from 71%.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "range-wrong",
+      "original": "Coverage moved from 71% up to 83% in staging.",
+      "proposal": "In staging, coverage moved to 71% from 83%.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "stage-safe",
+      "original": "周琳在沙盒中验证了回退脚本，暂未部署。",
+      "proposal": "回退脚本由周琳在沙盒中验证，暂未部署。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "stage-wrong",
+      "original": "周琳在沙盒中验证了回退脚本，暂未部署。",
+      "proposal": "周琳已部署并验证回退脚本。",
+      "expected": "WRONG"
+    }
+  ]
+}

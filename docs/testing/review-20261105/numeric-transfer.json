@@ -1,0 +1,117 @@
+{
+  "date": "2026-11-05T13:23:46.768850+00:00",
+  "guard_files": {
+    "backend/services/fact_lock.py": "3a34bd31dd2937de11639af1ca125205bb5bfdce199a3ad76195b068482d4b4a",
+    "backend/services/edit_invariants.py": "a1614a232bc2d86863a16e0b190e2a0ad3ad5b4ee944237e2de77ea2939900f9",
+    "backend/services/wording_review.py": "6d0adf6545015fcecf2977624af72e6ce275d554acacbc4c5b156453332d3438",
+    "backend/services/asu_resume.py": "d3337d5158bb9693e4abca49c1f42e4ddadff6e0fcd2be73cc74b81599ed1c3e"
+  },
+  "counts": {
+    "prose": {
+      "SAFE": 7,
+      "held_SAFE": 0,
+      "WRONG": 7,
+      "held_WRONG": 4
+    }
+  },
+  "rows": [
+    {
+      "suite": "prose",
+      "id": "p95-safe",
+      "label": "SAFE",
+      "input_sha256": "580f602286f3efef58b19ccadb05d4c474e0dbf1855b6003794edf26a6bfd708",
+      "held": false
+    },
+    {
+      "suite": "prose",
+      "id": "p95-wrong",
+      "label": "WRONG",
+      "input_sha256": "575c3ef3096c0a04abd7fdbb2a13fd98022a416a4e4661c5a2c8c17da35bc261",
+      "held": true
+    },
+    {
+      "suite": "prose",
+      "id": "approval-safe",
+      "label": "SAFE",
+      "input_sha256": "1a3dc4f0b8ed134de2249828470d612b7f535ee641b9e4a1e4a8619e31aa2fcd",
+      "held": false
+    },
+    {
+      "suite": "prose",
+      "id": "approval-wrong",
+      "label": "WRONG",
+      "input_sha256": "784de7c9241fac1d173e69c906850b5dedc41c5ca4696ec11ecaf255c51ceccf",
+      "held": false
+    },
+    {
+      "suite": "prose",
+      "id": "timing-safe",
+      "label": "SAFE",
+      "input_sha256": "d057ce667fd6222c76d27ecf2d48e9bef382d74ccef707cbb563f1848c0714a7",
+      "held": false
+    },
+    {
+      "suite": "prose",
+      "id": "timing-wrong",
+      "label": "WRONG",
+      "input_sha256": "9e08210cd86217a1a00158ff2adac0762c3a8a595f3ae9a80b5d5867237c06c9",
+      "held": true
+    },
+    {
+      "suite": "prose",
+      "id": "who-safe",
+      "label": "SAFE",
+      "input_sha256": "d63b339d4409cdaf72207b5e3bb197de6e398da8ba0056a6bccc225c57300d79",
+      "held": false
+    },
+    {
+      "suite": "prose",
+      "id": "who-wrong",
+      "label": "WRONG",
+      "input_sha256": "a2aff61321a4caaebce58a965fe98952915afed8c79fc3734ceee7547b7b4293",
+      "held": true
+    },
+    {
+      "suite": "prose",
+      "id": "assessor-safe",
+      "label": "SAFE",
+      "input_sha256": "4e157d0f5dffd5399ae42ee309e87044feb9fe301b1ad12660a3c7447579276b",
+      "held": false
+    },
+    {
+      "suite": "prose",
+      "id": "assessor-wrong",
+      "label": "WRONG",
+      "input_sha256": "2275263919137e580b59bac40d46fd79398efe52fbcae2b74474cd74937058ad",
+      "held": false
+    },
+    {
+      "suite": "prose",
+      "id": "unit-base-safe",
+      "label": "SAFE",
+      "input_sha256": "d29cb0fc22896f81110eb4158c3d03a29f9d4c0e0e2fa1245748944418af578e",
+      "held": false
+    },
+    {
+      "suite": "prose",
+      "id": "unit-base-wrong",
+      "label": "WRONG",
+      "input_sha256": "16f34aed70d694c5feb94e916288fcc47c41c57764d919f66b737f6e472586b0",
+      "held": false
+    },
+    {
+      "suite": "prose",
+      "id": "quantity-safe",
+      "label": "SAFE",
+      "input_sha256": "d732920dc21cecf76e47f8df162937fe72258f17d396b65d54861a4a4d527e26",
+      "held": false
+    },
+    {
+      "suite": "prose",
+      "id": "quantity-wrong",
+      "label": "WRONG",
+      "input_sha256": "8be9471fa05c699c239855419116e0ed7e4f9b59fd968d48fac92ecd1e98e94a",
+      "held": true
+    }
+  ]
+}

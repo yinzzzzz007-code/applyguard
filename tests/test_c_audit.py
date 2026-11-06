@@ -45,7 +45,7 @@ class AuditTests(unittest.TestCase):
         with patch.dict('os.environ', {}, clear=True), patch('urllib.request.urlopen', return_value=response) as transport:
             HttpModelClient(api_key='dummy').complete_json('system', 'fictional')
         body = json.loads(transport.call_args.args[0].data)
-        self.assertEqual(body['model'], 'gpt-4o-mini')
+        self.assertEqual(body['model'], 'gemini-3.1-flash-lite-preview')
         self.assertEqual(body['max_tokens'], 2048)
         self.assertEqual(transport.call_args.args[0].full_url, 'https://api.chatanywhere.tech/v1/chat/completions')
         self.assertNotIn('thinking', body)

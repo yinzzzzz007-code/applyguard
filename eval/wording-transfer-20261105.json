@@ -1,0 +1,90 @@
+{
+  "date": "2026-11-05",
+  "notice": "New author-labeled fictional cases after the second repair. Freeze before scoring. No independent user adjudication.",
+  "cases": [
+    {
+      "id": "p95-safe",
+      "original": "The p95 latency fell from 290 ms to 175 ms on the test machine.",
+      "proposal": "On the test machine the p95 latency fell to 175 ms from 290 ms.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "p95-wrong",
+      "original": "The p95 latency fell from 290 ms to 175 ms on the test machine.",
+      "proposal": "On the test machine the p95 latency fell to 290 ms from 175 ms.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "approval-safe",
+      "original": "团队拟定了分批发布计划，尚待审批。",
+      "proposal": "分批发布计划已由团队拟定，尚待审批。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "approval-wrong",
+      "original": "团队拟定了分批发布计划，尚待审批。",
+      "proposal": "团队已获批分批发布计划。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "timing-safe",
+      "original": "The worker took 1.25 seconds in staging.",
+      "proposal": "In staging the worker took 1250 ms.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "timing-wrong",
+      "original": "The worker took 1.25 seconds in staging.",
+      "proposal": "In staging the worker took 125 ms.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "who-safe",
+      "original": "Lin supervised Rae during onboarding.",
+      "proposal": "During onboarding Lin supervised Rae.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "who-wrong",
+      "original": "Lin supervised Rae during onboarding.",
+      "proposal": "Rae supervised Lin during onboarding.",
+      "expected": "WRONG"
+    },
+    {
+      "id": "assessor-safe",
+      "original": "产品组委托运维组核算费用。",
+      "proposal": "费用由运维组受产品组委托核算。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "assessor-wrong",
+      "original": "产品组委托运维组核算费用。",
+      "proposal": "运维组委托产品组核算费用。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "unit-base-safe",
+      "original": "故障间隔为两周，记录来自演练环境。",
+      "proposal": "记录来自演练环境，故障间隔为十四天。",
+      "expected": "SAFE"
+    },
+    {
+      "id": "unit-base-wrong",
+      "original": "故障间隔为两周，记录来自演练环境。",
+      "proposal": "故障间隔为两天，记录来自演练环境。",
+      "expected": "WRONG"
+    },
+    {
+      "id": "quantity-safe",
+      "original": "The pilot covered approximately 13% of the region and exactly 7% of its schools.",
+      "proposal": "Exactly 7% of schools and roughly 13% of the region were covered by the pilot.",
+      "expected": "SAFE"
+    },
+    {
+      "id": "quantity-wrong",
+      "original": "The pilot covered approximately 13% of the region and exactly 7% of its schools.",
+      "proposal": "The pilot covered exactly 13% of the region and approximately 7% of its schools.",
+      "expected": "WRONG"
+    }
+  ]
+}

@@ -41,3 +41,13 @@ test('history cannot restore a different application; restoring does not inherit
 test('highlight finds changed part and retains full proposal',()=>{
  for(const [a,b] of [['参与开发','主导开发'],['仅离线测试','测试'],['约30%','30%']]) assert.equal(changedSpan(a,b).join(''),b)
 })
+
+test('a wording-approved draft remains editable without upgrading insufficient evidence',()=>{
+ const w=fixture(), id=w.resume_claims[0].claim_id, text='Reordered draft'
+ const state={resume_claims:w.resume_claims.map(c=>c.claim_id===id?{...c,text}:c),grounding:{results:{[id]:{
+   final_text:text,state:'NEEDS_REVIEW',relation:'INSUFFICIENT',proposal_applied:true,
+   wording_auto_applied:true,change_audit:{sensitive_change:true}}}}}
+ const merged=mergeReviewResult(w,state)
+ assert.equal(merged.resume_claims[0].text,text)
+ assert.equal(currentSupport(merged,id),'材料不足或待核验')
+})
