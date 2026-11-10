@@ -396,6 +396,8 @@ export interface WorkflowResponse {
   review_session?: import('../resume/review').ReviewSession
   grounding?: GroundingReport
   target_job?: import('./jobs').JobTarget
+  local_only?: boolean
+  profile_checks?: import('./jobs').ProfileChecks
   requires_reverification?: boolean
   evidence_sources?: VaultEvidence[]
   trace_id: string

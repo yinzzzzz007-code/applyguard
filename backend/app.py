@@ -83,10 +83,15 @@ def _error(code: str, message: str, trace_id: str, details: list[dict[str, Any]]
 
 def build_mock_workflow(request: dict[str, Any]) -> dict[str, Any]:
     from backend.services.grounded_workflow import apply_grounding
+    from backend.services.evidence_matcher import profile_checks
+    if request.get("parse_mode") == "offline":
+        request = {**request, "local_only": True}
     response = _build_base_workflow(request)
+    response["local_only"] = request.get("local_only") is True
     grounding_request = {**request, 'candidate_id':response['candidate_id']}
     if response.get('component_modes', {}).get('career_vault') == 'LOCAL_RESUME_DRAFT' and not isinstance(request.get('resume_draft'), dict):
         grounding_request['resume_draft'] = load_resume_draft()
+    response['profile_checks'] = profile_checks(response['parsed_jd'], grounding_request.get('resume_draft'))
     return apply_grounding(CAREER_VAULT_PATH, grounding_request, response)
 
 
@@ -414,19 +419,23 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
 
     def do_DELETE(self) -> None:  # noqa: N802
         trace_id = f"trace_{uuid.uuid4().hex[:12]}"
-        if not self.path.startswith("/api/v1/evidence"):
+        if self.path.startswith("/api/v1/evidence"):
+            delete = handle_evidence_delete
+        elif self.path.startswith("/api/v1/jobs/"):
+            delete = job_radar.handle_delete
+        else:
             self._send_json(HTTPStatus.NOT_FOUND, _error("NOT_FOUND", "Route not found", trace_id))
             return
         try:
-            response = handle_evidence_delete(self.path)
+            response = delete(self.path)
         except ValueError as exc:
             code = "NOT_FOUND" if str(exc) == "Route not found" else "VALIDATION_ERROR"
             status = HTTPStatus.NOT_FOUND if code == "NOT_FOUND" else HTTPStatus.UNPROCESSABLE_ENTITY
             self._send_json(status, _error(code, str(exc), trace_id))
             return
         except Exception:
-            logging.exception("Evidence DELETE failed, trace_id=%s", trace_id)
-            self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, _error("INTERNAL_ERROR", "Evidence delete failed", trace_id))
+            logging.exception("DELETE failed, trace_id=%s path=%s", trace_id, self.path)
+            self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, _error("INTERNAL_ERROR", "删除失败，请重试。", trace_id))
             return
         self._send_json(HTTPStatus.OK, response)
 

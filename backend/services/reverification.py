@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 from backend.services.career_vault import CareerVault
 from backend.services.claim_validator import ClaimValidator
-from backend.services.evidence_matcher import EvidenceMatcher
+from backend.services.evidence_matcher import EvidenceMatcher, profile_checks
 from backend.services.jd_parser import JDParser
 from backend.services.local_evidence import attach_local_evidence
 from backend.services.resume_draft_vault import claim_is_form_confirmed, experiences_from_resume_draft
@@ -114,6 +114,7 @@ def reverify_workflow(vault_path: Path, request: dict[str, Any], *, _skip_ground
     trace += [{'step': 'Human Confirmation', 'status': 'BLOCKED' if blocked else 'PENDING'},
               {'step': 'Audit Record', 'status': 'CREATED'}]
     response = {'resume_claims': claims, 'step_trace': trace, 'evidence_match': matched,
+            'profile_checks': profile_checks(parsed, draft),
             'evidence_sources': [source for item in items for source in item['evidence_sources']], 'claim_verification': results, 'ats_form_mapping': mapping,
             'field_controls': engine.field_controls(mapping, results), 'risk_result': risk,
             'workflow_status': 'BLOCKED' if blocked else 'AWAITING_HUMAN_CONFIRMATION',

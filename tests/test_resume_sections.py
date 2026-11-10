@@ -44,6 +44,36 @@ Python · PyTorch · RAG · Linux
 '''
 
 class ResumeSectionsTests(unittest.TestCase):
+    def test_research_and_awards_with_right_aligned_dates(self):
+        text = """科研与项目经历
+2026
+Atlas：离线测试工具 2026.03 – 至今
+软件组——测试方案设计｜示例实验室
+• 整理异常输入和错误恢复流程。
+Notes: A Study of Personal Notes Through Visual Editing 2026.04 – 2026.06
+共 同第一作者
+• 分析笔记中的编辑操作。
+竞赛获奖
+示例数学竞赛 Meritorious Winner（M奖）｜队长 2026
+示例应用挑战赛二等奖 2025
+专业技能
+Python
+"""
+        form = extract_resume_from_text(text)
+        self.assertEqual([row['title'] for row in form['projects']], [
+            'Atlas：离线测试工具', 'Notes: A Study of Personal Notes Through Visual Editing',
+        ])
+        self.assertEqual([row['role'] for row in form['projects']], ['软件组', '共同第一作者'])
+        self.assertEqual(form['projects'][0]['organization'], '示例实验室')
+        self.assertEqual([(row['start'], row['end']) for row in form['projects']], [
+            ('2026-03', '至今'), ('2026-04', '2026-06'),
+        ])
+        self.assertEqual([(row['name'], row['date']) for row in form['awards']], [
+            ('示例数学竞赛 Meritorious Winner（M奖）', '2026'), ('示例应用挑战赛二等奖', '2025'),
+        ])
+        self.assertNotIn('竞赛获奖', form['projects'][1]['description'])
+        self.assertIn('队长', form['awards'][0]['description'])
+
     def test_unlabelled_bilingual_header_and_missing_identity_fields(self):
         form=extract_resume_from_text(CV)
         self.assertEqual(form['basic']['name'],'林晓舟')
@@ -80,6 +110,34 @@ class ResumeSectionsTests(unittest.TestCase):
         for text in ['个人简历\n教育背景\n示例理工大学','教育背景\n软件工程本科','技术技能\nPython']:
             self.assertEqual(extract_resume_from_text(text)['basic']['name'],'')
         self.assertEqual(extract_resume_from_text('简历\n姓名：赵小雨\n手机：13800000001')['basic']['name'],'赵小雨')
+
+    def test_pdf_header_with_reordered_labels_and_grouped_phone(self):
+        text = (
+            '邮箱： 电话： 赵小雨\n'
+            '138-0000-0001 fictional@example.test\n'
+            '教育背景\n'
+            '2024.09–2028.06 示例理工大学（STU）\n'
+            '数据科学与大数据技术专业（本科） 广州\n'
+            '科研与项目经历\n'
+            '亚太地区大学生示例数学建模竞赛三等奖\n'
+            '专业技能\nPython'
+        )
+        form = extract_resume_from_text(text)
+        self.assertEqual(form['basic']['name'], '赵小雨')
+        self.assertEqual(form['basic']['phone'], '13800000001')
+        self.assertEqual(form['basic']['email'], 'fictional@example.test')
+        self.assertEqual(len(form['education']), 1)
+        self.assertEqual(form['education'][0]['major'], '数据科学与大数据技术')
+
+    def test_contact_labels_and_numeric_email_are_not_contact_values(self):
+        text = '联系方式\n邮箱： 电话：\n13800000001@example.test'
+        basic = extract_resume_from_text(text)['basic']
+        self.assertEqual(basic['name'], '')
+        self.assertEqual(basic['phone'], '')
+
+    def test_phone_with_spaces_and_country_code(self):
+        basic = extract_resume_from_text('手机：+86 138 0000 0001')['basic']
+        self.assertEqual(basic['phone'], '13800000001')
     def test_month_precision_and_multiple_education_records(self):
         self.assertEqual(dates('2024.09 - 2026.06'),('2024-09','2026-06'))
         text='教育经历\n示例理工大学 2020–2024\n软件工程本科\n示例科技大学 2024.09 - 2026.06\n专业：计算机科学\n硕士\n技能\nPython'

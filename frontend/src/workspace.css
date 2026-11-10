@@ -166,6 +166,9 @@ input:focus,select:focus,textarea:focus { border-color:var(--primary); outline:2
 .resume-section { background:#fff; border:1px solid var(--hairline); border-radius:12px; }
 .resume-side { top:24px; }.resume-side-item.active { background:#e9eef5; color:#1d4ed8; border-color:#dbe4f0; }
 .resume-section h3 i { background:var(--primary); }.resume-input:focus { box-shadow:none; }
+.intention-fields > .resume-field { min-width: 0; }
+.intention-date { min-width: 0; }
+.intention-previous { margin: 6px 0 0; overflow-wrap: anywhere; }
 .resume-panel.is-unsaved,.resume-panel.is-saved { border:0; }.resume-toolbar.is-saved { border-color:#cbd5e1; background:#fff; }
 .vault-coverage { background:#fff; border:1px solid var(--hairline); border-radius:14px; padding:20px; }
 .vault-cov { background:none; border:0; border-right:1px solid var(--hairline); border-radius:0; }.vault-cov:last-child { border-right:0; }
@@ -357,3 +360,109 @@ button:focus-visible,a:focus-visible,summary:focus-visible { scroll-margin:80px;
 .review-export input { flex-shrink: 0; margin-top: 4px; }
 .review-editor, .review-workspace > * { min-width: 0; }
 @media (max-width: 640px) { .review-sentence { padding: 12px; } .review-sentence .btn { flex: 1 1 auto; } }
+
+/* Review workbench: readable document first, evidence second, explicit export paths. */
+.review-document-heading { display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.review-document-heading h3 { font-size:20px; margin:0; }
+.review-document-heading > span { font-size:12px; color:#52627a; }
+.review-priority { display:flex; align-items:center; gap:14px; flex-wrap:wrap; border-block:1px solid var(--hairline); padding:4px 0; margin:18px 0; font-size:13px; }
+.review-sentence.is-selected { border-color:#6085d9; box-shadow:0 0 0 1px #6085d92b; }
+.review-labels { display:grid; grid-template-columns:1fr; gap:6px; }
+.review-labels span { width:fit-content; max-width:100%; }
+.review-labels .support-state.supported { background:#edf8f0; color:#21643b; }
+.review-labels .support-state.pending { background:#fff5df; color:#805611; }
+.review-labels .support-state.conflict { background:#fff0ef; color:#a52d29; }
+.review-labels .user-choice { color:#46566e; background:#f1f4f8; }
+.review-editor .review-sentence .jd-input { font-size:16px; line-height:1.85; }
+.review-editor .review-tools { margin:0; padding:20px; border:1px solid var(--hairline); border-radius:14px; background:#fff; }
+.review-tools > summary { display:none; }
+.review-tools:not([open]) > :not(summary) { display:block; }
+.selected-review { padding-bottom:20px; border-bottom:1px solid var(--hairline); }
+.selected-review h3 { margin:0 0 14px; font-size:17px; }
+.selected-original { line-height:1.85; overflow-wrap:anywhere; }
+.selected-review .review-proposal p { font-size:15px; line-height:1.8; }
+.review-tools .sag-panel { border:0; padding:20px 0 0; }
+.review-tools .sag-panel > p { font-size:14px; }
+.review-tools .sag-panel > .muted,.review-tools .sag-provider-note { font-size:12px; }
+.review-export-section,.review-add-content { margin:24px 0; padding:20px 24px; border:1px solid var(--hairline); border-radius:12px; background:white; scroll-margin-top:24px; }
+.review-export-section > summary,.review-add-content > summary { font-size:16px; font-weight:600; cursor:pointer; min-height:44px; display:list-item; padding:10px 0; }
+.review-export-section .review-export { border:0; margin:0; padding-top:12px; }
+.export-preview { background:#f7f9fc; border:1px solid var(--hairline); border-radius:10px; padding:18px; margin:20px 0; }
+.export-preview p { font-size:16px; line-height:1.9; overflow-wrap:anywhere; }
+.review-add-content .rr-add { border-top:0; }
+.review-footer { position:static; margin-top:24px; border-top:1px solid var(--hairline); padding:20px 0; }
+.review-footer .btn { white-space:normal; }
+.processing-details { font-size:13px; margin:12px 0; }
+.sample-data-note summary { cursor:pointer; }
+.review-content summary:focus-visible,.review-tools button:focus-visible { outline:2px solid var(--primary); outline-offset:4px; }
+@media (max-width:1180px) {
+  .review-rail { grid-row:auto; position:static; }
+}
+@media (max-width:760px) {
+  .review-workspace { display:flex; flex-direction:column; }
+  .review-workspace > * { width:100%; box-sizing:border-box; }
+  .review-tools > summary { display:list-item; font-size:16px; min-height:44px; }
+  .review-tools:not([open]) > :not(summary) { display:none; }
+  .review-draft { padding:18px; }
+  .review-export-section,.review-add-content { padding:16px; }
+  .review-footer { position:static; display:flex; flex-direction:column; align-items:stretch; }
+  .review-footer > span { margin:0; }
+  .review-footer > .btn { width:100%; }
+  .review-sentence .btn-row { align-items:stretch; }
+  .review-sentence textarea { scroll-margin-block:24px; }
+}
+
+/* Grouped application navigation and preparation-first evidence workspace. */
+.grouped-nav { margin-bottom:8px; }
+.grouped-nav .nav-group-label { margin:12px 12px 5px; }
+.grouped-nav .workspace-nav-item { min-height:36px; padding-block:7px; }
+.workspace-help-link { display:inline-flex; align-items:center; gap:6px; min-height:44px; padding:8px; font-size:13px; color:var(--steel); }
+.workspace-help-link .ui-icon { width:16px; height:16px; }
+.evidence-view-tabs { display:flex; gap:24px; border-bottom:1px solid var(--hairline); margin:24px 0; }
+.evidence-view-tabs button { border:0; background:transparent; padding:14px 2px; color:var(--steel); border-bottom:3px solid transparent; min-height:48px; }
+.evidence-view-tabs button[aria-selected=true] { color:var(--primary); border-bottom-color:var(--primary); font-weight:600; }
+.evidence-first-step { background:#eef4ff; padding:18px 20px; border-radius:10px; line-height:1.8; }
+.evidence-workspace [role=tabpanel][hidden] { display:none; }
+.evidence-workspace [role=tabpanel] { scroll-margin-top:24px; }
+.evidence-workspace .material-library { margin-top:0; }
+.evidence-advanced,.vault-optional { border:1px solid var(--hairline); border-radius:10px; padding:14px 18px; margin:24px 0; }
+.evidence-advanced > summary,.vault-optional > summary { font-size:14px; font-weight:500; min-height:44px; padding:10px 0; cursor:pointer; }
+.vault-optional .resume-hint { margin:12px 0 20px; }
+.evidence-next-step { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:24px 0; margin-top:24px; border-top:1px solid var(--hairline); }
+.evidence-next-step > p { flex:1 1 280px; font-size:14px; color:var(--steel); line-height:1.8; }
+.welcome-guide { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; border:1px solid #dbe6f7; padding:18px 22px; margin:0 0 28px; border-radius:12px; background:#f0f5ff; }
+.welcome-guide strong { font-size:15px; }.welcome-guide p { font-size:14px; margin:10px 0 0; line-height:1.8; }
+.help-page { max-width:940px; }
+.help-steps article { display:flex; gap:24px; padding:28px 0; border-bottom:1px solid var(--hairline); }
+.help-step-number { flex-shrink:0; display:grid; place-items:center; width:36px; height:36px; background:#e9f0ff; color:var(--primary); border-radius:50%; }
+.help-steps h3 { margin:4px 0 14px; font-size:19px; }.help-steps p,.help-export p { line-height:1.9; max-width:70ch; }
+.help-completion { color:var(--steel); font-size:14px; }
+.help-export { padding:24px 0; }.help-animation > summary { min-height:48px; padding:16px 0; cursor:pointer; }
+.help-animation .project-reel { margin:12px 0; padding:0; }
+@media (max-width:760px) {
+  .workspace-help-link span { display:none; }
+  .workspace-help-link { padding-inline:6px; }
+  .welcome-guide { padding:16px; flex-direction:column; gap:4px; }
+  .evidence-match-banner { flex-direction:column; align-items:stretch; }
+  .evidence-match-banner .btn-row { flex-wrap:wrap; }
+  .evidence-view-tabs { gap:20px; }
+  .evidence-next-step { flex-direction:column; align-items:stretch; }
+  .evidence-next-step > p { flex:auto; }
+  .help-steps article { gap:14px; }
+  .vault-optional { padding:12px; }
+}
+
+/* Inline facts and previews keep the same surface rhythm as the form. */
+.job-structured-facts { display: flex; flex-wrap: wrap; gap: .7rem 1.5rem; margin-block: .9rem; }
+.job-structured-facts dt, .import-preview-fields dt { font-size: .85rem; font-weight: 600; }
+.job-structured-facts dd, .import-preview-fields dd { margin: .2rem 0 0; overflow-wrap: anywhere; }
+.import-preview-fields { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,11rem),1fr)); gap: .7rem; }
+.import-preview-fields dd { white-space: pre-wrap; }
+.import-preview-fields small { display: block; margin-top: .3rem; color: var(--muted); }
+.import-preview-row { margin: .65rem 0; }
+.import-preview-row > label { display: inline-flex; gap: .45rem; align-items: baseline; margin-top: .5rem; }
+.profile-checks { padding-inline-start: 1.3rem; }
+.precision-date { display: grid; grid-template-columns: 1fr 1fr; gap: .45rem; }
+.precision-date select { min-width: 0; }
+.evidence-add-bar > label { min-width: 0; }
+.evidence-add-bar > label > :is(input, select) { display: block; width: 100%; }

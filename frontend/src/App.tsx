@@ -12,6 +12,7 @@ import { HumanConfirmationPage } from './pages/HumanConfirmationPage'
 import { JdInputPage } from './pages/JdInputPage'
 import { ResumeReviewPage } from './pages/ResumeReviewPage'
 import { JobRadarPage } from './pages/JobRadarPage'
+import { HelpPage } from './pages/HelpPage'
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="/ats" element={<AtsSimulatorPage />} />
             <Route path="/confirm" element={<HumanConfirmationPage />} />
             <Route path="/history" element={<ApplicationHistoryPage />} />
+            <Route path="/help" element={<HelpPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AppShell>

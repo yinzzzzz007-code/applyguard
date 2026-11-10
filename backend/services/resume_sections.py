@@ -8,7 +8,7 @@ import re
 
 _HEADINGS = {
     'education': (r'教育(?:背景|经历)', r'education(?:al background)?'),
-    'projects': (r'(?:重点|主要|精选)?(?:科研|研究)(?:经历|项目)|当前研究|在研项目|(?:工程|个人|重点|精选)?项目(?:经历|经验)?',
+    'projects': (r'(?:重点|主要|精选)?(?:科研|研究)(?:(?:与|及)项目经历|经历|项目)|当前研究|在研项目|(?:工程|个人|重点|精选)?项目(?:经历|经验)?',
                  r'(?:selected |current |ongoing )?research(?: experience| projects)?|(?:engineering |selected |personal )?projects?(?: experience)?'),
     'internships': (r'实习(?:经历|经验)?|工作(?:经历|经验)?|职业经历', r'(?:work|professional|internship) experience|internships?|employment'),
     'awards': (r'(?:获奖|荣誉|奖项|竞赛|比赛|学科竞赛)(?:情况|经历|成果|获奖)?|荣誉奖项', r'(?:awards?|honou?rs?|competitions?)(?:\s*(?:&|and)\s*(?:awards?|honou?rs?))?'),
@@ -18,8 +18,9 @@ _HEADINGS = {
     'summary': (r'个人简介|自我评价|个人总结', r'profile|summary|about me'),
 }
 _ROLE = re.compile(r'独立第一作者|独立一作|共同第一作者|共同一作|第一作者|项目负责人|技术负责人|主要贡献者|核心成员|团队成员')
-_AWARD = re.compile(r'一等奖|二等奖|三等奖|金奖|银奖|铜奖|银牌|金牌|铜牌|奖学金|优胜|冠军|亚军|季军|\b(?:silver|gold|bronze|honorable\s+mention|honourable\s+mention|scholarship)\b', re.I)
-_SCHOOL = re.compile(r'[\u4e00-\u9fff]{2,20}(?:大学|学院)')
+_AWARD = re.compile(r'一等奖|二等奖|三等奖|金奖|银奖|铜奖|银牌|金牌|铜牌|奖学金|优胜|冠军|亚军|季军|\b(?:silver|gold|bronze|meritorious\s+winner|honou?rable\s+mention|scholarship)\b', re.I)
+_SCHOOL = re.compile(r'[\u4e00-\u9fff]{2,20}(?:大学(?!生)|学院)')
+_CONTACT_LABELS = re.compile(r'^(?:(?:电子邮箱|邮箱|联系电话|电话|手机(?:号码)?)\s*[:：]\s*)+')
 _RANGE = re.compile(r'(?<![\d./-])(20\d{2})(?:[./年-](\d{1,2})(?!\d)月?)?\s*(?:[–—~至]|\s-\s|-(?=20))\s*(20\d{2}|至今|现在|present)(?:[./年-](\d{1,2})(?!\d)月?)?(?!\d|[./年-]\d)',re.I)
 
 def heading_kind(line):
@@ -44,7 +45,8 @@ def sections(text):
 def header_name(text):
     for line in [s.strip() for s in text.splitlines() if s.strip()][:3]:
         if heading_kind(line):break
-        if re.search(r'简历|姓名|学院|大学|专业|背景|个人资料|基本信息|个人信息',line):continue
+        line = _CONTACT_LABELS.sub('', line)
+        if re.search(r'简历|姓名|学院|大学|专业|背景|个人资料|基本信息|个人信息|联系方式|邮箱|电话|手机',line):continue
         found=re.fullmatch(r'([\u4e00-\u9fff]{2,4})(?:\s+[A-Za-z][A-Za-z .\x27-]{1,55})?',line)
         if found:return found[1]
     return ''
@@ -72,7 +74,7 @@ def education(lines):
         if not school:continue
         degree=re.search(r'博士|硕士|本科|专科|高中',text)
         major=re.search(r'(?:所学专业|专业)(?!排名|方向|课程)\s*[:：]\s*([^\n，,；;]{2,40})',text)
-        if not major:major=re.search(r'^\s*([\u4e00-\u9fff与及 /A-Za-z-]{2,40}?)(?:本科|硕士|博士|专科)',text,re.M)
+        if not major:major=re.search(r'^\s*([\u4e00-\u9fff与及 /A-Za-z-]{2,40}?)(?:专业)?\s*[（(]?\s*(?:本科|硕士|博士|专科)',text,re.M)
         rank=re.search(r'(?:专业排名|排名|Rank)\s*[:：]?\s*(\d+\s*/\s*\d+(?:\s*[（(]\s*Top\s*[\d.]+%\s*[）)])?)',text,re.I)
         start,end=dates(text)
         rows.append({'school':school[0],'degree':degree[0] if degree else '',
@@ -81,8 +83,13 @@ def education(lines):
     return rows
 
 def _title_line(line):
-    if len(line)>180 or re.match(r'研究[:：]|贡献[:：]|职责[:：]|负责[:：]|项目负责人[。.]',line):return False
-    if re.search(r'[。；;，]|(?:^|\s)(?:through|and|with|using)\s',line):return False
+    if len(line)>180 or re.match(r'[•●▪]|研究[:：]|贡献[:：]|职责[:：]|负责[:：]|项目负责人[。.]',line):return False
+    if re.search(r'[。；;，]', line):
+        return False
+    date_range = _RANGE.search(line)
+    if date_range and (date_range.start() == 0 or date_range.end() == len(line)) and dates(line)[0]:
+        return bool(re.search(r'[^\W\d_]', _RANGE.sub('', line)))
+    if re.search(r'(?:^|\s)(?:through|and|with|using)\s',line):return False
     if re.search(r'\s[—–]+\s|\s-\s',line):return True
     # Capitalized English titles; continuation prose with punctuation stays in the body.
     return bool(re.match(r'^[A-Z][A-Za-z0-9-]*(?:\s+[A-Z0-9][A-Za-z0-9/&-]*){1,}',line)
@@ -91,6 +98,9 @@ def _title_line(line):
 def project_entries(lines,kind):
     groups=[];current=[]
     for line in lines:
+        # Loose date fragments can be emitted before the entry they belong to.
+        if not current and not re.search(r'[^\W\d_]', _RANGE.sub('', line)):
+            continue
         if current and len(current)==1 and current[0].endswith('-'):
             current[0]+=line;continue
         if _title_line(line) and current:groups.append(current);current=[]
@@ -98,18 +108,49 @@ def project_entries(lines,kind):
     if current:groups.append(current)
     rows=[]
     for group in groups:
-        header=group[0];role=_ROLE.search(header);start,end=dates(header)
+        header = group[0]
+        start, end = dates(header)
+        metadata_index = 1
+        title = header
+        date_range = _RANGE.search(header)
+        if start and date_range and (date_range.start() == 0 or date_range.end() == len(header)):
+            title = _RANGE.sub('', header, count=1).strip()
+            # Long English titles can wrap onto a second line above the role.
+            if len(title) >= 60 and len(group) >= 3 and re.fullmatch(r"[A-Z][A-Za-z0-9 &'(),:/–-]+", group[1]):
+                title += ' ' + group[1]
+                metadata_index = 2
+        metadata = group[metadata_index] if len(group) > metadata_index else ''
+        metadata = re.sub(r'(?<=[\u4e00-\u9fff])\s+(?=[\u4e00-\u9fff])', '', metadata)
+        role = _ROLE.search(header)
+        if not role and not re.match(r'[•●▪]|负责|参与|研究[:：]|贡献[:：]', metadata):
+            role = _ROLE.match(metadata) or re.match(r'(.{1,20}组)(?=[—–-])', metadata)
+        role_name = role[0] if role else ''
+        if not role_name:
+            course_work = re.match(r'课程设计\s*[|｜]\s*(.+)', metadata)
+            role_name = course_work[1] if course_work else ''
+        organization = header[:100] if kind == 'internships' else ''
+        if not organization and role_name.endswith('组'):
+            team = re.search(r'[|｜]\s*([^|｜]+)$', metadata)
+            organization = team[1].strip() if team else ''
         # Remove only trailing status metadata from the displayed title, retaining it in description.
-        title=re.split(r'\s+(?=[A-Z][A-Z0-9/-]{1,20}\s+20\d{2}\s+(?i:Submitted|Accepted)\b|Kaggle\s+(?:Silver|Gold|Bronze)\b|(?:独立一作|共同第一作者|项目负责人|主要贡献者|核心成员)\b)',header)[0]
-        rows.append({'organization':header[:100] if kind=='internships' else '',
-            'title':title,'role':role[0] if role else '', 'start':start,'end':end,
+        title=re.split(r'\s+(?=[A-Z][A-Z0-9/-]{1,20}\s+20\d{2}\s+(?i:Submitted|Accepted)\b|Kaggle\s+(?:Silver|Gold|Bronze)\b|(?:独立一作|共同第一作者|项目负责人|主要贡献者|核心成员)\b)',title)[0]
+        title = re.sub(r'(?<=[\u4e00-\u9fff])\s+(?=[\u4e00-\u9fff])', '', title)
+        rows.append({'organization':organization,
+            'title':title,'role':role_name, 'start':start,'end':end,
             'description':'\n'.join(group)})
     return rows
 
-def award_entry(text):
+def award_entry(text, *, allow_year=False):
     match=re.search(r'(?<!\d)(20\d{2})[./年-](\d{1,2})(?!\d)月?',text)
-    if match and not 1<=int(match[2])<=12:match=None
-    return {'name':text,'issuer':'','date':f'{match[1]}-{int(match[2]):02d}' if match else '', 'description':text}
+    date = f'{match[1]}-{int(match[2]):02d}' if match and 1 <= int(match[2]) <= 12 else ''
+    name = text
+    year = re.search(r'\s+(20\d{2})年?$', text) if allow_year and not match else None
+    if year:
+        date = year[1]
+        name = text[:year.start()].rstrip()
+    if allow_year:
+        name = re.sub(r'\s*[|｜]\s*(?:队长|队员|团队成员)\s*$', '', name)
+    return {'name':name, 'issuer':'', 'date':date, 'description':text}
 
 def enrich_sections(result,text):
     if not result['basic']['name']:result['basic']['name']=header_name(text)
@@ -135,7 +176,7 @@ def enrich_sections(result,text):
                 piece=piece.strip(' ·•-')
                 if not piece:continue
                 if _AWARD.search(piece) or (kind=='awards' and re.search(r'竞赛|比赛|大赛|挑战杯|数学建模',piece)):
-                    awards.append(award_entry(piece))
+                    awards.append(award_entry(piece, allow_year=kind == 'awards'))
                 elif kind=='mixed' and (_ROLE.search(piece) or re.search(r'项目|大创',piece)):
                     project_rows.extend(project_entries([piece],'projects'))
         elif kind=='skills':skills.append(' '.join(lines))

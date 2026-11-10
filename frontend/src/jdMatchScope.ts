@@ -9,7 +9,7 @@ export interface SectionSpan {
 }
 
 const HEADER =
-  /^\s*(?:[【\[（(]\s*)?(?:(?:[一二三四五六七八九十]+|\d{1,2})\s*[、.．]\s*)?(加分项或注意事项|加分项|优先条件|nice[\s-]to[\s-]have|preferred(?:\s+(?:qualifications|requirements|skills))?|bonus|任职资格|任职要求|岗位要求|基本要求|required(?:\s+(?:qualifications|skills))?|requirements|qualifications|职位描述|岗位描述|工作职责|岗位职责|工作内容|job\s+description|responsibilities|职责|面向对象|招聘对象)\s*(?:[】\])）)])?\s*[:：]?(?=\s|$)/i
+  /^\s*(?:[【\[（(]\s*)?(?:(?:[一二三四五六七八九十]+|\d{1,2})\s*[、.．]\s*)?(加分项或注意事项|加分项|优先条件|nice[\s-]to[\s-]have|preferred(?:\s+(?:qualifications|requirements|skills))?|bonus|任职资格|任职要求|岗位要求|工作要求|基本要求|required(?:\s+(?:qualifications|skills))?|requirements|qualifications|职位描述|岗位描述|工作职责|岗位职责|工作内容|job\s+description|responsibilities|职责|面向对象|招聘对象)\s*(?:[】\])）)])?\s*[:：]?(?=\s|$)/i
 
 const BONUS = new Set(['加分项或注意事项', '加分项', '优先条件', 'nice to have', 'nice-to-have', 'bonus'])
 const DESCRIPTION = new Set([

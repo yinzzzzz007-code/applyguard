@@ -13,7 +13,7 @@ import re
 import sqlite3
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from html.parser import HTMLParser
 from typing import Any
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
@@ -115,6 +115,41 @@ def jd_text(job: dict[str, Any]) -> str:
             + job["description"])
 
 
+def _structured_metadata(raw: dict[str, Any]) -> dict[str, Any]:
+    result = {}
+    salary = raw.get("salary")
+    if isinstance(salary, dict):
+        low, high = salary.get("min"), salary.get("max")
+        currency, unit = salary.get("currency"), salary.get("unit")
+        if not (all(type(value) in (int, float) and 0 <= value <= 1e9 for value in (low, high))
+                and low <= high and isinstance(currency, str) and re.fullmatch(r"[A-Z]{3}", currency)
+                and isinstance(unit, str) and unit in {"hour", "day", "week", "month", "year"}):
+            raise ValueError("薪资范围、币种或计薪单位无效")
+        result["salary"] = {"min": low, "max": high, "currency": currency, "unit": unit}
+    schedule = raw.get("internship_schedule")
+    if isinstance(schedule, dict):
+        days, months = schedule.get("days_per_week"), schedule.get("duration_months")
+        if not (type(days) in (int, float) and 0 < days <= 7
+                and type(months) in (int, float) and 0 < months <= 120):
+            raise ValueError("实习天数或月数无效")
+        result["internship_schedule"] = {"days_per_week": days, "duration_months": months}
+    window = raw.get("graduation_window")
+    if isinstance(window, dict):
+        first, last, year = window.get("start_date"), window.get("end_date"), window.get("class_year")
+        try:
+            start, end = date.fromisoformat(first), date.fromisoformat(last)
+            if start.isoformat() != first or end.isoformat() != last or start > end:
+                raise ValueError
+            if year is not None and (type(year) is not int or year not in range(start.year, end.year + 1)):
+                raise ValueError
+        except (TypeError, ValueError) as exc:
+            raise ValueError("毕业时间窗口无效") from exc
+        result["graduation_window"] = {"start_date": first, "end_date": last}
+        if year is not None:
+            result["graduation_window"]["class_year"] = year
+    return result
+
+
 def normalize(raw: Any, *, radar: bool = False) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise ValueError("每个岗位必须是 JSON 对象")
@@ -148,6 +183,7 @@ def normalize(raw: Any, *, radar: bool = False) -> dict[str, Any]:
            "source_observed_at": _text(raw.get("last_seen_at") or raw.get("source_observed_at"), "来源观察时间", 100)}
     for key in ("location", "education", "experience", "recruitment_type"):
         job[key] = _text(raw.get(key), key) or ""
+    job.update(_structured_metadata(raw))
     if len(jd_text(job)) > 20000:
         raise ValueError("岗位合并文本超过工作流上限")
     identity = ([job["source_namespace"], company.casefold(), job["external_id"]] if job["external_id"]
@@ -272,10 +308,14 @@ def list_jobs(path: str) -> dict[str, Any]:
 def set_stage(job_id: str, stage: Any) -> dict[str, Any]:
     if not isinstance(stage, str) or stage not in STAGES:
         raise ValueError("收藏阶段只接受 saved、preparing 或 archived")
-    get_job(job_id)
+    if not isinstance(job_id, str) or not re.fullmatch(r"job_[a-f0-9]{16}", job_id):
+        raise ValueError("无效岗位编号")
     with database() as conn:
-        conn.execute("UPDATE opportunities SET stage=? WHERE id=?", (stage, job_id))
-    return {"job": get_job(job_id)}
+        updated = conn.execute("UPDATE opportunities SET stage=? WHERE id=?", (stage, job_id))
+        if not updated.rowcount:
+            raise ValueError("Route not found")
+        row = conn.execute("SELECT * FROM opportunities WHERE id=?", (job_id,)).fetchone()
+        return {"job": _view(row)}
 
 
 def edit_job(job_id: str, raw: Any) -> dict[str, Any]:
@@ -284,17 +324,22 @@ def edit_job(job_id: str, raw: Any) -> dict[str, Any]:
         raise ValueError("job 必须是对象")
     fields = {key: raw.get(key, original[key]) for key in
               ("title", "company", "location", "url", "status", "description")}
-    job = normalize({**original, **fields, "source_kind": "local_edit", "source_observed_at": ""})
+    metadata = {key: raw.get(key, original.get(key) if fields["description"] == original["description"] else None)
+                for key in ("salary", "internship_schedule", "graduation_window")}
+    job = normalize({**original, **fields, **metadata, "source_kind": "local_edit", "source_observed_at": ""})
     # Local editing keeps the same identity; later official reimports can create a new revision.
     with database() as conn:
         row = conn.execute("SELECT * FROM opportunities WHERE id=?", (job_id,)).fetchone()
+        if row is None:
+            raise ValueError("Route not found")
         job["identity_key"] = row["identity_key"]
         encoded = json.dumps(job, ensure_ascii=False)
         version, timestamp = row["version"] + 1, now()
         conn.execute("UPDATE opportunities SET payload=?, version=?, imported_at=? WHERE id=?",
                      (encoded, version, timestamp, job_id))
         conn.execute("INSERT INTO opportunity_versions VALUES(?, ?, ?, ?)", (job_id, version, encoded, timestamp))
-    return {"job": get_job(job_id)}
+        row = conn.execute("SELECT * FROM opportunities WHERE id=?", (job_id,)).fetchone()
+        return {"job": _view(row)}
 
 
 def validate_target(request: dict[str, Any]) -> dict[str, Any] | None:
@@ -319,7 +364,7 @@ def validate_target(request: dict[str, Any]) -> dict[str, Any] | None:
 def analyze_job(job_id: str, request: dict[str, Any]) -> dict[str, Any]:
     from backend.services.jd_parser import JDParser
     from backend.services.jd_match_scope import select_requirements_for_matching
-    from backend.services.evidence_matcher import EvidenceMatcher
+    from backend.services.evidence_matcher import EvidenceMatcher, profile_checks
     from backend.services.local_evidence import attach_local_evidence
     from backend.services.resume_draft_vault import experiences_from_resume_draft
     from backend.services.claim_validator import ClaimValidator
@@ -334,6 +379,7 @@ def analyze_job(job_id: str, request: dict[str, Any]) -> dict[str, Any]:
     excluded = len(parsed["requirements"]) - len(scoped)
     matched = EvidenceMatcher().match(parsed, experiences) if experiences else {"matches": []}
     requirements = []
+    checks_by_req = profile_checks(parsed, draft)
     for req in scoped:
         candidates = sorted([m for m in matched["matches"] if m["requirement_id"] == req["requirement_id"]],
                             key=lambda m: (m["ready_for_selection"], m["relevance_score"]), reverse=True)
@@ -347,18 +393,26 @@ def analyze_job(job_id: str, request: dict[str, Any]) -> dict[str, Any]:
                 "requirement_ids": [req["requirement_id"]]}, experiences,
                 experiences[0]["candidate_id"], matched)["state"] == "VERIFIED" for claim in claims):
                 supported.append(match)
+        checks = checks_by_req.get(req["requirement_id"], [])
+        if req["category"] == "EDUCATION":
+            supported = []  # The draft education entry is candidate-provided, not a credential.
         best = (supported or candidates or [None])[0]
-        requirements.append({**req, "coverage": "SUPPORTED" if supported else "NEEDS_EVIDENCE" if candidates else "NO_MATCH",
+        coverage = ("SUPPORTED" if supported else "PROFILE_REPORTED" if checks
+                    else "REVIEW_REQUIRED" if not req["normalized_terms"] else "NEEDS_EVIDENCE" if candidates else "NO_MATCH")
+        notes = (["根据简历填写内容核对，仍需本人确认。"] if checks and not supported else
+                 ["请对照岗位原文人工判断。"] if coverage == "REVIEW_REQUIRED" else
+                 best["missing_evidence"] if best else ["本次经历中未找到可用证据。"])
+        requirements.append({**req, "coverage": coverage,
             "evidence_ids": best["evidence_ids"] if supported else [],
             "experience_ids": [m["experience_id"] for m in supported],
-            "notes": best["missing_evidence"] if best else ["本次经历中未找到可用证据；这不等于不具备此能力。"]})
+            "notes": notes})
     notice = "离线预检查，不生成或修改经历；缺证不等于不合格，也不是录用概率。正式申请仍需完整校验。"
     if excluded:
         notice += f" 证据匹配只统计任职要求与加分项，已排除职位描述等其余 {excluded} 条。"
     return {"job_id": job_id, "content_hash": job["content_hash"], "analyzed_at": now(),
             "mode": mode, "has_resume": bool(experiences), "requirements": requirements,
             "supported": sum(r["coverage"] == "SUPPORTED" for r in requirements), "total": len(requirements),
-            "excluded": excluded, "factors": job["factors"], "notice": notice}
+            "excluded": excluded, "profile_checks": checks_by_req, "factors": job["factors"], "notice": notice}
 
 
 def _radar_get(path: str) -> dict[str, Any]:
@@ -467,3 +521,16 @@ def handle_post(path: str, request: dict[str, Any]) -> dict[str, Any]:
             return edit_job(match[1], request.get("job"))
         return set_stage(match[1], request.get("stage")) if match[2] == "stage" else analyze_job(match[1], request)
     raise ValueError("Route not found")
+
+
+def handle_delete(path: str) -> dict[str, Any]:
+    match = re.fullmatch(r"/api/v1/jobs/(job_[a-f0-9]{16})", urlsplit(path).path)
+    if not match:
+        raise ValueError("Route not found")
+    job_id = match[1]
+    with database() as conn:
+        deleted = conn.execute("DELETE FROM opportunities WHERE id=?", (job_id,))
+        if not deleted.rowcount:
+            raise ValueError("Route not found")
+        conn.execute("DELETE FROM opportunity_versions WHERE job_id=?", (job_id,))
+    return {"deleted": job_id}

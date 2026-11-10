@@ -4,6 +4,8 @@ import unittest
 
 from backend.app import build_mock_workflow
 from backend.services.jd_parser import JDParser
+from backend.services.evidence_matcher import profile_checks
+from backend.services.jd_match_scope import select_requirements_for_matching
 
 
 JD = """大模型预训练评测研发实习生实习
@@ -58,6 +60,31 @@ class ChineseOfflineJDTests(unittest.TestCase):
         self.assertNotIn("大模型预训练评测研发实习生实习", texts)
         self.assertEqual(sum("2027届" in text for text in texts), 1)
         self.assertFalse(any(text.startswith(("一、", "二、", "职位描述：")) for text in texts))
+
+    def test_chinese_qualifications_keep_source_and_separate_profile_signals(self):
+        source = ("前端实习\n工作职责\n维护网站和接口。\n工作要求\n"
+                  "本科及以上，计算机软件相关专业，2027.9.1–2028.8.31 期间毕业。\n"
+                  "熟悉至少一门编程语言，如 C/C++/Java/PHP/Python/Go/Rust 等。\n"
+                  "了解 ES5/6/7、HTML、CSS，使用 ReactJS+Redux 或 EmberJS。\n"
+                  "具备数据结构、算法和设计模式知识。\n热爱编码。\n加分项\n熟悉 React Native 或 Flutter。")
+        parsed, _, _ = JDParser().parse(source)
+        requirements = select_requirements_for_matching(parsed)
+        self.assertEqual(len(requirements), 6)
+        self.assertTrue(all(row['evidence_text'] in source for row in requirements))
+        self.assertEqual(requirements[4]['normalized_terms'], [])
+        self.assertEqual(requirements[5]['type'], 'PREFERRED')
+        self.assertNotIn('React', requirements[5]['normalized_terms'])
+        self.assertTrue({'JavaScript', 'CSS', 'HTML', 'React'} <= set(requirements[2]['normalized_terms']))
+        draft = {'education': [{'degree': '本科', 'major': '数据科学', 'end': '2028-06'}],
+                 'extras': {'skills': 'Python、HTML'}}
+        by_id = profile_checks(parsed, draft)
+        education_id = requirements[0]['requirement_id']
+        self.assertEqual([row['state'] for row in by_id[education_id]], ['MATCH', 'MATCH', 'MATCH'])
+        self.assertEqual(by_id[requirements[1]['requirement_id']][0]['state'], 'DECLARED')
+        self.assertNotIn(requirements[3]['requirement_id'], by_id)
+        draft['education'][0].update(degree='', end='2028-09')
+        self.assertEqual([row['state'] for row in profile_checks(parsed, draft)[education_id]],
+                         ['UNKNOWN', 'MATCH', 'MISMATCH'])
 
     def test_offline_workflow_reports_requested_mode_without_model_failure(self):
         result = build_mock_workflow({"candidate_id": "cand_demo_001", "jd_text": JD, "parse_mode": "offline"})

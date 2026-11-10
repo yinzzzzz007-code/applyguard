@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { EmptyState, LevelBadge, RiskBadge } from '../components/States'
 import { useDemo } from '../context/DemoContext'
 import { ZH_ACTION, ZH_MAPPER, zhLookup, zhText } from '../i18n'
@@ -69,6 +69,8 @@ export function AtsSimulatorPage() {
       )}
 
       <div className="stack">
+        <h3>模拟模板字段</h3>
+        <p className="muted">字段来自 ApplyGuard 的演示表单。岗位要求请查阅 <Link to="/jd">岗位原文</Link>。</p>
         {mapping.fields.map((f) => {
           const control = controls[f.field_id]
           const level = control?.level ?? 'L0'
@@ -162,6 +164,7 @@ export function AtsSimulatorPage() {
                   <span className="tag">{zhLookup(ZH_ACTION, control.action)}</span>
                 </span>
               </div>
+              {control.field_id === 'work_authorization' && <p className="muted">演示模板项，请按本人情况填写。该字段来自固定模板。</p>}
               <p className="warn-text">无拟填值；不得从简历推断，须由用户本人提供。</p>
               {control.action !== 'BLOCKED' && (
                 <label className="check-line">

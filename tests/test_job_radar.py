@@ -232,6 +232,29 @@ class JobApiTests(JobFixture, unittest.TestCase):
         self.assertEqual(self.request('GET', '/api/v1/jobs/missing')[0], 404)
         self.assertEqual(self.request('GET', '/jobs')[0], 200)
 
+    def test_prepare_archive_restore_and_delete_job(self):
+        job = self.save()
+        other = self.save(external_id='43', url='https://example.test/jobs/43')
+        self.save(description=JD + ' Bonus: SQL.')
+        path = f"/api/v1/jobs/{job['id']}"
+
+        for stage in ('preparing', 'archived', 'saved'):
+            status, body = self.request('POST', path + '/stage', {'stage': stage})
+            self.assertEqual(status, 200)
+            self.assertEqual(json.loads(body)['job']['stage'], stage)
+        status, body = self.request('DELETE', path)
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body)['deleted'], job['id'])
+        self.assertEqual(self.request('GET', path)[0], 404)
+        self.assertEqual(self.request('GET', path + '/versions')[0], 404)
+        self.assertEqual(self.request('DELETE', path)[0], 404)
+        with jr.database() as conn:
+            remaining = conn.execute('SELECT job_id, version FROM opportunity_versions').fetchall()
+            self.assertEqual([tuple(row) for row in remaining], [(other['id'], 1)])
+        status, body = self.request('GET', '/api/v1/jobs')
+        self.assertEqual(status, 200)
+        self.assertEqual([item['id'] for item in json.loads(body)['items']], [other['id']])
+
     def test_real_http_adapter_pagination_no_redirects_and_failure_preserves_jobs(self):
         recorded = []
         detail = {**JOB, 'id': 42}

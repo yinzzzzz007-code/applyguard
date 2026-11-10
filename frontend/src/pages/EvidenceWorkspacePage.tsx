@@ -4,7 +4,6 @@ import { fileToBase64, getApiClient } from '../api/client'
 import type {
   AwardEvidenceFields,
   CareerVaultSeed,
-  EditableResumeForm,
   EvidenceRecord,
   EvidenceSourceFile,
   EvidenceSpan,
@@ -18,7 +17,7 @@ import { materialName, orderedEvidenceSpans } from '../evidence/materials'
 import { EvidenceMatchBoard } from '../components/EvidenceMatchBoard'
 import { useDemo } from '../context/DemoContext'
 import {
-  buildResumeFormFromVault,
+  emptyResumeForm,
   newExperienceId,
   normalizeResumeForm,
   syncAwardText,
@@ -38,6 +37,9 @@ const ALLOWED = new Set([
   '.ocr.json',
 ])
 
+const MAX_UPLOAD_BYTES = 6 * 1024 * 1024
+const MATERIAL_FILE_TYPES = [...ALLOWED].filter(ext => ext !== '.ocr.json').join(',')
+
 function extOf(name: string): string {
   const lower = name.toLowerCase()
   if (lower.endsWith('.ocr.json')) return '.ocr.json'
@@ -49,14 +51,6 @@ function isAllowed(name: string): boolean {
   return ALLOWED.has(extOf(name))
 }
 
-function alreadyRecognized(f: EvidenceSourceFile): boolean {
-  if (f.state === 'FAILED' || f.state === 'PARSING' || f.state === 'PENDING') return false
-  if (f.recognition_saved) return true
-  if ((f.span_count ?? 0) > 0) return true
-  return f.state === 'INDEXED' || f.state === 'NEEDS_REVIEW'
-}
-
-/** Skip dotfiles and any path under a `.`-prefixed (hidden) folder. */
 function isHiddenPath(relativePath: string): boolean {
   return relativePath
     .replace(/\\/g, '/')
@@ -261,13 +255,20 @@ function PreviewPane({
 
 export function EvidenceWorkspacePage() {
   const api = getApiClient()
-  const { resumeForm, setResumeForm } = useDemo()
-  const [params] = useSearchParams()
+  const { resumeForm, setResumeForm, activeJobId, jdRawInput } = useDemo()
+  const [params,setParams] = useSearchParams()
   const linkTargetType = params.get('target_type') || 'award'
   const linkTargetId = params.get('target_id') || ''
   const openEvidenceId = params.get('evidence_id') || ''
   const supplementInputRef = useRef<HTMLInputElement | null>(null)
-  const [supplementTarget, setSupplementTarget] = useState<ResumeMatchItem | null>(null)
+  const supplementTarget = useRef<ResumeMatchItem | null>(null)
+  const supplementInFlight = useRef(false)
+  const [supplementResult, setSupplementResult] = useState<{
+    targetKey: string
+    message: string
+    files: EvidenceSourceFile[]
+    warnings?: string[]
+  } | null>(null)
   const [addKind, setAddKind] = useState<'internship' | 'project' | 'award'>('award')
   const [addLabel, setAddLabel] = useState('')
   const [addOrg, setAddOrg] = useState('')
@@ -276,6 +277,12 @@ export function EvidenceWorkspacePage() {
   const [workspaceId, setWorkspaceId] = useState(() => loadStoredWorkspaceId())
   const [pending, setPending] = useState<PendingFile[]>([])
   const [files, setFiles] = useState<EvidenceSourceFile[]>([])
+  const requestedTab = params.get('view')
+  const activeTab = requestedTab === 'materials' || requestedTab === 'relations' ? requestedTab :
+    openEvidenceId ? 'materials' : linkTargetId ? 'relations' : files.length ? 'relations' : 'materials'
+  const showTab = (tab: 'materials'|'relations') => {
+    const next = new URLSearchParams(params);next.set('view',tab);setParams(next,{replace:true})
+  }
   const [evidenceList, setEvidenceList] = useState<EvidenceRecord[]>([])
   const [selectedEvidenceId, setSelectedEvidenceId] = useState('')
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -324,8 +331,7 @@ export function EvidenceWorkspacePage() {
 
       let hint = ''
       setResumeForm((prev) => {
-        // Only keep memory edits if user already had a saved vault and is mid-edit
-        if (prev?.dirty && prev.savedAt && prev.candidateId) {
+        if (prev?.dirty && prev.candidateId === (draftRes.data?.candidateId ?? seed?.candidate_id)) {
           hint = '经历库未保存编辑'
           return normalizeResumeForm(prev)
         }
@@ -338,21 +344,9 @@ export function EvidenceWorkspacePage() {
           hint = '经历库当前编辑稿'
           return normalizeResumeForm(prev)
         }
-        try {
-          const raw = sessionStorage.getItem('applyguard.resumeForm')
-          if (raw) {
-            const parsed = JSON.parse(raw) as EditableResumeForm
-            if (parsed.candidateId && parsed.savedAt) {
-              hint = '浏览器会话中的经历库'
-              return normalizeResumeForm({ ...parsed, dirty: false })
-            }
-          }
-        } catch {
-          /* ignore */
-        }
         if (seed) {
-          hint = '种子数据（请先到经历库填写并保存）'
-          return { ...buildResumeFormFromVault(seed), dirty: true, savedAt: undefined }
+          hint = '尚未填写经历'
+          return emptyResumeForm(seed.candidate_id)
         }
         hint = ''
         return prev
@@ -474,7 +468,7 @@ export function EvidenceWorkspacePage() {
               status: 'UNCHECKED',
               score: 0,
               notes: ['尚未对照'],
-              action: '点「一键对照经历库」开始匹配证据',
+              action: '点「查找材料与经历的对应关系」开始匹配证据',
               candidate_fields: {},
             },
       )
@@ -494,7 +488,7 @@ export function EvidenceWorkspacePage() {
               status: 'UNCHECKED',
               score: 0,
               notes: ['尚未对照'],
-              action: '点「一键对照经历库」开始匹配证据',
+              action: '点「查找材料与经历的对应关系」开始匹配证据',
               candidate_fields: {},
             },
       )
@@ -514,7 +508,7 @@ export function EvidenceWorkspacePage() {
               status: 'UNCHECKED',
               score: 0,
               notes: ['尚未对照'],
-              action: '点「一键对照经历库」开始匹配证据',
+              action: '点「查找材料与经历的对应关系」开始匹配证据',
               candidate_fields: {},
             },
       )
@@ -557,7 +551,7 @@ export function EvidenceWorkspacePage() {
   const ensureDraftForm = useCallback(() => {
     if (resumeForm) return resumeForm
     if (vaultSeed) {
-      const built = { ...buildResumeFormFromVault(vaultSeed), dirty: true as const }
+      const built = emptyResumeForm(vaultSeed.candidate_id)
       setResumeForm(built)
       return built
     }
@@ -612,6 +606,7 @@ export function EvidenceWorkspacePage() {
     if (openEvidenceId) {
       setSelectedEvidenceId(openEvidenceId)
       setPreviewOpen(true)
+      setPreviewContext('library')
     }
   }, [openEvidenceId])
 
@@ -628,12 +623,13 @@ export function EvidenceWorkspacePage() {
       if (cancelled) return
       if (res.data) {
             setDetail({ ...res.data, spans: orderedEvidenceSpans(res.data.spans || []) })
+        if (openEvidenceId === selectedEvidenceId) setLibraryFileId(res.data.primary_file_id || '')
         setFields({ ...res.data.normalized_fields })
         setDraftSavedAt(res.data.reviewed_at || '')
       } else setPreviewError(res.error?.message || '无法加载证据，请重新打开。')
     })
     return () => { cancelled = true }
-  }, [api, selectedEvidenceId, detailRevision])
+  }, [api, selectedEvidenceId, detailRevision, openEvidenceId])
 
   // Capture the file ID with each draft; serialize saves before confirming a review.
   const flushFieldDraft = useCallback(() => {
@@ -719,19 +715,11 @@ export function EvidenceWorkspacePage() {
       const e = extOf(p.relative_path) || '(none)'
       byExt[e] = (byExt[e] || 0) + 1
     })
-    const existingByPath = new Map(files.map((f) => [f.relative_path.replace(/\\/g, '/'), f]))
-    let wouldSkip = 0
-    if (skipAlreadyRecognized) {
-      for (const p of supported) {
-        if (p.relative_path.toLowerCase().endsWith('.ocr.json')) continue
-        const ex = existingByPath.get(p.relative_path.replace(/\\/g, '/'))
-        if (ex && alreadyRecognized(ex) && ex.size === p.file.size) wouldSkip += 1
-      }
-    }
-    return { supported, unsupported, byExt, wouldSkip }
-  }, [pending, files, skipAlreadyRecognized])
+    return { supported, unsupported, byExt }
+  }, [pending])
 
   const pickDirectory = async () => {
+    showTab('materials')
     setMessage('')
     const w = window as Window & {
       showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle>
@@ -815,39 +803,19 @@ export function EvidenceWorkspacePage() {
     const byPath = new Map(
       batch.map((item) => [item.relative_path.replace(/\\/g, '/'), item] as const),
     )
-    const MAX_UPLOAD_BYTES = 6 * 1024 * 1024
     const primaries = batch.filter((item) => !item.relative_path.toLowerCase().endsWith('.ocr.json'))
-    const existingByPath = new Map(files.map((f) => [f.relative_path.replace(/\\/g, '/'), f]))
     const skippedHuge = primaries.filter((item) => item.file.size > MAX_UPLOAD_BYTES)
-    const skippedKnown: PendingFile[] = []
-    const uploadList = primaries.filter((item) => {
-      if (item.file.size > MAX_UPLOAD_BYTES) return false
-      if (!skipAlreadyRecognized) return true
-      const rel = item.relative_path.replace(/\\/g, '/')
-      const ex = existingByPath.get(rel)
-      if (ex && alreadyRecognized(ex) && ex.size === item.file.size) {
-        skippedKnown.push(item)
-        return false
-      }
-      return true
-    })
+    const uploadList = primaries.filter((item) => item.file.size <= MAX_UPLOAD_BYTES)
     if (!uploadList.length) {
       setBusy('')
-      if (skippedKnown.length) {
-        setMessage(
-          `已全部跳过：${skippedKnown.length} 个文件本机已有识别结果（未重跑 OCR）。取消勾选「跳过已识别」可强制重新上传。`,
-        )
-        setPending([])
-      } else {
-        setMessage(`没有可导入文件（${skippedHuge.length} 个超过 6MB 已跳过）。`)
-      }
+      setMessage(skippedHuge.length ? '没有可导入的文件，所选文件超过 6 MB。' : '请同时选择 OCR 旁路文件对应的原图。')
       return
     }
     const totalSteps = Math.max(1, uploadList.length * 2) // read + upload per file
     let step = 0
     let okCount = 0
     let failCount = skippedHuge.length
-    let reusedCount = skippedKnown.length
+    let reusedCount = 0
     let firstFail = skippedHuge[0]
       ? `${skippedHuge[0].relative_path} 超过 6MB，已跳过`
       : ''
@@ -864,8 +832,8 @@ export function EvidenceWorkspacePage() {
           total: totalSteps,
           label: `读取 ${rel}`,
         })
-        const payload: Array<{ relative_path: string; content_base64: string }> = [
-          { relative_path: rel, content_base64: await fileToBase64(item.file) },
+        const payload: Array<{ relative_path: string; content_base64: string; force_reparse?: boolean }> = [
+          { relative_path: rel, content_base64: await fileToBase64(item.file), force_reparse: !skipAlreadyRecognized },
         ]
         const side =
           byPath.get(`${rel}.ocr.json`) ||
@@ -1005,8 +973,9 @@ export function EvidenceWorkspacePage() {
   }
 
   const linkToTarget = async () => {
-    if (!selectedEvidenceId || !linkTargetId) {
-      setMessage('请从经历库奖项进入本页（带 target_id），或在下方手动填写关联目标。')
+    const target = vaultRows.find(row => row.target_type === linkTargetType && row.target_id === linkTargetId)
+    if (!selectedEvidenceId || !target) {
+      setMessage('请先选择要关联的经历和材料。')
       return
     }
     setBusy('建立关联…')
@@ -1020,9 +989,11 @@ export function EvidenceWorkspacePage() {
       setMessage(res.error?.message || '关联失败（需先完成核对）')
       return
     }
-    setMessage(
-      `已关联 ${linkTargetType}:${linkTargetId} → ${selectedEvidenceId}（${res.data.link_state}）`,
-    )
+    await runMatchVault()
+    setMessage('已关联「' + target.label + '」。')
+    setSelectedMatchKey(matchKey(target))
+    setPreviewContext('match')
+    showTab('relations')
   }
 
   const runClaimCheck = async () => {
@@ -1061,14 +1032,26 @@ export function EvidenceWorkspacePage() {
     setEvidenceList([])
     setDetail(null)
     setMatchReport(null)
+    setSupplementResult(null)
     await loadWorkspaces()
   }
 
+  const matchVaultInWorkspace = async (ws: string) => {
+    const result = await api.matchResumeEvidence(ws, {
+      awards: vaultPayload.awards,
+      internships: vaultPayload.internships,
+      projects: vaultPayload.projects,
+    })
+    if (result.data) {
+      setMatchReport(result.data)
+      saveStoredMatch(ws, result.data)
+    }
+    return result
+  }
+
   const runMatchVault = async () => {
-    const ws = workspaceId || (await ensureWorkspace())
-    if (!ws) return
-    if (!files.length) {
-      setMessage('请先导入证据文件夹，再对照经历库。')
+    if (!workspaceId || !files.length) {
+      setMessage('请先导入材料，再对照经历库。')
       return
     }
     if (!vaultItemCount) {
@@ -1077,24 +1060,17 @@ export function EvidenceWorkspacePage() {
     }
     setBusy('正在对照经历库与本地证据…')
     setMessage('')
-    const res = await api.matchResumeEvidence(ws, {
-      awards: vaultPayload.awards,
-      internships: vaultPayload.internships,
-      projects: vaultPayload.projects,
-    })
-    setBusy('')
-    if (res.error || !res.data) {
-      setMessage(res.error?.message || '对照失败')
-      return
+    try {
+      const result = await matchVaultInWorkspace(workspaceId)
+      setMessage(result.error?.message || result.data?.notice || '对照失败，请重试。')
+    } finally {
+      setBusy('')
     }
-    setMatchReport(res.data)
-    saveStoredMatch(ws, res.data)
-    setMessage(res.data.notice || '对照完成')
   }
 
   // 草稿与文件就绪后自动对照一次；列表始终以经历库条目为轴
   useEffect(() => {
-    if (vaultPayload.source === 'seed') return
+    if (vaultPayload.source === 'seed' || supplementInFlight.current) return
     if (!workspaceId || !files.length || !vaultItemCount) return
     const signature = `${resumeForm?.savedAt || 'edit'}|${vaultItemCount}|${workspaceId}`
     if (autoMatchedForDraft.current === signature) return
@@ -1303,49 +1279,98 @@ export function EvidenceWorkspacePage() {
   }
 
   const startSupplement = (row: ResumeMatchItem) => {
-    setSupplementTarget(row)
-    window.setTimeout(() => supplementInputRef.current?.click(), 0)
+    supplementTarget.current = row
+    supplementInputRef.current?.click()
   }
 
-  const onSupplementFiles = async (list: FileList | null) => {
-    const row = supplementTarget
-    setSupplementTarget(null)
-    if (!list?.length || !row) return
-    const ws = workspaceId || (await ensureWorkspace())
-    if (!ws) return
-    setBusy(`正在为「${row.label}」补充证据…`)
-    const mapped: PendingFile[] = []
-    for (const file of Array.from(list)) {
-      if (file.size > 6 * 1024 * 1024) continue
-      const rel = (file.webkitRelativePath || file.name).replace(/\\/g, '/')
-      if (isHiddenPath(rel) || !isAllowed(rel)) continue
-      mapped.push({ relative_path: rel, file })
-    }
-    const unique = allocateUniqueImportPaths(
-      mapped,
-      files.map((file) => file.relative_path),
-    )
-    const payload = []
-    for (const item of unique) {
-      payload.push({
-        relative_path: item.relative_path,
-        content_base64: await fileToBase64(item.file),
-      })
-    }
-    if (!payload.length) {
+  const onSupplementFiles = async (selected: File[]) => {
+    const row = supplementTarget.current
+    supplementTarget.current = null
+    if (!selected.length || !row || supplementInFlight.current) return
+    supplementInFlight.current = true
+    const targetKey = matchKey(row)
+    const uploaded: EvidenceSourceFile[] = []
+    const warnings: string[] = []
+    const candidates: PendingFile[] = []
+    const report = (message: string) => setSupplementResult({
+      targetKey, message, files: [...uploaded], warnings: [...warnings],
+    })
+
+    setMessage('')
+    setBusy('正在导入本次补充材料…')
+    report('已选中材料，正在读取和识别…')
+    try {
+      for (const file of selected) {
+        if (!file.size) warnings.push(file.name + '：文件为空。')
+        else if (file.size > MAX_UPLOAD_BYTES) warnings.push(file.name + '：超过 6 MB。')
+        else if (!isAllowed(file.name) || isHiddenPath(file.name) || extOf(file.name) === '.ocr.json') {
+          warnings.push(file.name + '：请选择图片、PDF、Word 或 Markdown。')
+        } else candidates.push({ relative_path: file.name, file })
+      }
+      if (!candidates.length) {
+        report('没有可导入的文件，请重新选择。')
+        return
+      }
+
+      const ws = await ensureWorkspace()
+      if (!ws) {
+        report('无法创建本地工作区，请检查后端连接后重试。')
+        return
+      }
+      setBusy('正在导入本次补充材料…')
+      const batch = allocateUniqueImportPaths(candidates, files.map(file => file.relative_path))
+      for (const [index, item] of batch.entries()) {
+        report('正在导入 ' + (index + 1) + ' / ' + batch.length + ' · ' + item.file.name)
+        try {
+          const result = await api.importEvidenceFiles(ws, [{
+            relative_path: item.relative_path,
+            content_base64: await fileToBase64(item.file),
+          }])
+          const file = result.data?.files[0]
+          if (file?.file_id) uploaded.push(file)
+          if (result.error || !file?.file_id || file.state === 'FAILED' || file.parse_error) {
+            warnings.push(item.file.name + '：' + (result.error?.message || file?.parse_error || '未完成识别，请重试。'))
+          }
+        } catch {
+          warnings.push(item.file.name + '：无法读取所选文件，请重新选择。')
+        }
+      }
+      if (!uploaded.length) {
+        report('导入未完成，请查看原因后重试。')
+        return
+      }
+
+      report('文件已保存，正在重新对照此经历…')
+      await refreshLists(ws)
+      const result = await matchVaultInWorkspace(ws)
+      const candidate = result.data?.results.find(item => matchKey(item) === targetKey)
+      const outcome = result.error
+        ? '自动对照失败，可以打开本次材料人工核对。'
+        : candidate?.evidence_id
+          ? '已刷新候选。请打开原件核对，再确认关联。'
+          : '未找到合适的自动候选，可以打开本次材料人工核对并关联。'
+      report('已添加 ' + uploaded.length + ' 份材料。' + outcome)
+    } finally {
+      supplementInFlight.current = false
       setBusy('')
-      setMessage('没有可导入的支持文件')
-      return
     }
-    const res = await api.importEvidenceFiles(ws, payload)
-    setBusy('')
-    if (res.error || !res.data) {
-      setMessage(res.error?.message || '补充导入失败')
-      return
-    }
-    await refreshLists(ws)
-    setMessage(`已为「${row.label}」补充 ${res.data.files.filter((f) => !f.sidecar).length} 个文件，正在重新对照…`)
-    await runMatchVault()
+  }
+
+  const openSupplementMaterial = (row: ResumeMatchItem, file: EvidenceSourceFile) => {
+    void flushFieldDraft()
+    setPreviewContext('library')
+    setLibraryFileId(file.file_id)
+    setSelectedEvidenceId(file.evidence_id || '')
+    setPreviewOpen(false)
+    setClaimProbe('')
+    setClaimResult('')
+    const next = new URLSearchParams(params)
+    next.set('view', 'materials')
+    next.set('target_type', row.target_type)
+    next.set('target_id', row.target_id)
+    next.delete('evidence_id')
+    setParams(next, { replace: true })
+    requestAnimationFrame(() => document.getElementById('evidence-files')?.scrollIntoView({ block: 'start' }))
   }
 
   const deleteMaterialFiles = async (fileIds: string[]) => {
@@ -1437,9 +1462,9 @@ export function EvidenceWorkspacePage() {
   return (
     <section className="panel evidence-workspace">
       <header className="panel-head">
-        <h2>本地证据工作区</h2>
+        <h2>证明材料</h2>
         <p>
-          选一条经历，核对右侧对应材料，再确认关联。每次操作只针对当前显示的这一对记录。
+          先导入原件并核对识别内容，再把材料关联到具体经历。文件识别、经历关联和逐句事实核验是不同步骤。
         </p>
         <p>
           <Link to="/vault">去经历库编辑</Link>
@@ -1472,27 +1497,38 @@ export function EvidenceWorkspacePage() {
 
       <div className="evidence-match-banner">
         <div>
-          <h3>经历 ↔ 证明材料</h3>
+          <h3>{files.length ? '材料与经历的准备进度' : '先为一条经历添加证明材料'}</h3>
           <p className="muted">
             已导入 {files.length} 份材料 · 已关联 {coverage.linked}/{coverage.total} 条经历 · 待处理 {coverage.total - coverage.linked} 条
           </p>
         </div>
         <div className="btn-row">
-        <a className="btn secondary" href="#evidence-relations">开始核对 ↓</a>
-        <a className="btn secondary" href="#evidence-files">导入 / 管理材料</a>
+        <button type="button" className="btn secondary" onClick={() => showTab(activeTab === 'materials' ? 'relations' : 'materials')}>{activeTab === 'materials' ? '查看经历关联' : '添加或管理材料'}</button>
         <button
           type="button"
           className="btn primary"
-          disabled={!!importProgress || !!busy}
-          onClick={() => void runMatchVault()}
+          disabled={!!importProgress || !!busy || !files.length}
+          onClick={() => {showTab('relations');void runMatchVault()}}
         >
-          一键对照经历库
+          查找材料与经历的对应关系
         </button>
         </div>
       </div>
-
+      <div className="evidence-view-tabs" role="tablist" aria-label="证明材料工作区" onKeyDown={event => {
+        if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return
+        event.preventDefault()
+        const tab = event.key === 'Home' ? 'materials' : event.key === 'End' ? 'relations' : activeTab === 'materials' ? 'relations' : 'materials'
+        showTab(tab);document.getElementById(`evidence-tab-${tab}`)?.focus()
+      }}>
+        {(['materials','relations'] as const).map(tab => <button type="button" key={tab} id={`evidence-tab-${tab}`} role="tab"
+          aria-selected={activeTab === tab} aria-controls={`evidence-panel-${tab}`} tabIndex={activeTab === tab ? 0 : -1}
+          onClick={() => showTab(tab)}>{tab === 'materials' ? `材料库（${files.length}）` : `经历关联（${coverage.linked}/${coverage.total}）`}</button>)}
+      </div>
+      {!files.length && activeTab === 'materials' && <p className="evidence-first-step">从下方添加文件或文件夹。识别后请打开原件核对，再切换到“经历关联”。</p>}
+      <div id="evidence-panel-relations" role="tabpanel" aria-labelledby="evidence-tab-relations" hidden={activeTab !== 'relations'} tabIndex={0}>
       <details className="relation-add"><summary>＋ 添加一条经历</summary>
       <div className="evidence-add-bar">
+        <label className="field-label">经历类型
         <select
           className="resume-input resume-select"
           value={addKind}
@@ -1501,19 +1537,21 @@ export function EvidenceWorkspacePage() {
           <option value="award">获奖/竞赛</option>
           <option value="project">项目</option>
           <option value="internship">实习</option>
-        </select>
+        </select></label>
+        <label className="field-label">{addKind === "award" ? "奖项名称" : "标题"}
         <input
           className="resume-input"
           placeholder={addKind === 'award' ? '奖项名称' : '标题'}
           value={addLabel}
           onChange={(e) => setAddLabel(e.target.value)}
-        />
+        /></label>
+        <label className="field-label">{addKind === "award" ? "颁发方（可选）" : "组织（可选）"}
         <input
           className="resume-input"
           placeholder={addKind === 'award' ? '颁发方（可选）' : '组织（可选）'}
           value={addOrg}
           onChange={(e) => setAddOrg(e.target.value)}
-        />
+        /></label>
         <button type="button" className="btn secondary" onClick={addVaultItem}>
           添加条目
         </button>
@@ -1525,25 +1563,40 @@ export function EvidenceWorkspacePage() {
         type="file"
         multiple
         hidden
-        onChange={(e) => {
-          void onSupplementFiles(e.target.files)
-          e.target.value = ''
+        accept={MATERIAL_FILE_TYPES}
+        onChange={(event) => {
+          const selected = Array.from(event.currentTarget.files ?? [])
+          event.currentTarget.value = ''
+          void onSupplementFiles(selected)
         }}
       />
 
-      <AgentConnector ensureWorkspace={ensureWorkspace} onImported={refreshLists} />
       <EvidenceMatchBoard key={`matches:${workspaceId}`} rows={vaultRows} selectedKey={selectedMatchKey} busy={!!busy || !!importProgress}
         sourceDetails={sourceDetails} evidenceExcerpt={evidenceExcerpt} onSelect={selectMatch}
         onConfirm={(row) => void confirmLinkMatch(row)} onReject={(row) => void rejectMatch(row)}
         onUnlink={(row) => void unlinkMatch(row)} onSupplement={startSupplement}
         onDelete={deleteVaultItem} onMatch={() => void runMatchVault()}
+        renderSupplement={(row) => supplementResult?.targetKey === matchKey(row) && <div className="callout relation-supplement">
+          <p role="status">{supplementResult.message}</p>
+          {!!supplementResult.warnings?.length && <ul role="alert">
+            {supplementResult.warnings.map((warning, index) => <li key={index}>{warning}</li>)}
+          </ul>}
+          {!!supplementResult.files.length && <div className="btn-row">
+            {supplementResult.files.map(file => <button type="button" className="btn secondary" key={file.file_id}
+              disabled={!!busy} onClick={() => openSupplementMaterial(row, file)}>
+              打开材料 · {materialName(file.relative_path)}
+            </button>)}
+          </div>}
+        </div>}
         renderEvidence={(row) => row.evidence_id ? (
           previewContext === 'match' && previewOpen && selectedEvidenceId === row.evidence_id ? renderPreview() :
           <button type="button" className="btn secondary relation-preview-button" onClick={() => openPreview(row.evidence_id!)}>查看 B 的原件与识别字段</button>
         ) : null}
       />
-
+      </div>
+      <div id="evidence-panel-materials" role="tabpanel" aria-labelledby="evidence-tab-materials" hidden={activeTab !== 'materials'} tabIndex={0}>
       <EvidenceMaterialLibrary key={`materials:${workspaceId}`} files={files} rows={vaultRows}
+        onShowRelations={() => showTab('relations')}
         selectedFileId={previewContext === 'library' ? libraryFileId : ''}
         workspaceName={workspaces.find((workspace) => workspace.workspace_id === workspaceId)?.name || ''}
         busy={!!busy || !!importProgress}
@@ -1558,8 +1611,9 @@ export function EvidenceWorkspacePage() {
           setClaimProbe('')
         }}
         onFocusRow={(row) => {
+          showTab('relations')
           selectMatch(row)
-          document.getElementById('evidence-relations')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          requestAnimationFrame(() => document.getElementById('evidence-relations')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
         }}
         onSearch={async (query) => {
           if (!workspaceId) return { matches: [], error: '请先导入材料。' }
@@ -1571,11 +1625,12 @@ export function EvidenceWorkspacePage() {
           <button type="button" className="btn primary" disabled={!!busy} onClick={() => uploadInputRef.current?.click()}>＋ 添加文件</button>
           <button type="button" className="btn secondary" disabled={!!busy} onClick={() => void pickDirectory()}>导入文件夹</button>
           <input ref={uploadInputRef} type="file" multiple hidden accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,.doc,.docx,.md,.markdown,.json" onChange={(event) => {
+            showTab('materials')
             onMultiFiles(event.target.files); event.target.value = ''
           }} />
           <input ref={directoryInputRef} type="file" multiple hidden
             // @ts-expect-error webkitdirectory is supported by Chromium folder inputs
-            webkitdirectory="" onChange={(event) => { onMultiFiles(event.target.files); event.target.value = '' }} />
+            webkitdirectory="" onChange={(event) => { showTab('materials');onMultiFiles(event.target.files); event.target.value = '' }} />
         </div>}
         notice={<>
           {busy && <p className="material-local-notice" role="status">{busy}</p>}
@@ -1586,9 +1641,6 @@ export function EvidenceWorkspacePage() {
                 将导入 <strong>{stats.supported.length}</strong> 个支持文件
                 {stats.unsupported.length
                   ? `，跳过 ${stats.unsupported.length} 个不支持类型`
-                  : ''}
-                {stats.wouldSkip
-                  ? `；其中约 ${stats.wouldSkip} 个本机已有识别，将直接复用`
                   : ''}
                 。
               </p>
@@ -1605,7 +1657,7 @@ export function EvidenceWorkspacePage() {
                   checked={skipAlreadyRecognized}
                   onChange={(e) => setSkipAlreadyRecognized(e.target.checked)}
                 />
-                跳过已识别文件（默认开启，避免重复 OCR）
+                内容完全相同时复用已有识别（默认开启）
               </label>
               <button
                 type="button"
@@ -1662,7 +1714,7 @@ export function EvidenceWorkspacePage() {
               void flushFieldDraft()
               const id = event.target.value
               setSelectedMatchKey(''); setSelectedEvidenceId(''); setLibraryFileId(''); setPreviewOpen(false)
-              setPreviewContext('match'); setPending([]); setFiles([]); setEvidenceList([]); setClaimResult('')
+              setPreviewContext('match'); setPending([]); setFiles([]); setEvidenceList([]); setClaimResult(''); setSupplementResult(null)
               setWorkspaceId(id); saveStoredWorkspaceId(id); setMatchReport(loadStoredMatch(id))
             }}>
               <option value="" disabled>导入时自动创建</option>
@@ -1693,13 +1745,21 @@ export function EvidenceWorkspacePage() {
               <button type="button" className="btn secondary" disabled={!!busy || !claimProbe.trim()} onClick={() => void runClaimCheck()}>检查这句话</button>
               {claimResult && <p role="status">{claimResult}</p>}
             </details>}
-            {linkTargetId && currentDetail && <details className="material-check-tool"><summary>关联到带入的经历</summary>
-              <p>{vaultRows.find((row) => row.target_type === linkTargetType && row.target_id === linkTargetId)?.label || '从经历库带入的目标'}</p>
-              <button type="button" className="btn secondary" disabled={!!busy || currentDetail.review_state !== 'REVIEWED'} onClick={() => void linkToTarget()}>确认关联到此经历</button>
-            </details>}
+            {linkTargetId && currentDetail && <div className="material-check-tool">
+              <strong>关联到此次选择的经历</strong>
+              <p>{vaultRows.find((row) => row.target_type === linkTargetType && row.target_id === linkTargetId)?.label || '该经历已不存在'}</p>
+              {currentDetail.review_state !== 'REVIEWED' && <p>请先在「核对字段」中点击「确认材料已核对」。</p>}
+              <button type="button" className="btn secondary"
+                disabled={!!busy || currentDetail.review_state !== 'REVIEWED' || !vaultRows.some(row => matchKey(row) === linkTargetType + ':' + linkTargetId)}
+                onClick={() => void linkToTarget()}>确认关联到此经历</button>
+            </div>}
           </>
         }}
       />
+      <details className="evidence-advanced"><summary>高级功能：连接自己的 Agent</summary><p>可选。手动导入材料即可完成申请准备，无需连接其他工具。</p><AgentConnector ensureWorkspace={ensureWorkspace} onImported={refreshLists} /></details>
+      </div>
+      <div className="evidence-next-step"><p>{coverage.total ? `已关联 ${coverage.linked}/${coverage.total} 条经历。未关联的内容仍需在审核时补充材料。` : '先在经历库保存自己的项目、实习或获奖经历。'}</p>
+        <Link className="btn secondary" to="/vault">返回经历库</Link><Link className="btn primary" to={activeJobId || jdRawInput.trim() ? "/jd" : "/jobs"}>继续准备岗位</Link></div>
     </section>
   )
 }

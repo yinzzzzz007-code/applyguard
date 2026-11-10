@@ -9,12 +9,13 @@ function download(text: string, filename: string, type: string) {
   setTimeout(() => URL.revokeObjectURL(url),1000)
 }
 export function GroundedExport({editing = false}: {editing?: boolean}) {
-  const {workflow,resumeForm,claimDecisions} = useDemo()
+  const {workflow,resumeForm,claimDecisions,reviewDrafts} = useDemo()
+  editing = editing || Object.keys(reviewDrafts).length > 0
   const [confirmed,setConfirmed] = useState('')
   const [busy,setBusy] = useState(false)
   const [notice,setNoticeState] = useState({signature:'',text:''})
   const [record,setRecord] = useState<{signature:string; report:unknown} | null>(null)
-  const signature = JSON.stringify([workflow,resumeForm,claimDecisions])
+  const signature = JSON.stringify([workflow,resumeForm,claimDecisions,reviewDrafts])
   const current = useRef(signature)
   useLayoutEffect(() => {current.current = signature;return () => {current.current = ''}},[signature])
   const setNotice = (text: string) => setNoticeState({signature:current.current,text})
@@ -22,10 +23,11 @@ export function GroundedExport({editing = false}: {editing?: boolean}) {
   const claims=workflow.resume_claims.filter(c => claimDecisions[c.claim_id]?.decision !== 'reject')
     .map(c => ({claim_id:c.claim_id,text:(claimDecisions[c.claim_id]?.editedText ?? c.text).trim()}))
   return <div className="review-export">
-    <h3>确认最终稿并导出</h3>
-    <p>你决定最终正文。材料不足、冲突或尚未核验会保留记录，不会因确认而变成“材料支持”。</p>
+    <h3>导出个人草稿</h3>
+    <p>下载你确认的正文 TXT。未核验和冲突状态保留在审核记录中；此操作不代表材料已通过检查，也不进入网申填写。</p>
+    <p className="muted">如需准备网申，请返回并选择“继续核验并准备网申”，通过材料检查后再模拟填写。</p>
     {editing && <p role="status">请先保存或取消正在编辑的句子，再确认导出。</p>}
-    <details><summary>预览将导出的正文（{claims.length} 条）</summary><p style={{whiteSpace:'pre-wrap'}}>{claims.map(c => c.text).join('\n')}</p></details>
+    <div className="export-preview"><h4>将导出的正文（{claims.length} 条）</h4><p style={{whiteSpace:'pre-wrap'}}>{claims.map(c => c.text).join('\n')}</p></div>
     <label><input type="checkbox" checked={!editing && confirmed === signature} disabled={busy || editing || !claims.length}
       onChange={e => setConfirmed(e.target.checked ? signature : '')} />我确认最终正文，并知晓尚未获得材料支持或存在冲突的内容仍由我决定是否使用。</label>
     <button type="button" className="btn primary" disabled={busy || editing || confirmed !== signature || !claims.length}
@@ -47,11 +49,11 @@ export function GroundedExport({editing = false}: {editing?: boolean}) {
             metric_notice:'从本次导入开始（未导入时从工作流载入）到导出，包括等待与离开时间；不是人工可用性测评。'},
             prior_model_checks:workflow.grounding ? {snapshot:workflow.grounding.snapshot,
               results:workflow.grounding.results,notice:'历史模型记录；不代表导出时再次核验，须逐句比对 final_text。'} : null}})
-          download(result.data.text,'ApplyGuard-最终草稿.txt','text/plain;charset=utf-8')
+          download(result.data.text,'ApplyGuard-个人草稿.txt','text/plain;charset=utf-8')
           setNotice(result.data.notice)
         } catch {setNotice('导出未完成，请检查连接后重试。草稿已保留。')}
         finally {setBusy(false)}
-      }}>{busy ? '正在准备导出…' : '导出最终草稿 TXT'}</button>
+      }}>{busy ? '正在准备导出…' : '下载个人草稿 TXT'}</button>
     {record?.signature === signature && <button className="btn secondary" onClick={() => download(JSON.stringify(record.report,null,2),'ApplyGuard-审核记录.json','application/json')}>下载审核记录</button>}
     {!editing && notice.signature === signature && notice.text && <p role="status">{notice.text}</p>}
   </div>

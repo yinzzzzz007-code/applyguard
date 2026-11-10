@@ -606,7 +606,10 @@ def _import_one(
                 "SELECT COUNT(*) AS n FROM source_span WHERE file_id = ?",
                 (latest["file_id"],),
             ).fetchone()["n"]
-            if _should_reuse_existing(str(latest["state"] or ""), int(spans or 0), force_reparse):
+            if _should_reuse_existing(str(latest["state"] or ""), int(spans or 0), force_reparse) and not (
+                f"{relative_path}.ocr.json" in (companions or {})
+                or f"{Path(relative_path).name}.ocr.json" in (companions or {})
+            ):
                 return {
                     **_serialize_file(latest, span_count=spans),
                     **_file_recognition_meta(conn, latest["file_id"]),
@@ -632,9 +635,10 @@ def _import_one(
                     """
                     UPDATE evidence_link
                     SET link_state = 'STALE'
-                    WHERE file_sha256 = ? AND link_state = 'ACTIVE'
+                    WHERE evidence_id IN (SELECT evidence_id FROM evidence_record WHERE primary_file_id = ?)
+                      AND link_state = 'ACTIVE'
                     """,
-                    (latest["sha256"],),
+                    (latest["file_id"],),
                 )
                 conn.execute(
                     """
@@ -1496,12 +1500,17 @@ def _score_item_against_evidence(
     from backend.services.evidence_parsers import _GRADE, conflict_between_claim_and_fields
 
     notes: list[str] = []
-    conflicts = conflict_between_claim_and_fields(item_text, fields)
+    award_checks = target_type not in {"project", "internship"}
+    conflicts = conflict_between_claim_and_fields(item_text, fields) if award_checks else []
 
     field_text = " ".join(str(v) for v in fields.values() if v)
     evidence_blob = f"{field_text} {corpus}".strip()
     evidence_tokens = _tokens(evidence_blob)
     core_tokens = _tokens(core_text or "")
+    if target_type == "project" and core_text is not None:
+        core_tokens = {token for token in core_tokens if any(char.isalpha() for char in token)}
+        if not core_tokens:
+            return 0, notes, conflicts
     item_tokens = _tokens(item_text) or core_tokens
     if not item_tokens and not core_tokens:
         return 0, notes, conflicts
@@ -1523,28 +1532,29 @@ def _score_item_against_evidence(
         score = min(100, score + min(12, 2 * len(extra_hits)))
         notes.append("描述相关：" + "、".join(sorted(extra_hits)[:4]))
 
-    item_grade = _GRADE.search(item_text)
-    ev_grade = str(fields.get("grade") or "")
-    if not ev_grade:
-        m = _GRADE.search(corpus)
-        if m:
-            ev_grade = m.group(1)
-    if item_grade and ev_grade and item_grade.group(1) == ev_grade:
-        score += 20
-        notes.append(f"等级一致：{ev_grade}")
-    elif item_grade and (item_grade.group(1) in corpus or item_grade.group(1) in field_text):
-        score += 15
-        notes.append(f"原文含等级：{item_grade.group(1)}")
+    if award_checks:
+        item_grade = _GRADE.search(item_text)
+        ev_grade = str(fields.get("grade") or "")
+        if not ev_grade:
+            m = _GRADE.search(corpus)
+            if m:
+                ev_grade = m.group(1)
+        if item_grade and ev_grade and item_grade.group(1) == ev_grade:
+            score += 20
+            notes.append(f"等级一致：{ev_grade}")
+        elif item_grade and (item_grade.group(1) in corpus or item_grade.group(1) in field_text):
+            score += 15
+            notes.append(f"原文含等级：{item_grade.group(1)}")
 
-    award_name = str(fields.get("award_name") or "")
-    if award_name and award_name in item_text:
-        score += 15
-        notes.append(f"奖项名命中：{award_name}")
+        award_name = str(fields.get("award_name") or "")
+        if award_name and award_name in item_text:
+            score += 15
+            notes.append(f"奖项名命中：{award_name}")
 
-    issuer = str(fields.get("issuer") or "")
-    if issuer and any(tok in issuer for tok in focus_tokens if len(tok) >= 2):
-        score += 8
-        notes.append("颁发方相关")
+        issuer = str(fields.get("issuer") or "")
+        if issuer and any(tok in issuer for tok in focus_tokens if len(tok) >= 2):
+            score += 8
+            notes.append("颁发方相关")
 
     # Type gate: awards vs internship proofs
     if target_type == "internship":
@@ -1567,7 +1577,7 @@ def _score_item_against_evidence(
         if "实习证明" in evidence_blob and not any(m in item_text for m in ("实习",)):
             score = max(0, score - 25)
             notes.append("材料为实习证明，与获奖经历类型不符")
-    else:
+    elif award_checks:
         for marker in ("奖学金", "竞赛", "比赛", "大赛"):
             in_item = marker in item_text
             in_ev = marker in evidence_blob
@@ -1799,7 +1809,7 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
         hint_bits = [f"{item.get('kind', '')} {item['label']}".strip()]
         from backend.services.evidence_parsers import _GRADE
 
-        g = _GRADE.search(item["text"])
+        g = _GRADE.search(item["text"]) if item["target_type"] == "award" else None
         if g:
             hint_bits.append(f"需含「{g.group(1)}」")
         notes = ["工作区中未找到足够相关的原文"]
@@ -1811,7 +1821,7 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
                 evidence_id=None,
                 score=0,
                 notes=notes,
-                action="需要补充材料：请把对应证明放入文件夹后重新导入并对照经历库",
+                action="未找到自动候选。可为这条经历补充原件，或打开已导入材料人工核对。",
                 gap_hint="、".join(hint_bits),
             )
         )

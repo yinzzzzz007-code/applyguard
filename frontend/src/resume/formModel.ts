@@ -84,11 +84,8 @@ export function buildResumeFormFromVault(vault: CareerVaultSeed): EditableResume
 export function resumeCompleteness(form: EditableResumeForm): number {
   const required: string[] = [
     form.basic.name,
-    form.basic.gender,
-    form.basic.birthday,
     form.basic.phone,
     form.basic.email,
-    form.basic.idType,
     form.basic.city,
     form.intention.projectType,
     form.intention.expectRole,
@@ -110,8 +107,7 @@ export function resumeCompleteness(form: EditableResumeForm): number {
     form.projects.some((p) => p.title && p.description)
       ? 1
       : 0
-  const awardBonus = (form.awards ?? []).some((item) => item.name.trim()) ? 1 : 0
-  return Math.min(100, Math.round(((filled + expBonus + awardBonus) / (required.length + 2)) * 100))
+  return Math.min(100, Math.round(((filled + expBonus) / (required.length + 1)) * 100))
 }
 
 export function newExperienceId(prefix: string): string {
@@ -187,21 +183,54 @@ export function emptyResumeForm(candidateId: string): EditableResumeForm {
   }
 }
 
-export function overwriteFromExtracted(candidateId: string, extracted: ExtractedResumeForm): EditableResumeForm {
-  const next = applyExtractedResume(emptyResumeForm(candidateId), extracted)
-  return { ...next, dirty: true, savedAt: undefined }
+export const resumeSections = ['education', 'internships', 'projects', 'awards'] as const
+export type ResumeSection = typeof resumeSections[number]
+
+const identityPart = (value?: string) => filled(value).normalize('NFKC').toLowerCase().replace(/\s+/g, '')
+
+function reconcileRows<T extends { id: string }>(next: T[], previous: T[], identity: (row: T) => string): T[] {
+  return next.map(row => {
+    const key = identity(row)
+    if (!key || next.filter(item => identity(item) === key).length !== 1) return row
+    const matches = previous.filter(item => identity(item) === key)
+    return matches.length === 1 ? { ...row, id: matches[0].id } : row
+  })
+}
+
+export function overwriteFromExtracted(candidateId: string, extracted: ExtractedResumeForm, previous?: EditableResumeForm | null): EditableResumeForm {
+  const blank = emptyResumeForm(candidateId)
+  const next = applyExtractedResume({ ...blank, basic: { ...blank.basic, idType: '' }, education: [] }, extracted)
+  if (!previous || previous.candidateId !== candidateId ||
+      (identityPart(next.basic.name) && identityPart(previous.basic.name) &&
+       identityPart(next.basic.name) !== identityPart(previous.basic.name))) return next
+  const experienceKey = (row: EditableResumeForm['projects'][number]) =>
+    identityPart(row.title || row.role) && [row.title || row.role, row.organization, row.start, row.end].map(identityPart).join('|')
+  return { ...next,
+    education: reconcileRows(next.education, previous.education, row =>
+      identityPart(row.school) && [row.school, row.degree, row.major, row.start, row.end].map(identityPart).join('|')),
+    internships: reconcileRows(next.internships, previous.internships, experienceKey),
+    projects: reconcileRows(next.projects, previous.projects, experienceKey),
+    awards: reconcileRows(next.awards, previous.awards ?? [], row =>
+      identityPart(row.name) && [row.name, row.issuer, row.date].map(identityPart).join('|')),
+  }
+}
+
+export function selectImportRows<T extends { id: string }>(next: T[], previous: T[], excluded: ReadonlySet<string>, removed: ReadonlySet<string>): T[] {
+  const selected = next.filter(row => !excluded.has(row.id))
+  const replaced = new Set(selected.map(row => row.id))
+  return [...selected, ...previous.filter(row => !replaced.has(row.id) && !removed.has(row.id))]
 }
 
 export function applyExtractedResume(base: EditableResumeForm, extracted: ExtractedResumeForm): EditableResumeForm {
   const pick = (current: string, next: string | undefined) => filled(next) || current
   const education = extracted.education
     .filter((row) => filled(row.school) || filled(row.major))
-    .map((row, index) => ({
-      id: `edu_extract_${index + 1}`,
+    .map((row) => ({
+      id: newExperienceId("edu"),
       school: row.school,
       degree: row.degree,
       major: row.major,
-      fullTime: row.fullTime || '是',
+      fullTime: row.fullTime || '',
       start: row.start,
       end: row.end,
       rank: row.rank,

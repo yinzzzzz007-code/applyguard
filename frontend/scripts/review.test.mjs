@@ -17,17 +17,23 @@ test('a user confirmation is independent of evidence, and text edits invalidate 
  assert.throws(()=>changeClaim(w,id,'','edit'))
  assert.throws(()=>changeClaim(w,id,'x'.repeat(421),'edit'))
 })
-test('safe server changes are applied while factual changes remain proposals',()=>{
+test('all model rewrites remain previews until a user explicitly adopts them',()=>{
  const w=fixture(), id=w.resume_claims[0].claim_id, old=w.resume_claims[0].text
  const result={resume_claims:w.resume_claims.map(c=>c.claim_id===id?{...c,text:'Changed suggestion'}:c),grounding:{results:{[id]:{original_text:old,final_text:'Changed suggestion',state:'VERIFIED',change_audit:{sensitive_change:false}}}}}
- assert.equal(mergeReviewResult(w,result).resume_claims[0].text,'Changed suggestion')
+ const preview=mergeReviewResult(w,result)
+ assert.equal(preview.resume_claims[0].text,old)
+ assert.equal(preview.grounding.results[id].proposed_text,'Changed suggestion')
+ assert.equal(preview.requires_reverification,true)
+ const accepted=changeClaim(preview,id,'Changed suggestion','accept')
+ assert.equal(accepted.resume_claims[0].text,'Changed suggestion')
+ assert.equal(accepted.claim_verification[0].state,'NEEDS_REVIEW')
  result.grounding.results[id].change_audit.sensitive_change=true
  const held=mergeReviewResult(w,result)
  assert.equal(held.resume_claims[0].text,old)
  assert.equal(held.requires_reverification,true)
  assert.equal(held.review_session.choices[id],undefined)
  assert.equal(held.review_session.actions,0)
- assert.equal(reviewPriority(held,id),3)
+ assert.equal(reviewPriority(held,id),4)
  assert.equal(w.review_session,undefined)
 })
 test('history cannot restore a different application; restoring does not inherit confirmation',()=>{

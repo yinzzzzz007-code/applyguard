@@ -8,6 +8,7 @@ import re
 from typing import Any
 
 from backend.services.model_client import ModelClient, ModelFailure
+from backend.services.jd_match_scope import _HEADER, _header_kind
 from backend.services.prompts import JD_PARSE_SYSTEM_PROMPT
 from backend.services.schema_validation import validate_contract
 from backend.services.third_party.resume_matcher_keywords import _sanitize_user_input, _validate_string_list_field
@@ -25,6 +26,14 @@ _TERM_ALIASES = {"HTTP API": ("HTTP API", "HTTP APIs", "Python APIs"),
                  "data pipelines": ("data pipeline", "data pipelines"),
                  "data quality": ("data quality", "data-quality"),
                  "microcontrollers": ("microcontroller", "microcontrollers")}
+_FRONTEND_TERMS = {
+    "JavaScript": r"\bJavaScript\b|\bES[5-9](?:/[5-9])*\b",
+    "CSS": r"\bCSS\b", "HTML": r"\bHTML\b",
+    "React": r"\bReact(?:JS)?\b(?!\s+Native)", "Redux": r"\bRedux\b", "EmberJS": r"\bEmberJS\b",
+    "React Native": r"\bReact Native\b", "Weex": r"\bWeex\b", "Hippy": r"\bHippy\b",
+    "Flutter": r"\bFlutter\b", "PHP": r"\bPHP\b", "Rust": r"\bRust\b", "数据结构": "数据结构", "算法": "算法",
+    "设计模式": "设计模式", "软件架构": "软件架构",
+}
 _STOP = {"a", "an", "and", "the", "for", "with", "of", "to", "in", "on", "or", "is", "are",
          "we", "you", "who", "be", "our", "have", "has", "experience", "job", "role", "skill", "skills", "using"}
 _INSTRUCTION = re.compile(r"ignore\s+(?:all\s+)?previous|disregard|new instructions|system\s*:|忽略.{0,8}(指令|要求)|系统指令", re.I)
@@ -298,6 +307,7 @@ class JDParser:
         requirements = []
         section_preferred = False
         section_category = None
+        in_qualifications = False
         first_line = source.splitlines()[0].strip()
         seen_text: set[str] = set()
         candidate_count = 0
@@ -308,9 +318,17 @@ class JDParser:
                 r"(?:实习生|工程师|研究员|分析师|设计师|产品经理|开发|研发)(?:实习)?$", line
             ):
                 continue
-            if re.match(r"^(?:职位描述\s*[:：]\s*)?我们正在招聘", line) or re.fullmatch(
+            header = _header_kind(line)
+            if header:
+                section_preferred = header == "bonus"
+                in_qualifications = header in {"requirement", "bonus"}
+                section_category = "RESPONSIBILITY" if header == "description" else None
+                # Full-line headings can be skipped. Inline headings still contain source text.
+                if _HEADER.fullmatch(line):
+                    continue
+            if re.match(r"^(?:职位描述\s*[:：]\s*)?我们正在招聘", line) or (not in_qualifications and re.fullmatch(
                 r"[一二三四五六七八九十]+[、.．].{2,60}", line
-            ) or line == "面向对象":
+            )) or line == "面向对象":
                 continue
             if re.fullmatch(
                 r"(?:preferred(?: qualifications| requirements| skills)?|nice.to.have|优先条件|加分项(?:或注意事项)?)\s*[:：]?",
@@ -330,16 +348,28 @@ class JDParser:
                 section_preferred, section_category = False, "RESPONSIBILITY"
                 continue
             line_preferred = section_preferred or bool(_PREFERRED.search(line))
-            for fragment in re.split(r",|\band\b", line, flags=re.I):
+            fragments = [line] if in_qualifications and re.search(r"[\u3400-\u9fff]", line) else re.split(r",|\band\b", line, flags=re.I)
+            for fragment in fragments:
                 fragment = fragment.strip()
                 terms = [term for term in _TERMS if any(
                     re.search(r"(?<![a-z0-9])" + re.escape(alias) + r"(?![a-z0-9])", fragment, re.I)
                     for alias in _TERM_ALIASES.get(term, (term,)))]
+                if in_qualifications:
+                    if "React" in terms and not re.search(_FRONTEND_TERMS["React"], fragment, re.I):
+                        terms.remove("React")
+                    terms.extend(term for term, pattern in _FRONTEND_TERMS.items()
+                                 if term not in terms and re.search(pattern, fragment, re.I))
+                    if "编程语言" in fragment:
+                        terms.extend(term for term, pattern in (("C", r"(?<![a-z0-9])C(?![a-z0-9+])"),
+                                                               ("Go", r"(?<![a-z0-9])Go(?![a-z0-9])"))
+                                     if re.search(pattern, fragment, re.I))
                 category = "EDUCATION" if _EDUCATION.search(fragment) else "EXPERIENCE" if _EXPERIENCE.search(fragment) else section_category or ("RESPONSIBILITY" if _RESPONSIBILITY.search(fragment) else "SKILL")
                 if not terms and category in {"EDUCATION", "EXPERIENCE"}:
                     terms = [fragment]
-                if not terms:
+                if not terms and not in_qualifications:
                     continue
+                if not terms:
+                    category = "OTHER"
                 candidate_count += 1
                 if fragment in seen_text:
                     continue

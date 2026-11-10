@@ -231,7 +231,7 @@ export function HumanConfirmationPage() {
           </button>
         </div>
         <p className="muted">单项也可复制。证件号若未填则不会进入全文稿；本地编辑的经历和技能不进入可复制稿。</p>
-        <textarea className="jd-input copy-pack" rows={12} readOnly value={copyPack} />
+        <textarea className="jd-input copy-pack" rows={12} aria-label="可复制的模拟填写稿" readOnly value={copyPack} />
       </div>
 
       {form ? (

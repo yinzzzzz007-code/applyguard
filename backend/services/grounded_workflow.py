@@ -185,7 +185,7 @@ class GroundingService:
             result[cid] = hits
         return result
 
-    def run(self, claims, items, candidate, mode, *, jd='', polish=False):
+    def run(self, claims, items, candidate, mode, *, jd='', polish=False, local_only=False):
         sources, contexts, allowed = collect_sources(items,candidate)
         personal = {c['claim_id']:c for item in items if item.get('candidate_id') == candidate
                     for c in item.get('claims', []) if claim_is_form_confirmed(c['claim_id'], [item])}
@@ -203,7 +203,9 @@ class GroundingService:
         risk_escalation = {}
         reused_checks = set()
         try:
-            hits = self.retrieve(active,sources,allowed,candidate) if active else {}
+            if local_only and active:
+                error = '当前为全离线模式。材料已关联。若需模型核验，请回到岗位说明选择 AI 模式、确认后重新分析。'
+            hits = self.retrieve(active,sources,allowed,candidate) if active and not local_only else {}
             original_hits = copy.deepcopy(hits)
             if polish and active:
                 if mode == 'sag_atomic':
@@ -218,7 +220,7 @@ class GroundingService:
                 active = [changed[c['claim_id']] for c in active]
                 changed_active = [c for c in active if c['text'] != original_text[c['claim_id']]]
                 if changed_active:hits.update(self.retrieve(changed_active,sources,allowed,candidate))
-            if mode == 'sag_atomic' and active:
+            if mode == 'sag_atomic' and active and not local_only:
                 # Reuse only checks computed in THIS call against its immutable
                 # source snapshot. apply_grounding rechecks revocation afterward.
                 unchanged = [c for c in active if polish and c['text']==original_text[c['claim_id']]]
@@ -338,7 +340,7 @@ def apply_grounding(vault_path, request, response, *, polish=False):
     items = load_grounding_experiences(vault_path,request)
     out = copy.deepcopy(response)
     claims, verified, report = GroundingService().run(out['resume_claims'],items,request['candidate_id'],mode,
-        jd=request.get('jd_text',''),polish=polish)
+        jd=request.get('jd_text',''),polish=polish,local_only=request.get('local_only') is True and not polish)
     # Check for source replacement/revocation while network calls were in progress.
     current, _, _ = collect_sources(load_grounding_experiences(vault_path,request),request['candidate_id'])
     if evidence_snapshot(current) != report['snapshot']:

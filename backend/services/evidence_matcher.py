@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import re
+from calendar import monthrange
+from datetime import date
 from typing import Any
 
 from backend.services.jd_match_scope import select_requirements_for_matching
+from backend.services.resume_draft_vault import is_form_confirmed_evidence
 
 
 _NON_ALNUM = re.compile(r"[^a-z0-9+#.]+")
@@ -27,6 +30,8 @@ _ALIASES = {
     "pytorch": "pytorch",
     "tensorflow": "tensorflow",
     "tf": "tensorflow",
+    "reactjs": "react",
+    "ember": "emberjs",
 }
 _MENTION_VARIANTS = {
     "data pipelines": {"etl pipeline", "etl pipelines"},
@@ -51,7 +56,6 @@ _CJK_BRIDGES = {
     "排序": {"machine learning", "model evaluation"},
     "模型算法": {"pytorch", "model evaluation", "llm", "machine learning"},
     "模型": {"pytorch", "model evaluation", "llm"},
-    "算法": {"python", "pytorch", "model evaluation"},
     "编程": {"python", "java", "c++", "typescript"},
     "神经网络": {"pytorch", "machine learning", "llm"},
     "多模态": {"llm", "machine learning", "model evaluation"},
@@ -116,9 +120,65 @@ def _cs_related_major_in(text: str) -> bool:
 
 def _requirement_asks_related_cs_major(requirement: dict[str, Any], terms: set[str]) -> bool:
     blob = f"{requirement.get('text') or ''} {requirement.get('evidence_text') or ''} {' '.join(terms)}"
-    if "相关专业" in blob:
-        return True
-    return any(key in blob for key in ("计算机", "人工智能", "软件工程", "软件"))
+    return any(key in blob for key in ("计算机", "人工智能", "软件工程", "软件相关", "数据科学", "大数据"))
+
+
+_DEGREES = (r"专科|大专|associate", r"本科|学士|bachelor", r"硕士|master", r"博士|ph\.?d\.?|doctorate")
+_GRADUATION_DAY = re.compile(r"(20\d{2})[.\-/年](\d{1,2})[.\-/月](\d{1,2})")
+
+
+def _education_checks(requirement: dict[str, Any], degree: str, major: str, end: str) -> list[dict[str, str]]:
+    text = str(requirement.get("evidence_text") or requirement.get("text") or "")
+    checks = []
+    minimum = next((i for i, pattern in enumerate(_DEGREES) if re.search(pattern, text, re.I)), None)
+    if minimum is not None:
+        level = next((i for i, pattern in enumerate(_DEGREES) if re.search(pattern, degree, re.I)), None)
+        checks.append({"label": "学历", "value": degree, "state": (
+            "UNKNOWN" if level is None else "MATCH" if level >= minimum else "MISMATCH")})
+    if "相关专业" in text:
+        related = _requirement_asks_related_cs_major(requirement, set()) and _cs_related_major_in(major)
+        checks.append({"label": "相关专业", "value": major, "state": "MATCH" if related else "UNKNOWN"})
+    dates = _GRADUATION_DAY.findall(text) if "毕业" in text else []
+    if len(dates) == 2:
+        state = "UNKNOWN"
+        try:
+            lower, upper = (date(*map(int, parts)) for parts in dates)
+            if lower <= upper and re.fullmatch(r"\d{4}-\d{2}", end):
+                year, month = map(int, end.split("-"))
+                first, last = date(year, month, 1), date(year, month, monthrange(year, month)[1])
+                if lower <= first and last <= upper:
+                    state = "MATCH"
+                elif last < lower or first > upper:
+                    state = "MISMATCH"
+        except ValueError:
+            pass
+        checks.append({"label": "毕业时间窗口", "value": end, "state": state})
+    elif re.search(r"20\d{2}\s*届", text) and "毕业" in text:
+        checks.append({"label": "毕业届别", "value": end, "state": "UNKNOWN"})
+    return checks
+
+
+def profile_checks(parsed: dict[str, Any], form: Any) -> dict[str, list[dict[str, str]]]:
+    """Separate self-reported profile signals from claim evidence and approvals."""
+    if not isinstance(form, dict):
+        return {}
+    extras = form.get("extras")
+    skills = str(extras.get("skills") or "") if isinstance(extras, dict) else ""
+    result = {}
+    for req in select_requirements_for_matching(parsed):
+        if req["category"] == "EDUCATION":
+            options = [_education_checks(req, str(row.get("degree") or ""), str(row.get("major") or ""),
+                       str(row.get("end") or "")) for row in form.get("education") or [] if isinstance(row, dict)]
+            checks = max(options, key=lambda rows: (all(row["state"] == "MATCH" for row in rows),
+                         sum(row["state"] == "MATCH" for row in rows)), default=[])
+            if checks:
+                result[req["requirement_id"]] = checks
+        elif req["category"] in {"SKILL", "RESPONSIBILITY"}:
+            found = [term for term in req["normalized_terms"]
+                     if (term in skills if _has_cjk(term) else _mentions(_normalise(term), skills))]
+            if found:
+                result[req["requirement_id"]] = [{"label": "技能栏本人填写", "value": "、".join(found), "state": "DECLARED"}]
+    return result
 
 
 def _mentions(term: str, text: str) -> bool:
@@ -141,6 +201,8 @@ def _mentions(term: str, text: str) -> bool:
             re.search(r"(?<![a-z0-9+#])model(?![a-z0-9+#])", normalised_text)
             and re.search(r"(?<![a-z0-9+#])evaluation(?![a-z0-9+#])", normalised_text)
         )
+    if term == "react":
+        normalised_text = re.sub(r"\breact native\b", "", normalised_text)
     variants = {term, *_MENTION_VARIANTS.get(term, set())}
     variants.update(alias for alias, canonical in _ALIASES.items() if canonical == term)
     return any(
@@ -240,6 +302,12 @@ class EvidenceMatcher:
             claim for claim in experience.get("claims", [])
             if any(_mentions(term, claim["text"]) for term in requirement_terms)
         ]
+        if requirement.get("category") == "EDUCATION":
+            source_ids = {source["evidence_id"] for source in experience.get("evidence_sources", [])
+                          if is_form_confirmed_evidence(source)}
+            if source_ids:
+                claims = [claim for claim in experience.get("claims", [])
+                          if source_ids.intersection(claim.get("evidence_ids", []))]
         if not claims:
             return None
         return self.score_linked_claims(requirement, requirement_terms, experience, claims)
@@ -271,7 +339,12 @@ class EvidenceMatcher:
                 *(claim.get("text") or "" for claim in claims),
             )
         )
-        related_major_hit = _requirement_asks_related_cs_major(requirement, requirement_terms) and _cs_related_major_in(
+        personal_education = requirement.get("category") == "EDUCATION" and any(
+            is_form_confirmed_evidence(source) for source in experience.get("evidence_sources", []))
+        education = _education_checks(requirement, experience.get("title", ""), claim_blob,
+                                      experience.get("end_date") or "") if personal_education else []
+        profile_match = bool(education) and all(check["state"] == "MATCH" for check in education)
+        related_major_hit = (not education or profile_match) and _requirement_asks_related_cs_major(requirement, requirement_terms) and _cs_related_major_in(
             claim_blob
         )
         supported_terms = {
@@ -289,7 +362,7 @@ class EvidenceMatcher:
         responsibility_hits = sorted(term for term in supported_terms if _mentions(term, responsibility_text))
         if related_major_hit and "相关专业" not in responsibility_hits:
             responsibility_hits = sorted({*responsibility_hits, "相关专业"})
-        if require_keyword_hit and not keyword_hits and not responsibility_hits and semantic_score is None and not related_major_hit:
+        if require_keyword_hit and not keyword_hits and not responsibility_hits and semantic_score is None and not (related_major_hit or education):
             return None
         claim_ids = list(dict.fromkeys(claim["claim_id"] for claim in claims))
         evidence_ids = sorted({evidence_id for claim in claims for evidence_id in claim.get("evidence_ids", [])})
@@ -302,15 +375,24 @@ class EvidenceMatcher:
 
         conflicts = self._conflicts(experience, claims, linked_sources)
         missing_evidence = self._missing_evidence(experience, claims, linked_sources)
-        unsupported_terms = sorted(requirement_terms - supported_terms)
+        missing_evidence.extend(f"个人资料待核对：{check['label']}（{check['value'] or '未填写'}）"
+                                for check in education if check["state"] != "MATCH")
+        unsupported = requirement_terms - supported_terms
+        requirement_text = requirement.get("text", "")
+        language_alternatives = re.search(r"至少一门编程语言|at least one programming language", requirement_text, re.I)
+        if language_alternatives:
+            # The languages listed after “for example” are alternatives.
+            if supported_terms:
+                unsupported = set()
+        unsupported_terms = sorted(unsupported)
         # AI may attest paraphrase coverage; still never invent evidence IDs or clear verification gaps.
         ai_covers_terms = isinstance(semantic_score, (int, float)) and float(semantic_score) >= 0.55
-        if related_major_hit:
+        if related_major_hit or profile_match:
             ai_covers_terms = True
         if unsupported_terms and not ai_covers_terms:
             missing_evidence.append(f"No linked claim explicitly supports: {', '.join(unsupported_terms)}.")
         verification_score = self._verification_score(experience, claims, linked_sources)
-        term_denom = max(len(requirement_terms), 1)
+        term_denom = max(len(supported_terms if language_alternatives and supported_terms else requirement_terms), 1)
         keyword_overlap = len(keyword_hits) / term_denom
         responsibility_overlap = len(responsibility_hits) / term_denom
         metric_bonus = 0.1 if any(
@@ -337,7 +419,7 @@ class EvidenceMatcher:
         else:
             semantic = None
         # 数据科学 / 大数据等对「相关专业」按强覆盖处理，避免模型保守打成中等分。
-        if related_major_hit:
+        if related_major_hit or profile_match:
             semantic = max(semantic or 0.0, 0.95)
         if semantic is not None:
             # Prefer the model score so keyword sparsity does not crush on-topic matches.

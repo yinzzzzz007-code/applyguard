@@ -8,7 +8,6 @@ import type {
 } from '../api/types'
 import { EmptyState } from '../components/States'
 import { ReviewDraft } from '../components/ReviewDraft'
-import { SAGPolishPanel } from '../components/SAGPolishPanel'
 import { saveTextVersion } from '../resume/groundingHistory'
 import { useDemo } from '../context/DemoContext'
 import { zhText } from '../i18n'
@@ -86,7 +85,7 @@ function claimsFromResumeForm(form: EditableResumeForm | null): DraftClaim[] {
 
 export function ResumeReviewPage() {
   const navigate = useNavigate()
-  const { workflow, patchWorkflow, resumeForm } = useDemo()
+  const { workflow, patchWorkflow, resumeForm, reviewDrafts } = useDemo()
   const [draftText, setDraftText] = useState('')
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [historyError,setHistoryError] = useState('')
@@ -303,9 +302,9 @@ export function ResumeReviewPage() {
   return (
     <section className="panel">
       <header className="panel-head">
-        <h2>让经历，表达得更准确。</h2>
+        <h2>审核申请草稿</h2>
         <p>
-          直接修改草稿，优先处理最值得看的三处。用户确认与材料支持分别记录。
+          对照建议修改正文，检查材料支持，再选择导出草稿或继续准备网申。
         </p>
       </header>
 
@@ -344,9 +343,18 @@ export function ResumeReviewPage() {
         <p>自动筛选参考：{selection.max_claims} 条 / {selection.max_characters} 字<br /><span>手动加入的陈述仍须核验。</span></p>
       </div>
 
-      <div className="review-workspace"><div className="review-draft">
+      <div className="review-content">
       {historyError && <p className="danger-text" role="alert">{historyError}</p>}
       <ReviewDraft key={workflow.application_id} />
+      {!claims.length && <div className="callout">
+        <strong>没有自动选入的陈述</strong>
+        <p>当前经历与岗位要求没有足够的可用依据。你可以手动选择经历，或补充材料后再核验。</p>
+        <div className="btn-row"><a className="btn primary" href="#review-source-pool" onClick={() => {
+          const details = document.getElementById('review-add-content')
+          if (details instanceof HTMLDetailsElement) details.open = true
+        }}>从经历库选入</a><Link className="btn secondary" to="/evidence">补充证明材料</Link></div>
+      </div>}
+      <details className="review-add-content" id="review-add-content"><summary>添加内容或管理条目</summary>
       <details><summary>管理草稿条目</summary>{claims.map(c => <div className="btn-row" key={c.claim_id}><span>{c.text}</span><button className="btn secondary" onClick={() => removeClaim(c)}>移出</button></div>)}</details>
 
       <div className="rr-add">
@@ -369,7 +377,7 @@ export function ResumeReviewPage() {
         </div>
       </div>
 
-      <div className="source-pool-heading"><h3 className="em-section-title">从经历库选入</h3><span>{visibleSources.length} / {available.length} 条</span></div>
+      <div className="source-pool-heading" id="review-source-pool"><h3 className="em-section-title">从经历库选入</h3><span>{visibleSources.length} / {available.length} 条</span></div>
       <label className="work-search source-search"><Icon name="search" /><input aria-label="搜索可加入的经历" value={sourceQuery} onChange={e => setSourceQuery(e.target.value)} placeholder="搜索项目名称、技术或经历内容" />
         {sourceQuery && <button type="button" aria-label="清除经历搜索" onClick={() => setSourceQuery('')}><Icon name="close" /></button>}</label>
       <div className="scope-switch source-kind" aria-label="经历类型">{['all','实习','项目','获奖'].map(kind => <button type="button" key={kind} aria-pressed={sourceKind === kind} onClick={() => setSourceKind(kind)}>{kind === 'all' ? '全部' : kind}</button>)}</div>
@@ -424,11 +432,15 @@ export function ResumeReviewPage() {
         </div>
       )}
 
-      </div><aside className="review-rail"><SAGPolishPanel /></aside></div>
+      </details></div>
       <div className="btn-row end review-footer">
-        <span>{claims.length ? '已整理 '+claims.length+' 条草稿，下一步核对每条依据。' : '先从经历库选入，或手动添加一条陈述。'}</span>
-        <button type="button" className="btn primary" disabled={!claims.length} onClick={() => navigate('/claims')}>
-          下一步：陈述核验
+        <span role="status">{Object.keys(reviewDrafts).length ? '有未保存修改，请先保存或取消。' : claims.length ? `已整理 ${claims.length} 条正文，可预览并导出。` : '请先选择或写入一条草稿陈述。'}</span>
+        <button type="button" className="btn primary" disabled={!claims.length || !!Object.keys(reviewDrafts).length} onClick={() => {
+          const panel = document.getElementById('review-export') as HTMLDetailsElement | null
+          if (panel) {panel.open = true; panel.scrollIntoView({behavior:'smooth',block:'start'});panel.querySelector('summary')?.focus()}
+        }}>检查并导出</button>
+        <button type="button" className="btn secondary" disabled={!claims.length || !!Object.keys(reviewDrafts).length} onClick={() => navigate('/claims')}>
+          继续核验并准备网申
         </button>
       </div>
     </section>

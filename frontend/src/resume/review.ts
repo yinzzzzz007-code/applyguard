@@ -14,6 +14,7 @@ export function reviewPriority(workflow: WorkflowResponse, id: string): number {
   const choice = workflow.review_session?.choices[id]
   if (choice && choice.text === claim?.text) return 0
   const result = workflow.grounding?.results[id]
+  if (result?.proposed_text && result.proposed_text !== claim?.text) return needsAttention(result) ? 4 : 1
   if (result?.proposal_rejected) return 4
   if (needsAttention(result)) return 3
   if (!result || result.state !== 'VERIFIED' || result.final_text !== claim?.text) return 2
@@ -38,10 +39,12 @@ export function changeClaim(workflow: WorkflowResponse, id: string, text: string
 }
 export function mergeReviewResult(workflow: WorkflowResponse, result: Partial<WorkflowResponse>): WorkflowResponse {
   const next = {...workflow, ...result, review_session: {...session(workflow),choices:{}}}
-  // A model-approved correction still needs a person's choice if it changes factual meaning.
+  // Every rewrite requires a person's choice, including model-approved wording changes.
   for (const claim of workflow.resume_claims) {
     const row = next.grounding?.results[claim.claim_id]
-    if (row && needsAttention(row) && next.resume_claims.find(c => c.claim_id === claim.claim_id)?.text !== claim.text) {
+    if (row && next.resume_claims.find(c => c.claim_id === claim.claim_id)?.text !== claim.text) {
+      // A successful model check is still a suggestion, never permission to rewrite.
+      row.proposed_text = row.proposed_text || next.resume_claims.find(c => c.claim_id === claim.claim_id)!.text
       const review = next.review_session
       const edited = changeClaim(next, claim.claim_id, claim.text, 'original')
       Object.assign(next, edited, {review_session:review})

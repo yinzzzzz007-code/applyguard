@@ -13,7 +13,6 @@ import {
 import {
   getActiveScenario,
   getApiClient,
-  SAMPLE_JD,
   setActiveScenario as setScenarioInClient,
 } from '../api/client'
 import type {
@@ -26,11 +25,19 @@ import type {
 } from '../api/types'
 import { zhLookup } from '../i18n'
 import type { FlowStep } from '../flow'
+import { invalidateRestoredWorkflow, loadReviewSession, saveReviewSession } from '../resume/reviewSession'
 
 interface DemoState {
+  reviewDrafts: Record<string, string>
+  setReviewDraft: (id: string, text: string | null) => void
+  reviewStorageError: string
+  restoredAt: string
   scenario: DemoScenario
   step: FlowStep
   jdRawInput: string
+  activeJobId: string | null
+  setActiveJobId: (id: string | null) => void
+  invalidateWorkflow: () => void
   workflow: WorkflowResponse | null
   resumeForm: EditableResumeForm | null
   dataSourceLabel: string
@@ -59,6 +66,18 @@ interface DemoState {
 
 const DemoContext = createContext<DemoState | null>(null)
 
+function readSession(key: string): string | null {
+  try { return sessionStorage.getItem(key) } catch { return null }
+}
+
+function readUnsavedResume(): EditableResumeForm | null {
+  try {
+    const form = JSON.parse(readSession('applyguard.resume-edit.v1') ?? 'null')
+    return form?.dirty && typeof form.candidateId === 'string' && form.basic &&
+      Array.isArray(form.education) && Array.isArray(form.internships) && Array.isArray(form.projects) ? form : null
+  } catch { return null }
+}
+
 function sourceLabel(scenario: DemoScenario, workflow: WorkflowResponse | null): string {
   if (workflow?._prerecorded) {
     return `预录 · ${zhLookup({ unsupported_block: '不支持阻断', timeout_fallback: '超时回退' }, workflow._prerecorded.case)}`
@@ -77,19 +96,51 @@ function sourceLabel(scenario: DemoScenario, workflow: WorkflowResponse | null):
 }
 
 export function DemoProvider({ children }: { children: ReactNode }) {
+  const [restored] = useState(() => loadReviewSession(sessionStorage))
+  const [reviewDrafts, setReviewDrafts] = useState<Record<string,string>>(restored?.drafts ?? {})
+  const [reviewStorageError, setReviewStorageError] = useState('')
+  const [restoredAt, setRestoredAt] = useState(restored?.savedAt ?? '')
   const [scenario, setScenarioState] = useState<DemoScenario>(getActiveScenario())
   const [step, setStep] = useState<FlowStep>('import')
-  const [jdRawInput, setJdRawInput] = useState(SAMPLE_JD)
-  const [workflow, setWorkflowState] = useState<WorkflowResponse | null>(null)
-  const [resumeForm, setResumeForm] = useState<EditableResumeForm | null>(null)
+  const [jdRawInput, setJdRawInput] = useState(() => restored?.jd ?? readSession('applyguard.jd') ?? '')
+  const [activeJobId, setActiveJobId] = useState(() => (readSession('applyguard.job') ?? restored?.workflow.target_job?.id) || null)
+  const [workflow, setWorkflowState] = useState<WorkflowResponse | null>(restored?.workflow ?? null)
+  const [resumeForm, setResumeForm] = useState<EditableResumeForm | null>(readUnsavedResume() ?? restored?.form ?? null)
   const [claimDecisions, setClaimDecisions] = useState<Record<string, LocalClaimDecision>>({})
   const [fieldDecisions, setFieldDecisions] = useState<Record<string, LocalFieldDecision>>({})
   const [confirmationNote, setConfirmationNote] = useState('')
   const [simulatedConfirmed, setSimulatedConfirmed] = useState(false)
   const revision = useRef(0)
+  const activeApplication = useRef(restored?.workflow.application_id)
+  const setReviewDraft = useCallback((id: string, text: string | null) => {
+    revision.current += 1
+    setReviewDrafts(values => {const next = {...values}; if (text === null) delete next[id]; else next[id] = text; return next})
+  }, [])
+  useEffect(() => {
+    let active = true
+    const report = (message: string) => queueMicrotask(() => {if (active) setReviewStorageError(message)})
+    try {
+      saveReviewSession(workflow && scenario === 'live' ? {workflow, jd: jdRawInput, form: resumeForm, drafts: reviewDrafts} : null, sessionStorage)
+      sessionStorage.setItem('applyguard.jd', jdRawInput)
+      sessionStorage.setItem('applyguard.job', activeJobId ?? '')
+      if (resumeForm?.dirty) sessionStorage.setItem('applyguard.resume-edit.v1', JSON.stringify(resumeForm))
+      else sessionStorage.removeItem('applyguard.resume-edit.v1')
+      report('')
+    } catch { report('浏览器暂存失败，请保留此页面并导出已保存正文，刷新可能丢失进度。') }
+    return () => {active = false}
+  }, [workflow, jdRawInput, resumeForm, reviewDrafts, scenario, activeJobId])
+  useEffect(() => {
+    if (!Object.keys(reviewDrafts).length && !reviewStorageError && !resumeForm?.dirty) return
+    const warn = (event: BeforeUnloadEvent) => {event.preventDefault(); event.returnValue = ''}
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [reviewDrafts, reviewStorageError, resumeForm?.dirty])
 
   const setWorkflow = useCallback((w: WorkflowResponse | null) => {
     revision.current += 1
+    if (activeApplication.current !== w?.application_id || !w) setReviewDrafts({})
+    activeApplication.current = w?.application_id
+    setRestoredAt('')
     let startedAt=Date.now()
     try {const imported=Number(sessionStorage.getItem('applyguard.review.importStartedAt'));if (imported > 0 && imported <= startedAt) startedAt=imported} catch { /* optional local timing */ }
     setWorkflowState(w ? {...w,review_session:w.review_session ?? {startedAt,actions:0,interruptions:0,choices:{}}} : null)
@@ -114,29 +165,39 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     [],
   )
 
+  const invalidateWorkflow = useCallback(() => {
+    revision.current += 1
+    setWorkflowState(previous => previous ? invalidateRestoredWorkflow(previous, '岗位或经历材料有变动，请重新核验当前草稿。') : previous)
+    setClaimDecisions({})
+    setFieldDecisions({})
+    setSimulatedConfirmed(false)
+    setConfirmationNote('')
+  }, [])
+
   const previousInput = useRef<string | null>(null)
   useEffect(() => {
     const { dirty: _dirty, savedAt: _savedAt, ...content } = resumeForm ?? {}
     const signature = JSON.stringify([jdRawInput, content])
-    if (previousInput.current !== null && previousInput.current !== signature) setWorkflow(null)
+    if (previousInput.current !== null && previousInput.current !== signature) invalidateWorkflow()
     previousInput.current = signature
-  }, [jdRawInput, resumeForm, setWorkflow])
+  }, [jdRawInput, resumeForm, invalidateWorkflow])
 
   useEffect(() => {
-    const invalidate = () => setWorkflow(null)
+    const invalidate = invalidateWorkflow
     const storage = (event: StorageEvent) => { if (event.key === 'applyguard.evidence.version') invalidate() }
     window.addEventListener('applyguard:evidence-changed', invalidate)
     window.addEventListener('applyguard:jobs-changed', invalidate)
     window.addEventListener('storage', storage)
     return () => { window.removeEventListener('applyguard:evidence-changed', invalidate); window.removeEventListener('applyguard:jobs-changed', invalidate); window.removeEventListener('storage', storage) }
-  }, [setWorkflow])
+  }, [invalidateWorkflow])
 
   const setScenario = useCallback(
     (s: DemoScenario) => {
       setScenarioInClient(s)
       setScenarioState(s)
       setStep('import')
-      setJdRawInput(SAMPLE_JD)
+      setJdRawInput('')
+      setActiveJobId(null)
       setWorkflow(null)
       setResumeForm(null)
     },
@@ -190,7 +251,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   )
 
   const canProceedFromClaims = useCallback(() => {
-    if (!workflow?.claim_verification.length || workflow.requires_reverification) return false
+    if (Object.keys(reviewDrafts).length || !workflow?.claim_verification.length || workflow.requires_reverification) return false
     for (const v of workflow.claim_verification) {
       const d = claimDecisions[v.claim_id]
       if (workflow.grounding && d?.decision !== 'reject' &&
@@ -232,7 +293,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       workflow.claim_verification.length > 0 &&
       workflow.claim_verification.every((v) => v.state === 'BLOCKED')
     return hasPassable || onlyBlocked
-  }, [workflow, claimDecisions])
+  }, [workflow, claimDecisions, reviewDrafts])
   const atsFieldAcksComplete = useCallback(() => {
     if (!workflow) return false
     const controls = workflow.field_controls ?? []
@@ -259,7 +320,10 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   }, [workflow, atsFieldAcksComplete, canProceedFromClaims])
 
   const reverifyClaims = useCallback(async () => {
+    if (Object.keys(reviewDrafts).length) return '审核页仍有暂存修改，请返回保存或取消后再核验。'
     if (!workflow) return '请先运行工作流。'
+    if (!workflow._prerecorded && (workflow.parsed_jd.source_text.trim() !== jdRawInput.trim() ||
+        (workflow.target_job?.id ?? null) !== activeJobId)) return '岗位或关联已改变，请先在岗位说明重新分析。'
     const version = revision.current
     const claims = workflow.resume_claims
       .filter((claim) => claimDecisions[claim.claim_id]?.decision !== 'reject')
@@ -269,10 +333,11 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     if (res.error || !res.data) return res.error?.message ?? '重新核验失败'
     setWorkflow({...workflow, ...res.data})
     return null
-  }, [workflow, claimDecisions, resumeForm, setWorkflow])
+  }, [workflow, claimDecisions, resumeForm, setWorkflow, reviewDrafts, jdRawInput, activeJobId])
 
   const validateExport = useCallback(async () => {
-    if (!workflow || !canSubmitAts()) return false
+    if (!workflow || !canSubmitAts() || (!workflow._prerecorded && (
+        workflow.parsed_jd.source_text.trim() !== jdRawInput.trim() || (workflow.target_job?.id ?? null) !== activeJobId))) return false
     const version = revision.current
     const claims = workflow.resume_claims.filter((claim) => claimDecisions[claim.claim_id]?.decision !== 'reject')
       .map((claim) => ({claim_id: claim.claim_id, text: claim.text}))
@@ -289,15 +354,16 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       return false
     }
     return true
-  }, [workflow, claimDecisions, resumeForm, canSubmitAts, setWorkflow])
+  }, [workflow, claimDecisions, resumeForm, canSubmitAts, setWorkflow, jdRawInput, activeJobId])
 
   const dataSourceLabel = sourceLabel(scenario, workflow)
 
   const value = useMemo(
     () => ({
       scenario,
+      reviewDrafts, setReviewDraft, reviewStorageError, restoredAt,
       step,
-      jdRawInput,
+      jdRawInput, activeJobId, invalidateWorkflow,
       workflow,
       resumeForm,
       dataSourceLabel,
@@ -307,7 +373,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       simulatedConfirmed,
       setScenario,
       setStep,
-      setJdRawInput,
+      setJdRawInput, setActiveJobId,
       setWorkflow,
       patchWorkflow,
       reverifyClaims,
@@ -325,8 +391,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     }),
     [
       scenario,
+      reviewDrafts, setReviewDraft, reviewStorageError, restoredAt,
       step,
-      jdRawInput,
+      jdRawInput, activeJobId, invalidateWorkflow,
       workflow,
       resumeForm,
       dataSourceLabel,

@@ -85,10 +85,10 @@ export interface ApiClient {
   getCareerVault(): Promise<ApiResult<CareerVaultSeed>>
   parseResumePdf(file: File, parseMode?: WorkflowParseMode): Promise<ApiResult<ResumeParseResult>>
   getResumeDraft(): Promise<ApiResult<EditableResumeForm>>
-  saveResumeDraft(form: EditableResumeForm): Promise<ApiResult<{ saved: boolean; saved_at?: string; notice?: string }>>
+  saveResumeDraft(form: EditableResumeForm, expectedSavedAt?: string | null): Promise<ApiResult<{ saved: boolean; saved_at?: string; notice?: string }>>
   runWorkflow(
     jdText: string,
-    options?: { parseMode?: WorkflowParseMode; resumeDraft?: EditableResumeForm | null; targetJob?: { id: string; content_hash: string } },
+    options?: { parseMode?: WorkflowParseMode; resumeDraft?: EditableResumeForm | null; applicationId?: string; targetJob?: { id: string; content_hash: string } },
   ): Promise<ApiResult<WorkflowResponse>>
   createEvidenceWorkspace(name: string): Promise<ApiResult<EvidenceWorkspace>>
   listEvidenceWorkspaces(): Promise<ApiResult<EvidenceWorkspace[]>>
@@ -196,7 +196,7 @@ export class ApplyGuardApiClient implements ApiClient {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({candidate_id: workflow.candidate_id, application_id: workflow.application_id,
           jd_text: workflow.parsed_jd.source_text, target_job: workflow.target_job, resume_draft: draft ?? undefined,
-          grounding_mode: mode ?? workflow.grounding?.mode, claims}),
+          grounding_mode: mode ?? workflow.grounding?.mode, local_only: workflow.local_only ?? workflow.component_modes?.requested_parse_mode === 'OFFLINE', claims}),
       })
       const body = await readJson(response)
       if (!response.ok) return { error: toApiError(body, response.status) }
@@ -292,12 +292,13 @@ export class ApplyGuardApiClient implements ApiClient {
 
   async saveResumeDraft(
     form: EditableResumeForm,
+    expectedSavedAt?: string | null,
   ): Promise<ApiResult<{ saved: boolean; saved_at?: string; notice?: string }>> {
     try {
       const res = await apiFetch(`${apiBase()}/api/v1/resume/draft`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(expectedSavedAt === undefined ? form : { form, expected_saved_at: expectedSavedAt }),
       })
       const body = await readJson(res)
       if (!res.ok) return { error: toApiError(body, res.status) }
@@ -309,7 +310,7 @@ export class ApplyGuardApiClient implements ApiClient {
 
   async runWorkflow(
     jdText: string,
-    options?: { parseMode?: WorkflowParseMode; resumeDraft?: EditableResumeForm | null; targetJob?: { id: string; content_hash: string } },
+    options?: { parseMode?: WorkflowParseMode; resumeDraft?: EditableResumeForm | null; applicationId?: string; targetJob?: { id: string; content_hash: string } },
   ): Promise<ApiResult<WorkflowResponse>> {
     const scenario = activeScenario
     const parseMode: WorkflowParseMode = options?.parseMode ?? 'offline'
@@ -395,7 +396,7 @@ export class ApplyGuardApiClient implements ApiClient {
           jd_text: trimmed,
           target_job: options?.targetJob,
           parse_mode: parseMode,
-          application_id: `app_${crypto.randomUUID().replaceAll('-', '').slice(0, 16)}`,
+          application_id: options?.applicationId ?? `app_${crypto.randomUUID().replaceAll('-', '').slice(0, 16)}`,
           resume_draft: resumeDraft ?? undefined,
         }),
       })
@@ -742,7 +743,7 @@ export async function groundingRequest<T>(path: 'polish' | 'export', workflow: W
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({candidate_id:workflow.candidate_id,application_id:workflow.application_id,
         jd_text:workflow.parsed_jd.source_text,target_job:workflow.target_job,
-        resume_draft:draft ?? undefined,
+        resume_draft:draft ?? undefined, local_only: workflow.local_only ?? workflow.component_modes?.requested_parse_mode === 'OFFLINE',
         claims:workflow.resume_claims.map(({claim_id,text}) => ({claim_id,text})), ...extra}),
     })
     const body = await readJson(response)
