@@ -57,11 +57,13 @@ class GroundingV2Tests(unittest.TestCase):
         model = Model()
         service = GroundingService(retriever=AllSources(), model=model)
         with patch.object(service, 'retrieve', side_effect=AssertionError('Unexpected remote retrieval')):
-            _, checks, report = service.run([copy.deepcopy(CLAIM)], [experience()],
-                                             'cand_test', 'sag_atomic', local_only=True)
-        self.assertEqual(model.calls, [])
-        self.assertNotEqual(checks[0]['state'], 'VERIFIED')
-        self.assertTrue(report['error'])
+            for polish in (False, True):
+                with self.subTest(polish=polish):
+                    _, checks, report = service.run([copy.deepcopy(CLAIM)], [experience()],
+                                                     'cand_test', 'sag_atomic', polish=polish, local_only=True)
+                    self.assertEqual(model.calls, [])
+                    self.assertNotEqual(checks[0]['state'], 'VERIFIED')
+                    self.assertTrue(report['error'])
 
     def test_rejected_edit_restores_and_rechecks_original(self):
         model=Model(proposal='Alex increased throughput by 900%.')

@@ -6,6 +6,8 @@ export function session(workflow: WorkflowResponse): ReviewSession {
   return workflow.review_session ?? {startedAt: Date.now(), actions: 0, interruptions: 0, choices: {}}
 }
 export function needsAttention(result?: GroundingClaimResult): boolean {
+  if (result?.wording_auto_restored && result.final_text === result.original_text) return false
+  if (result?.wording_auto_applied && result.proposal_applied && !result.proposal_rejected) return false
   return Boolean(result && (result.proposal_rejected || result.preservation?.lost_supported_details.length ||
     result.change_audit?.sensitive_change || result.risk_escalation?.error || result.risk_escalation?.agrees_with_primary === false))
 }
@@ -15,7 +17,7 @@ export function reviewPriority(workflow: WorkflowResponse, id: string): number {
   if (choice && choice.text === claim?.text) return 0
   const result = workflow.grounding?.results[id]
   if (result?.proposed_text && result.proposed_text !== claim?.text) return needsAttention(result) ? 4 : 1
-  if (result?.proposal_rejected) return 4
+  if (result?.proposal_rejected && !result.wording_auto_restored) return 4
   if (needsAttention(result)) return 3
   if (!result || result.state !== 'VERIFIED' || result.final_text !== claim?.text) return 2
   return 0

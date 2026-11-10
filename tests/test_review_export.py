@@ -47,4 +47,4 @@ class ReviewExportTests(unittest.TestCase):
             self.assertEqual(GroundingService().model.model,'gemini-3.1-flash-lite-preview')
             self.assertEqual(HttpModelClient(model='explicit',task='complex').model,'explicit')
         with patch.dict(os.environ,{},clear=True):
-            self.assertEqual(HttpModelClient(task='complex').model,'gpt-4o-mini')
+            self.assertEqual(HttpModelClient(task='complex').model,'gemini-3.1-flash-lite-preview')

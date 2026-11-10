@@ -10,7 +10,8 @@ sys.path.insert(0,str(ROOT))
 def configure():
     os.environ.setdefault('APPLYGUARD_GROUNDING_MODE','sag_atomic')
     os.environ.setdefault('APPLYGUARD_AI_BASE_URL','https://api.chatanywhere.tech/v1')
-    os.environ.setdefault('APPLYGUARD_AI_MODEL','gpt-4.1-mini')
+    from backend.services.model_client import DEFAULT_TEXT_MODEL
+    os.environ.setdefault('APPLYGUARD_AI_MODEL', DEFAULT_TEXT_MODEL)
     if not os.getenv('APPLYGUARD_AI_API_KEY'):
         os.environ['APPLYGUARD_AI_API_KEY']=getpass.getpass('Model API key (hidden, memory only): ').strip()
     if not os.environ['APPLYGUARD_AI_API_KEY']:raise SystemExit('No key supplied.')

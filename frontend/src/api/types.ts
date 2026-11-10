@@ -282,6 +282,9 @@ export interface GroundingSource {
   retrieval_channels?: string[]
 }
 export interface GroundingClaimResult {
+  wording_auto_applied?: boolean
+  wording_auto_restored?: boolean
+  proposal_applied?: boolean
   verification_scope?: 'personal' | 'experience'
   scope_notice?: string
   state: ClaimState

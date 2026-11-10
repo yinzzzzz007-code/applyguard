@@ -12,6 +12,7 @@ from pathlib import Path
 
 from backend.services.atomic_verifier import AtomicVerifier, ATOM_PROMPT, JUDGE_PROMPT
 from backend.services.career_vault import CareerVault
+from backend.services.wording_review import JUDGE, REPAIR, review_edit, may_apply_wording
 from backend.services.local_evidence import vault_evidence_id
 from backend.services.model_client import HttpModelClient, ModelFailure
 from backend.services.resume_draft_vault import (
@@ -201,20 +202,39 @@ class GroundingService:
         polish_violations = {}
         original_hits = {}
         risk_escalation = {}
+        wording = {}
+        applied_wording = set()
+        empty_check = {'relation':'INSUFFICIENT', 'complete':False, 'atoms':[]}
         reused_checks = set()
         try:
             if local_only and active:
                 error = '当前为全离线模式。材料已关联。若需模型核验，请回到岗位说明选择 AI 模式、确认后重新分析。'
             hits = self.retrieve(active,sources,allowed,candidate) if active and not local_only else {}
             original_hits = copy.deepcopy(hits)
-            if polish and active:
-                if mode == 'sag_atomic':
+            polishable = [c for c in claims if c['claim_id'] in contexts] if mode == 'sag_atomic' else active
+            if polish and polishable and not local_only:
+                if mode == 'sag_atomic' and active:
                     original_checks = AtomicVerifier(self.model).verify(active,contexts,hits)
+                for claim in polishable:
+                    original_checks.setdefault(claim['claim_id'], {**empty_check,
+                        'claim_text_sha256':hashlib.sha256(claim['text'].encode()).hexdigest()})
                 polisher = AtomicVerifier(self.model)
-                polished = polisher.polish(active,contexts,hits,jd,original_checks=original_checks)
+                polished = polisher.polish(polishable,contexts,hits,jd,original_checks=original_checks)
                 polish_source = polisher.polish_source
                 polish_violations = polisher.polish_violations
                 changed = {c['claim_id']:c for c in polished}
+                if mode == 'sag_atomic':
+                    from backend.services.asu_resume import proposal_violations
+                    from backend.services.fact_lock import locked_edit_findings
+                    for cid, proposal in changed.items():
+                        if proposal['text'] == original_text[cid]:
+                            continue
+                        text, wording[cid] = review_edit(getattr(self.model, 'wording_step', None),
+                                                         original_text[cid], proposal['text'])
+                        if text != proposal['text']:
+                            proposal['text'] = text
+                            polish_violations[cid] = (proposal_violations(original_text[cid], text, hits.get(cid, []))
+                                + locked_edit_findings(original_text[cid], text, original_checks[cid]))
                 proposals = copy.deepcopy(changed)
                 claims = [changed.get(c['claim_id'],c) for c in claims]
                 active = [changed[c['claim_id']] for c in active]
@@ -237,7 +257,7 @@ class GroundingService:
                 strong_name = os.getenv('APPLYGUARD_STRONG_AI_MODEL', '').strip()
                 if mode == 'sag_atomic' and strong_name:
                     high_risk = [proposals[c['claim_id']] for c in changed_originals
-                                 if high_risk_edit(c['text'], proposals[c['claim_id']]['text'])]
+                                 if c['claim_id'] in atomic and high_risk_edit(c['text'], proposals[c['claim_id']]['text'])]
                     if high_risk:
                         try:
                             strong = HttpModelClient(model=strong_name,
@@ -256,17 +276,29 @@ class GroundingService:
                                 risk_escalation[claim['claim_id']] = {'model':strong_name,
                                     'relation':'INSUFFICIENT', 'error':'强模型复核未完成；建议未采用。'}
                 if mode == 'sag_atomic':
-                    preservation_checks = preservation(self.model,changed_originals,list(proposals.values()),hits,original_checks)
-                rejected = {c['claim_id'] for c in changed_originals if mode != 'sag_atomic'
-                    or polish_violations.get(c['claim_id'])
-                    or atomic.get(c['claim_id'],{}).get('relation') != 'SUPPORTED'
-                    or preservation_checks.get(c['claim_id'],{}).get('lost_supported_details')
-                    or c['claim_id'] in escalated_rejections}
+                    # Incomplete/absent originals have no complete inventory of supported facts.
+                    # Keep their source status separate; do not contaminate other sentences.
+                    comparable = [c for c in changed_originals if original_checks[c['claim_id']].get('complete')]
+                    preservation_checks = preservation(self.model,comparable,list(proposals.values()),hits,original_checks)
+                for original in changed_originals:
+                    cid = original['claim_id']
+                    final_check = atomic.get(cid, empty_check)
+                    if mode == 'sag_atomic' and may_apply_wording(
+                        wording.get(cid, {}), original_checks[cid], final_check,
+                        polish_violations.get(cid), cid in escalated_rejections,
+                        original_text[cid], proposals[cid]['text'], preservation_checks.get(cid, {})
+                    ):
+                        applied_wording.add(cid)
+                        # A stylistic change cannot promote an unsupported original.
+                        if original_checks[cid]['relation'] != 'SUPPORTED' and final_check['relation'] == 'SUPPORTED':
+                            atomic[cid] = {**final_check, 'relation':'INSUFFICIENT',
+                                           'support_notice':'原句依据不足；此处仅确认表达等价。'}
+                rejected = {c['claim_id'] for c in changed_originals} - applied_wording
                 fallback = [c for c in originals if c['claim_id'] in rejected]
                 if fallback:
                     restored = {c['claim_id']:c for c in fallback}
                     claims = [restored.get(c['claim_id'],c) for c in claims]
-                    fallback_hits = {c['claim_id']:original_hits[c['claim_id']] for c in fallback}
+                    fallback_hits = {c['claim_id']:original_hits.get(c['claim_id'], []) for c in fallback}
                     hits.update(fallback_hits)
                     if mode == 'sag_atomic':
                         atomic.update({c['claim_id']:copy.deepcopy(original_checks[c['claim_id']]) for c in fallback})
@@ -296,8 +328,8 @@ class GroundingService:
             else:
                 state = {'SUPPORTED':'VERIFIED','CONTRADICTED':'BLOCKED','INSUFFICIENT':'NEEDS_REVIEW'}[row['relation']]
                 explanation = {'VERIFIED':'所有已拆分事实及完整性检查通过，逐字引文来自当前经历原件；请人工核对后使用。',
-                    'BLOCKED':'至少一项原子事实与当前原件矛盾，禁止导出。',
-                    'NEEDS_REVIEW':'至少一项事实证据不足、引用无效或拆分不完整，尚不可导出。'}[state]
+                    'BLOCKED':'至少一项事实与原件矛盾。请查看引文，可编辑后按用户确认稿导出。',
+                    'NEEDS_REVIEW':'证据不足、引用无效或拆分不完整。可按用户确认稿导出，材料状态单独记录。'}[state]
             claim['evidence_ids'] = (personal[cid]['evidence_ids'] if is_personal else
                 sorted({s['evidence_id'] for s in sources if s['source_id'] in allowed.get(cid,[])}))
             claim['status'] = 'BLOCKED' if state == 'BLOCKED' else 'DRAFT'
@@ -315,18 +347,22 @@ class GroundingService:
                 proposed = proposals[cid]['text']
                 results[cid].update(proposed_text=proposed,proposal_check=proposal_checks.get(cid),
                     original_check=original_checks.get(cid),
+                    wording_auto_restored=(not error and proposed != claim['text'] and
+                        claim['text'] == original_text[cid] and
+                        wording.get(cid, {}).get('repair_outcome') == 'restored_original'),
+                    wording_review=wording.get(cid), wording_auto_applied=cid in applied_wording and not error,
                     proposal_constraint_violations=polish_violations.get(cid,[]),
                     risk_escalation=risk_escalation.get(cid),
                     preservation=preservation_checks.get(cid),change_audit=change_audit(original_text[cid],proposed),
                     proposal_applied=not error and proposed==claim['text'],
                     proposal_rejected=proposed!=claim['text'],
                     proposal_notice=('；'.join(polish_violations[cid]) if polish_violations.get(cid)
-                        else '建议未通过核验或信息保留检查，已保留原文；原文状态单独核验。') if proposed!=claim['text'] else '')
+                        else '建议未确认事实等价，已保留原文；原文状态单独核验。') if proposed!=claim['text'] else '')
         from backend.services.structured_verifier import SPLIT_PROMPT, CHECK_PROMPT
         from backend.services.atomic_verifier import POLISH_PROMPT
         from backend.services.edit_guard import PRESERVE_PROMPT
         return claims, verifications, {'mode':mode,'engine':'zleap-sag 0.15.0','snapshot':snapshot,
-            'prompt_version':fingerprint([ATOM_PROMPT,JUDGE_PROMPT,SPLIT_PROMPT,CHECK_PROMPT,PRESERVE_PROMPT,POLISH_PROMPT,polish_source]),
+            'prompt_version':fingerprint([ATOM_PROMPT,JUDGE_PROMPT,JUDGE,REPAIR,SPLIT_PROMPT,CHECK_PROMPT,PRESERVE_PROMPT,POLISH_PROMPT,polish_source]),
             'polish_source':polish_source,'results':results,'error':error,
             'export_requires_atomic':True, 'model_routing':{
                 'requested_model':getattr(self._model,'model',None),
@@ -348,7 +384,15 @@ def apply_grounding(vault_path, request, response, *, polish=False):
         for result in verified:
             if report['results'][result['claim_id']].get('verification_scope') == 'personal':continue
             result.update(state='NEEDS_REVIEW',grounded=False,support_score=0.0,explanation=report['error'])
-            report['results'][result['claim_id']]['state'] = 'NEEDS_REVIEW'
+            cid = result['claim_id']
+            row = report['results'][cid]
+            if polish and row.get('wording_auto_applied'):
+                claim = next(c for c in claims if c['claim_id'] == cid)
+                claim['text'] = row['original_text']
+                row.update(final_text=claim['text'], proposal_rejected=True, proposal_applied=False)
+            row.update(state='NEEDS_REVIEW', relation='INSUFFICIENT', wording_auto_applied=False,
+                       wording_auto_restored=False)
+
     from backend.services.reverification import simulator_mapping
     from backend.services.risk_engine import RiskEngine
     from backend.services.schema_validation import validate_contract
@@ -366,7 +410,7 @@ def apply_grounding(vault_path, request, response, *, polish=False):
     out.update(resume_claims=claims,claim_verification=verified,grounding=report,
         ats_form_mapping=mapping,field_controls=engine.field_controls(mapping,verified),risk_result=risk,
         requires_reverification=False,workflow_status='BLOCKED' if blocked else 'AWAITING_HUMAN_CONFIRMATION',
-        human_confirmation={'required':True,'reason':'请核对逐事实引文；待复核状态不能通过人工点击直接导出。',
+        human_confirmation={'required':True,'reason':'请核对引文。已核验稿要求材料支持；用户确认稿可在编辑并确认最终文字后单独导出。',
             'allowed_actions':['CONFIRM','EDIT','CANCEL'] if strict_ready and not blocked else ['EDIT','CANCEL']})
     out['component_modes'] = {**out.get('component_modes',{}),'claim_grounding':mode.upper()}
     out['evidence_sources'] = [{k:v for k,v in source.items() if not k.startswith('_')}
@@ -400,7 +444,7 @@ def export_grounded(vault_path, request):
     verified = result['claim_verification']
     if (not verified or result['grounding'].get('error') or result['risk_result']['action'] == 'BLOCKED'
             or any(row['state'] != 'VERIFIED' for row in verified)):
-        raise ValueError('最终文本尚未全部通过原子事实核验，不能导出；人工确认不能覆盖此状态')
+        raise ValueError('仅已核验稿要求全部事实通过原子核验。请复核材料，或选择用户确认稿导出。')
     # The server returns its reconstructed final text, not a client-provided export body.
     text = '\n'.join(claim['text'] for claim in result['resume_claims'])
     return {'text':text,'sha256':hashlib.sha256(text.encode()).hexdigest(),

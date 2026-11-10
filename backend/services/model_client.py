@@ -56,7 +56,14 @@ def _json_object(content: str) -> dict[str, Any] | None:
     return parsed if isinstance(parsed, dict) else None
 
 
+DEFAULT_TEXT_MODEL = "gemini-3.1-flash-lite-preview"
+
+
 class HttpModelClient:
+    def wording_step(self, action, original, proposal, issues):
+        from backend.services.wording_review import sdk_step
+        return sdk_step(self, action, original, proposal, issues)
+
     def __init__(self, *, api_key: str | None = None, base_url: str | None = None,
                  model: str | None = None, max_tokens: int | None = None, timeout: float | None = None,
                  require_complete: bool = False, task: str = "simple") -> None:
@@ -68,7 +75,7 @@ class HttpModelClient:
         if task not in {"simple", "complex"}:
             raise ValueError("Unknown model task")
         self.task = task
-        default_model = os.getenv("APPLYGUARD_AI_MODEL", "gpt-4o-mini")
+        default_model = os.getenv("APPLYGUARD_AI_MODEL", DEFAULT_TEXT_MODEL)
         if task == "complex":
             default_model = os.getenv("APPLYGUARD_COMPLEX_AI_MODEL", "").strip() or default_model
         self.model = model if model is not None else default_model
