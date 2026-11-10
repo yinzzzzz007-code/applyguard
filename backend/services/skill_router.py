@@ -115,6 +115,8 @@ class SkillRouter:
         modes["jd_parser"] = parser_mode
 
         def match_model() -> ModelClient | None:
+            if request.get("local_only") is True or request.get("parse_mode") == "offline":
+                return None
             if self.model is not None:
                 return self.model
             # Offline JD parse still uses AI matching when a key is configured.
@@ -131,7 +133,8 @@ class SkillRouter:
         def match():
             baseline = EvidenceMatcher().match(parsed, experiences)
             result = augment_match_with_ai(parsed, experiences, baseline, match_model())
-            result = augment_match_with_sag(parsed, experiences, result)
+            if request.get("local_only") is not True and request.get("parse_mode") != "offline":
+                result = augment_match_with_sag(parsed, experiences, result)
             validate_contract("evidence-match", result)
             return result
         matched = execute("Evidence Matcher", match)

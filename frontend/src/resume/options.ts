@@ -100,6 +100,13 @@ export const FULL_TIME_OPTIONS = ['是', '否']
 
 export const PROJECT_TYPE_OPTIONS = ['应届生', '实习生', '社招（演示）']
 
+export const EXPECTED_ROLE_OPTIONS = [
+  '后端开发', '前端开发', '全栈开发', '移动端开发', '软件开发（其他方向）',
+  '测试 / 质量保障', '运维 / DevOps', '信息安全',
+  '数据分析', '数据工程', 'AI / 算法', '产品经理', '用户体验 / 设计',
+  '运营', '市场 / 商务', '其他职位',
+]
+
 /** Province → cities (simplified China mainland set for cascader demos). */
 export const REGION_TREE: Record<string, string[]> = {
   北京市: ['东城区', '西城区', '朝阳区', '海淀区', '丰台区', '石景山区', '通州区', '昌平区', '大兴区', '其他'],
@@ -140,6 +147,14 @@ export const REGION_TREE: Record<string, string[]> = {
 }
 
 export const PROVINCES = Object.keys(REGION_TREE)
+
+export const EXPECTED_CITY_OPTIONS = [
+  ...Object.entries(REGION_TREE).flatMap(([region, cities]) =>
+    /(?:市|特别行政区)$/.test(region) ? [region] : cities.filter((city) => city !== '其他'),
+  ),
+  '城市不限',
+  '其他城市',
+]
 
 export function yearsBetween(from: number, to: number): string[] {
   const out: string[] = []

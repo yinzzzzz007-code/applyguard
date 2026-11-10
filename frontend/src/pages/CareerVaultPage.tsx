@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getApiClient } from '../api/client'
 import type {
@@ -13,6 +13,7 @@ import { EmptyState, ErrorState, LoadingState } from '../components/States'
 import { useDemo } from '../context/DemoContext'
 import {
   buildResumeFormFromVault,
+  emptyResumeForm,
   newExperienceId,
   normalizeResumeForm,
   resumeCompleteness,
@@ -21,6 +22,8 @@ import {
 import {
   DEGREE_OPTIONS,
   ETHNICITY_OPTIONS,
+  EXPECTED_CITY_OPTIONS,
+  EXPECTED_ROLE_OPTIONS,
   FULL_TIME_OPTIONS,
   GENDER_OPTIONS,
   ID_TYPE_OPTIONS,
@@ -51,16 +54,18 @@ function FieldShell({
   label,
   required,
   wide,
+  htmlFor,
   children,
 }: {
   label: string
   required?: boolean
   wide?: boolean
+  htmlFor?: string
   children: React.ReactNode
 }) {
   return (
     <div className={wide ? 'resume-field resume-field-wide' : 'resume-field'}>
-      <label>
+      <label htmlFor={htmlFor}>
         {required ? <span className="req">*</span> : null}
         {label}
       </label>
@@ -76,6 +81,8 @@ function FieldInput({
   wide,
   multiline,
   placeholder,
+  type = "text",
+  error,
   onChange,
 }: {
   label: string
@@ -84,12 +91,16 @@ function FieldInput({
   wide?: boolean
   multiline?: boolean
   placeholder?: string
+  type?: "text" | "tel" | "email"
+  error?: string
   onChange: (v: string) => void
 }) {
+  const id = useId()
   return (
-    <FieldShell label={label} required={required} wide={wide}>
+    <FieldShell label={label} required={required} wide={wide} htmlFor={id}>
       {multiline ? (
         <textarea
+          id={id}
           className="resume-input"
           rows={4}
           value={value}
@@ -98,12 +109,18 @@ function FieldInput({
         />
       ) : (
         <input
+          id={id}
+          type={type}
+          autoComplete={type === "text" ? undefined : type}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? id + "-error" : undefined}
           className="resume-input"
           value={value}
           placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
         />
       )}
+      {error && <p id={id + "-error"} className="danger-text">{error}</p>}
     </FieldShell>
   )
 }
@@ -115,6 +132,7 @@ function FieldSelect({
   required,
   wide,
   placeholder = '请选择',
+  showPreviousValue,
   onChange,
 }: {
   label: string
@@ -123,27 +141,121 @@ function FieldSelect({
   required?: boolean
   wide?: boolean
   placeholder?: string
+  showPreviousValue?: boolean
   onChange: (v: string) => void
 }) {
+  const id = useId()
+  const previousValue = showPreviousValue && value && !options.includes(value) ? value : ''
   return (
-    <FieldShell label={label} required={required} wide={wide}>
+    <FieldShell label={label} required={required} wide={wide} htmlFor={id}>
       <select
+        id={id}
         className="resume-input resume-select"
         value={value}
+        aria-describedby={previousValue ? `${id}-previous` : undefined}
         onChange={(e) => onChange(e.target.value)}
       >
         <option value="">{placeholder}</option>
+        {previousValue && <option value={previousValue} disabled>原值待重选</option>}
         {options.map((opt) => (
           <option key={opt} value={opt}>
             {opt}
           </option>
         ))}
       </select>
+      {previousValue && <p id={`${id}-previous`} className="resume-hint intention-previous">
+        原值：{previousValue}。可从列表重选或清空。
+      </p>}
+    </FieldShell>
+  )
+}
+
+function CalendarField({ label, value, type, required, onChange }: {
+  label: string
+  value: string
+  type: 'date' | 'month'
+  required?: boolean
+  onChange: (value: string) => void
+}) {
+  const id = useId()
+  const input = useRef<HTMLInputElement>(null)
+  const isMonth = type === 'month'
+  const isCalendarValue = (candidate: string) => {
+    const fullDate = isMonth ? `${candidate}-01` : candidate
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fullDate) || fullDate.startsWith('0000')) return false
+    const parsed = new Date(`${fullDate}T00:00:00Z`)
+    return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === fullDate
+  }
+  const dateValue = isCalendarValue(value) ? value : ''
+  const previousValue = value && !dateValue ? value : ''
+
+  return (
+    <FieldShell label={label} required={required} htmlFor={id}>
+      <input
+        id={id}
+        ref={input}
+        className="resume-input intention-date"
+        type={type}
+        value={dateValue}
+        min={isMonth ? '0001-01' : '0001-01-01'}
+        max={isMonth ? '9999-12' : '9999-12-31'}
+        aria-describedby={previousValue ? `${id}-previous` : undefined}
+        onChange={(event) => {
+          const next = event.currentTarget.value
+          if (event.currentTarget.validity.valid && (!next || isCalendarValue(next))) onChange(next)
+        }}
+      />
+      {previousValue && <p id={`${id}-previous`} className="resume-hint intention-previous">
+        原值：{previousValue}。选择{isMonth ? '年月' : '日期'}即可替换。
+        {' '}
+        <button type="button" className="text-action" onClick={() => {
+          onChange('')
+          input.current?.focus()
+        }}>清除原值</button>
+      </p>}
     </FieldShell>
   )
 }
 
 /** 出生日期：年 / 月 / 日 下拉（校招常见日期选取） */
+const EXPERIENCE_YEARS = Array.from({ length: 81 }, (_, index) => String(new Date().getFullYear() + 10 - index))
+
+function PrecisionDateField({ label, value, required, allowOngoing, onChange }: {
+  label: string
+  value: string
+  required?: boolean
+  allowOngoing?: boolean
+  onChange: (value: string) => void
+}) {
+  const id = useId()
+  const ongoing = /^(至今|现在|present|current|now)$/i.test(value)
+  const valid = /^\d{4}(?:-\d{2}(?:-\d{2})?)?$/.test(value)
+  const [year = '', month = '', day = ''] = valid ? value.split('-') : []
+  const years = [...new Set([year, ...EXPERIENCE_YEARS])].filter(Boolean).sort().reverse()
+
+  return <FieldShell label={label} required={required} htmlFor={id}>
+    <div className="precision-date">
+      <select id={id} aria-label={label + '年份'} value={ongoing ? 'ongoing' : year} className="resume-input"
+        onChange={event => {
+          const next = event.target.value
+          onChange(next === 'ongoing' ? '至今' : [next, next && month].filter(Boolean).join('-'))
+        }}>
+        <option value="">选择年份</option>
+        {allowOngoing && <option value="ongoing">至今</option>}
+        {years.map(item => <option key={item} value={item}>{item} 年</option>)}
+      </select>
+      <select aria-label={label + '月份'} value={month} disabled={!year || ongoing} className="resume-input"
+        onChange={event => onChange([year, event.target.value].filter(Boolean).join('-'))}>
+        <option value="">仅年份</option>
+        {MONTH_OPTIONS.map(item => <option key={item} value={item}>{item} 月</option>)}
+      </select>
+    </div>
+    {day && <p className="resume-hint">已记录日期 {value}。调整年月会按新的精度保存。</p>}
+    {!valid && value && !ongoing && <p className="resume-hint">原值 {value}。请选择年月，
+      或 <button type="button" className="text-action" onClick={() => onChange('')}>清除原值</button>。</p>}
+  </FieldShell>
+}
+
 function BirthDateSelect({
   value,
   onChange,
@@ -159,7 +271,7 @@ function BirthDateSelect({
     onChange(joinDate(nextY, nextM, day))
   }
   return (
-    <FieldShell label="出生日期" required>
+    <FieldShell label="出生日期（选填）">
       <div className="resume-triple">
         <select
           className="resume-input resume-select"
@@ -307,8 +419,8 @@ function ExperienceEditor({
             <FieldInput label="担任角色" value={entry.role} required onChange={(v) => set('role', v)} />
           </>
         )}
-        <FieldInput label="开始时间" value={entry.start} required onChange={(v) => set('start', v)} />
-        <FieldInput label="结束时间" value={entry.end} required onChange={(v) => set('end', v)} />
+        <PrecisionDateField label="开始时间" value={entry.start} required onChange={(v) => set('start', v)} />
+        <PrecisionDateField label="结束时间" value={entry.end} required allowOngoing onChange={(v) => set('end', v)} />
         {mode === 'project' ? (
           <FieldInput
             label="所属组织"
@@ -359,7 +471,7 @@ function AwardEditor({
       <div className="resume-fields">
         <FieldInput label="奖项名称" value={entry.name} required onChange={(v) => set('name', v)} />
         <FieldInput label="颁发单位" value={entry.issuer} onChange={(v) => set('issuer', v)} />
-        <FieldInput label="获奖时间" value={entry.date} onChange={(v) => set('date', v)} />
+        <PrecisionDateField label="获奖时间" value={entry.date} onChange={(v) => set('date', v)} />
         <FieldInput
           label="说明"
           value={entry.description}
@@ -408,6 +520,9 @@ export function CareerVaultPage() {
   const [activeSection, setActiveSection] = useState<string>('basic')
   const [saveMsg, setSaveMsg] = useState('')
   const [saveKind, setSaveKind] = useState<'ok' | 'warn' | ''>('')
+  const [saving,setSaving] = useState(false)
+  const [beforeClear, setBeforeClear] = useState<EditableResumeForm | null>(null)
+  const editRevision = useRef(0)
 
   const hasFormRef = useRef(false)
   hasFormRef.current = !!resumeForm
@@ -420,11 +535,11 @@ export function CareerVaultPage() {
       getApiClient().getCareerVault(),
       getApiClient().getResumeDraft(),
     ])
-    // 已保存草稿优先：种子失败也不要整页报错退回首页
+    // 已保存草稿优先，读取失败时保留本标签页的表单。
     if (draft.data) {
       setVault(res.data ?? null)
       setResumeForm((prev) => {
-        if (prev?.dirty && prev.savedAt && prev.candidateId === draft.data!.candidateId) {
+        if (prev?.dirty && prev.candidateId === draft.data!.candidateId) {
           return normalizeResumeForm(prev)
         }
         const fromDisk = normalizeResumeForm(draft.data!)
@@ -433,10 +548,15 @@ export function CareerVaultPage() {
       const notice = sessionStorage.getItem('applyguard.importNotice')
       if (notice) {
         sessionStorage.removeItem('applyguard.importNotice')
-        setSaveKind('warn')
+        setSaveKind('ok')
         setSaveMsg(notice)
       }
       setStatus('success')
+      return
+    }
+    if (draft.error && !hasFormRef.current) {
+      setErrorMsg(draft.error.message)
+      setStatus('error')
       return
     }
     if (res.error) {
@@ -444,7 +564,7 @@ export function CareerVaultPage() {
       setStatus('error')
       return
     }
-    if (res.empty || !res.data?.experiences.length) {
+    if (res.empty || !res.data?.candidate_id) {
       setVault(res.data ?? null)
       setStatus('empty')
       return
@@ -454,31 +574,16 @@ export function CareerVaultPage() {
       if (
         prev &&
         prev.candidateId === res.data!.candidate_id &&
-        prev.dirty &&
-        prev.savedAt
+        prev.dirty
       ) {
         return normalizeResumeForm(prev)
       }
-      if (prev && prev.candidateId === res.data!.candidate_id && prev.savedAt) {
-        return normalizeResumeForm(prev)
-      }
-      try {
-        const raw = sessionStorage.getItem('applyguard.resumeForm')
-        if (raw) {
-          const parsed = JSON.parse(raw) as EditableResumeForm
-          if (parsed.candidateId === res.data!.candidate_id && parsed.savedAt) {
-            return normalizeResumeForm({ ...parsed, dirty: false })
-          }
-        }
-      } catch {
-        /* ignore */
-      }
-      return { ...buildResumeFormFromVault(res.data!), dirty: true, savedAt: undefined }
+      return emptyResumeForm(res.data!.candidate_id)
     })
     const notice = sessionStorage.getItem('applyguard.importNotice')
     if (notice) {
       sessionStorage.removeItem('applyguard.importNotice')
-      setSaveKind('warn')
+      setSaveKind('ok')
       setSaveMsg(notice)
     }
     setStatus('success')
@@ -489,9 +594,16 @@ export function CareerVaultPage() {
   }, [load, scenario])
 
   const form = resumeForm
+  const phone = form?.basic.phone.trim() ?? ''
+  const email = form?.basic.email.trim() ?? ''
+  const phoneError = phone && !/^(?:1[3-9]\d{9}|\+861[3-9]\d{9}|\+(?!86)[1-9]\d{6,14})$/.test(phone.replace(/[\s()-]/g, ''))
+    ? '请输入有效手机号。其他地区号码请带国际区号。' : ''
+  const emailError = email && !/^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(email)
+    ? '请输入有效的电子邮箱。' : ''
 
   const patchForm = (updater: (prev: EditableResumeForm) => EditableResumeForm) => {
     if (!resumeForm) return
+    editRevision.current += 1
     setResumeForm({ ...updater(resumeForm), dirty: true })
     setSaveKind('')
     setSaveMsg('')
@@ -504,48 +616,78 @@ export function CareerVaultPage() {
     document.getElementById(`resume-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  const saveLocal = () => {
-    if (!form) return
+  const saveLocal = async (): Promise<boolean> => {
+    if (!form || saving) return false
+    if (phoneError || emailError) {
+      setSaveKind('warn')
+      setSaveMsg('请先修正基本信息中的手机号或邮箱。')
+      scrollTo('basic')
+      document.querySelector<HTMLInputElement>('#resume-basic input[aria-invalid="true"]')?.focus()
+      return false
+    }
+    const revision = editRevision.current
+    setSaving(true)
     const saved = {
       ...form,
       dirty: false,
-      savedAt: new Date().toLocaleString(),
     }
-    void getApiClient()
-      .saveResumeDraft(saved)
-      .then((res) => {
-        if (res.error) {
+    try {
+        const res = await getApiClient().saveResumeDraft(saved, form.savedAt ?? null)
+        if (res.error || !res.data?.saved) {
           setSaveKind('warn')
-          setSaveMsg(`未保存到后端：${res.error.message}`)
-          return
+          setSaveMsg(`未保存到后端：${res.error?.message ?? '未收到保存确认'}`)
+          return false
         }
-        setResumeForm(saved)
-        try {
-          sessionStorage.setItem('applyguard.resumeForm', JSON.stringify(saved))
-        } catch {
-          /* ignore quota */
+        const savedAt = res.data.saved_at
+        setBeforeClear(null)
+        if (editRevision.current !== revision) {
+          setResumeForm(prev => prev ? { ...prev, savedAt } : prev)
+          setSaveKind('warn')
+          setSaveMsg('上一版本已保存，刚才的新修改尚未保存，请再次保存。')
+          return false
         }
+        setResumeForm({ ...saved, savedAt })
         setSaveKind('ok')
         setSaveMsg('保存成功')
-      })
+        return true
+    } catch {setSaveKind('warn');setSaveMsg('保存未完成，请检查连接后重试。当前输入仍保留。');return false}
+    finally {setSaving(false)}
   }
 
-  const resetFromSeed = () => {
-    if (!vault) return
-    if (!window.confirm('用种子数据覆盖当前编辑？未保存修改将丢失。')) return
-    setResumeForm({ ...buildResumeFormFromVault(vault), dirty: true, savedAt: undefined })
+  const clearForm = () => {
+    if (!form || saving || !window.confirm(
+      '清空当前经历库表单？点「保存经历」后才会覆盖已保存的资料，原件仍可在材料库查看。')) return
+    const blank = emptyResumeForm(form.candidateId)
+    setBeforeClear(form)
+    patchForm(() => ({ ...blank, basic: { ...blank.basic, idType: '' }, savedAt: form.savedAt }))
     setSaveKind('warn')
-    setSaveMsg('已从种子数据重新载入，尚未保存。')
+    setSaveMsg('表单已清空，尚未保存。可以撤销清空，或点「保存经历」应用。')
+  }
+
+  const undoClear = () => {
+    if (!beforeClear || saving) return
+    editRevision.current += 1
+    setResumeForm(beforeClear)
+    setBeforeClear(null)
+    setSaveKind('ok')
+    setSaveMsg('已恢复清空前的表单。')
+  }
+
+  const loadDemoResume = () => {
+    if (!vault) return
+    if (!window.confirm('载入虚构的演示简历？当前未保存的修改会丢失。再次保存时，演示简历会覆盖已保存的草稿。')) return
+    setBeforeClear(null)
+    setResumeForm({ ...buildResumeFormFromVault(vault), dirty: true, savedAt: resumeForm?.savedAt })
+    setSaveKind('warn')
+    setSaveMsg('已载入演示简历，尚未保存。')
   }
 
   return (
     <section className={`panel resume-panel ${form && !form.dirty && form.savedAt ? 'is-saved' : 'is-unsaved'}`}>
       <header className="panel-head">
-        <h2>经历库 · 简历编辑</h2>
+        <h2>整理自己的经历</h2>
         <p>
-          整理教育、实习、项目与获奖经历，保存到本机草稿。个人资料与教育信息以填写为准；项目、实习与竞赛/获奖需关联证据核验。可到{' '}
-          <Link to="/evidence">本地证据工作区</Link>
-          关联原件，保留文件版本与原文位置。
+          优先核对项目、实习与技能，保存后到 <Link to="/evidence">证明材料</Link> 补充依据。个人资料和教育信息按填写使用，不代表已被证据核验。
         </p>
       </header>
 
@@ -566,19 +708,24 @@ export function CareerVaultPage() {
         <>
           <div className={form.dirty || !form.savedAt ? 'resume-toolbar is-unsaved' : 'resume-toolbar is-saved'}>
             <div>
-              <strong>简历完整度 {completeness}%</strong>
+              <strong>核心资料准备度 {completeness}%</strong>
               <div className="resume-progress">
                 <span style={{ width: `${completeness}%` }} />
               </div>
             </div>
-            <span className="resume-tip">
-              {form.dirty || !form.savedAt ? '未保存' : `已保存${form.savedAt ? ` · ${form.savedAt}` : ''}`}
-            </span>
+            <div className="btn-row">
+              <span className="resume-tip">
+                {form.dirty || !form.savedAt ? '未保存' : `已保存${form.savedAt ? ` · ${new Date(form.savedAt).toLocaleString()}` : ''}`}
+              </span>
+              <button type="button" className={beforeClear ? 'btn secondary' : 'btn ghost-danger'} disabled={saving}
+                onClick={beforeClear ? undoClear : clearForm}>{beforeClear ? '撤销清空' : '清空表单'}</button>
+            </div>
           </div>
           {saveMsg ? (
-            <div className={saveKind === 'ok' ? 'callout ok' : 'callout warn'}>{saveMsg}</div>
+            <div role="status" className={saveKind === 'ok' ? 'callout ok' : 'callout warn'}>{saveMsg}</div>
           ) : null}
 
+          <p className="resume-hint">星号表示建议优先填写，可先保存不完整草稿。网申补充信息为选填，不影响准备度。</p>
           <div className="resume-layout">
             <aside className="resume-side">
               <p className="resume-side-title">简历模块</p>
@@ -611,39 +758,10 @@ export function CareerVaultPage() {
                       patchForm((p) => ({ ...p, basic: { ...p.basic, name: v } }))
                     }
                   />
-                  <FieldSelect
-                    label="性别"
-                    required
-                    options={GENDER_OPTIONS}
-                    value={form.basic.gender}
-                    onChange={(v) =>
-                      patchForm((p) => ({ ...p, basic: { ...p.basic, gender: v } }))
-                    }
-                  />
-                  <BirthDateSelect
-                    value={form.basic.birthday}
-                    onChange={(v) =>
-                      patchForm((p) => ({ ...p, basic: { ...p.basic, birthday: v } }))
-                    }
-                  />
-                  <FieldSelect
-                    label="民族"
-                    options={ETHNICITY_OPTIONS}
-                    value={form.basic.ethnicity}
-                    onChange={(v) =>
-                      patchForm((p) => ({ ...p, basic: { ...p.basic, ethnicity: v } }))
-                    }
-                  />
-                  <FieldSelect
-                    label="政治面貌"
-                    options={POLITICS_OPTIONS}
-                    value={form.basic.politics}
-                    onChange={(v) =>
-                      patchForm((p) => ({ ...p, basic: { ...p.basic, politics: v } }))
-                    }
-                  />
                   <FieldInput
                     label="手机号码"
+                    type="tel"
+                    error={phoneError}
                     required
                     value={form.basic.phone}
                     onChange={(v) =>
@@ -652,29 +770,12 @@ export function CareerVaultPage() {
                   />
                   <FieldInput
                     label="电子邮箱"
+                    type="email"
+                    error={emailError}
                     required
                     value={form.basic.email}
                     onChange={(v) =>
                       patchForm((p) => ({ ...p, basic: { ...p.basic, email: v } }))
-                    }
-                  />
-                  <FieldSelect
-                    label="证件类型"
-                    required
-                    options={ID_TYPE_OPTIONS}
-                    value={form.basic.idType}
-                    onChange={(v) =>
-                      patchForm((p) => ({ ...p, basic: { ...p.basic, idType: v } }))
-                    }
-                  />
-                  <FieldInput
-                    label="证件号码"
-                    required
-                    wide
-                    value={form.basic.idNo}
-                    placeholder="演示环境请勿填写真实证件号"
-                    onChange={(v) =>
-                      patchForm((p) => ({ ...p, basic: { ...p.basic, idNo: v } }))
                     }
                   />
                   <RegionSelect
@@ -685,14 +786,19 @@ export function CareerVaultPage() {
                       patchForm((p) => ({ ...p, basic: { ...p.basic, city: v } }))
                     }
                   />
-                  <RegionSelect
-                    label="户口所在地"
-                    value={form.basic.hukou}
-                    onChange={(v) =>
-                      patchForm((p) => ({ ...p, basic: { ...p.basic, hukou: v } }))
-                    }
-                  />
                 </div>
+                <details className="vault-optional"><summary>网申补充信息（选填）</summary>
+                  <p className="resume-hint">仅在目标招聘表单确有需要时填写。演示请使用虚构信息；留空不影响整理经历和材料。</p>
+                  <div className="resume-fields">
+                    <FieldSelect label="性别" options={GENDER_OPTIONS} value={form.basic.gender} onChange={v => patchForm(p => ({...p,basic:{...p.basic,gender:v}}))} />
+                    <BirthDateSelect value={form.basic.birthday} onChange={v => patchForm(p => ({...p,basic:{...p.basic,birthday:v}}))} />
+                    <FieldSelect label="民族" options={ETHNICITY_OPTIONS} value={form.basic.ethnicity} onChange={v => patchForm(p => ({...p,basic:{...p.basic,ethnicity:v}}))} />
+                    <FieldSelect label="政治面貌" options={POLITICS_OPTIONS} value={form.basic.politics} onChange={v => patchForm(p => ({...p,basic:{...p.basic,politics:v}}))} />
+                    <FieldSelect label="证件类型" options={ID_TYPE_OPTIONS} value={form.basic.idType} onChange={v => patchForm(p => ({...p,basic:{...p.basic,idType:v}}))} />
+                    <FieldInput label="证件号码" value={form.basic.idNo} placeholder="演示请勿填写真实证件号" onChange={v => patchForm(p => ({...p,basic:{...p.basic,idNo:v}}))} />
+                    <RegionSelect label="户口所在地" value={form.basic.hukou} onChange={v => patchForm(p => ({...p,basic:{...p.basic,hukou:v}}))} />
+                  </div>
+                </details>
               </section>
 
               <section id="resume-intention" className="resume-section">
@@ -700,7 +806,7 @@ export function CareerVaultPage() {
                   <i />
                   求职意向
                 </h3>
-                <div className="resume-fields">
+                <div className="resume-fields intention-fields">
                   <FieldSelect
                     label="招聘项目"
                     required
@@ -713,9 +819,12 @@ export function CareerVaultPage() {
                       }))
                     }
                   />
-                  <FieldInput
+                  <FieldSelect
                     label="期望职位"
                     required
+                    options={EXPECTED_ROLE_OPTIONS}
+                    placeholder="请选择职位"
+                    showPreviousValue
                     value={form.intention.expectRole}
                     onChange={(v) =>
                       patchForm((p) => ({
@@ -724,9 +833,12 @@ export function CareerVaultPage() {
                       }))
                     }
                   />
-                  <FieldInput
+                  <FieldSelect
                     label="期望城市"
                     required
+                    options={EXPECTED_CITY_OPTIONS}
+                    placeholder="请选择城市"
+                    showPreviousValue
                     value={form.intention.expectCity}
                     onChange={(v) =>
                       patchForm((p) => ({
@@ -735,8 +847,9 @@ export function CareerVaultPage() {
                       }))
                     }
                   />
-                  <FieldInput
+                  <CalendarField
                     label="到岗时间"
+                    type="date"
                     value={form.intention.availability}
                     onChange={(v) =>
                       patchForm((p) => ({
@@ -811,11 +924,11 @@ export function CareerVaultPage() {
                           })
                         }
                       />
-                      <FieldInput
+                      <CalendarField
                         label="入学时间"
+                        type="month"
                         required
                         value={edu.start}
-                        placeholder="YYYY-MM"
                         onChange={(v) =>
                           patchForm((p) => {
                             const education = p.education.map((row, i) =>
@@ -825,11 +938,11 @@ export function CareerVaultPage() {
                           })
                         }
                       />
-                      <FieldInput
+                      <CalendarField
                         label="毕业时间"
+                        type="month"
                         required
                         value={edu.end}
-                        placeholder="YYYY-MM"
                         onChange={(v) =>
                           patchForm((p) => {
                             const education = p.education.map((row, i) =>
@@ -868,7 +981,7 @@ export function CareerVaultPage() {
                           school: '',
                           degree: '',
                           major: '',
-                          fullTime: '是',
+                          fullTime: '',
                           start: '',
                           end: '',
                           rank: '',
@@ -1058,22 +1171,23 @@ export function CareerVaultPage() {
             <button type="button" className="btn secondary" onClick={() => navigate('/')}>
               可选：简历识别
             </button>
-            <button type="button" className="btn secondary" onClick={resetFromSeed} disabled={!vault}>
-              从种子重载
+            <button type="button" className="btn secondary" onClick={loadDemoResume} disabled={!vault || saving}>
+              载入演示简历
             </button>
-            <button type="button" className="btn secondary" onClick={saveLocal}>
-              保存简历
+            <button type="button" className="btn secondary" disabled={saving} onClick={() => void saveLocal()}>
+              {saving ? '正在保存…' : '保存经历'}
             </button>
             <button
               type="button"
               className="btn primary"
-              onClick={() => {
+              disabled={saving}
+              onClick={async () => {
                 // Persist before leaving so returning from later steps doesn't look「被清空」
-                if (form.dirty || !form.savedAt) saveLocal()
-                navigate('/jd')
+                if ((form.dirty || !form.savedAt) && !await saveLocal()) return
+                navigate('/evidence?view=materials')
               }}
             >
-              下一步：岗位说明
+              保存并补充证明材料
             </button>
           </div>
         </>

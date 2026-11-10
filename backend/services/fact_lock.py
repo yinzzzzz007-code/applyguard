@@ -7,11 +7,27 @@ from __future__ import annotations
 
 import re
 from collections import Counter
+from decimal import Decimal
 
 from backend.services.edit_invariants import equivalent_point_detail, lost_qualifiers
 
-NUMBER = re.compile(r"(?<![0-9A-Za-z_.])-?\d+(?:\.\d+)?\s*(?:%|％|个百分点|percentage\s+points?|pp\b|"
-                    r"milliseconds?\b|ms\b|毫秒|秒|人|个|次|年|万元|万|GB\b|MB\b)?", re.I)
+QUANTITY = (r"-?\d+(?:\.\d+)?(?:\s*(?:[%％]|个百分点|percentage\s+points?|pp\b|"
+            r"milliseconds?\b|ms\b|seconds?\b|secs?\b|s\b|毫秒|秒|个?星期|个?周|天|人|个|次|年|万元|万|GB\b|MB\b))?")
+# Calendar weeks and calendar days have a fixed conversion. Months and workdays do not.
+CN_DIGITS = "零一二三四五六七八九"
+CN_DAY_NUMBER = r"(?:[一二两三四五六七八九]?十[一二三四五六七八九]?|[一二两三四五六七八九])"
+NUMBER = re.compile(r"(?<![0-9A-Za-z_.])" + QUANTITY +
+                    r"|(?<![零〇一二两三四五六七八九十百千万第])" + CN_DAY_NUMBER + r"(?:天|个?周|个?星期)", re.I)
+# Normalise the direction before comparing. "to B from A" preserves "from A to B".
+TRANSITION = re.compile(
+    rf"(?:\bfrom\s+|[从由])(?P<start>{QUANTITY})\s*"
+    rf"(?:(?:(?:up|down)\s+)?\bto\s+|(?:提高|提升|上升|降低|下降|调整|升|增|降)?[至到]|变为|→|->)\s*(?P<end>{QUANTITY})"
+    rf"|\bto\s+(?P<last>{QUANTITY})\s+from\s+(?P<first>{QUANTITY})", re.I)
+METRIC = re.compile(r"\b(?:precision|recall|accuracy|latency|duration|throughput|cost|revenue|pass rate)\b"
+                    r"|精确率|召回率|准确率|延迟|时延|耗时|吞吐量|成本|收入|通过率", re.I)
+APPROX_BEFORE = re.compile(
+    r"(?:\b(?:approximately|roughly|about|around)|[约≈~]|近似|大约)"
+    r"(?:为|(?:降低|提升|减少|增加|提高|下降)(?:了)?)?\s*$", re.I)
 TECH = re.compile(r"(?<![A-Za-z0-9])(?:Python|JavaScript|TypeScript|Java|C\+\+|C#|"
                   r"PostgreSQL|SQL|Vue|React|Redis|Docker|Kubernetes|PyTorch|TensorFlow|"
                   r"Go|Rust|Spark|Flink)(?![A-Za-z0-9])", re.I)
@@ -59,11 +75,73 @@ def source_bound_ledger(original: str, check: dict | None, sources: list[dict]) 
 
 def _numeric_key(value: str) -> str:
     value = re.sub(r"\s+", "", value).casefold()
-    return re.sub(r"milliseconds?|毫秒", "ms", value)
+    value = value.replace("％", "%")
+    value = re.sub(r"percentagepoints?|个百分点", "pp", value)
+    calendar = re.fullmatch(r"(-?\d+(?:\.\d+)?|" + CN_DAY_NUMBER + r")(天|个?星期|个?周)", value)
+    if calendar:
+        digits = calendar[1].replace("两", "二")
+        if "十" in digits:
+            tens, ones = digits.split("十")
+            amount = (CN_DIGITS.index(tens) if tens else 1) * 10 + (CN_DIGITS.index(ones) if ones else 0)
+        elif digits in CN_DIGITS:
+            amount = CN_DIGITS.index(digits)
+        else:
+            amount = Decimal(digits)
+        days = Decimal(amount) * (1 if calendar[2] == "天" else 7)
+        return format(days.normalize(), 'f') + '天'
+    duration = re.fullmatch(r"(-?\d+(?:\.\d+)?)(ms|milliseconds?|毫秒|s|secs?|seconds?|秒)", value)
+    if duration:
+        amount = Decimal(duration[1])
+        if duration[2] not in {'ms', 'millisecond', 'milliseconds', '毫秒'}:
+            amount *= 1000
+        digits = format(amount, 'f')
+        return (digits.rstrip('0').rstrip('.') if '.' in digits else digits) + 'ms'
+    return value
 
 
 def _numbers(text: str) -> Counter:
     return Counter(_numeric_key(m.group()) for m in NUMBER.finditer(text))
+
+
+def _transitions(text: str):
+    paths = []
+    for match in TRANSITION.finditer(text):
+        start = match['start'] or match['first']
+        end = match['end'] or match['last']
+        # Limit the metric to the same clause; a decimal point belongs to a value.
+        clause = re.split(r"[，,；;。!?\n]|(?<!\d)\.|\.(?!\d)", text[:match.start()])[-1]
+        names = list(METRIC.finditer(clause))
+        metric = names[-1].group().casefold() if names else ''
+        paths.append((metric, _numeric_key(start), _numeric_key(end)))
+    return paths
+
+
+def _approximate_values(text: str) -> Counter:
+    result = Counter()
+    for number in NUMBER.finditer(text):
+        if (APPROX_BEFORE.search(text[:number.start()]) or
+                re.match(r"\s*左右", text[number.end():])):
+            result[_numeric_key(number.group())] += 1
+    return result
+
+
+def _numeric_links(original: str, proposal: str) -> list[str]:
+    """Catch explicit rebindings while allowing independent clauses to be reordered."""
+    old, new = _transitions(original), _transitions(proposal)
+    issues = []
+    for metric in {m for m, _, _ in old} & {m for m, _, _ in new}:
+        before = Counter((a, b) for m, a, b in old if m == metric)
+        after = Counter((a, b) for m, a, b in new if m == metric)
+        if before.total() == after.total() and before != after:
+            issues.append("改变指标的起止数值：" + (metric or "原文数值区间"))
+    old_approx, new_approx = _approximate_values(original), _approximate_values(proposal)
+    if old_approx and new_approx and old_approx != new_approx:
+        # An unparsed paraphrase can still reach the semantic judge. Flag a number
+        # that was explicitly approximate and is now written without that qualifier.
+        lost = (old_approx - new_approx) & _numbers(proposal)
+        if lost:
+            issues.append("近似限定改变了对应数值：" + "、".join(sorted(lost)))
+    return issues
 
 
 def _relative_percent(text: str, value: str) -> bool:
@@ -112,14 +190,90 @@ def locked_edit_findings(original: str, proposal: str, original_check: dict | No
     """Require review on provable losses, preserving ordinary paraphrase elsewhere."""
     if not isinstance(original_check, dict) or original_check.get("relation") != "SUPPORTED":
         return []
-    findings = []
     if not original_check.get("complete"):
         return ["原句事实拆分不完整，不能自动采用润色。"]
+    return wording_invariants(original, proposal)
+
+
+# Compare only explicit active subjects. Unknown syntax remains with the semantic reviewer.
+ACTIVE_ROLE = re.compile(r"\b(?P<person>I|We|[A-Z][a-z]+)\s+(?P<role>assisted|helped|led|headed|spearheaded)\b")
+TRANSITIVE = re.compile(r"\b(?P<subject>[A-Z][a-z]+)\s+(?P<verb>interviewed|mentored|supervised|trained)"
+                        r"\s+(?P<object>[A-Z][a-z]+)\b")
+
+
+DIRECT_DELEGATION = re.compile(r"(?:^|[，,；;。!?\n])\s*([\u4e00-\u9fffA-Za-z]{2,24}?)\s*"
+                               r"(委托|授权|聘请)\s*([\u4e00-\u9fffA-Za-z]{2,})")
+
+
+def _actor_changes(original: str, proposal: str) -> list[str]:
+    def roles(text):
+        return {(m['person'], 'support' if m['role'] in {'assisted','helped'} else 'lead')
+                for m in ACTIVE_ROLE.finditer(text)}
+    old, new = roles(original), roles(proposal)
+    changes = ["改变支持或主导职责的归属：" + person for person,role in sorted(new-old)
+               if any(previous == person for previous,_ in old-new)]
+    triples = {m.groups() for m in TRANSITIVE.finditer(proposal)}
+    for m in TRANSITIVE.finditer(original):
+        actor, verb, recipient = m.groups()
+        if (recipient,verb,actor) in triples and (actor,verb,recipient) not in triples:
+            changes.append("对调了行动人与对象：" + actor + " / " + recipient)
+    for old_subject, verb, old_rest in DIRECT_DELEGATION.findall(original):
+        for subject, new_verb, rest in DIRECT_DELEGATION.findall(proposal):
+            if (verb == new_verb and subject != old_subject
+                    and old_rest.startswith(subject) and rest.startswith(old_subject)):
+                changes.append("对调了发起方与受托方：" + old_subject + " / " + subject)
+    return changes
+
+
+def _participial_estimate(original_estimate: str, proposal: str, person: str) -> bool:
+    """Recognise 'Rae drafted a plan, estimating 20%' with one unambiguous subject."""
+    pattern = (rf"(?:^|[.;!?]\s*){re.escape(person)}\s+(?:completed|prepared|drafted|created|wrote|finished)"
+               r"\s+(?P<object>[^,;.!?]{1,120}),\s*(?:estimating|projecting|forecasting)\s+(?P<estimate>[^;!?]*)")
+    old_clause = re.split(r"[;!?]|\.(?!\d)", original_estimate, maxsplit=1)[0]
+    old_value = NUMBER.search(old_clause)
+    for match in re.finditer(pattern, proposal, re.I):
+        if re.search(r"\b(?:and|who|which|that|while|with|as|because)\b", match['object'], re.I):
+            continue
+        new_clause = re.split(r"[;!?]|\.(?!\d)", match['estimate'], maxsplit=1)[0]
+        new_value = NUMBER.search(new_clause)
+        if old_value and new_value and _numeric_key(old_value.group()) == _numeric_key(new_value.group()):
+            return True
+    return False
+
+
+def reversed_cited_transition(text: str, quoted: str) -> bool:
+    """Only a named, explicitly reversed path; allow another quote to supply the right path."""
+    claims = _transitions(text)
+    if not claims:
+        return False
+    sources = set(_transitions(quoted))
+    return any(metric and start != end and (metric,end,start) in sources and
+               (metric,start,end) not in sources for metric,start,end in claims)
+
+
+def wording_invariants(original: str, proposal: str) -> list[str]:
+    """Text-only constraints; this comparison establishes no source support."""
+    findings = _numeric_links(original, proposal) + _actor_changes(original, proposal)
+    # A passive estimate can keep the number while dropping the named estimator.
+    for match in re.finditer(r"\b([A-Z][a-z]+)\s+(?:estimated|projected|forecast)\b", original):
+        person = match[1]
+        name = re.escape(person)
+        explicit = rf"\b{name}\s+(?:(?:has|had)\s+)?(?:estimated|projected|forecast)|\b{name}['’]s\s+(?:estimate|projection|forecast)|(?:estimated|projected|forecast)\s+by\s+{name}\b"
+        if not (re.search(explicit, proposal, re.I) or
+                _participial_estimate(original[match.end():], proposal, person)):
+            findings.append("省略了估算人：" + person)
+    leadership = r'主导|牵头|独立负责|独立完成|\b(?:led|headed|spearheaded|independently)\b'
+    if re.search(leadership, proposal, re.I) and not re.search(leadership, original, re.I):
+        findings.append("新增主导或独立职责")
     for item in lost_qualifiers(original, proposal):
-        findings.append("遗漏已核验限定条件：" + item["detail"])
+        findings.append("遗漏原句限定条件：" + item["detail"])
     old_numbers, new_numbers = _numbers(original), _numbers(proposal)
     old_forms = {_numeric_key(m.group()): m.group().strip()
                  for m in NUMBER.finditer(original)}
+    for value in new_numbers - old_numbers:
+        findings.append("新增数字／单位：" + value)
+    for tech in sorted(_technologies(proposal) - _technologies(original)):
+        findings.append("新增技术：" + tech)
     for value in old_numbers - new_numbers:
         if (equivalent_point_detail(old_forms[value], original, proposal)
                 and not _relative_percent(proposal, old_forms[value])):

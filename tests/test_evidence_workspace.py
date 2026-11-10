@@ -245,6 +245,23 @@ class EvidenceWorkspaceServiceTests(unittest.TestCase):
         self.assertNotEqual(row.get("evidence_id"), cand)
         self.assertEqual(row["status"], "MISSING")
 
+    def test_project_does_not_match_or_require_an_award_on_year_and_grade_alone(self) -> None:
+        workspace_id = self.ew.create_workspace("项目与奖项区分")["workspace_id"]
+        text = "示例程序设计竞赛\n2026年二等奖\n示例同学"
+        self.ew.import_files(workspace_id, [{
+            "relative_path": "award.md",
+            "content_base64": base64.b64encode(text.encode("utf-8")).decode(),
+        }])
+        report = self.ew.match_resume(workspace_id, {
+            "projects": [{"id": "old_project", "title": "2026", "description": text}],
+            "awards": [{"id": "award", "name": "示例程序设计竞赛二等奖", "date": "2026"}],
+        })
+        project, award = report["results"]
+        self.assertEqual(project["status"], "MISSING")
+        self.assertNotIn("二等奖", project["gap_hint"])
+        self.assertIsNone(project["evidence_id"])
+        self.assertIn(award["status"], {"NEEDS_CONFIRM", "MATCHED"})
+
     def test_internship_certificate_matches_org_in_glued_ocr(self) -> None:
         """Company names often sit mid-sentence with no separators after OCR."""
         ws = self.ew.create_workspace("实习匹配")

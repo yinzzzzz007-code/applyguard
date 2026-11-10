@@ -102,9 +102,8 @@ def missing_numeric_qualifiers(text,atoms):
 def guard_percent_units(text, verdict):
     """A narrow fail-closed guard, not a general numeric entailment checker.
 
-    Reusing a percentage-point value as a percent can change the fact. If the
-    supporting quote only contains the former unit, require review. Never turn
-    this ambiguity into a contradiction or override an existing rejection.
+    A reversed metric trajectory or a switch between percent and percentage points
+    requires review when the cited text gives only the opposite interpretation.
     """
     if verdict['relation']!='SUPPORTED':return verdict
     from decimal import Decimal
@@ -113,7 +112,13 @@ def guard_percent_units(text, verdict):
     points=number+r'(?:个?百分点|percentage\s+points?\b|pp\b)'
     quoted='\n'.join(c['quote'] for c in verdict['citations'])
     values=lambda pattern, value:{Decimal(n) for n in re.findall(pattern,value,re.I)}
-    ambiguous=values(percent,text)&(values(points,quoted)-values(percent,quoted))
+    from backend.services.fact_lock import reversed_cited_transition
+    if reversed_cited_transition(text, quoted):
+        return {**verdict, 'relation':'INSUFFICIENT', 'numeric_review':True,
+                'reason':'陈述中指标的起止数值与引文顺序相反，请核对。 '+verdict['reason']}
+    quote_percent, quote_points = values(percent,quoted), values(points,quoted)
+    ambiguous = (values(percent,text) & (quote_points - quote_percent) |
+                 values(points,text) & (quote_percent - quote_points))
     if not ambiguous:return verdict
     return {**verdict,'relation':'INSUFFICIENT','unit_review':True,
         'reason':'百分比与百分点可能混用，须核对基准、单位及计算口径。 '+verdict['reason']}

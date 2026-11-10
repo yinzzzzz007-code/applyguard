@@ -2,89 +2,54 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import { groundingRequest, getApiClient } from '../api/client'
 import type { WorkflowResponse } from '../api/types'
 import { useDemo } from '../context/DemoContext'
-import { AtomicEvidence } from './AtomicEvidence'
-import { ClaimBadge } from './States'
 import { saveTextVersion } from '../resume/groundingHistory'
+import { mergeReviewResult, session } from '../resume/review'
 import { GroundingHistory } from './GroundingHistory'
 import { Icon } from './Icon'
 
 export function SAGPolishPanel() {
-  const {workflow,resumeForm,setWorkflow} = useDemo()
+  const {workflow,resumeForm,setWorkflow,reviewDrafts} = useDemo()
   const [busy,setBusy] = useState(false)
   const [error,setError] = useState('')
-  const [pending,setPending] = useState<Partial<WorkflowResponse> | null>(null)
-  const signature = JSON.stringify([workflow,resumeForm])
+  const editing = Object.keys(reviewDrafts).length > 0
+  const signature = JSON.stringify([workflow,resumeForm,reviewDrafts])
   const current = useRef(signature)
-  useLayoutEffect(() => {current.current = signature},[signature])
-  const proposalSignature = useRef('')
+  useLayoutEffect(() => {current.current = signature;return () => {current.current = ''}},[signature])
   if (!workflow) return null
-
   async function run(polish: boolean) {
-    if (!workflow) return
+    if (!workflow || editing) return
+    if ((polish || !workflow.local_only) && !window.confirm(
+      '本操作可能把岗位说明、草稿陈述及相关材料发送给后端配置的模型服务。继续？')) return
     const started = current.current
-    setBusy(true); setError(''); setPending(null)
+    setBusy(true);setError('')
     try {
       const result = polish
         ? await groundingRequest<Partial<WorkflowResponse>>('polish',workflow,resumeForm,{grounding_mode:'sag_atomic'})
-        : await getApiClient().reverifyWorkflow(workflow,
-            workflow.resume_claims.map(({claim_id,text}) => ({claim_id,text})),resumeForm,'sag_atomic')
-      if (current.current !== started) { setError('输入已改变，请针对最新内容重新运行。'); return }
-      if (result.error || !result.data) {setError(result.error?.message ?? '未完成');return}
-      proposalSignature.current = started
-      setPending(result.data)
-    } catch {setError('处理未完成，原稿已保留。请检查服务连接后重试。')}
+        : await getApiClient().reverifyWorkflow(workflow,workflow.resume_claims.map(({claim_id,text}) => ({claim_id,text})),resumeForm, workflow.local_only ? undefined : 'sag_atomic')
+      if (current.current !== started) {setError('草稿已变化，本次结果未覆盖你的编辑。请重新运行。');return}
+      if (result.error || !result.data) {
+        const review=session(workflow)
+        setWorkflow({...workflow,review_session:{...review,interruptions:review.interruptions+1}})
+        setError(result.error?.message ?? '处理未完成，原稿保留。');return
+      }
+      const next = mergeReviewResult(workflow,result.data)
+      saveTextVersion(workflow,polish ? '润色前' : '核验前')
+      saveTextVersion(next,polish ? '建议已生成：等待预览与采用' : '刷新材料支持情况')
+      setWorkflow(next)
+      setError(result.data.grounding?.error ?? '')
+    } catch {setError('处理或保存未完成，原稿已保留。请检查连接及本机存储。')}
     finally {setBusy(false)}
   }
-
   return <div className="sag-panel" aria-label="SAG润色与事实核验">
-    <div className="sag-panel-heading"><Icon name="spark" /><h3>有依据的润色</h3></div>
-    <p>检索相关原件，优化表达；逐项检查新增、夸大或错配的事实。</p>
-    <p className="muted">项目、竞赛／获奖与实习使用 SAG＋原子事实核验；个人资料与教育信息按填写使用，不参与核验或润色。</p>
-    <div className="sag-provider-note"><Icon name="lock" /><span>材料将发送给本机配置的模型服务。</span></div>
-    <div className="btn-row">
-      <button className="btn primary" type="button" disabled={busy || !workflow.resume_claims.length} onClick={() => void run(true)}>
-        {busy ? '正在检索与处理…' : '生成润色建议'}
-      </button>
-      <button className="btn secondary" type="button" disabled={busy || !workflow.resume_claims.length} onClick={() => void run(false)}>
-        核验当前原稿
-      </button>
-    </div>
-    <details className="sag-policy"><summary>核验与导出规则</summary><p>仅检索不能标为事实已通过。待复核、引用无效或失败的内容，需要补充材料或编辑后重核验，不能靠人工确认绕过。</p></details>
+    <div className="sag-panel-heading"><Icon name="spark" /><h3>表达建议与材料核验</h3></div>
+    <p>先预览改写，再逐句采用。生成建议不会替换你的正文。</p>
+    <p className="muted">个人资料和教育信息按表单使用；项目、竞赛与实习核对原件。</p>
+    <div className="sag-provider-note"><Icon name="lock" /><span>{workflow.local_only ? "本地核验在本机运行。只有确认生成 AI 建议时才发送相关内容。" : "生成 AI 建议或模型核验前会询问是否发送相关内容。"}</span></div>
+    {editing && <p role="status">请先保存或取消正在编辑的句子，再生成建议或核验。</p>}
+    <div className="btn-row"><button className="btn primary" disabled={busy || editing || !workflow.resume_claims.length} onClick={() => void run(true)}>{busy ? '正在处理…' : '生成建议（不改正文）'}</button>
+      <button className="btn secondary" disabled={busy || editing || !workflow.resume_claims.length} onClick={() => void run(false)}>检查草稿的材料支持</button></div>
+    <details><summary>确认与材料支持有什么区别？</summary><p>你可以编辑、确认并导出自己的最终稿。材料不足或冲突会保留记录，用户确认不会把它变成“材料支持”。本地导出不等于提交招聘网站。</p></details>
     {error && <p className="danger-text" role="alert">{error}</p>}
-    {pending?.grounding && <div>
-      {pending.grounding.error && <p className="danger-text">{pending.grounding.error}</p>}
-      {Object.entries(pending.grounding.results).map(([id,result]) => <article className="item-block" key={id}>
-        <ClaimBadge status={result.state} personal={result.verification_scope === 'personal'} />
-        <div className="proposal-comparison"><div><span>原稿</span><p>{result.original_text}</p></div><div><span>AI 建议</span><p>{result.proposed_text ?? result.final_text}</p></div></div>
-        {result.proposal_rejected && <p className="warn-text" role="status">{result.proposal_notice}</p>}
-        {result.risk_escalation && <p className="warn-text">高风险修改已二次核验：{result.risk_escalation.error ??
-          (result.risk_escalation.agrees_with_primary ? '两次判断一致。' : '两次判断不同，建议未自动采用。')}</p>}
-        {result.preservation?.lost_supported_details.map((text,index) => <p className="warn-text" key={index}>可能丢失有效信息：{text}</p>)}
-        {result.change_audit?.sensitive_change && <p className="warn-text">涉及数字、职责、时间或限定词变化，请重点核对。</p>}
-        <p><strong>待采用正文：</strong>{result.final_text}</p>
-        <AtomicEvidence result={result} />
-      </article>)}
-      <div className="btn-row">
-        <button className="btn primary" type="button" disabled={busy} onClick={() => {
-          if (proposalSignature.current !== current.current) {setPending(null);setError('原稿已变化，请重新运行。');return}
-          try {
-            saveTextVersion(workflow,'采用建议前')
-            saveTextVersion({...workflow,...pending},'采用建议后')
-          } catch {setError('无法保存本机历史，请检查浏览器存储权限后重试。');return}
-          setWorkflow({...workflow,...pending})
-          setPending(null)
-        }}>采用本次结果，进入人工核对</button>
-        <button className="btn secondary" type="button" onClick={() => {
-          try {
-            const report = pending.grounding
-            saveTextVersion({...workflow,grounding:report ? {...report,results:Object.fromEntries(
-              Object.entries(report.results).map(([id,row]) => [id,{...row,proposal_rejected:true}]))} : workflow.grounding},
-              '保留原稿，未采用建议留档')
-            setPending(null)
-          } catch {setError('建议留档失败，尚未关闭本次结果。')}
-        }}>保留原稿并留档建议</button>
-      </div>
-    </div>}
     <GroundingHistory />
   </div>
 }

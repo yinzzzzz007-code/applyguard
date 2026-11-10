@@ -18,11 +18,17 @@ export interface JobTarget {
   source_observed_at: string
   imported_at: string
 }
+export type ProfileCheck = { label: string; value: string; state: 'MATCH' | 'MISMATCH' | 'UNKNOWN' | 'DECLARED' }
+export type ProfileChecks = Record<string, ProfileCheck[]>
+
 export interface Opportunity extends JobTarget {
   location: string
   education: string
   experience: string
   recruitment_type: string
+  salary?: { min: number; max: number; currency: string; unit: string }
+  internship_schedule?: { days_per_week: number; duration_months: number }
+  graduation_window?: { class_year?: number; start_date: string; end_date: string }
   description: string
   stage: 'saved' | 'preparing' | 'archived'
   workflow_jd_text: string
@@ -42,7 +48,8 @@ export interface JobAnalysis {
   total: number
   supported: number
   excluded?: number
-  requirements: Array<ParsedRequirement & { coverage: 'SUPPORTED' | 'NEEDS_EVIDENCE' | 'NO_MATCH'; evidence_ids: string[]; experience_ids: string[]; notes: string[] }>
+  profile_checks?: ProfileChecks
+  requirements: Array<ParsedRequirement & { coverage: 'SUPPORTED' | 'NEEDS_EVIDENCE' | 'NO_MATCH' | 'PROFILE_REPORTED' | 'REVIEW_REQUIRED'; evidence_ids: string[]; experience_ids: string[]; notes: string[] }>
   notice: string
 }
 export interface RadarPage {
@@ -53,17 +60,18 @@ export interface RadarPage {
 }
 export interface ImportResult { created: number; updated: number; unchanged: number; items: Opportunity[] }
 
-export async function jobsRequest<T>(path = '', body?: unknown): Promise<T> {
+export async function jobsRequest<T>(path = '', body?: unknown, method: 'GET' | 'POST' | 'DELETE' = body === undefined ? 'GET' : 'POST'): Promise<T> {
   const base = (import.meta.env.VITE_API_BASE as string | undefined) ?? ''
   let response: Response
   try {
-    response = await fetch(`${base}/api/v1/jobs${path}`, body === undefined ? undefined : {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    response = await fetch(`${base}/api/v1/jobs${path}`, {
+      method,
+      ...(body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
     })
   } catch { throw new Error('无法连接本机后端，请确认服务已启动。') }
   const result = await response.json().catch(() => ({ error: { message: '后端未返回有效 JSON，请重启更新后的后端。' } }))
   if (!response.ok || result.error) throw new Error(result.error?.message ?? `请求失败（${response.status}）`)
-  if (body !== undefined && !path.endsWith('/analyze')) window.dispatchEvent(new Event('applyguard:jobs-changed'))
+  if (method !== 'GET' && !path.endsWith('/analyze')) window.dispatchEvent(new Event('applyguard:jobs-changed'))
   return result as T
 }
 

@@ -14,6 +14,7 @@ type Props = {
   notice: ReactNode
   onSelect: (file: EvidenceSourceFile) => void
   onFocusRow: (row: ResumeMatchItem) => void
+  onShowRelations: () => void
   onSearch: (query: string) => Promise<{ matches: EvidenceSearchMatch[]; error?: string }>
   onDeleteFiles: (fileIds: string[]) => Promise<void> | void
   renderDetail: (file: EvidenceSourceFile, tab: DetailTab) => ReactNode
@@ -149,11 +150,9 @@ export function EvidenceMaterialLibrary(props: Props) {
       <header className="material-library-head">
         <div>
           <h3>材料库</h3>
-          <p>可逐条或批量整理文件；新增不会覆盖已有材料。核对后再到上方关联经历。</p>
+          <p>新增文件不会覆盖已有条目。查看原件和识别内容后，切换到“经历关联”。</p>
         </div>
-        <a className="btn secondary" href="#evidence-relations">
-          返回经历对照 ↑
-        </a>
+        <button type="button" className="btn secondary" onClick={props.onShowRelations}>核对经历关联</button>
       </header>
 
       <div className="material-import-strip">
@@ -467,7 +466,7 @@ export function EvidenceMaterialLibrary(props: Props) {
               <ol>
                 <li>查看原件</li>
                 <li>核对识别内容</li>
-                <li>回到上方确认经历关联</li>
+                <li>切换到“经历关联”，核对并确认材料归属</li>
               </ol>
             </div>
           )}

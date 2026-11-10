@@ -9,6 +9,7 @@ export function ApplicationHistoryPage() {
   const [error, setError] = useState('')
 
   function remove(id: string) {
+    if (!window.confirm('删除这条本地模拟记录？此操作无法撤销。')) return
     if (!removeApplicationHistory(id)) {
       setError('无法删除这条本地记录，请检查浏览器存储权限。')
       return
@@ -29,7 +30,7 @@ export function ApplicationHistoryPage() {
           title="还没有模拟记录"
           detail="完成一次人工确认或阻断回顾后，这里会出现记录。"
           actionLabel="回到经历库"
-          onAction={() => navigate('/')}
+          onAction={() => navigate('/vault')}
         />
       ) : (
         <div className="stack">

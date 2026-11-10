@@ -56,16 +56,30 @@ def _json_object(content: str) -> dict[str, Any] | None:
     return parsed if isinstance(parsed, dict) else None
 
 
+DEFAULT_TEXT_MODEL = "gemini-3.1-flash-lite-preview"
+
+
 class HttpModelClient:
+    def wording_step(self, action, original, proposal, issues):
+        from backend.services.wording_review import sdk_step
+        return sdk_step(self, action, original, proposal, issues)
+
     def __init__(self, *, api_key: str | None = None, base_url: str | None = None,
                  model: str | None = None, max_tokens: int | None = None, timeout: float | None = None,
-                 require_complete: bool = False) -> None:
+                 require_complete: bool = False, task: str = "simple") -> None:
         self.require_complete = require_complete
         self._usage_lock = threading.Lock()
         self.usage = {'calls':0, 'prompt_tokens':0, 'completion_tokens':0, 'total_tokens':0}
         self.api_key = api_key if api_key is not None else os.getenv("APPLYGUARD_AI_API_KEY", "")
         self.base_url = (base_url or os.getenv("APPLYGUARD_AI_BASE_URL", "https://api.chatanywhere.tech/v1")).rstrip("/")
-        self.model = model if model is not None else os.getenv("APPLYGUARD_AI_MODEL", "gpt-4o-mini")
+        if task not in {"simple", "complex"}:
+            raise ValueError("Unknown model task")
+        self.task = task
+        default_model = os.getenv("APPLYGUARD_AI_MODEL", DEFAULT_TEXT_MODEL)
+        if task == "complex":
+            default_model = os.getenv("APPLYGUARD_COMPLEX_AI_MODEL", "").strip() or default_model
+        self.model = model if model is not None else default_model
+        self.response_models: set[str] = set()
         if not isinstance(self.model, str) or not self.model.strip():
             raise ValueError("APPLYGUARD_AI_MODEL must be a non-empty model name")
         configured_tokens = max_tokens if max_tokens is not None else os.getenv("APPLYGUARD_AI_MAX_TOKENS", "2048")
@@ -142,6 +156,10 @@ class HttpModelClient:
             raise ModelFailure("Model response exceeded size limit")
         try:
             response_payload = json.loads(raw)
+            returned_model = response_payload.get('model')
+            if isinstance(returned_model, str):
+                with self._usage_lock:
+                    self.response_models.add(returned_model)
             usage = response_payload.get('usage', {})
             with self._usage_lock:
                 for field in ('prompt_tokens','completion_tokens','total_tokens'):

@@ -5,16 +5,19 @@ from decimal import Decimal
 
 # A family requires the same meaning, not merely a shared negative word.
 QUALIFIERS = {
+    'approximate': r'大约|约(?=(?:为|降低|提升|减少|增加|提高|下降)?\s*\d)|近似|左右|\b(?:approximately|roughly)\b|\b(?:about|around)\b(?=\s*(?:[~≈+-]?\d|half\b|a\s+(?:third|quarter|dozen)|one\b|two\b|three\b))|[~≈]\s*\d',
+    'offline_only': r'(?:仅|只)(?:限于|限|在)?离线|offline[ -]only|only (?:in |during )?offline',
     'not_implemented': r'尚未实施|未(?:正式)?实施|尚未落地|未付诸实施|尚未执行|未执行该方案|尚未(?:开始|启动)|not\s+(?:yet\s+)?implemented|unimplemented|(?:has|have|had)\s+not\s+(?:yet\s+)?(?:started|begun)',
     'estimated': r'预计|预估|估算|预测|测算|估计|estimat(?:e[ds]?|ing|ion)|projected|projecting|forecast(?:ed)?|expected',
     'offline': r'离线|offline',
     'prototype': r'原型|概念验证|proof.of.concept|prototype|\bPoC\b',
     'not_deployed': r'未(?:正式)?(?:上线|部署)|尚未(?:上线|部署)|未进入生产|未投产|未发布到生产|not\s+(?:yet\s+)?(?:deployed|released)|(?:did\s+not|never)\s+deploy|no\s+production\s+deployment',
     'not_trained': r'未(?:参与|负责|进行)(?:模型)?训练|未训练|(?:did\s+not|never)\s+train|not\s+(?:involved\s+in\s+)?(?:model\s+)?training|without\s+(?:(?:participating|being\s+involved)\s+in\s+)?(?:model\s+)?training',
-    'assisting': r'协助|辅助|assisted|supported\s+(?:the\s+)?team|helped',
+    'assisting': r'协助|辅助|配合|assisted|supported\s+(?:the\s+)?team|helped',
     'not_leader': r'非(?:项目)?负责人|并非(?:项目)?负责人|未(?:主导|领导)|不是(?:项目)?负责人|not\s+(?:the\s+)?(?:project\s+)?lead(?:er)?|did\s+not\s+lead',
     'pilot': r'试点|试运行|pilot',
     'anonymous': r'匿名|脱敏|anonymi[sz]ed|de.identif',
+    'pending_confirmation': r'待(?:核定|核实|确认|审核|审批|批准)|pending (?:verification|confirmation|approval)|(?:has|have) (?:yet to be|not (?:yet )?been) (?:verified|confirmed|approved)',
     'limited_role': r'(?:只|仅)(?:负责|实现|参与)|(?:only|solely|exclusively)\s+(?:implemented|responsible)|implement(?:ed|s|ing)\s+(?:only|solely|exclusively)|responsibilit(?:y|ies)\s+(?:was|were|is)\s+limited\s+to',
 }
 
@@ -28,6 +31,9 @@ def lost_qualifiers(supported_original,proposal):
 
 def equivalent_qualifier_detail(detail,original,proposal):
     clean=detail.strip(' .。;；')
+    if clean.casefold() in {'about','around'}:
+        pattern = QUALIFIERS['approximate']
+        return bool(re.search(pattern,original,re.I) and re.search(pattern,proposal,re.I))
     return any(re.fullmatch(pattern,clean,re.I) and re.search(pattern,original,re.I) and re.search(pattern,proposal,re.I)
                for pattern in QUALIFIERS.values())
 

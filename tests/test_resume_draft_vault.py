@@ -89,7 +89,7 @@ class ResumeDraftVaultTests(unittest.TestCase):
                 {
                     "id": "edu_extract_1",
                     "school": "华南理工大学",
-                    "degree": "",
+                    "degree": "本科",
                     "major": "数据科学与大数据技术",
                     "start": "2024-09",
                     "end": "2028-09",
@@ -138,7 +138,7 @@ class ResumeDraftVaultTests(unittest.TestCase):
                 {
                     "id": "edu_extract_1",
                     "school": "华南理工大学",
-                    "degree": "",
+                    "degree": "本科",
                     "major": "数据科学与大数据技术",
                     "start": "2024-09",
                     "end": "2028-09",
@@ -188,7 +188,7 @@ class ResumeDraftVaultTests(unittest.TestCase):
                 {
                     "id": "edu_ds",
                     "school": "华南理工大学",
-                    "degree": "",
+                    "degree": "本科",
                     "major": "数据科学与大数据技术",
                     "start": "2024-09",
                     "end": "2028-09",

@@ -3,7 +3,7 @@ import base64,copy,http.client,json,random,threading,unittest
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from unittest.mock import MagicMock,patch
-from pypdf import PdfWriter
+from pypdf import PdfReader, PdfWriter
 from pypdf.generic import DictionaryObject,NameObject,DecodedStreamObject
 from backend import app
 from backend.services import resume_parser as parser
@@ -28,6 +28,26 @@ def body(data=None,**changes):
         'parse_mode':'offline',**changes}
 
 class ResumeAbnormalUnitTests(unittest.TestCase):
+    def test_pdf_text_boxes_are_read_by_page_position(self):
+        writer = PdfWriter()
+        writer.append_pages_from_reader(PdfReader(BytesIO(pdf())))
+        page = writer.pages[0]
+        stream = DecodedStreamObject()
+        stream.set_data(
+            b'BT /F1 10 Tf 1 0 0 1 460 690 Tm (2026) Tj ET\n'
+            b'BT /F1 10 Tf 1 0 0 1 20 690 Tm (Example Contest Gold) Tj ET\n'
+            b'BT /F1 10 Tf 1 0 0 1 20 714 Tm (Awards) Tj ET\n'
+            b'BT /F1 10 Tf 1 0 0 1 20 750 Tm (fictional@example.test) Tj ET\n'
+        )
+        page[NameObject('/Contents')] = writer._add_object(stream)
+        target = BytesIO()
+        writer.write(target)
+        form = parser.parse_resume_pdf(**body(target.getvalue()))['form']
+        self.assertEqual(form['basic']['email'], 'fictional@example.test')
+        self.assertEqual([(row['name'], row['date']) for row in form['awards']], [
+            ('Example Contest Gold', '2026'),
+        ])
+
     def test_birth_date_keeps_precision_and_rejects_impossible_dates(self):
         for raw in ['出生年月：2002-08','出生日期：2002-13-01','出生日期：2002-02-30']:
             with self.subTest(raw=raw):

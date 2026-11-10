@@ -1,0 +1,252 @@
+{
+  "created_at": "2026-11-05T07:41:07.084465+00:00",
+  "dataset_sha256": "6d5f654d6ca2b375af2e6c3c773de0cbe33b0efe11cc8a01a4d5ffcef651dc2d",
+  "prompt_sha256": "85ea876045a517eaa662de766ef18e93053ac4553048254a77002cc18b962440",
+  "results": [
+    {
+      "requested_model": "gpt-4o-mini",
+      "response_models": [
+        "gpt-4o-mini-2024-07-18"
+      ],
+      "seconds": 12.48,
+      "usage": {
+        "calls": 2,
+        "prompt_tokens": 922,
+        "completion_tokens": 367,
+        "total_tokens": 1289
+      },
+      "correct": 9,
+      "completed": 10,
+      "false_accept": 1,
+      "false_reject": 0,
+      "rows": [
+        {
+          "id": "safe_approx",
+          "expected_equivalent": true,
+          "equivalent": true,
+          "reason": "Both sentences convey that the query delay is reduced by about 30% and that it is not yet online."
+        },
+        {
+          "id": "safe_role",
+          "expected_equivalent": true,
+          "equivalent": true,
+          "reason": "Both sentences indicate that the person assisted or collaborated with the leader in organizing 18 interview records."
+        },
+        {
+          "id": "safe_points",
+          "expected_equivalent": true,
+          "equivalent": true,
+          "reason": "Both sentences state that the accuracy of offline testing increased from 80% to 84%, maintaining the same factual information."
+        },
+        {
+          "id": "safe_future",
+          "expected_equivalent": true,
+          "equivalent": true,
+          "reason": "Both sentences express that the pilot is planned for the next quarter and that only prototype validation has been completed."
+        },
+        {
+          "id": "safe_team",
+          "expected_equivalent": true,
+          "equivalent": true,
+          "reason": "Both sentences indicate that a three-person team completed the system, with the speaker responsible for testing and not involved in deployment."
+        },
+        {
+          "id": "bad_scope",
+          "expected_equivalent": false,
+          "equivalent": false,
+          "reason": "The proposal states that the delay reduction is observed in the online system, while the original specifies it was only observed in offline playback and not yet online."
+        },
+        {
+          "id": "bad_role",
+          "expected_equivalent": false,
+          "equivalent": false,
+          "reason": "The original states that the person participated in the development with Wang Lin as the responsible person, while the proposal claims the person led the development."
+        },
+        {
+          "id": "bad_percent",
+          "expected_equivalent": false,
+          "equivalent": true,
+          "reason": "The proposal accurately reflects the percentage increase in accuracy and maintains the same factual meaning."
+        },
+        {
+          "id": "bad_time",
+          "expected_equivalent": false,
+          "equivalent": false,
+          "reason": "The original indicates that the pilot is planned for the next quarter and only the prototype validation is completed, while the proposal states that the pilot has been completed and is in use."
+        },
+        {
+          "id": "bad_owner",
+          "expected_equivalent": false,
+          "equivalent": false,
+          "reason": "The original states that the team organized 50 data pieces and the individual independently checked 8, while the proposal incorrectly claims the individual organized and checked all 50 data pieces."
+        }
+      ],
+      "errors": []
+    },
+    {
+      "requested_model": "gpt-4o",
+      "response_models": [
+        "gpt-4o-2024-11-20"
+      ],
+      "seconds": 8.66,
+      "usage": {
+        "calls": 2,
+        "prompt_tokens": 922,
+        "completion_tokens": 326,
+        "total_tokens": 1248
+      },
+      "correct": 9,
+      "completed": 10,
+      "false_accept": 1,
+      "false_reject": 0,
+      "rows": [
+        {
+          "id": "safe_approx",
+          "expected_equivalent": true,
+          "equivalent": true,
+          "reason": "The proposal rephrases the original statement while maintaining the same meaning, including the approximate reduction in query latency and the fact that it is not yet online."
+        },
+        {
+          "id": "safe_role",
+          "expected_equivalent": true,
+          "equivalent": true,
+          "reason": "The proposal rephrases the original statement while preserving the role and the action performed."
+        },
+        {
+          "id": "safe_points",
+          "expected_equivalent": true,
+          "equivalent": true,
+          "reason": "The proposal conveys the same information about the increase in accuracy from 80% to 84%, which is a 4 percentage point increase."
+        },
+        {
+          "id": "safe_future",
+          "expected_equivalent": true,
+          "equivalent": true,
+          "reason": "The proposal rephrases the original statement while maintaining the same meaning about the current status and future plans."
+        },
+        {
+          "id": "safe_team",
+          "expected_equivalent": true,
+          "equivalent": true,
+          "reason": "The proposal rephrases the original statement while preserving the information about the team composition and the specific roles."
+        },
+        {
+          "id": "bad_scope",
+          "expected_equivalent": false,
+          "equivalent": false,
+          "reason": "The proposal changes the scope from offline playback to online system, which alters the factual meaning."
+        },
+        {
+          "id": "bad_role",
+          "expected_equivalent": false,
+          "equivalent": false,
+          "reason": "The proposal changes the role from participation to leading, which alters the factual meaning."
+        },
+        {
+          "id": "bad_percent",
+          "expected_equivalent": false,
+          "equivalent": true,
+          "reason": "The proposal preserves the factual meaning of the percentage increase and the resulting accuracy."
+        },
+        {
+          "id": "bad_time",
+          "expected_equivalent": false,
+          "equivalent": false,
+          "reason": "The proposal changes the timeline and status from planning and prototype validation to completion and usage, which alters the factual meaning."
+        },
+        {
+          "id": "bad_owner",
+          "expected_equivalent": false,
+          "equivalent": false,
+          "reason": "The proposal changes the role from checking a subset of data to independently handling all data, which alters the factual meaning."
+        }
+      ],
+      "errors": []
+    },
+    {
+      "requested_model": "gemini-3.1-flash-lite-preview",
+      "response_models": [
+        "gemini-3.1-flash-lite-preview"
+      ],
+      "seconds": 11.69,
+      "usage": {
+        "calls": 2,
+        "prompt_tokens": 1123,
+        "completion_tokens": 528,
+        "total_tokens": 1651
+      },
+      "correct": 10,
+      "completed": 10,
+      "false_accept": 0,
+      "false_reject": 0,
+      "rows": [
+        {
+          "id": "safe_approx",
+          "expected_equivalent": true,
+          "equivalent": true,
+          "reason": "The proposal preserves all factual meaning regarding the offline playback, the approximately 30% reduction in query latency, and the fact that it is not yet online."
+        },
+        {
+          "id": "safe_role",
+          "expected_equivalent": true,
+          "equivalent": true,
+          "reason": "The proposal accurately paraphrases the action of assisting the person in charge with organizing 18 interview records without altering the role or scope."
+        },
+        {
+          "id": "safe_points",
+          "expected_equivalent": true,
+          "equivalent": true,
+          "reason": "An explicitly implied percentage-point delta is equivalent to stating the start and end percentages, as 84% minus 80% equals a 4 percentage point increase."
+        },
+        {
+          "id": "safe_future",
+          "expected_equivalent": true,
+          "equivalent": true,
+          "reason": "The proposal maintains the exact timeline, scope, and uncertainty of only having completed prototype validation and planning a pilot for the next quarter."
+        },
+        {
+          "id": "safe_team",
+          "expected_equivalent": true,
+          "equivalent": true,
+          "reason": "The proposal preserves the team size, personal responsibilities of testing, and the explicit negation of not being responsible for deployment."
+        },
+        {
+          "id": "bad_scope",
+          "expected_equivalent": false,
+          "equivalent": false,
+          "reason": "The original states the decrease is only in offline replay and not yet online, whereas the proposal claims the online query latency is reduced."
+        },
+        {
+          "id": "bad_role",
+          "expected_equivalent": false,
+          "equivalent": false,
+          "reason": "The original states the person participated in development with Wang Lin as the lead, while the proposal states the person led the development."
+        },
+        {
+          "id": "bad_percent",
+          "expected_equivalent": false,
+          "equivalent": false,
+          "reason": "The original states an absolute increase of 4 percentage points, whereas the proposal incorrectly states a relative increase of 4%."
+        },
+        {
+          "id": "bad_time",
+          "expected_equivalent": false,
+          "equivalent": false,
+          "reason": "The original states only prototype validation is done and the pilot is planned for next quarter, while the proposal claims the pilot is already completed and in use."
+        },
+        {
+          "id": "bad_owner",
+          "expected_equivalent": false,
+          "equivalent": false,
+          "reason": "The original states the team prepared 50 documents and the author checked 8, whereas the proposal claims the author prepared and checked all 50 documents."
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "limitations": [
+    "Ten fictional author-labeled pairs, one trial per model, no independent human labels.",
+    "Fixed equivalence task, not SAG retrieval, polishing generation or full pipeline evaluation.",
+    "No evidence quality conclusion follows from wording equivalence. Provider-reported model names are not proof of upstream model identity."
+  ]
+}

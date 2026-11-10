@@ -1,3 +1,5 @@
+import os
+from unittest.mock import patch
 import http.client
 import json
 import threading
@@ -28,6 +30,8 @@ class WorkflowUnitTests(unittest.TestCase):
 class ApiTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        cls.env = patch.dict(os.environ, {'APPLYGUARD_AI_API_KEY':'', 'APPLYGUARD_AI_MATCH':'off', 'APPLYGUARD_GROUNDING_MODE':'off'})
+        cls.env.start()
         cls.server = create_server("127.0.0.1", 0)
         cls.port = cls.server.server_address[1]
         cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
@@ -38,6 +42,7 @@ class ApiTests(unittest.TestCase):
         cls.server.shutdown()
         cls.server.server_close()
         cls.thread.join(timeout=2)
+        cls.env.stop()
 
     def request(self, method: str, path: str, body: dict | None = None) -> tuple[int, dict]:
         connection = http.client.HTTPConnection("127.0.0.1", self.port, timeout=3)

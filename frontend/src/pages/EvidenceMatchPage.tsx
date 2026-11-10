@@ -1,3 +1,4 @@
+import { ProfileCheckList } from '../components/ProfileCheckList'
 import { useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { EvidenceMatchItem, ParsedRequirement } from '../api/types'
@@ -57,7 +58,7 @@ function scoreOutOfTen(match: EvidenceMatchItem): string {
       ? Math.max(0, Math.min(10, fromModel))
       : Math.max(0, Math.min(10, match.relevance_score * 10))
   const text = Number.isInteger(value) ? String(value) : value.toFixed(1)
-  return `${text}/10`
+  return `相关度 ${text}/10`
 }
 
 function pickNeedle(jdText: string, req: ParsedRequirement): string | null {
@@ -156,13 +157,18 @@ export function EvidenceMatchPage() {
       const candidates = byReq.get(requirement.requirement_id) ?? []
       const best = [...candidates].sort((a, b) => b.relevance_score - a.relevance_score)[0]
       const uncoveredReason = uncovered.get(requirement.requirement_id)
-      const tone = toneForMatch(best)
+      const profile = workflow.profile_checks?.[requirement.requirement_id]
+      const personalEducation = requirement.category === 'EDUCATION' && Boolean(profile?.length)
+      const tone = personalEducation ? 'medium' : toneForMatch(best)
+      const label = personalEducation ? '个人资料对照' : !requirement.normalized_terms?.length
+        ? '需人工核对' : !best && profile?.some(check => check.state === 'DECLARED')
+          ? '本人填写，待补证' : toneLabel(tone)
       const section = sectionOf((jd.source_text || jdRawInput || '').trim(), requirement)
       if (section === 'out') return []
       return [{
         requirement,
         tone,
-        label: toneLabel(tone),
+        label,
         best,
         uncoveredReason,
         section,
@@ -225,6 +231,7 @@ export function EvidenceMatchPage() {
       <header className="panel-head">
         <h2>证据匹配</h2>
         <p>只对照任职要求与加分项；职位描述不参与匹配。点击彩色片段查看经历与证据明细。</p>
+        <p className="muted">相关度只表示经历与岗位要求的匹配程度，不代表事实可信度或录用概率；材料支持需另行核验。</p>
         {(() => {
           const matcherMode = workflow.component_modes?.evidence_matcher
           const label = matcherMode
@@ -268,7 +275,7 @@ export function EvidenceMatchPage() {
 
       <div className="em-legend" aria-label="匹配图例">
         <span className="em-chip strong">强匹配 {counts.strong}</span>
-        <span className="em-chip medium">弱匹配 {counts.medium}</span>
+        <span className="em-chip medium">相关经历 / 个人资料 {counts.medium}</span>
         <span className="em-chip conflict">有冲突 {counts.conflict}</span>
         <span className="em-chip uncovered">未覆盖 {counts.uncovered}</span>
       </div>
@@ -368,6 +375,8 @@ export function EvidenceMatchPage() {
               </button>
             </header>
             <p className="em-modal-req">{active.requirement.text}</p>
+            <ProfileCheckList checks={workflow.profile_checks?.[active.requirement.requirement_id]} />
+            {!active.requirement.normalized_terms?.length && <p>此条需要对照岗位原文人工核对。</p>}
             <p className="muted">
               类型 {zhLookup(ZH_REQ_TYPE, active.requirement.type)} · 类别{' '}
               {zhLookup(ZH_CATEGORY, active.requirement.category)}
@@ -386,7 +395,9 @@ export function EvidenceMatchPage() {
               </div>
             ) : null}
 
-            {relatedMatches.length ? (
+            {active.requirement.category === 'EDUCATION' && workflow.profile_checks?.[active.requirement.requirement_id]?.length ? (
+              <p className="muted">对照依据为本人填写的教育信息。请按岗位要求另行核对学历证明。</p>
+            ) : relatedMatches.length ? (
               <div className="stack">
                 {relatedMatches.map((m) => (
                   <article

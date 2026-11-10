@@ -29,6 +29,7 @@ type Props = {
   onSupplement: (row: ResumeMatchItem) => void
   onDelete: (row: ResumeMatchItem) => void
   onMatch: () => void
+  renderSupplement: (row: ResumeMatchItem) => ReactNode
   renderEvidence: (row: ResumeMatchItem) => ReactNode
 }
 
@@ -136,6 +137,7 @@ export function EvidenceMatchBoard(props: Props) {
             </div>
             <button type="button" className="btn secondary" disabled={busy || !nextPending} onClick={() => nextPending && onSelect(nextPending)}>下一条待处理 →</button>
           </div>
+          {props.renderSupplement(selected)}
           {props.renderEvidence(selected)}
           <details className="relation-more"><summary>编辑经历 / 更多操作</summary><div className="btn-row">
             <Link className="btn secondary" to="/vault">去经历库编辑</Link>

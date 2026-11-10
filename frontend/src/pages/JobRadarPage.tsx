@@ -1,3 +1,4 @@
+import { ProfileCheckList } from '../components/ProfileCheckList'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getApiClient } from '../api/client'
@@ -21,9 +22,9 @@ const initialForm = { title: '', company: '', location: '', url: '', status: 'un
 
 export function JobRadarPage() {
   const navigate = useNavigate()
-  const { resumeForm, setWorkflow, scenario } = useDemo()
+  const { resumeForm, setWorkflow, scenario, workflow, activeJobId, setActiveJobId, reviewDrafts } = useDemo()
   const [library, setLibrary] = useState<JobLibrary | null>(null)
-  const [selectedId, setSelectedId] = useState('')
+  const [selectedId, setSelectedId] = useState(activeJobId ?? '')
   const [query, setQuery] = useState(() => savedView().query || '')
   const [statusFilter, setStatusFilter] = useState<JobScope>(() => {
     const value = savedView().scope
@@ -73,7 +74,10 @@ export function JobRadarPage() {
   useEffect(() => {
     let cancelled = false
     void jobsRequest<JobLibrary>().then((data) => {
-      if (!cancelled) { setLibrary(data); setSelectedId(data.items[0]?.id ?? '') }
+      if (!cancelled) {
+        setLibrary(data)
+        setSelectedId(current => data.items.some(job => job.id === current) ? current : data.items[0]?.id ?? '')
+      }
     }).catch((e) => { if (!cancelled) setError(String(e.message)) })
     return () => { cancelled = true }
   }, [])
@@ -241,12 +245,25 @@ export function JobRadarPage() {
         <button type="button" className="radar-mobile-back text-action" onClick={() => {setDetailOpen(false);requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.radar-job.selected')?.focus())}}><Icon name="back" />返回岗位列表</button>
         <div className="radar-detail-heading"><span className="company-monogram" aria-hidden="true">{selected.company.slice(0,1)}</span><div><h3 ref={detailHeading} tabIndex={-1}>{selected.title}</h3><p>{selected.company} · {selected.location || '地点未知'}</p></div></div>
         <div className="radar-tags"><span className="badge muted">{JOB_STATUS[selected.status]}</span><span className="badge muted">{JOB_STAGE[selected.stage]}</span><span className="badge muted">版本 {selected.version}</span></div>
+        {(selected.salary || selected.internship_schedule || selected.graduation_window) && <dl className="job-structured-facts">
+          {selected.salary && <div><dt>薪资</dt><dd>{selected.salary.min}–{selected.salary.max}
+            {' '}{selected.salary.currency === 'CNY' ? '元' : selected.salary.currency}
+            /{({hour:'小时',day:'天',week:'周',month:'月',year:'年'} as Record<string,string>)[selected.salary.unit]}</dd></div>}
+          {selected.internship_schedule && <div><dt>实习安排</dt><dd>{selected.internship_schedule.days_per_week} 天/周 · {selected.internship_schedule.duration_months} 个月</dd></div>}
+          {selected.graduation_window && <div><dt>毕业窗口</dt><dd>{selected.graduation_window.class_year ? selected.graduation_window.class_year + ' 届 · ' : ''}
+            {selected.graduation_window.start_date} 至 {selected.graduation_window.end_date}</dd></div>}
+        </dl>}
         <p className="radar-provenance">来源：{({manual:'手动收藏',local_edit:'本地编辑',radar:'本机雷达',peer_benchmark:'参考样例'} as Record<string,string>)[selected.source_kind] || '来源记录'} · 导入：{new Date(selected.imported_at).toLocaleString()}<br />来源观察时间：{selected.source_observed_at || '未记录；导入时间不代表官网核验时间'}</p>
         {selected.url && <p><a className="radar-source" href={selected.url} target="_blank" rel="noreferrer">查看原始招聘页面 ↗</a></p>}
         <div className="btn-row">
           <button type="button" className="btn primary" disabled={busy || scenario !== 'live' || !canPrepareJob(selected)} onClick={() => void perform(async () => {
-            await jobsRequest(`/${selected.id}/stage`, { stage: 'preparing' })
-            setWorkflow(null); navigate(`/jd?job=${selected.id}`)
+            const sameJob = activeJobId === selected.id || workflow?.target_job?.id === selected.id
+            if (!sameJob && (workflow?.resume_claims.length || Object.keys(reviewDrafts).length) &&
+                !window.confirm('更换岗位会结束当前申请，并清除本次申请的正文和暂存编辑。继续更换？')) return
+            if (selected.stage !== 'preparing') await jobsRequest(`/${selected.id}/stage`, { stage: 'preparing' })
+            if (activeJobId !== selected.id && workflow?.target_job?.id !== selected.id) setWorkflow(null)
+            setActiveJobId(selected.id)
+            navigate(`/jd?job=${selected.id}`)
           })}>用此岗位准备申请</button>
           <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(analyze)}>检查证据缺口</button>
           <button type="button" className="btn secondary" disabled={busy} onClick={() => {
@@ -255,8 +272,29 @@ export function JobRadarPage() {
             openForm()
           }}>编辑 JD</button>
           <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(async () => {
-            await jobsRequest(`/${selected.id}/stage`, { stage: selected.stage === 'archived' ? 'saved' : 'archived' }); await reload(selected.id)
+            const restoring = selected.stage === 'archived'
+            await jobsRequest(`/${selected.id}/stage`, { stage: restoring ? 'saved' : 'archived' })
+            await reload(selected.id)
+            setStatusFilter(current => current === 'all' ? current : restoring ? 'active' : 'archived')
+            setMessage(restoring ? `已恢复收藏「${selected.title}」。` : `已归档「${selected.title}」，可在「已归档」中恢复。`)
           })}>{selected.stage === 'archived' ? '恢复收藏' : '归档'}</button>
+          <button type="button" className="btn ghost-danger" disabled={busy} onClick={() => {
+            const linked = activeJobId === selected.id || workflow?.target_job?.id === selected.id
+            const impact = linked ? '\n当前申请正文会保留。要继续使用岗位原文，请到「岗位说明」解除关联。' : ''
+            if (!window.confirm(`永久删除「${selected.title}」及其岗位版本记录？${impact}`)) return
+            void perform(async () => {
+              await jobsRequest(`/${selected.id}`, undefined, 'DELETE')
+              await reload()
+              if (editingId === selected.id) {
+                setEditingId(null)
+                setForm(initialForm)
+                if (formPanel.current) formPanel.current.open = false
+              }
+              setDetailOpen(false)
+              setDetailTab('description')
+              setMessage(`已删除「${selected.title}」。`)
+            })
+          }}>删除岗位</button>
         </div>
         {!canPrepareJob(selected) && <p className="callout warn">已归档、已关闭或参考快照仅供查看，不能从这里准备申请。</p>}
         <Tabs id="job-tab" label="岗位详情视图" panelId="job-detail-panel" value={detailTab} onChange={setDetailTab} items={[{id:'description',label:'岗位原文'},{id:'analysis',label:'证据预检'},{id:'versions',label:'版本记录'}]} />
@@ -277,8 +315,9 @@ export function JobRadarPage() {
           <div className="scope-switch" aria-label="预检结果筛选">{[['all','全部'],['missing','待补证'],['supported','已支持']].map(([id,label]) => <button type="button" key={id} aria-pressed={coverageFilter === id} onClick={() => setCoverageFilter(id)}>{label}</button>)}</div>
           {!visibleRequirements.length && <p className="radar-inline-empty">此分类下没有要求。可切换到“全部”查看预检结果。</p>}
           {visibleRequirements.map((req) => <div className="item-block" key={req.requirement_id}>
-            <span className={`badge ${req.coverage === 'SUPPORTED' ? 'ok' : 'warn'}`}>{req.coverage === 'SUPPORTED' ? '有已核验证据支持' : req.coverage === 'NEEDS_EVIDENCE' ? '有相关经历，仍需补证' : '未找到支持证据'}</span>
+            <span className={`badge ${req.coverage === 'SUPPORTED' ? 'ok' : 'warn'}`}>{req.coverage === 'SUPPORTED' ? '有已核验证据支持' : ({ NEEDS_EVIDENCE: '有相关经历，仍需补证', NO_MATCH: '未找到支持证据', PROFILE_REPORTED: '个人资料对照', REVIEW_REQUIRED: '需人工核对' })[req.coverage]}</span>
             <span className="muted"> · {zhLookup(ZH_REQ_TYPE, req.type)}</span><p>{req.text}</p>
+            <ProfileCheckList checks={analysis.profile_checks?.[req.requirement_id]} />
             {req.evidence_ids.length > 0 && <p className="muted">证据：{req.evidence_ids.join('、')}</p>}
             {req.notes.map((note, i) => <p className="muted" key={i}>{zhText(note)}</p>)}
           </div>)}

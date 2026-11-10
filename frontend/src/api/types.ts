@@ -282,6 +282,9 @@ export interface GroundingSource {
   retrieval_channels?: string[]
 }
 export interface GroundingClaimResult {
+  wording_auto_applied?: boolean
+  wording_auto_restored?: boolean
+  proposal_applied?: boolean
   verification_scope?: 'personal' | 'experience'
   scope_notice?: string
   state: ClaimState
@@ -393,8 +396,11 @@ export interface AuditRecord {
 
 /** Full POST /api/v1/workflow/mock success body (offline / dynamic / fixture). */
 export interface WorkflowResponse {
+  review_session?: import('../resume/review').ReviewSession
   grounding?: GroundingReport
   target_job?: import('./jobs').JobTarget
+  local_only?: boolean
+  profile_checks?: import('./jobs').ProfileChecks
   requires_reverification?: boolean
   evidence_sources?: VaultEvidence[]
   trace_id: string

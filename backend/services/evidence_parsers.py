@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -570,6 +571,18 @@ def _get_ocr_engine() -> tuple[Any | None, str | None]:
     if _OCR_ENGINE_ERROR:
         return None, _OCR_ENGINE_ERROR
 
+    if os.getenv("APPLYGUARD_OCR_BACKEND") == "rapidocr":
+        try:
+            from rapidocr_onnxruntime import RapidOCR
+
+            _OCR_ENGINE = RapidOCR(intra_op_num_threads=2, inter_op_num_threads=1)
+            return _OCR_ENGINE, None
+        except ImportError:
+            _OCR_ENGINE_ERROR = "未安装本机 RapidOCR，请检查后端的 OCR 运行环境。"
+        except Exception as exc:  # noqa: BLE001
+            _OCR_ENGINE_ERROR = f"RapidOCR 初始化失败：{exc}"
+        return None, _OCR_ENGINE_ERROR
+
     try:
         from paddleocr import PaddleOCR  # type: ignore
     except ImportError:
@@ -591,8 +604,6 @@ def _get_ocr_engine() -> tuple[Any | None, str | None]:
     # Avoid slow model-host connectivity checks on each cold start.
     # PaddlePaddle 3.3.x + oneDNN can raise ConvertPirAttribute2RuntimeAttribute;
     # force-disable mkldnn before constructing the engine.
-    import os
-
     os.environ.setdefault("PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK", "True")
     os.environ.setdefault("FLAGS_use_mkldnn", "0")
     os.environ.setdefault("FLAGS_onednn", "0")
@@ -627,7 +638,7 @@ def _get_ocr_engine() -> tuple[Any | None, str | None]:
     return None, _OCR_ENGINE_ERROR
 
 
-def _spans_from_ocr_payload(result: Any) -> list[SpanDraft]:
+def _spans_from_ocr_payload(result: Any, *, extractor: str = "paddleocr") -> list[SpanDraft]:
     """Normalize PaddleOCR 2.x list / 3.x predict result objects into spans."""
     spans: list[SpanDraft] = []
     if result is None:
@@ -668,7 +679,7 @@ def _spans_from_ocr_payload(result: Any) -> list[SpanDraft]:
                     except Exception:  # noqa: BLE001
                         bbox = None
                 spans.append(
-                    SpanDraft(page=page_idx, bbox=bbox, raw_text=raw, extractor="paddleocr")
+                    SpanDraft(page=page_idx, bbox=bbox, raw_text=raw, extractor=extractor)
                 )
         if spans:
             return spans
@@ -693,7 +704,7 @@ def _spans_from_ocr_payload(result: Any) -> list[SpanDraft]:
                             page=page_idx,
                             bbox=bbox,
                             raw_text=str(text).strip(),
-                            extractor="paddleocr",
+                            extractor=extractor,
                         )
                     )
             except (TypeError, ValueError, IndexError):
@@ -707,8 +718,16 @@ def _run_local_ocr(path: Path) -> tuple[list[SpanDraft], str | None]:
     if engine is None:
         return [], err
 
+    extractor = "paddleocr"
     try:
-        if hasattr(engine, "predict"):
+        if os.getenv("APPLYGUARD_OCR_BACKEND") == "rapidocr":
+            extractor = "rapidocr"
+            rows, _ = engine(str(path), use_cls=False)
+            result = [{
+                "rec_texts": [text for _, text, _ in rows or []],
+                "rec_polys": [box for box, _, _ in rows or []],
+            }]
+        elif hasattr(engine, "predict"):
             result = engine.predict(str(path))
         else:
             try:
@@ -718,7 +737,7 @@ def _run_local_ocr(path: Path) -> tuple[list[SpanDraft], str | None]:
     except Exception as exc:  # noqa: BLE001
         return [], f"OCR 执行失败：{exc}"
 
-    spans = _spans_from_ocr_payload(result)
+    spans = _spans_from_ocr_payload(result, extractor=extractor)
     if not spans:
         return [], "OCR 已运行但未识别到文字（图片可能过糊、无中文，或为空白页）"
     return spans, None

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import base64
 import re
+import unicodedata
+from collections import Counter
 from datetime import date
 from io import BytesIO
 from typing import Any
@@ -18,7 +20,11 @@ MAX_PDF_PAGES = 20
 MAX_BASE64_CHARS = 4 * ((MAX_PDF_BYTES + 2) // 3)
 
 _EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
-_PHONE = re.compile(r"(?<!\d)(1[3-9]\d{9})(?!\d)")
+_PHONE = re.compile(
+    r"(?<![0-9A-Za-z_])(?:\+86[ \t-]*)?"
+    r"(1[3-9][0-9][- \t\u2010-\u2014]?[0-9]{4}[- \t\u2010-\u2014]?[0-9]{4})"
+    r"(?![0-9A-Za-z_]|[-\u2010-\u2014][0-9])"
+)
 _BIRTH = re.compile(r"(?:出生(?:日期|年月)?|生日)[:：\s]*(\d{4})\s*[.\-年/]\s*(\d{1,2})(?!\d)(?:\s*[.\-月/]\s*(\d{1,2})(?!\d)日?)?")
 _NAME = re.compile(r"(?:姓名|名字)[:：\s]*([\u4e00-\u9fff·]{2,8})")
 _GENDER = re.compile(r"(?:性别)[:：\s]*(男|女)")
@@ -27,7 +33,7 @@ _POLITICS = re.compile(r"(?:政治面貌)[:：\s]*([\u4e00-\u9fff]{2,12})")
 _ID_NO = re.compile(r"(?:身份证|证件号)[:：\s]*([0-9Xx]{15,18})")
 _CITY = re.compile(r"(?:现居(?:住地)?|居住地|所在地)[:：\s]*([^\n]{2,30})")
 _HUKOU = re.compile(r"(?:户口(?:所在地)?)[:：\s]*([^\n]{2,30})")
-_SCHOOL = re.compile(r"([\u4e00-\u9fff]{2,20}(?:大学|学院|职业技术学院))")
+_SCHOOL = re.compile(r"([\u4e00-\u9fff]{2,20}(?:大学(?!生)|学院|职业技术学院))")
 _DEGREE = re.compile(r"(博士|硕士|本科|专科|高中)")
 _MAJOR = re.compile(r"(?:专业)(?!排名|方向|课程)[:：\s]+([^\n，,；;]{2,30})")
 _EXPECT_ROLE = re.compile(r"(?:求职意向|期望职位|应聘岗位)[:：\s]*([^\n]{2,40})")
@@ -203,7 +209,8 @@ def extract_resume_from_text(text: str) -> dict[str, Any]:
     basic = result["basic"]
     email = _EMAIL.search(compact)
     basic["email"] = email.group(0) if email else ""
-    basic["phone"] = _first(_PHONE, compact)
+    contact_text = _EMAIL.sub(" ", unicodedata.normalize("NFKC", compact))
+    basic["phone"] = re.sub(r"\D", "", _first(_PHONE, contact_text))
     birth = _BIRTH.search(compact)
     if birth and birth.group(3):
         try:
@@ -268,7 +275,7 @@ def extract_resume_from_text(text: str) -> dict[str, Any]:
     award_chunks = [
         _section(
             compact,
-            r"获奖(?:情况|经历)?|荣誉(?:奖项|称号)?|奖项|竞赛经历|比赛经历|学科竞赛|竞赛获奖|比赛获奖",
+            r"(?m)^[ \t]*(?:获奖(?:情况|经历)?|荣誉(?:奖项|称号)?|奖项|竞赛经历|比赛经历|学科竞赛|竞赛获奖|比赛获奖)[ \t]*[:：]?[ \t]*$",
             _STOP,
         )
     ]
@@ -295,6 +302,32 @@ def extract_resume_from_text(text: str) -> dict[str, Any]:
     if birth and not basic['birthday']:
         result['extras']['summary'] = '\n'.join(filter(None, (result['extras']['summary'], birth.group(0))))
     return result
+
+
+def _pdf_in_reading_order(data: bytes, plain_pages: list[str]) -> str:
+    """Prefer geometry-based ordering when it retains the text of every page."""
+    plain = "\n".join(plain_pages).strip()
+    try:
+        import pdfplumber
+
+        with pdfplumber.open(BytesIO(data)) as document:
+            if len(document.pages) != len(plain_pages):
+                return plain
+            pages = []
+            for page, original in zip(document.pages, plain_pages):
+                # Labels in separate text boxes can have slightly different baselines.
+                ordered = page.extract_text(y_tolerance=4) or ""
+                original_chars = Counter(c for c in original if c.isalnum())
+                ordered_chars = Counter(c for c in ordered if c.isalnum())
+                if original.strip() and (
+                    not ordered.strip() or (original_chars & ordered_chars).total() < original_chars.total() * 0.95
+                ):
+                    return plain
+                pages.append(ordered)
+    except Exception:
+        # The plain extraction has already passed the per-page completeness checks.
+        return plain
+    return "\n".join(pages).strip()
 
 
 def pdf_bytes_to_text(data: bytes) -> str:
@@ -328,7 +361,9 @@ def pdf_bytes_to_text(data: bytes) -> str:
         if length > MAX_TEXT_CHARS:
             raise ValueError(f'PDF 文字超过{MAX_TEXT_CHARS}字符，请拆分后上传；未截断内容。')
         pages.append(text)
-    text = "\n".join(pages).strip()
+    text = _pdf_in_reading_order(data, pages)
+    if len(text) > MAX_TEXT_CHARS:
+        raise ValueError(f'PDF 文字超过{MAX_TEXT_CHARS}字符，请拆分后上传；未截断内容。')
     if len(text) < 8:
         raise ValueError("未能从 PDF 抽出文字。扫描件或图片型简历无法识别，请换可复制文字的 PDF。")
     return text

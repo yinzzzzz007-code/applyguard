@@ -1,0 +1,155 @@
+{
+  "date": "2026-11-05T13:26:15.993422+00:00",
+  "guard_files": {
+    "backend/services/fact_lock.py": "0e0bcf8dbc9c5c62114fd50447ce4d95822399fb056485e419964e95a81d75cd",
+    "backend/services/edit_invariants.py": "a226b4a1b090ec544875f985e94c9b959febc90e3c3abaf6c0b98e7c7da9c78b",
+    "backend/services/wording_review.py": "6d0adf6545015fcecf2977624af72e6ce275d554acacbc4c5b156453332d3438",
+    "backend/services/asu_resume.py": "d3337d5158bb9693e4abca49c1f42e4ddadff6e0fcd2be73cc74b81599ed1c3e"
+  },
+  "counts": {
+    "prose": {
+      "SAFE": 8,
+      "previously_held_SAFE": 2,
+      "held_SAFE": 0,
+      "WRONG": 8,
+      "previously_held_WRONG": 5,
+      "held_WRONG": 8
+    }
+  },
+  "rows": [
+    {
+      "suite": "prose",
+      "id": "quant-dir-safe",
+      "label": "SAFE",
+      "input_sha256": "456b0b4261c049730b216fbadd6d225502f723293a63e3d6d4d465f564c6635b",
+      "held": false,
+      "previously_held": false
+    },
+    {
+      "suite": "prose",
+      "id": "quant-dir-wrong",
+      "label": "WRONG",
+      "input_sha256": "cf2408a03a97502a3b9b6183ccaf497e5366f17b77aadaffaf56d5355a28837a",
+      "held": true,
+      "previously_held": true
+    },
+    {
+      "suite": "prose",
+      "id": "role-safe",
+      "label": "SAFE",
+      "input_sha256": "bae79678459b42616eb98c53dc1fce266bead6aa149664fe3f2fca4f9727d542",
+      "held": false,
+      "previously_held": false
+    },
+    {
+      "suite": "prose",
+      "id": "role-wrong",
+      "label": "WRONG",
+      "input_sha256": "e1732aa3dc92840387f5777169461250d8817dbae828e3e172d55e1543a1a230",
+      "held": true,
+      "previously_held": false
+    },
+    {
+      "suite": "prose",
+      "id": "number-context-safe",
+      "label": "SAFE",
+      "input_sha256": "b26baa651f2e18adf855d99d6de94ac242c78130c3dab451e7c6a3a581dcb879",
+      "held": false,
+      "previously_held": false
+    },
+    {
+      "suite": "prose",
+      "id": "number-context-wrong",
+      "label": "WRONG",
+      "input_sha256": "4c38c3349c81f399c27fc4d739aa3715258e754067f831cb7433151a53f30d79",
+      "held": true,
+      "previously_held": true
+    },
+    {
+      "suite": "prose",
+      "id": "interview-safe",
+      "label": "SAFE",
+      "input_sha256": "6dc698cbd8aeb918e33c251262a80b87109f6517a0f1c443947515f02c91a459",
+      "held": false,
+      "previously_held": true
+    },
+    {
+      "suite": "prose",
+      "id": "interview-wrong",
+      "label": "WRONG",
+      "input_sha256": "5b568d90219928d0a732eedd13131b2d87648dd3aa8120c7cb25b3c4f9037ba1",
+      "held": true,
+      "previously_held": false
+    },
+    {
+      "suite": "prose",
+      "id": "spend-safe",
+      "label": "SAFE",
+      "input_sha256": "ecac3df5bbc5756e7ac96db441ceed5137cec34bfc3af804bfcee04d1cde5863",
+      "held": false,
+      "previously_held": false
+    },
+    {
+      "suite": "prose",
+      "id": "spend-wrong",
+      "label": "WRONG",
+      "input_sha256": "687f3efd1cccb814df1da24eb19561664afeb143528d2e87ea71847db56ea0cd",
+      "held": true,
+      "previously_held": false
+    },
+    {
+      "suite": "prose",
+      "id": "equivalent-units-safe",
+      "label": "SAFE",
+      "input_sha256": "fe701bf30e3d7aa077fed78d757998e4579620636ae222b98bf62a9e32b7c173",
+      "held": false,
+      "previously_held": true
+    },
+    {
+      "suite": "prose",
+      "id": "equivalent-units-wrong",
+      "label": "WRONG",
+      "input_sha256": "68a1172abfbef2276040d508baa989ec22d5ec21def36231fe945e1ecec9ef1c",
+      "held": true,
+      "previously_held": true
+    },
+    {
+      "suite": "prose",
+      "id": "range-safe",
+      "label": "SAFE",
+      "input_sha256": "593e6aed9864e5ea1762c850c343242f6ed7daf7506358c945a34b28f7e136c5",
+      "held": false,
+      "previously_held": false
+    },
+    {
+      "suite": "prose",
+      "id": "range-wrong",
+      "label": "WRONG",
+      "input_sha256": "55440add4b11a166ce2474f02bec71dd968fbb390d8d460d454f4600efdfa197",
+      "held": true,
+      "previously_held": true
+    },
+    {
+      "suite": "prose",
+      "id": "stage-safe",
+      "label": "SAFE",
+      "input_sha256": "9c236dc8a8a524cddfdf2ced58c11b82180db13e801a02cfe436c0712939fe83",
+      "held": false,
+      "previously_held": false
+    },
+    {
+      "suite": "prose",
+      "id": "stage-wrong",
+      "label": "WRONG",
+      "input_sha256": "98166be33badd7f25a6fdc74025811dc5b9db027016ebaabc58115efcfbfe35a",
+      "held": true,
+      "previously_held": true
+    }
+  ],
+  "baseline_guard_files": {
+    "backend/services/fact_lock.py": "258046286c166537bec3334311ff13dc98fecea61dad2543b75783ad07565c28",
+    "backend/services/edit_invariants.py": "d78152ec926a0ac0b96907243961883c89df3764eae817b74ff46e5aa1d22a69",
+    "backend/services/wording_review.py": "6d0adf6545015fcecf2977624af72e6ce275d554acacbc4c5b156453332d3438",
+    "backend/services/asu_resume.py": "d3337d5158bb9693e4abca49c1f42e4ddadff6e0fcd2be73cc74b81599ed1c3e"
+  }
+}

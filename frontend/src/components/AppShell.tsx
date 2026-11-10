@@ -3,30 +3,23 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import type { DemoScenario } from '../api/types'
 import { useDemo } from '../context/DemoContext'
 import { zhText } from '../i18n'
-import { STEP_META, STEP_ORDER, loadMaxStep, rememberMaxStep, stepFromPath, stepIndex } from '../flow'
-import { Icon, type IconName } from './Icon'
-import { ProjectReel } from './ProjectReel'
+import { rememberMaxStep, stepFromPath } from '../flow'
+import { NAV_GROUPS } from '../navigation'
+import { Icon } from './Icon'
 import { PageMotion } from './PageMotion'
 
-const STEP_ICONS: IconName[] = ['upload', 'folder', 'briefcase', 'layers', 'file', 'shield', 'window', 'check']
-const TOOLS: { path:string; label:string; icon:IconName }[] = [
-  {path:'/jobs',label:'岗位雷达',icon:'compass'},
-  {path:'/evidence',label:'证据工作区',icon:'library'},
-  {path:'/history',label:'申请历史',icon:'history'},
-]
 const SCENARIOS: {id:DemoScenario;label:string}[] = [
   {id:'live',label:'连接本地后端'}, {id:'prerecorded_block',label:'预录 · 阻断样例'},
   {id:'prerecorded_fallback',label:'预录 · 回退样例'}, {id:'error',label:'错误重试样例'},
 ]
 
 export function AppShell({children}:{children:React.ReactNode}) {
-  const {scenario,setScenario,step,setStep,dataSourceLabel,workflow} = useDemo()
+  const {scenario,setScenario,setStep,dataSourceLabel,workflow,restoredAt,reviewStorageError,reviewDrafts} = useDemo()
   const location = useLocation()
   const navigate = useNavigate()
   const drawer = useRef<HTMLDetailsElement>(null)
   const fromPath = stepFromPath(location.pathname)
-  const unlocked = Math.max(stepIndex(step),stepIndex(loadMaxStep()),fromPath ? stepIndex(fromPath) : 0,stepIndex('vault'))
-  const title = fromPath ? STEP_META[fromPath].label : TOOLS.find(t => t.path === location.pathname)?.label ?? '申请工作台'
+  const title = location.pathname === '/help' ? '使用帮助' : NAV_GROUPS.flatMap(group => group.items).find(item => item.path === location.pathname)?.label ?? '申请工作台'
   useEffect(() => {
     const target = stepFromPath(location.pathname)
     if (target) {setStep(target);rememberMaxStep(target)}
@@ -37,17 +30,12 @@ export function AppShell({children}:{children:React.ReactNode}) {
   function navigation() {
     return <>
       <div className="workspace-scope"><span className="scope-mark">个</span><div><strong>个人工作台</strong><small>本地申请空间</small></div></div>
-      <nav className="workspace-nav" aria-label="申请流程">
-        <p className="nav-group-label">准备一份申请</p>
-        <ol>{STEP_ORDER.map((key,index) => <li key={key}>
-          {index <= unlocked ? <NavLink end={key === 'import'} to={STEP_META[key].path} className={({isActive}) => `workspace-nav-item${isActive ? ' is-current' : ''}`}>
-            <Icon name={STEP_ICONS[index]} /><span>{STEP_META[key].label}</span>{fromPath === key && <span className="nav-current-dot" />}
-          </NavLink> : <span className="workspace-nav-item is-locked" aria-disabled="true" title="完成前面的流程后解锁"><Icon name={STEP_ICONS[index]} /><span>{STEP_META[key].label}</span><Icon name="lock" /></span>}
-        </li>)}</ol>
-      </nav>
-      <nav className="workspace-nav" aria-label="工作台工具"><p className="nav-group-label">资料与记录</p>
-        {TOOLS.map(tool => <NavLink key={tool.path} to={tool.path} className={({isActive}) => `workspace-nav-item${isActive ? ' is-current' : ''}`}><Icon name={tool.icon} /><span>{tool.label}</span></NavLink>)}
-      </nav>
+      {NAV_GROUPS.map(group => <nav className="workspace-nav grouped-nav" key={group.label} aria-label={group.label}>
+        <p className="nav-group-label">{group.label}</p>
+        {group.items.map(item => <NavLink key={item.path} end={item.path === '/'} to={item.path} className={({isActive}) => `workspace-nav-item${isActive ? ' is-current' : ''}`}>
+          <Icon name={item.icon} /><span>{item.label}</span>{location.pathname === item.path && <span className="nav-current-dot" />}
+        </NavLink>)}
+      </nav>)}
     </>
   }
   return <div className="workspace-shell">
@@ -61,6 +49,7 @@ export function AppShell({children}:{children:React.ReactNode}) {
     <div className="workspace-body">
       <header className="workspace-topbar">
         <div className="workspace-breadcrumb"><span>申请工作台</span><Icon name="chevron" /><h1>{title}</h1></div>
+        <NavLink className="workspace-help-link" to="/help" aria-label="使用帮助"><Icon name="file" /><span>使用帮助</span></NavLink>
         <details className="workspace-scenario"><summary><span className="connection-dot" />{scenario === 'live' ? '本地后端' : '预录 / 模拟'}<Icon name="down" /></summary>
           <div className="scenario-popover"><label htmlFor="demo-scenario">演示场景</label><select id="demo-scenario" value={scenario} onChange={event => {
             if (workflow && !window.confirm('切换演示场景会清空本页工作流与未采用的建议。是否继续？')) return
@@ -73,10 +62,12 @@ export function AppShell({children}:{children:React.ReactNode}) {
       </header>
       <main id="workspace-main" className="workspace-main" tabIndex={-1}>
         {workflow?._prerecorded && <p className="workspace-notice">{zhText(workflow._prerecorded.notice)}</p>}
-        {fromPath && workflow?.mock_notice && !workflow._prerecorded && <p className="sample-data-note">{zhText(workflow.mock_notice)}</p>}
+        {fromPath && workflow?.mock_notice && !workflow._prerecorded && <details className="sample-data-note"><summary>演示与处理说明</summary><p>当前为本地实验版，网申使用模拟表单，最终提交由本人完成。</p><p>{zhText(workflow.mock_notice)}</p></details>}
+        {restoredAt && workflow && <p className="workspace-notice" role="status">已恢复上次申请的文字与编辑进度（{new Date(restoredAt).toLocaleString('zh-CN')}）。材料状态需重新检查。<NavLink to="/resume">继续审核草稿</NavLink></p>}
+        {reviewStorageError && <p className="danger-text" role="alert">{reviewStorageError}</p>}
+        {!!Object.keys(reviewDrafts).length && location.pathname !== '/resume' && <p className="workspace-notice">审核页有 {Object.keys(reviewDrafts).length} 处暂存输入。<NavLink to="/resume">返回保存修改</NavLink></p>}
         <PageMotion>{children}</PageMotion>
       </main>
-      <ProjectReel />
       <footer className="workspace-footer"><span>ApplyGuard · 让表达有据可依</span><details><summary>数据与模型说明</summary><p>数据来源：{dataSourceLabel}。{workflow?.mock_notice ? zhText(workflow.mock_notice) : ''} 岗位解析与 SAG 分别配置；SAG 启用时会向所配置的模型服务发送材料。</p></details></footer>
     </div>
   </div>
