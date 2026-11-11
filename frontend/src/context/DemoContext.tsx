@@ -39,6 +39,7 @@ interface DemoState {
   setActiveJobId: (id: string | null) => void
   invalidateWorkflow: () => void
   workflow: WorkflowResponse | null
+  workflowSourceNotice: string
   resumeForm: EditableResumeForm | null
   dataSourceLabel: string
   claimDecisions: Record<string, LocalClaimDecision>
@@ -100,6 +101,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const [reviewDrafts, setReviewDrafts] = useState<Record<string,string>>(restored?.drafts ?? {})
   const [reviewStorageError, setReviewStorageError] = useState('')
   const [restoredAt, setRestoredAt] = useState(restored?.savedAt ?? '')
+  const [workflowSourceNotice, setWorkflowSourceNotice] = useState('')
   const [scenario, setScenarioState] = useState<DemoScenario>(getActiveScenario())
   const [step, setStep] = useState<FlowStep>('import')
   const [jdRawInput, setJdRawInput] = useState(() => restored?.jd ?? readSession('applyguard.jd') ?? '')
@@ -112,10 +114,54 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const [simulatedConfirmed, setSimulatedConfirmed] = useState(false)
   const revision = useRef(0)
   const activeApplication = useRef(restored?.workflow.application_id)
+  const skipSourceInvalidate = useRef(Boolean(restored?.workflow))
+  const backendHydrated = useRef(Boolean(restored?.workflow) || getActiveScenario() !== 'live')
   const setReviewDraft = useCallback((id: string, text: string | null) => {
     revision.current += 1
     setReviewDrafts(values => {const next = {...values}; if (text === null) delete next[id]; else next[id] = text; return next})
   }, [])
+
+  const applyBackendDraft = useCallback(async (opts?: { replaceForm?: boolean }) => {
+    const res = await getApiClient().getWorkflowDraft()
+    if (res.error || !res.data?.exists || !res.data.workflow) {
+      if (res.error?.code === 'NETWORK_ERROR') {
+        setWorkflowSourceNotice('无法连接后端，暂不能恢复本机工作流草稿。启动后端后刷新本页。')
+      }
+      return false
+    }
+    const draft = res.data
+    let next = draft.workflow!
+    let notice = draft.saved_at ? `已从本机后端恢复分析草稿（${new Date(draft.saved_at).toLocaleString()}）。` : '已从本机后端恢复分析草稿。'
+    if (draft.stale) {
+      next = invalidateRestoredWorkflow(next, draft.stale_reason || '岗位或经历源头已变化，请重新分析。')
+      notice = draft.stale_reason || notice
+    }
+    skipSourceInvalidate.current = true
+    setJdRawInput(draft.jd || next.parsed_jd.source_text || '')
+    setActiveJobId(draft.active_job_id || next.target_job?.id || null)
+    if (opts?.replaceForm !== false && draft.form) setResumeForm(draft.form)
+    setReviewDrafts(draft.drafts ?? {})
+    activeApplication.current = next.application_id
+    setWorkflowState({
+      ...next,
+      review_session: next.review_session ?? { startedAt: Date.now(), actions: 0, interruptions: 0, choices: {} },
+    })
+    setClaimDecisions({})
+    setFieldDecisions({})
+    setSimulatedConfirmed(false)
+    setConfirmationNote('')
+    setRestoredAt(draft.saved_at || '')
+    setWorkflowSourceNotice(notice)
+    return true
+  }, [])
+
+  useEffect(() => {
+    if (backendHydrated.current) return
+    backendHydrated.current = true
+    if (scenario !== 'live' || workflow) return
+    void applyBackendDraft()
+  }, [applyBackendDraft, scenario, workflow])
+
   useEffect(() => {
     let active = true
     const report = (message: string) => queueMicrotask(() => {if (active) setReviewStorageError(message)})
@@ -129,6 +175,29 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     } catch { report('浏览器暂存失败，请保留此页面并导出已保存正文，刷新可能丢失进度。') }
     return () => {active = false}
   }, [workflow, jdRawInput, resumeForm, reviewDrafts, scenario, activeJobId])
+
+  useEffect(() => {
+    if (scenario !== 'live' || !workflow || workflow._prerecorded) return
+    const analyzedJd = workflow.parsed_jd?.source_text?.trim()
+    if (!analyzedJd) return
+    const timer = window.setTimeout(() => {
+      void getApiClient().saveWorkflowDraft({
+        workflow,
+        jd: analyzedJd,
+        active_job_id: activeJobId,
+        job_content_hash: workflow.target_job?.content_hash ?? null,
+        resume_saved_at: resumeForm?.savedAt ?? null,
+        form: resumeForm,
+        drafts: reviewDrafts,
+      }).then((res) => {
+        if (res.error && res.error.code === 'NETWORK_ERROR') {
+          setWorkflowSourceNotice('分析仍在本页，但未能写入后端草稿；请确认本地后端已启动。')
+        }
+      })
+    }, 450)
+    return () => window.clearTimeout(timer)
+  }, [workflow, activeJobId, resumeForm, reviewDrafts, scenario])
+
   useEffect(() => {
     if (!Object.keys(reviewDrafts).length && !reviewStorageError && !resumeForm?.dirty) return
     const warn = (event: BeforeUnloadEvent) => {event.preventDefault(); event.returnValue = ''}
@@ -141,6 +210,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     if (activeApplication.current !== w?.application_id || !w) setReviewDrafts({})
     activeApplication.current = w?.application_id
     setRestoredAt('')
+    if (w) setWorkflowSourceNotice('')
     let startedAt=Date.now()
     try {const imported=Number(sessionStorage.getItem('applyguard.review.importStartedAt'));if (imported > 0 && imported <= startedAt) startedAt=imported} catch { /* optional local timing */ }
     setWorkflowState(w ? {...w,review_session:w.review_session ?? {startedAt,actions:0,interruptions:0,choices:{}}} : null)
@@ -165,9 +235,10 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     [],
   )
 
-  const invalidateWorkflow = useCallback(() => {
+  const invalidateWorkflow = useCallback((reason = '岗位或经历材料有变动，请重新核验当前草稿。') => {
     revision.current += 1
-    setWorkflowState(previous => previous ? invalidateRestoredWorkflow(previous, '岗位或经历材料有变动，请重新核验当前草稿。') : previous)
+    setWorkflowState(previous => previous ? invalidateRestoredWorkflow(previous, reason) : previous)
+    setWorkflowSourceNotice(reason)
     setClaimDecisions({})
     setFieldDecisions({})
     setSimulatedConfirmed(false)
@@ -178,12 +249,19 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { dirty: _dirty, savedAt: _savedAt, ...content } = resumeForm ?? {}
     const signature = JSON.stringify([jdRawInput, content])
-    if (previousInput.current !== null && previousInput.current !== signature) invalidateWorkflow()
+    if (skipSourceInvalidate.current) {
+      skipSourceInvalidate.current = false
+      previousInput.current = signature
+      return
+    }
+    if (previousInput.current !== null && previousInput.current !== signature) {
+      invalidateWorkflow('岗位或经历源头已修改，已作废旧核验结果；证据匹配等页需重新分析后再继续。')
+    }
     previousInput.current = signature
   }, [jdRawInput, resumeForm, invalidateWorkflow])
 
   useEffect(() => {
-    const invalidate = invalidateWorkflow
+    const invalidate = () => invalidateWorkflow('证明材料或收藏岗位有变动，请重新分析后再继续。')
     const storage = (event: StorageEvent) => { if (event.key === 'applyguard.evidence.version') invalidate() }
     window.addEventListener('applyguard:evidence-changed', invalidate)
     window.addEventListener('applyguard:jobs-changed', invalidate)
@@ -200,8 +278,13 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       setActiveJobId(null)
       setWorkflow(null)
       setResumeForm(null)
+      setWorkflowSourceNotice('')
+      if (s === 'live') {
+        backendHydrated.current = true
+        void applyBackendDraft({ replaceForm: true })
+      }
     },
-    [setWorkflow],
+    [setWorkflow, applyBackendDraft],
   )
 
   const resetFlow = useCallback(() => {
@@ -254,45 +337,47 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     if (Object.keys(reviewDrafts).length || !workflow?.claim_verification.length || workflow.requires_reverification) return false
     for (const v of workflow.claim_verification) {
       const d = claimDecisions[v.claim_id]
-      if (workflow.grounding && d?.decision !== 'reject' &&
-          (workflow.grounding.mode !== 'sag_atomic' ||
-           (workflow.grounding.error && workflow.grounding.results[v.claim_id]?.verification_scope !== 'personal') || v.state !== 'VERIFIED' ||
-           workflow.grounding.results[v.claim_id]?.state !== 'VERIFIED' ||
-           workflow.grounding.results[v.claim_id]?.final_text !== workflow.resume_claims.find(c => c.claim_id === v.claim_id)?.text)) return false
-      if (v.state === 'BLOCKED') {
-        // Cannot confirm-around BLOCKED; must reject/exclude
-        if (d?.decision === 'confirm') return false
-        if (d?.decision !== 'reject') return false
-      }
       const claim = workflow.resume_claims.find((item) => item.claim_id === v.claim_id)
-      // 无证据链仍不可进入网申。个人教育资料表单草稿若已 VERIFIED，可继续；
-      // 项目/比赛/实习草稿未核验会保持 BLOCKED，须拒绝排除。
-      if (!claim?.evidence_ids.length && d?.decision !== 'reject') return false
-      const hasUnverifiedDraft =
-        !!claim &&
-        claim.evidence_ids.some((id) => id.startsWith('ev_draft_')) &&
-        v.state !== 'VERIFIED'
-      if (hasUnverifiedDraft && d?.decision !== 'reject') return false
-      if (v.state === 'NEEDS_REVIEW') {
-        if (!d?.decision) return false
-        if (d.decision === 'edit' || d.freshness === 'edited_pending_reverify') {
-          // Edited → pending re-verify; cannot treat as passed
-          return false
+      const personal = workflow.grounding?.results[v.claim_id]?.verification_scope === 'personal'
+      if (d?.decision === 'edit' || d?.freshness === 'edited_pending_reverify') return false
+      if (d?.decision === 'reject' || d?.freshness === 'rejected') continue
+
+      // 辅助确认：已知悉可能不匹配，仍可继续；不把缺证据标成“已核验通过”。
+      if (d?.decision === 'confirm' && (v.state === 'BLOCKED' || v.state === 'NEEDS_REVIEW')) continue
+
+      if (v.state === 'BLOCKED' || v.state === 'NEEDS_REVIEW') return false
+
+      if (v.state === 'VERIFIED') {
+        if (workflow.grounding) {
+          const report = workflow.grounding
+          const result = report.results[v.claim_id]
+          const groundedOk = report.mode === 'sag_atomic'
+            && (!report.error || personal)
+            && result?.state === 'VERIFIED'
+            && result.final_text === claim?.text
+          if (!groundedOk) return false
         }
+        if (!personal && !claim?.evidence_ids.length) return false
+        if (!personal && claim?.evidence_ids.some((id) => id.startsWith('ev_draft_'))) return false
+        continue
       }
-      if (d?.freshness === 'edited_pending_reverify') return false
+      return false
     }
     const hasPassable = workflow.claim_verification.some((v) => {
       const d = claimDecisions[v.claim_id]
       if (d?.decision === 'reject' || d?.freshness === 'rejected') return false
       if (d?.freshness === 'edited_pending_reverify') return false
-      return v.state === 'VERIFIED' || (v.state === 'NEEDS_REVIEW' && d?.decision === 'confirm')
+      return v.state === 'VERIFIED'
+        || ((v.state === 'NEEDS_REVIEW' || v.state === 'BLOCKED') && d?.decision === 'confirm')
     })
-    // All-BLOCKED demo: after every BLOCKED is rejected, allow ATS inspection
-    const onlyBlocked =
+    const onlyBlockedHandled =
       workflow.claim_verification.length > 0 &&
-      workflow.claim_verification.every((v) => v.state === 'BLOCKED')
-    return hasPassable || onlyBlocked
+      workflow.claim_verification.every((v) => {
+        if (v.state !== 'BLOCKED') return false
+        const d = claimDecisions[v.claim_id]
+        return d?.decision === 'reject' || d?.decision === 'confirm' || d?.freshness === 'rejected'
+      })
+    return hasPassable || onlyBlockedHandled
   }, [workflow, claimDecisions, reviewDrafts])
   const atsFieldAcksComplete = useCallback(() => {
     if (!workflow) return false
@@ -365,6 +450,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       step,
       jdRawInput, activeJobId, invalidateWorkflow,
       workflow,
+      workflowSourceNotice,
       resumeForm,
       dataSourceLabel,
       claimDecisions,
@@ -395,6 +481,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       step,
       jdRawInput, activeJobId, invalidateWorkflow,
       workflow,
+      workflowSourceNotice,
       resumeForm,
       dataSourceLabel,
       claimDecisions,

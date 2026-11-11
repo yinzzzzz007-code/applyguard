@@ -7,23 +7,25 @@ import assert from 'node:assert/strict'
 function canProceed(claims, decisions = {}) {
   for (const v of claims) {
     const d = decisions[v.claim_id]
-    if (v.state === 'BLOCKED') {
-      if (d?.decision === 'confirm') return false
-      if (d?.decision !== 'reject') return false
-    }
-    if (v.state === 'NEEDS_REVIEW') {
-      if (!d?.decision) return false
-      if (d.decision === 'edit' || d.freshness === 'edited_pending_reverify') return false
-    }
-    if (d?.freshness === 'edited_pending_reverify') return false
+    if (d?.decision === 'edit' || d?.freshness === 'edited_pending_reverify') return false
+    if (d?.decision === 'reject' || d?.freshness === 'rejected') continue
+    if (d?.decision === 'confirm' && (v.state === 'BLOCKED' || v.state === 'NEEDS_REVIEW')) continue
+    if (v.state === 'BLOCKED' || v.state === 'NEEDS_REVIEW') return false
+    if (v.state === 'VERIFIED') continue
+    return false
   }
   const hasPassable = claims.some((v) => {
     const d = decisions[v.claim_id]
-    if (d?.decision === 'reject') return false
-    return v.state === 'VERIFIED' || (v.state === 'NEEDS_REVIEW' && d?.decision === 'confirm')
+    if (d?.decision === 'reject' || d?.freshness === 'rejected') return false
+    return v.state === 'VERIFIED'
+      || ((v.state === 'NEEDS_REVIEW' || v.state === 'BLOCKED') && d?.decision === 'confirm')
   })
-  const onlyBlocked = claims.length > 0 && claims.every((v) => v.state === 'BLOCKED')
-  return hasPassable || onlyBlocked
+  const onlyBlockedHandled = claims.length > 0 && claims.every((v) => {
+    if (v.state !== 'BLOCKED') return false
+    const d = decisions[v.claim_id]
+    return d?.decision === 'reject' || d?.decision === 'confirm' || d?.freshness === 'rejected'
+  })
+  return hasPassable || onlyBlockedHandled
 }
 
 assert.equal(
@@ -40,8 +42,8 @@ assert.equal(
   canProceed([{ claim_id: 'a', state: 'BLOCKED' }], {
     a: { decision: 'confirm' },
   }),
-  false,
-  'BLOCKED cannot confirm-around',
+  true,
+  'BLOCKED can acknowledge mismatch and keep',
 )
 assert.equal(
   canProceed(

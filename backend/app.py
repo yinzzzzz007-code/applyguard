@@ -10,7 +10,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 
 from backend.services.career_vault import CareerVault
 from backend.services.evidence_matcher import EvidenceMatcher
@@ -20,7 +20,13 @@ from backend.services.evidence_workspace import (
     handle_evidence_get,
     handle_evidence_post,
 )
-from backend.services.local_store import load_resume_draft, save_resume_draft
+from backend.services.local_store import (
+    clear_workflow_draft,
+    load_resume_draft,
+    load_workflow_draft,
+    save_resume_draft,
+    save_workflow_draft,
+)
 from backend.services.resume_draft_vault import experiences_from_resume_draft
 from backend.services.resume_parser import parse_resume_pdf
 from backend.services.resume_selector import ResumeSelector
@@ -389,6 +395,22 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
                 return
             self._send_json(HTTPStatus.OK, {"exists": True, "form": form})
             return
+        if path_only == "/api/v1/workflow/draft":
+            try:
+                query = parse_qs(urlsplit(self.path).query)
+                draft = load_workflow_draft(
+                    current_jd=query.get("jd", [None])[0],
+                    current_job_id=query.get("job_id", [None])[0],
+                    current_job_hash=query.get("job_hash", [None])[0],
+                )
+            except ValueError as exc:
+                self._send_json(HTTPStatus.UNPROCESSABLE_ENTITY, _error("VALIDATION_ERROR", str(exc), trace_id))
+                return
+            if draft is None:
+                self._send_json(HTTPStatus.OK, {"exists": False, "workflow": None})
+                return
+            self._send_json(HTTPStatus.OK, draft)
+            return
         if path_only.startswith("/api/v1/evidence"):
             try:
                 status, payload, preview = handle_evidence_get(self.path)
@@ -423,6 +445,15 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             delete = handle_evidence_delete
         elif self.path.startswith("/api/v1/jobs/"):
             delete = job_radar.handle_delete
+        elif urlsplit(self.path).path == "/api/v1/workflow/draft":
+            try:
+                response = clear_workflow_draft()
+            except Exception:
+                logging.exception("Workflow draft DELETE failed, trace_id=%s", trace_id)
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, _error("INTERNAL_ERROR", "删除失败，请重试。", trace_id))
+                return
+            self._send_json(HTTPStatus.OK, response)
+            return
         else:
             self._send_json(HTTPStatus.NOT_FOUND, _error("NOT_FOUND", "Route not found", trace_id))
             return
@@ -473,6 +504,8 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             max_bytes = 8_000_000
         elif self.path == "/api/v1/resume/draft":
             max_bytes = 400_000
+        elif self.path == "/api/v1/workflow/draft":
+            max_bytes = 800_000
         elif self.path in {"/api/v1/workflow/mock", "/api/v1/workflow/reverify", "/api/v1/resume/polish", "/api/v1/resume/export"}:
             max_bytes = 262144
         elif self.path.startswith("/api/v1/evidence"):
@@ -498,6 +531,8 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
                 response = parse_resume_pdf(request.get("pdf_base64", ""), request.get("filename", "resume.pdf"), parse_mode=request.get("parse_mode", "offline"))
             elif self.path == "/api/v1/resume/draft":
                 response = save_resume_draft(request)
+            elif self.path == "/api/v1/workflow/draft":
+                response = save_workflow_draft(request)
             elif self.path.startswith("/api/v1/evidence"):
                 response = handle_evidence_post(self.path, request)
             elif self.path == "/api/v1/jobs" or self.path.startswith("/api/v1/jobs/"):

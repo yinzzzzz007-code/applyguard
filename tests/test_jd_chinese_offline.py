@@ -1,5 +1,6 @@
 """Regression for the Chinese internship JD used in the offline demo."""
 
+import re
 import unittest
 
 from backend.app import build_mock_workflow
@@ -60,6 +61,15 @@ class ChineseOfflineJDTests(unittest.TestCase):
         self.assertNotIn("大模型预训练评测研发实习生实习", texts)
         self.assertEqual(sum("2027届" in text for text in texts), 1)
         self.assertFalse(any(text.startswith(("一、", "二、", "职位描述：")) for text in texts))
+        # Numbered / bulleted markers must stay attached to the line, not become lone requirements.
+        self.assertFalse(any(re.fullmatch(r"\d+[、.．]?", text.strip()) for text in texts))
+        scoped = select_requirements_for_matching(parsed)
+        self.assertEqual(len(scoped), 14)
+        req_texts = [item["text"] for item in scoped]
+        self.assertTrue(any(text.startswith("本科及以上") for text in req_texts))
+        self.assertTrue(any("熟悉 Python" in text for text in req_texts))
+        self.assertTrue(any(text.startswith("了解 PyTorch") for text in req_texts))
+        self.assertFalse(any(re.match(r"^(?:[-•*]|\d+[、.．])\s*", text) for text in req_texts))
 
     def test_chinese_qualifications_keep_source_and_separate_profile_signals(self):
         source = ("前端实习\n工作职责\n维护网站和接口。\n工作要求\n"

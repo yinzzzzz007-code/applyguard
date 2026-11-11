@@ -21,6 +21,8 @@ class MatchScopeTests(unittest.TestCase):
         self.assertIn("Public Benchmark", parsed_text)
         self.assertNotIn("Public Benchmark", scoped_text)
         self.assertNotIn("LLM Harness", scoped_text)
+        self.assertEqual(len(scoped), 14)
+        self.assertFalse(any(item["text"].strip() in {"1.", "2.", "3.", "4.", "5.", "6.", "7."} for item in scoped))
         self.assertLess(len(scoped), len(parsed["requirements"]))
         self.assertTrue(qualification_spans(JD))
 

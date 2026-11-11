@@ -57,7 +57,22 @@ def _injection(value: str) -> bool:
 
 
 def _spans(source: str) -> list[str]:
-    return [span.strip() for span in re.split(r"\n|;|；|。|(?<=\.)\s+", source) if span.strip()]
+    # Keep "1. …" list markers intact: only split after a non-digit period + space.
+    return [span.strip() for span in re.split(r"\n|;|；|。|(?<=(?<!\d)\.)\s+", source) if span.strip()]
+
+
+_LIST_MARKER = re.compile(r"^(?:[-•*]|[（(]?\d{1,2}[)）]|[一二三四五六七八九十]+[、.．]|\d{1,2}[、.．])\s*")
+
+
+def _strip_list_marker(fragment: str) -> str:
+    """Drop leading bullets / '1.' / '一、' so numbered lines stay one requirement."""
+    cleaned = _LIST_MARKER.sub("", fragment.strip(), count=1).strip()
+    return cleaned or fragment.strip()
+
+
+def _is_bare_list_marker(fragment: str) -> bool:
+    text = fragment.strip()
+    return bool(re.fullmatch(r"(?:[-•*]|\d{1,2}[、.．]?|[一二三四五六七八九十]+[、.．]?)", text))
 
 
 def _grounded_text(text: str, evidence: str) -> bool:
@@ -351,6 +366,12 @@ class JDParser:
             fragments = [line] if in_qualifications and re.search(r"[\u3400-\u9fff]", line) else re.split(r",|\band\b", line, flags=re.I)
             for fragment in fragments:
                 fragment = fragment.strip()
+                if _is_bare_list_marker(fragment):
+                    continue
+                if in_qualifications:
+                    fragment = _strip_list_marker(fragment)
+                if not fragment or _is_bare_list_marker(fragment):
+                    continue
                 terms = [term for term in _TERMS if any(
                     re.search(r"(?<![a-z0-9])" + re.escape(alias) + r"(?![a-z0-9])", fragment, re.I)
                     for alias in _TERM_ALIASES.get(term, (term,)))]

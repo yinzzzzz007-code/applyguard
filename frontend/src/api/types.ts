@@ -103,6 +103,10 @@ export interface ResumeBasicInfo {
   idNo: string
   city: string
   hukou: string
+  /** 可选外链，用于简历页眉 */
+  github: string
+  linkedin: string
+  website: string
 }
 
 export interface ResumeIntention {
@@ -121,6 +125,9 @@ export interface ResumeEducation {
   start: string
   end: string
   rank: string
+  gpa: string
+  location: string
+  coursework: string
 }
 
 export interface ResumeExperienceEntry {
@@ -131,6 +138,9 @@ export interface ResumeExperienceEntry {
   start: string
   end: string
   description: string
+  location: string
+  techStack: string
+  link: string
   sourceExperienceId?: string
 }
 
@@ -146,6 +156,12 @@ export interface ResumeExtras {
   skills: string
   awards: string
   summary: string
+  /** 语言能力，如：英语 CET-6 / IELTS 7.0 */
+  languages: string
+  /** 研究兴趣或方向 */
+  researchFocus: string
+  /** 论文 / 科研成果，多行文本 */
+  publications: string
 }
 
 export interface ExtractedResumeForm {
@@ -501,20 +517,51 @@ export interface EvidenceSourceFile {
   sidecar?: boolean
 }
 
+/** Structured extracts from a material. Keys depend on material kind — not always award fields. */
 export interface AwardEvidenceFields {
   recipient?: string
   award_name?: string
   grade?: string
   issuer?: string
   date?: string
+  company?: string
+  department?: string
+  title?: string
+  period?: string
+  duties?: string
+  outcomes?: string
+  name?: string
+  organization?: string
+  role?: string
+  responsibilities?: string
+  tech_stack?: string
+  material_label?: string
+  [key: string]: string | undefined
+}
+
+export type EvidenceFields = AwardEvidenceFields
+
+export type FieldCheckStatus = 'SUPPORTED' | 'NOT_MENTIONED' | 'CONFLICT' | 'PENDING'
+
+export interface EvidenceFieldCheck {
+  key: string
+  label: string
+  experience_value: string
+  status: FieldCheckStatus | string
+  status_label?: string
+  quote?: string
+  quote_available?: boolean
+  quote_note?: string
+  source?: string
 }
 
 export interface EvidenceRecord {
   evidence_id: string
   workspace_id: string
   kind: string
-  normalized_fields: AwardEvidenceFields
-  ocr_fields?: AwardEvidenceFields
+  kind_label?: string
+  normalized_fields: EvidenceFields
+  ocr_fields?: EvidenceFields
   review_state: EvidenceReviewState | string
   reviewed_at?: string | null
   primary_file_id?: string | null
@@ -532,7 +579,8 @@ export interface EvidenceLink {
   linked_at: string
   link_state: EvidenceLinkState | string
   review_state?: string
-  normalized_fields?: AwardEvidenceFields
+  normalized_fields?: EvidenceFields
+  field_checks?: EvidenceFieldCheck[] | null
   relative_path?: string
   version?: number
   file_state?: string
@@ -586,7 +634,14 @@ export interface ResumeMatchItem {
   notes: string[]
   action: string
   gap_hint?: string
-  candidate_fields?: AwardEvidenceFields
+  candidate_fields?: EvidenceFields
+  field_checks?: EvidenceFieldCheck[]
+  field_summary?: Record<string, number>
+  material_kind?: string | null
+  material_kind_label?: string | null
+  linked_evidence_ids?: string[]
+  recognition_state?: string
+  association_state?: string
 }
 
 export interface ResumeMatchReport {

@@ -1,0 +1,212 @@
+.resume-generate-page .resume-sheet {
+  background: #fff;
+  color: #1a1a1a;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin: 18px 0 28px;
+  box-shadow: 0 8px 24px rgba(20, 28, 45, 0.04);
+}
+
+.resume-sheet-head {
+  text-align: left;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.resume-sheet-byline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 14px;
+}
+
+.resume-sheet-name {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.resume-sheet-contacts,
+.resume-sheet-intention {
+  margin: 0;
+  font-size: 13px;
+  color: #444;
+}
+
+.resume-sheet-intention {
+  margin-top: 6px;
+}
+
+.resume-sheet-section {
+  margin-top: 16px;
+}
+
+.resume-sheet-section h2 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #222;
+  padding-bottom: 4px;
+}
+
+.resume-cn-campus .resume-sheet-section h2 {
+  text-transform: none;
+  letter-spacing: 0.04em;
+  color: #1f4f8a;
+  border-bottom-color: #1f4f8a;
+}
+
+.resume-sheet-entry + .resume-sheet-entry {
+  margin-top: 12px;
+}
+
+.resume-sheet-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.resume-sheet-line span {
+  white-space: nowrap;
+  font-size: 12px;
+  color: #555;
+}
+
+.resume-sheet-line.muted-line {
+  font-size: 13px;
+}
+
+.resume-sheet-meta,
+.resume-sheet-link {
+  margin: 4px 0;
+  font-size: 12px;
+  color: #555;
+}
+
+.resume-sheet-stack {
+  font-weight: 400;
+  color: #555;
+}
+
+.resume-sheet-section ul {
+  margin: 6px 0 0;
+  padding-left: 1.1rem;
+}
+
+.resume-sheet-section li {
+  margin: 3px 0;
+  line-height: 1.55;
+  font-size: 13px;
+}
+
+.resume-en-classic {
+  font-family: "Times New Roman", "Noto Serif SC", serif;
+}
+
+.resume-cn-academic,
+.resume-cn-campus {
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.resume-history-block {
+  margin-top: 12px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hairline);
+}
+
+.resume-sheet.is-editing .resume-sheet-entry,
+.resume-sheet.is-editing .resume-sheet-section,
+.resume-sheet.is-editing .resume-sheet-block,
+.resume-sheet.is-editing li {
+  position: relative;
+}
+
+.resume-sheet-section-head,
+.resume-sheet-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.resume-sheet-section-head h2 {
+  flex: 1;
+}
+
+.resume-edit-remove {
+  border: 1px solid #e2b4b4;
+  background: #fff5f5;
+  color: #9b1c1c;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1;
+  padding: 5px 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.resume-sheet.is-editing .resume-sheet-entry > .resume-edit-remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.resume-sheet.is-editing li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.resume-sheet-contact-chip .resume-edit-remove {
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+@media print {
+  .skip-link,
+  .workspace-sidebar,
+  .workspace-topbar,
+  .workspace-footer,
+  .workspace-notice,
+  .sample-data-note,
+  .workspace-main > .danger-text,
+  .resume-generate-page .panel-head,
+  .resume-generate-page .profile-card,
+  .resume-generate-page .resume-history-block,
+  .resume-generate-page .btn-row,
+  .resume-generate-page .callout,
+  .resume-generate-page .empty-state,
+  .resume-generate-page .state-panel,
+  .resume-edit-remove {
+    display: none !important;
+  }
+
+  .workspace-shell,
+  .workspace-body,
+  .workspace-main,
+  .panel,
+  .resume-generate-page {
+    display: block !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+  }
+
+  .resume-sheet {
+    display: block !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}

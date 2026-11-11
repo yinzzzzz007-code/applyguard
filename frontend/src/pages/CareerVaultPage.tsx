@@ -383,6 +383,13 @@ function ExperienceEditor({
 }) {
   const set = (key: keyof ResumeExperienceEntry, value: string) =>
     onChange({ ...entry, [key]: value })
+  const [links, setLinks] = useState<EvidenceLink[]>([])
+
+  useEffect(() => {
+    void getApiClient()
+      .listEvidenceLinks({ target_type: mode, target_id: entry.id })
+      .then((res) => setLinks(res.data ?? []))
+  }, [entry.id, mode])
 
   return (
     <div className="resume-entry">
@@ -429,14 +436,58 @@ function ExperienceEditor({
           />
         ) : null}
         <FieldInput
+          label="地点"
+          value={entry.location}
+          placeholder="城市 / 远程"
+          onChange={(v) => set('location', v)}
+        />
+        <FieldInput
+          label="技术栈"
+          value={entry.techStack}
+          placeholder="Python, PyTorch, React…"
+          onChange={(v) => set('techStack', v)}
+        />
+        <FieldInput
+          label="链接"
+          value={entry.link}
+          placeholder="GitHub / 项目页 / 论文"
+          onChange={(v) => set('link', v)}
+        />
+        <FieldInput
           label="工作 / 项目描述"
           value={entry.description}
           required
           wide
           multiline
-          placeholder="职责、技术栈、量化结果…"
+          placeholder="每行一条要点：职责、技术栈、量化结果…"
           onChange={(v) => set('description', v)}
         />
+      </div>
+      <div className="evidence-award-links">
+        {links.length ? (
+          <ul>
+            {links.map((link) => (
+              <li key={link.link_id}>
+                <Link to={`/evidence?evidence_id=${link.evidence_id}&target_type=${mode}&target_id=${entry.id}`}>
+                  {link.evidence_id}
+                </Link>
+                <span className={link.link_state === 'STALE' ? 'danger-text' : 'muted'}>
+                  {' '}
+                  · {link.link_state}
+                  {link.relative_path ? ` · ${link.relative_path} v${link.version}` : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="muted">尚未关联本地证明材料。</p>
+        )}
+        <Link
+          className="btn secondary"
+          to={`/evidence?target_type=${mode}&target_id=${encodeURIComponent(entry.id)}`}
+        >
+          导入 / 关联材料
+        </Link>
       </div>
     </div>
   )
@@ -786,6 +837,24 @@ export function CareerVaultPage() {
                       patchForm((p) => ({ ...p, basic: { ...p.basic, city: v } }))
                     }
                   />
+                  <FieldInput
+                    label="GitHub"
+                    value={form.basic.github}
+                    placeholder="github.com/username"
+                    onChange={(v) => patchForm((p) => ({ ...p, basic: { ...p.basic, github: v } }))}
+                  />
+                  <FieldInput
+                    label="LinkedIn"
+                    value={form.basic.linkedin}
+                    placeholder="linkedin.com/in/username"
+                    onChange={(v) => patchForm((p) => ({ ...p, basic: { ...p.basic, linkedin: v } }))}
+                  />
+                  <FieldInput
+                    label="个人主页"
+                    value={form.basic.website}
+                    placeholder="https://…"
+                    onChange={(v) => patchForm((p) => ({ ...p, basic: { ...p.basic, website: v } }))}
+                  />
                 </div>
                 <details className="vault-optional"><summary>网申补充信息（选填）</summary>
                   <p className="resume-hint">仅在目标招聘表单确有需要时填写。演示请使用虚构信息；留空不影响整理经历和材料。</p>
@@ -954,12 +1023,51 @@ export function CareerVaultPage() {
                       />
                       <FieldInput
                         label="成绩 / 排名"
-                        wide
                         value={edu.rank}
                         onChange={(v) =>
                           patchForm((p) => {
                             const education = p.education.map((row, i) =>
                               i === idx ? { ...row, rank: v } : row,
+                            )
+                            return { ...p, education }
+                          })
+                        }
+                      />
+                      <FieldInput
+                        label="GPA"
+                        value={edu.gpa}
+                        placeholder="如 3.8/4.0"
+                        onChange={(v) =>
+                          patchForm((p) => {
+                            const education = p.education.map((row, i) =>
+                              i === idx ? { ...row, gpa: v } : row,
+                            )
+                            return { ...p, education }
+                          })
+                        }
+                      />
+                      <FieldInput
+                        label="学校所在地"
+                        value={edu.location}
+                        placeholder="城市 / 国家"
+                        onChange={(v) =>
+                          patchForm((p) => {
+                            const education = p.education.map((row, i) =>
+                              i === idx ? { ...row, location: v } : row,
+                            )
+                            return { ...p, education }
+                          })
+                        }
+                      />
+                      <FieldInput
+                        label="相关课程"
+                        wide
+                        value={edu.coursework}
+                        placeholder="数据结构、操作系统、机器学习…"
+                        onChange={(v) =>
+                          patchForm((p) => {
+                            const education = p.education.map((row, i) =>
+                              i === idx ? { ...row, coursework: v } : row,
                             )
                             return { ...p, education }
                           })
@@ -985,6 +1093,9 @@ export function CareerVaultPage() {
                           start: '',
                           end: '',
                           rank: '',
+                          gpa: '',
+                          location: '',
+                          coursework: '',
                         } satisfies ResumeEducation,
                       ],
                     }))
@@ -1037,6 +1148,9 @@ export function CareerVaultPage() {
                           start: '',
                           end: '',
                           description: '',
+                          location: '',
+                          techStack: '',
+                          link: '',
                         },
                       ],
                     }))
@@ -1087,6 +1201,9 @@ export function CareerVaultPage() {
                           start: '',
                           end: '',
                           description: '',
+                          location: '',
+                          techStack: '',
+                          link: '',
                         },
                       ],
                     }))
@@ -1150,6 +1267,34 @@ export function CareerVaultPage() {
                     value={form.extras.skills}
                     onChange={(v) =>
                       patchForm((p) => ({ ...p, extras: { ...p.extras, skills: v } }))
+                    }
+                  />
+                  <FieldInput
+                    label="语言能力"
+                    wide
+                    value={form.extras.languages}
+                    placeholder="英语 CET-6 / IELTS 7.0；普通话母语"
+                    onChange={(v) =>
+                      patchForm((p) => ({ ...p, extras: { ...p.extras, languages: v } }))
+                    }
+                  />
+                  <FieldInput
+                    label="研究兴趣"
+                    wide
+                    value={form.extras.researchFocus}
+                    placeholder="大模型评测、AI Infra、分布式训练…"
+                    onChange={(v) =>
+                      patchForm((p) => ({ ...p, extras: { ...p.extras, researchFocus: v } }))
+                    }
+                  />
+                  <FieldInput
+                    label="论文 / 科研成果"
+                    wide
+                    multiline
+                    value={form.extras.publications}
+                    placeholder="每行一篇：作者. 标题. 会议/期刊 年份."
+                    onChange={(v) =>
+                      patchForm((p) => ({ ...p, extras: { ...p.extras, publications: v } }))
                     }
                   />
                   <FieldInput

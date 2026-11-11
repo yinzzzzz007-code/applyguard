@@ -62,3 +62,12 @@ test('a wording-approved rewrite stays in preview and does not upgrade insuffici
  assert.equal(accepted.claim_verification[0].state,'NEEDS_REVIEW')
  assert.equal(currentSupport(accepted,id),'当前文字待核验')
 })
+
+test('legacy demo labels retain blocking but edits still require verification',()=>{
+ const w=JSON.parse(readFileSync(new URL('../public/prerecorded/unsupported_block.json',import.meta.url)))
+ w._prerecorded={case:'unsupported_block',notice:'Demo only'}
+ const id=w.resume_claims[0].claim_id
+ assert.equal(currentSupport(w,id),'预录结果：已阻断')
+ const edited=changeClaim(w,id,'A changed sentence','edit')
+ assert.equal(currentSupport(edited,id),'当前文字待核验')
+})

@@ -4,6 +4,7 @@ import { fileToBase64, getApiClient } from '../api/client'
 import type {
   AwardEvidenceFields,
   CareerVaultSeed,
+  EvidenceFieldCheck,
   EvidenceRecord,
   EvidenceSourceFile,
   EvidenceSpan,
@@ -14,6 +15,11 @@ import type {
 import { EvidenceMaterialLibrary } from '../components/EvidenceMaterialLibrary'
 import { AgentConnector } from '../components/AgentConnector'
 import { materialName, orderedEvidenceSpans } from '../evidence/materials'
+import {
+  editorFieldsForKind,
+  MATERIAL_KIND_OPTIONS,
+  materialKindLabel,
+} from '../evidence/verification'
 import { EvidenceMatchBoard } from '../components/EvidenceMatchBoard'
 import { useDemo } from '../context/DemoContext'
 import {
@@ -295,6 +301,8 @@ export function EvidenceWorkspacePage() {
   const [previewError, setPreviewError] = useState('')
   const [detail, setDetail] = useState<EvidenceRecord | null>(null)
   const [fields, setFields] = useState<AwardEvidenceFields>({})
+  const [materialKind, setMaterialKind] = useState('DOCUMENT')
+  const [fieldChecksDraft, setFieldChecksDraft] = useState<EvidenceFieldCheck[]>([])
   const [draftSavedAt, setDraftSavedAt] = useState('')
   const [busy, setBusy] = useState('')
   const [message, setMessage] = useState('')
@@ -468,7 +476,7 @@ export function EvidenceWorkspacePage() {
               status: 'UNCHECKED',
               score: 0,
               notes: ['尚未对照'],
-              action: '点「查找材料与经历的对应关系」开始匹配证据',
+              action: '点「查找推荐对应」开始匹配；无候选时可从已有材料中选择',
               candidate_fields: {},
             },
       )
@@ -488,7 +496,7 @@ export function EvidenceWorkspacePage() {
               status: 'UNCHECKED',
               score: 0,
               notes: ['尚未对照'],
-              action: '点「查找材料与经历的对应关系」开始匹配证据',
+              action: '点「查找推荐对应」开始匹配；无候选时可从已有材料中选择',
               candidate_fields: {},
             },
       )
@@ -508,7 +516,7 @@ export function EvidenceWorkspacePage() {
               status: 'UNCHECKED',
               score: 0,
               notes: ['尚未对照'],
-              action: '点「查找材料与经历的对应关系」开始匹配证据',
+              action: '点「查找推荐对应」开始匹配；无候选时可从已有材料中选择',
               candidate_fields: {},
             },
       )
@@ -625,11 +633,16 @@ export function EvidenceWorkspacePage() {
             setDetail({ ...res.data, spans: orderedEvidenceSpans(res.data.spans || []) })
         if (openEvidenceId === selectedEvidenceId) setLibraryFileId(res.data.primary_file_id || '')
         setFields({ ...res.data.normalized_fields })
+        setMaterialKind(res.data.kind || 'DOCUMENT')
         setDraftSavedAt(res.data.reviewed_at || '')
       } else setPreviewError(res.error?.message || '无法加载证据，请重新打开。')
     })
     return () => { cancelled = true }
   }, [api, selectedEvidenceId, detailRevision, openEvidenceId])
+
+  useEffect(() => {
+    setFieldChecksDraft(activeMatch?.field_checks ? [...activeMatch.field_checks] : [])
+  }, [activeMatch?.evidence_id, activeMatch?.status, matchReport])
 
   // Capture the file ID with each draft; serialize saves before confirming a review.
   const flushFieldDraft = useCallback(() => {
@@ -653,13 +666,37 @@ export function EvidenceWorkspacePage() {
     return fieldSaveQueue.current
   }, [api, refreshLists])
 
-  const editEvidenceField = (key: keyof AwardEvidenceFields, value: string) => {
+  const editEvidenceField = (key: string, value: string) => {
     const next = { ...fields, [key]: value }
     setFields(next)
     setDraftSavedAt('')
     pendingFieldDraft.current = { id: selectedEvidenceId, fields: next, workspace: workspaceId }
     if (fieldsSaveTimer.current) clearTimeout(fieldsSaveTimer.current)
     fieldsSaveTimer.current = setTimeout(() => void flushFieldDraft(), 600)
+  }
+
+  const changeMaterialKind = (kind: string) => {
+    setMaterialKind(kind)
+    pendingFieldDraft.current = { id: selectedEvidenceId, fields, workspace: workspaceId }
+    if (fieldsSaveTimer.current) clearTimeout(fieldsSaveTimer.current)
+    fieldsSaveTimer.current = setTimeout(() => {
+      void (async () => {
+        if (!selectedEvidenceId) return
+        await flushFieldDraft()
+        await api.reviewEvidence(selectedEvidenceId, {
+          normalized_fields: fields,
+          review_state: 'UNREVIEWED',
+          kind,
+        })
+        setDetailRevision((value) => value + 1)
+      })()
+    }, 400)
+  }
+
+  const changeFieldCheckStatus = (key: string, status: string) => {
+    setFieldChecksDraft((prev) => prev.map((row) => row.key === key
+      ? { ...row, status, status_label: ({ SUPPORTED: '支持', NOT_MENTIONED: '未提及', CONFLICT: '冲突', PENDING: '待确认' } as Record<string, string>)[status] || status, source: 'user' }
+      : row))
   }
 
   useEffect(() => () => { void flushFieldDraft() }, [flushFieldDraft])
@@ -685,21 +722,29 @@ export function EvidenceWorkspacePage() {
     const entries: Record<string, { label: string; value: string }[]> = {}
     vaultPayload.awards.forEach((item) => {
       entries[`award:${item.award_id}`] = [
-        { label: '颁发方', value: item.issuer || '' },
-        { label: '日期', value: item.date || '' },
-        { label: '描述', value: item.description || '' },
+        { label: '奖项名称', value: item.name || '' },
+        { label: '颁发单位', value: item.issuer || '' },
+        { label: '获奖时间', value: item.date || '' },
+        { label: '说明', value: item.description || '' },
       ]
     })
-    for (const [type, items] of [['internship', vaultPayload.internships], ['project', vaultPayload.projects]] as const) {
-      items.forEach((item) => {
-        entries[`${type}:${item.id}`] = [
-          { label: '组织', value: item.organization || '' },
-          { label: '角色', value: item.role || '' },
-          { label: '时间', value: [item.start, item.end].filter(Boolean).join(' — ') },
-          { label: '描述', value: item.description || '' },
-        ]
-      })
-    }
+    vaultPayload.internships.forEach((item) => {
+      entries[`internship:${item.id}`] = [
+        { label: '公司', value: item.organization || '' },
+        { label: '岗位', value: item.title || item.role || '' },
+        { label: '时间', value: [item.start, item.end].filter(Boolean).join(' — ') },
+        { label: '职责 / 产出', value: item.description || '' },
+      ]
+    })
+    vaultPayload.projects.forEach((item) => {
+      entries[`project:${item.id}`] = [
+        { label: '名称', value: item.title || '' },
+        { label: '所属组织', value: item.organization || '' },
+        { label: '个人角色', value: item.role || '' },
+        { label: '时间', value: [item.start, item.end].filter(Boolean).join(' — ') },
+        { label: '负责工作 / 成果', value: item.description || '' },
+      ]
+    })
     return entries
   }, [vaultPayload])
 
@@ -950,22 +995,24 @@ export function EvidenceWorkspacePage() {
 
   const confirmReview = async () => {
     if (!selectedEvidenceId) return
-    setBusy('提交核对…')
+    setBusy('确认识别内容…')
     await flushFieldDraft()
     const res = await api.reviewEvidence(selectedEvidenceId, {
       normalized_fields: fields,
       review_state: 'REVIEWED',
       span_ids: detail?.spans?.map((s) => s.span_id),
+      kind: materialKind,
     })
     setBusy('')
     if (res.error || !res.data) {
-      setMessage(res.error?.message || '核对失败')
+      setMessage(res.error?.message || '确认失败')
       return
     }
     setDetail({ ...res.data, spans: orderedEvidenceSpans(res.data.spans || []) })
     setFields({ ...res.data.normalized_fields })
+    setMaterialKind(res.data.kind || materialKind)
     setDraftSavedAt(res.data.reviewed_at || new Date().toISOString())
-    setMessage('已确认证据并保存到本机。OCR 原文仍保留，界面字段为人工确认版本。')
+    setMessage('识别已确认（识别完成）。这不会自动把经历字段标成获支持；请到「经历关联」核对并确认关联。')
     if (workspaceId) {
       await refreshLists(workspaceId)
       await runMatchVault()
@@ -979,18 +1026,28 @@ export function EvidenceWorkspacePage() {
       return
     }
     setBusy('建立关联…')
+    let checks = fieldChecksDraft
+    if (!checks.length) {
+      const preview = await api.previewEvidenceFieldChecks({
+        target_type: target.target_type,
+        evidence_id: selectedEvidenceId,
+        experience: experiencePayloadFor(target),
+      })
+      checks = preview.data?.field_checks || []
+    }
     const res = await api.createEvidenceLink({
       target_type: linkTargetType,
       target_id: linkTargetId,
       evidence_id: selectedEvidenceId,
+      field_checks: checks,
     })
     setBusy('')
     if (res.error || !res.data) {
-      setMessage(res.error?.message || '关联失败（需先完成核对）')
+      setMessage(res.error?.message || '关联失败（需先确认识别完成）')
       return
     }
     await runMatchVault()
-    setMessage('已关联「' + target.label + '」。')
+    setMessage('已关联「' + target.label + '」。关联完成不等于全部字段获支持。')
     setSelectedMatchKey(matchKey(target))
     setPreviewContext('match')
     showTab('relations')
@@ -1098,26 +1155,33 @@ export function EvidenceWorkspacePage() {
     const fieldsToUse = detail?.evidence_id === row.evidence_id && selectedEvidenceId === row.evidence_id
       ? fields : current.data.normalized_fields
     if (current.data.review_state !== 'REVIEWED'
-      || JSON.stringify(fieldsToUse) !== JSON.stringify(current.data.normalized_fields)) {
+      || JSON.stringify(fieldsToUse) !== JSON.stringify(current.data.normalized_fields)
+      || (detail?.evidence_id === row.evidence_id && materialKind !== current.data.kind)) {
       const reviewed = await api.reviewEvidence(row.evidence_id, {
         normalized_fields: fieldsToUse,
         review_state: 'REVIEWED',
+        kind: detail?.evidence_id === row.evidence_id ? materialKind : current.data.kind,
       })
       if (reviewed.error || !reviewed.data) {
         setBusy('')
-        setMessage(reviewed.error?.message || '核对保存失败')
+        setMessage(reviewed.error?.message || '识别确认保存失败')
         return
       }
       if (selectedEvidenceId === row.evidence_id) {
-            setDetail({ ...reviewed.data, spans: orderedEvidenceSpans(reviewed.data.spans || []) })
+        setDetail({ ...reviewed.data, spans: orderedEvidenceSpans(reviewed.data.spans || []) })
         setFields({ ...reviewed.data.normalized_fields })
+        setMaterialKind(reviewed.data.kind || materialKind)
       }
     }
+    const checksToSave = (matchKey(row) === selectedMatchKey && fieldChecksDraft.length
+      ? fieldChecksDraft
+      : row.field_checks) || []
     const linked = await api.createEvidenceLink({
       target_type: row.target_type,
       target_id: row.target_id,
       evidence_id: row.evidence_id,
       link_state: 'ACTIVE',
+      field_checks: checksToSave,
     })
     setBusy('')
     if (linked.error || !linked.data) {
@@ -1125,7 +1189,80 @@ export function EvidenceWorkspacePage() {
       return
     }
     await runMatchVault()
-    setMessage(`已关联：「${row.label}」 ↔ 「${row.relative_path || '所选证据'}」。可继续处理下一条。`)
+    setMessage(`已关联：「${row.label}」 ↔ 「${row.relative_path || '所选材料'}」。关联完成 ≠ 全部字段获支持。`)
+  }
+
+  const experiencePayloadFor = (row: ResumeMatchItem): Record<string, unknown> => {
+    if (row.target_type === 'award') {
+      const item = vaultPayload.awards.find((entry) => entry.award_id === row.target_id)
+      return item ? { ...item } : { name: row.label }
+    }
+    if (row.target_type === 'internship') {
+      const item = vaultPayload.internships.find((entry) => entry.id === row.target_id)
+      return item ? { ...item } : { title: row.label }
+    }
+    const item = vaultPayload.projects.find((entry) => entry.id === row.target_id)
+    return item ? { ...item } : { title: row.label }
+  }
+
+  const pickExistingMaterial = async (row: ResumeMatchItem, file: EvidenceSourceFile) => {
+    if (!file.evidence_id) {
+      setMessage('该文件尚未生成可关联条目，请先打开并确认识别内容。')
+      return
+    }
+    setBusy('正在载入已有材料…')
+    await flushFieldDraft()
+    const [current, preview] = await Promise.all([
+      api.getEvidence(file.evidence_id),
+      api.previewEvidenceFieldChecks({
+        target_type: row.target_type,
+        evidence_id: file.evidence_id,
+        experience: experiencePayloadFor(row),
+      }),
+    ])
+    setBusy('')
+    if (!current.data || current.error) {
+      setMessage(current.error?.message || '读取材料失败')
+      return
+    }
+    const checks = preview.data?.field_checks || []
+    const nextRow: ResumeMatchItem = {
+      ...row,
+      status: current.data.review_state === 'REVIEWED' ? 'MATCHED' : 'NEEDS_CONFIRM',
+      evidence_id: file.evidence_id,
+      relative_path: file.relative_path,
+      review_state: current.data.review_state,
+      candidate_fields: current.data.normalized_fields,
+      material_kind: current.data.kind,
+      material_kind_label: materialKindLabel(current.data.kind),
+      score: row.score || 0,
+      notes: ['手动选择已有材料（未自动确认关联）', ...(row.notes || []).filter((note) => !note.includes('手动选择'))],
+      action: current.data.review_state === 'REVIEWED'
+        ? '已从材料库选择：请核对字段后确认关联'
+        : '已选择材料，请先确认识别内容，再核对字段并关联',
+      field_checks: checks,
+      field_summary: preview.data?.field_summary,
+      association_state: 'CANDIDATE',
+      recognition_state: current.data.review_state === 'REVIEWED' ? 'REVIEWED' : 'EXTRACTED',
+    }
+    setMatchReport((prev) => {
+      const base = prev || { workspace_id: workspaceId, summary: {}, results: vaultRows }
+      const results = base.results.some((item) => matchKey(item) === matchKey(row))
+        ? base.results.map((item) => matchKey(item) === matchKey(row) ? nextRow : item)
+        : [...base.results, nextRow]
+      const report = { ...base, results, notice: '手动选择仅作为推荐候选，需确认关联。' }
+      if (workspaceId) saveStoredMatch(workspaceId, report)
+      return report
+    })
+    setFieldChecksDraft(checks.slice())
+    setSelectedMatchKey(matchKey(row))
+    setSelectedEvidenceId(file.evidence_id)
+    setPreviewContext('match')
+    setPreviewOpen(true)
+    setDetail({ ...current.data, spans: orderedEvidenceSpans(current.data.spans || []) })
+    setFields({ ...current.data.normalized_fields })
+    setMaterialKind(current.data.kind || 'DOCUMENT')
+    setMessage(`已选择「${materialName(file.relative_path)}」。自动匹配未命中时也可这样关联，不会重复上传。`)
   }
 
   const rejectMatch = async (row: ResumeMatchItem) => {
@@ -1250,6 +1387,9 @@ export function EvidenceWorkspacePage() {
               start: '',
               end: '',
               description: '',
+              location: '',
+              techStack: '',
+              link: '',
             },
           ],
           dirty: true,
@@ -1267,6 +1407,9 @@ export function EvidenceWorkspacePage() {
             start: '',
             end: '',
             description: '',
+            location: '',
+            techStack: '',
+            link: '',
           },
         ],
         dirty: true,
@@ -1404,44 +1547,50 @@ export function EvidenceWorkspacePage() {
 
   const renderEvidenceEditor = (expanded = false) => (
     <details className="relation-field-editor" open={expanded || undefined}>
-      <summary>核对 / 修正识别字段</summary>
-      <p className="material-helper">以下为奖项类字段，其他材料可留空。请按原件填写；确认核对后，再到经历对照区建立关联。</p>
-          <div className="resume-fields">
-            {(
-              [
-                ['recipient', '获奖人'],
-                ['award_name', '奖项名称'],
-                ['grade', '等级'],
-                ['issuer', '颁发方'],
-                ['date', '日期'],
-              ] as const
-            ).map(([key, label]) => (
-              <label key={key} className="resume-field">
-                {label}
-                <input
-                  className="resume-input"
-                  disabled={!!busy || detail?.evidence_id !== selectedEvidenceId}
-                  value={fields[key] || ''}
-                  onChange={(e) => editEvidenceField(key, e.target.value)}
-                />
-              </label>
-            ))}
-          </div>
-          {fieldSaveError && <p role="alert" className="danger-text">{fieldSaveError} <button type="button" className="linkish" onClick={() => {
-            pendingFieldDraft.current = { id: selectedEvidenceId, fields, workspace: workspaceId }
-            void flushFieldDraft()
-          }}>重试保存</button></p>}
-          {draftSavedAt ? (
-            <p className="muted">最近保存：{new Date(draftSavedAt).toLocaleString('zh-CN')}</p>
-          ) : (
-            <p className="muted">修改会自动保存为草稿；核对无误后点击「确认材料已核对」。</p>
-          )}
-          <div className="btn-row">
-            <button type="button" className="btn primary" disabled={!!busy || !detail || detail.evidence_id !== selectedEvidenceId} onClick={() => void confirmReview()}>
-              确认材料已核对
-            </button>
-          </div>
-
+      <summary>确认识别内容</summary>
+      <p className="material-helper">
+        先标明材料类型，再按需修正提取字段。这是「识别完成」，不等于已经证明经历里的每一项信息。
+      </p>
+      <label className="resume-field">
+        材料类型
+        <select
+          className="resume-input resume-select"
+          disabled={!!busy || detail?.evidence_id !== selectedEvidenceId}
+          value={materialKind}
+          onChange={(event) => changeMaterialKind(event.target.value)}
+        >
+          {MATERIAL_KIND_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+      </label>
+      <div className="resume-fields">
+        {editorFieldsForKind(materialKind).map(([key, label]) => (
+          <label key={key} className="resume-field">
+            {label}
+            <input
+              className="resume-input"
+              disabled={!!busy || detail?.evidence_id !== selectedEvidenceId}
+              value={fields[key] || ''}
+              onChange={(e) => editEvidenceField(key, e.target.value)}
+            />
+          </label>
+        ))}
+      </div>
+      {fieldSaveError && <p role="alert" className="danger-text">{fieldSaveError} <button type="button" className="linkish" onClick={() => {
+        pendingFieldDraft.current = { id: selectedEvidenceId, fields, workspace: workspaceId }
+        void flushFieldDraft()
+      }}>重试保存</button></p>}
+      {draftSavedAt ? (
+        <p className="muted">最近保存：{new Date(draftSavedAt).toLocaleString('zh-CN')}</p>
+      ) : (
+        <p className="muted">修改会自动保存为草稿；确认内容无误后点「确认识别完成」。</p>
+      )}
+      <div className="btn-row">
+        <button type="button" className="btn primary" disabled={!!busy || !detail || detail.evidence_id !== selectedEvidenceId} onClick={() => void confirmReview()}>
+          确认识别完成
+        </button>
+      </div>
     </details>
   )
 
@@ -1453,7 +1602,7 @@ export function EvidenceWorkspacePage() {
       </div>
       {previewError ? <p role="alert">{previewError}</p> : detail?.evidence_id === selectedEvidenceId && detail.file ? <>
         <p className="relation-file-caption">{detail.file.relative_path}</p>
-        <PreviewPane file={detail.file} spans={detail.spans ?? []} highlightText={fields.grade || undefined} />
+        <PreviewPane file={detail.file} spans={detail.spans ?? []} highlightText={fields.grade || fields.company || fields.name || undefined} />
         {renderEvidenceEditor()}
       </> : <p role="status">正在加载当前证据…</p>}
     </div>
@@ -1464,7 +1613,7 @@ export function EvidenceWorkspacePage() {
       <header className="panel-head">
         <h2>证明材料</h2>
         <p>
-          先导入原件并核对识别内容，再把材料关联到具体经历。文件识别、经历关联和逐句事实核验是不同步骤。
+          流程：保存经历 → 导入材料 → 推荐对应经历 → 核对信息 → 确认关联。识别完成、关联完成、信息获支持是三件不同的事。
         </p>
         <p>
           <Link to="/vault">去经历库编辑</Link>
@@ -1497,20 +1646,21 @@ export function EvidenceWorkspacePage() {
 
       <div className="evidence-match-banner">
         <div>
-          <h3>{files.length ? '材料与经历的准备进度' : '先为一条经历添加证明材料'}</h3>
+          <h3>{files.length ? '材料与经历的准备进度' : '先保存经历，再导入证明材料'}</h3>
           <p className="muted">
-            已导入 {files.length} 份材料 · 已关联 {coverage.linked}/{coverage.total} 条经历 · 待处理 {coverage.total - coverage.linked} 条
+            已导入 {files.length} 份 · 关联完成 {coverage.linked}/{coverage.total} · 待处理 {coverage.total - coverage.linked}
+            {coverage.pending ? ` · 待确认推荐 ${coverage.pending}` : ''}
           </p>
         </div>
         <div className="btn-row">
-        <button type="button" className="btn secondary" onClick={() => showTab(activeTab === 'materials' ? 'relations' : 'materials')}>{activeTab === 'materials' ? '查看经历关联' : '添加或管理材料'}</button>
+        <button type="button" className="btn secondary" onClick={() => showTab(activeTab === 'materials' ? 'relations' : 'materials')}>{activeTab === 'materials' ? '去核对与关联' : '管理材料'}</button>
         <button
           type="button"
           className="btn primary"
-          disabled={!!importProgress || !!busy || !files.length}
+          disabled={!!importProgress || !!busy || !files.length || !coverage.total}
           onClick={() => {showTab('relations');void runMatchVault()}}
         >
-          查找材料与经历的对应关系
+          查找推荐对应
         </button>
         </div>
       </div>
@@ -1524,7 +1674,7 @@ export function EvidenceWorkspacePage() {
           aria-selected={activeTab === tab} aria-controls={`evidence-panel-${tab}`} tabIndex={activeTab === tab ? 0 : -1}
           onClick={() => showTab(tab)}>{tab === 'materials' ? `材料库（${files.length}）` : `经历关联（${coverage.linked}/${coverage.total}）`}</button>)}
       </div>
-      {!files.length && activeTab === 'materials' && <p className="evidence-first-step">从下方添加文件或文件夹。识别后请打开原件核对，再切换到“经历关联”。</p>}
+      {!files.length && activeTab === 'materials' && <p className="evidence-first-step">先在经历库保存条目，再在这里导入材料。识别完成后到「经历关联」查看推荐；没有推荐时可从已有材料中选择。</p>}
       <div id="evidence-panel-relations" role="tabpanel" aria-labelledby="evidence-tab-relations" hidden={activeTab !== 'relations'} tabIndex={0}>
       <details className="relation-add"><summary>＋ 添加一条经历</summary>
       <div className="evidence-add-bar">
@@ -1572,9 +1722,13 @@ export function EvidenceWorkspacePage() {
       />
 
       <EvidenceMatchBoard key={`matches:${workspaceId}`} rows={vaultRows} selectedKey={selectedMatchKey} busy={!!busy || !!importProgress}
-        sourceDetails={sourceDetails} evidenceExcerpt={evidenceExcerpt} onSelect={selectMatch}
+        sourceDetails={sourceDetails} evidenceExcerpt={evidenceExcerpt} libraryFiles={files}
+        fieldChecks={fieldChecksDraft}
+        onSelect={selectMatch}
         onConfirm={(row) => void confirmLinkMatch(row)} onReject={(row) => void rejectMatch(row)}
         onUnlink={(row) => void unlinkMatch(row)} onSupplement={startSupplement}
+        onPickExisting={(row, file) => void pickExistingMaterial(row, file)}
+        onChangeFieldStatus={changeFieldCheckStatus}
         onDelete={deleteVaultItem} onMatch={() => void runMatchVault()}
         renderSupplement={(row) => supplementResult?.targetKey === matchKey(row) && <div className="callout relation-supplement">
           <p role="status">{supplementResult.message}</p>
@@ -1590,7 +1744,7 @@ export function EvidenceWorkspacePage() {
         </div>}
         renderEvidence={(row) => row.evidence_id ? (
           previewContext === 'match' && previewOpen && selectedEvidenceId === row.evidence_id ? renderPreview() :
-          <button type="button" className="btn secondary relation-preview-button" onClick={() => openPreview(row.evidence_id!)}>查看 B 的原件与识别字段</button>
+          <button type="button" className="btn secondary relation-preview-button" onClick={() => openPreview(row.evidence_id!)}>查看原件与识别文字</button>
         ) : null}
       />
       </div>
@@ -1733,7 +1887,7 @@ export function EvidenceWorkspacePage() {
             {tab === 'text' && (waiting ? <p role="status">正在读取识别文字…</p> : currentDetail?.spans?.some((span) => span.raw_text.trim()) ?
               <div className="material-transcript">{currentDetail.spans.map((span) => <p key={span.span_id}>{span.raw_text}</p>)}</div> :
               <div className="material-empty"><strong>暂无识别文字</strong><p>仍可查看原件并人工核对。识别功能就绪后，可点击下方「重新识别」。</p></div>)}
-            {tab === 'fields' && (waiting ? <p role="status">正在读取核对字段…</p> : currentDetail ? renderEvidenceEditor(true) : <p className="material-helper">该文件尚未生成可核对条目，请先重新识别。</p>)}
+            {tab === 'fields' && (waiting ? <p role="status">正在读取识别内容…</p> : currentDetail ? renderEvidenceEditor(true) : <p className="material-helper">该文件尚未生成识别条目，请先重新识别。</p>)}
             <div className="material-detail-actions">
               <span>版本 {file.version} · {file.span_count || 0} 个文字片段</span>
               <button type="button" className="btn secondary" disabled={!!busy} onClick={() => void reparseOne(file.file_id)}>重新识别</button>
@@ -1748,7 +1902,7 @@ export function EvidenceWorkspacePage() {
             {linkTargetId && currentDetail && <div className="material-check-tool">
               <strong>关联到此次选择的经历</strong>
               <p>{vaultRows.find((row) => row.target_type === linkTargetType && row.target_id === linkTargetId)?.label || '该经历已不存在'}</p>
-              {currentDetail.review_state !== 'REVIEWED' && <p>请先在「核对字段」中点击「确认材料已核对」。</p>}
+              {currentDetail.review_state !== 'REVIEWED' && <p>请先在「确认识别内容」中点击「确认识别完成」。</p>}
               <button type="button" className="btn secondary"
                 disabled={!!busy || currentDetail.review_state !== 'REVIEWED' || !vaultRows.some(row => matchKey(row) === linkTargetType + ':' + linkTargetId)}
                 onClick={() => void linkToTarget()}>确认关联到此经历</button>

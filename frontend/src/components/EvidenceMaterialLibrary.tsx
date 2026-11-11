@@ -400,7 +400,7 @@ export function EvidenceMaterialLibrary(props: Props) {
                   [
                     ['original', '原件预览'],
                     ['text', '识别文字'],
-                    ['fields', '核对字段'],
+                    ['fields', '识别内容'],
                   ] as const
                 ).map(([key, label]) => (
                   <button
@@ -462,7 +462,7 @@ export function EvidenceMaterialLibrary(props: Props) {
             <div className="material-empty material-empty-detail">
               <span aria-hidden="true">▤</span>
               <h4>选择一份材料开始查看</h4>
-              <p>点击左侧文件，原件、识别文字和核对字段都会显示在这里。</p>
+              <p>点击左侧文件，可查看原件、识别文字与材料类型字段。</p>
               <ol>
                 <li>查看原件</li>
                 <li>核对识别内容</li>

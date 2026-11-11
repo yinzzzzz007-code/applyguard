@@ -416,6 +416,23 @@ code {
   padding-top: 0.15rem;
 }
 
+.copy-value-blocked,
+.copy-pack-blocked {
+  background: #fde8e8;
+  color: #8a1f1f;
+  border-radius: 6px;
+  padding: 0.35rem 0.55rem;
+}
+
+.copy-row.blocked-row {
+  background: #fff5f5;
+  margin: 0 -0.35rem;
+  padding-left: 0.35rem;
+  padding-right: 0.35rem;
+  border-radius: 6px;
+  border-bottom-color: transparent;
+}
+
 .copy-btn {
   padding: 6px 12px;
   font-size: 12px;
@@ -1436,7 +1453,25 @@ textarea.resume-input {
 .evidence-workspace .relation-detail-head h3 { margin: 0; font-size: 17px; overflow-wrap: anywhere; }
 .relation-pair { display: grid; grid-template-columns: minmax(0, 1fr) 54px minmax(0, 1fr); align-items: stretch; }
 .relation-source, .relation-proof { padding: 1rem; border: 1px solid #d9e3df; border-radius: 10px; min-width: 0; background: #fbfcfb; }
-.relation-proof { background: #f5faf8; border-color: #b8d8ca; }
+.relation-proof { background: #f5faf8; border-color: #b8d8ca; display: flex; flex-direction: column; gap: .75rem; }
+.relation-reasons-in-proof { margin: 0; }
+.relation-actions-in-proof { margin: 0; flex-direction: column; align-items: stretch; }
+.relation-actions-in-proof .btn-row { flex-wrap: wrap; }
+.relation-proof .relation-material-picker { margin-top: 0; }
+.relation-decision {
+  margin-top: 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid #b8d8ca;
+  border-radius: 12px;
+  background: #f5faf8;
+}
+.relation-decision-copy { margin-bottom: .85rem; }
+.relation-decision-copy strong { display: block; font-size: 14px; margin-bottom: .35rem; }
+.relation-decision-copy p { margin: 0; font-size: 13px; color: var(--steel); line-height: 1.6; }
+.relation-actions-footer { margin: 0; }
+@media (max-width: 760px) {
+  .relation-decision { position: sticky; bottom: 0; z-index: 3; box-shadow: 0 -8px 24px #163c2814; }
+}
 .relation-pair-CONFLICT .relation-proof { background: #fff8f3; border-color: #edbc95; }
 .relation-pair-LINKED .relation-proof { background: #effaf4; border-color: #78bf9d; }
 .relation-pair h4 { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; margin-bottom: .9rem; }

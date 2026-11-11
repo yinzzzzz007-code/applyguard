@@ -1,0 +1,12 @@
+.backend-status { display:inline-flex; align-items:center; gap:8px; }
+.connection-dot.is-online { background:#15803d; }
+.connection-dot.is-offline { background:#b45309; }
+.connection-dot.is-checking { background:#64748b; }
+.connection-dot.is-demo { background:#6366f1; }
+.demo-quick-start { margin:24px 0; padding:22px 24px; border:1px solid var(--hairline); border-radius:16px; background:linear-gradient(120deg,#f8fafc,#eef5ff); }
+.demo-eyebrow { color:#365983; font-size:11px; font-weight:700; letter-spacing:.12em; }
+.demo-quick-start h3 { margin:8px 0; font-size:18px; }
+.demo-quick-start p { margin:0 0 16px; color:var(--steel); line-height:1.7; }
+.demo-quick-start small { display:block; margin-top:14px; color:var(--steel); line-height:1.7; }
+.demo-quick-start .btn-row { flex-wrap:wrap; }
+@media(max-width:600px) { .demo-quick-start { padding:18px; } }

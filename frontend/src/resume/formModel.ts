@@ -11,6 +11,9 @@ export function buildResumeFormFromVault(vault: CareerVaultSeed): EditableResume
       start: e.start_date,
       end: e.end_date,
       description: [e.summary, ...(e.responsibilities ?? [])].filter(Boolean).join('\n'),
+      location: '',
+      techStack: (e.skills ?? []).join('、'),
+      link: '',
       sourceExperienceId: e.experience_id,
     }))
 
@@ -24,6 +27,9 @@ export function buildResumeFormFromVault(vault: CareerVaultSeed): EditableResume
       start: e.start_date,
       end: e.end_date,
       description: [e.summary, ...(e.responsibilities ?? [])].filter(Boolean).join('\n'),
+      location: '',
+      techStack: (e.skills ?? []).join('、'),
+      link: '',
       sourceExperienceId: e.experience_id,
     }))
 
@@ -50,6 +56,9 @@ export function buildResumeFormFromVault(vault: CareerVaultSeed): EditableResume
       idNo: '',
       city: '广东省 · 深圳市',
       hukou: '广东省 · 广州市',
+      github: '',
+      linkedin: '',
+      website: '',
     },
     intention: {
       projectType: '应届生',
@@ -67,6 +76,9 @@ export function buildResumeFormFromVault(vault: CareerVaultSeed): EditableResume
         start: '2022-09',
         end: '2026-06',
         rank: vault.profile.education,
+        gpa: '',
+        location: '深圳',
+        coursework: '',
       },
     ],
     internships,
@@ -76,6 +88,9 @@ export function buildResumeFormFromVault(vault: CareerVaultSeed): EditableResume
       skills,
       awards: awards.map((item) => item.name).filter(Boolean).join('；'),
       summary: vault.profile.consent,
+      languages: '',
+      researchFocus: '',
+      publications: '',
     },
     dirty: true,
   }
@@ -122,10 +137,36 @@ export function syncAwardText(awards: EditableResumeForm['awards']): string {
   return awards.map((item) => item.name).filter((name) => name.trim()).join('；')
 }
 
+function normalizeExperience(row: EditableResumeForm['internships'][number]): EditableResumeForm['internships'][number] {
+  return {
+    ...row,
+    location: row.location ?? '',
+    techStack: row.techStack ?? '',
+    link: row.link ?? '',
+  }
+}
+
+function normalizeEducation(row: EditableResumeForm['education'][number]): EditableResumeForm['education'][number] {
+  return {
+    ...row,
+    gpa: row.gpa ?? '',
+    location: row.location ?? '',
+    coursework: row.coursework ?? '',
+  }
+}
+
 export function normalizeResumeForm(form: EditableResumeForm): EditableResumeForm {
   const blank = emptyResumeForm(form.candidateId)
-  form = { ...blank, ...form, basic: { ...blank.basic, ...form.basic },
-    intention: { ...blank.intention, ...form.intention }, extras: { ...blank.extras, ...form.extras } }
+  form = {
+    ...blank,
+    ...form,
+    basic: { ...blank.basic, ...form.basic },
+    intention: { ...blank.intention, ...form.intention },
+    extras: { ...blank.extras, ...form.extras },
+    education: (form.education ?? blank.education).map(normalizeEducation),
+    internships: (form.internships ?? []).map(normalizeExperience),
+    projects: (form.projects ?? []).map(normalizeExperience),
+  }
   if (Array.isArray(form.awards)) {
     return {
       ...form,
@@ -156,6 +197,9 @@ export function emptyResumeForm(candidateId: string): EditableResumeForm {
       idNo: '',
       city: '',
       hukou: '',
+      github: '',
+      linkedin: '',
+      website: '',
     },
     intention: {
       projectType: '',
@@ -173,12 +217,15 @@ export function emptyResumeForm(candidateId: string): EditableResumeForm {
         start: '',
         end: '',
         rank: '',
+        gpa: '',
+        location: '',
+        coursework: '',
       },
     ],
     internships: [],
     projects: [],
     awards: [],
-    extras: { skills: '', awards: '', summary: '' },
+    extras: { skills: '', awards: '', summary: '', languages: '', researchFocus: '', publications: '' },
     dirty: true,
   }
 }
@@ -234,6 +281,9 @@ export function applyExtractedResume(base: EditableResumeForm, extracted: Extrac
       start: row.start,
       end: row.end,
       rank: row.rank,
+      gpa: row.gpa || '',
+      location: row.location || '',
+      coursework: row.coursework || '',
     }))
   const internships = extracted.internships
     .filter((row) => filled(row.organization) || filled(row.description) || filled(row.title))
@@ -245,6 +295,9 @@ export function applyExtractedResume(base: EditableResumeForm, extracted: Extrac
       start: row.start,
       end: row.end,
       description: row.description,
+      location: row.location || '',
+      techStack: row.techStack || '',
+      link: row.link || '',
     }))
   const projects = extracted.projects
     .filter((row) => filled(row.title) || filled(row.description) || filled(row.organization))
@@ -256,6 +309,9 @@ export function applyExtractedResume(base: EditableResumeForm, extracted: Extrac
       start: row.start,
       end: row.end,
       description: row.description,
+      location: row.location || '',
+      techStack: row.techStack || '',
+      link: row.link || '',
     }))
   const awards = (extracted.awards ?? [])
     .filter((row) => filled(row.name) || filled(row.description))
@@ -281,6 +337,9 @@ export function applyExtractedResume(base: EditableResumeForm, extracted: Extrac
       idNo: pick(base.basic.idNo, extracted.basic.idNo),
       city: pick(base.basic.city, extracted.basic.city),
       hukou: pick(base.basic.hukou, extracted.basic.hukou),
+      github: pick(base.basic.github, extracted.basic.github),
+      linkedin: pick(base.basic.linkedin, extracted.basic.linkedin),
+      website: pick(base.basic.website, extracted.basic.website),
     },
     intention: {
       projectType: pick(base.intention.projectType, extracted.intention.projectType),
@@ -296,6 +355,9 @@ export function applyExtractedResume(base: EditableResumeForm, extracted: Extrac
       skills: pick(base.extras.skills, extracted.extras.skills),
       awards: extrasAwards,
       summary: pick(base.extras.summary, extracted.extras.summary),
+      languages: pick(base.extras.languages, extracted.extras.languages),
+      researchFocus: pick(base.extras.researchFocus, extracted.extras.researchFocus),
+      publications: pick(base.extras.publications, extracted.extras.publications),
     },
     dirty: true,
   }

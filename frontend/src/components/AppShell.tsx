@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react'
+import { BackendStatus } from './BackendStatus'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import type { DemoScenario } from '../api/types'
 import { useDemo } from '../context/DemoContext'
@@ -8,16 +9,21 @@ import { NAV_GROUPS } from '../navigation'
 import { Icon } from './Icon'
 import { PageMotion } from './PageMotion'
 
+const RESTORE_NOTICE_KEY = 'applyguard.restore-notice.dismissed'
+
 const SCENARIOS: {id:DemoScenario;label:string}[] = [
   {id:'live',label:'连接本地后端'}, {id:'prerecorded_block',label:'预录 · 阻断样例'},
   {id:'prerecorded_fallback',label:'预录 · 回退样例'}, {id:'error',label:'错误重试样例'},
 ]
 
 export function AppShell({children}:{children:React.ReactNode}) {
-  const {scenario,setScenario,setStep,dataSourceLabel,workflow,restoredAt,reviewStorageError,reviewDrafts} = useDemo()
+  const {scenario,setScenario,setStep,dataSourceLabel,workflow,restoredAt,reviewStorageError,reviewDrafts,resumeForm} = useDemo()
   const location = useLocation()
   const navigate = useNavigate()
   const drawer = useRef<HTMLDetailsElement>(null)
+  const [restoreDismissed, setRestoreDismissed] = useState(() => {
+    try { return sessionStorage.getItem(RESTORE_NOTICE_KEY) === restoredAt } catch { return false }
+  })
   const fromPath = stepFromPath(location.pathname)
   const title = location.pathname === '/help' ? '使用帮助' : NAV_GROUPS.flatMap(group => group.items).find(item => item.path === location.pathname)?.label ?? '申请工作台'
   useEffect(() => {
@@ -26,6 +32,13 @@ export function AppShell({children}:{children:React.ReactNode}) {
     if (drawer.current) drawer.current.open = false
     window.scrollTo({top:0,left:0,behavior:'auto'})
   },[location.pathname,setStep])
+  useEffect(() => {
+    try {
+      setRestoreDismissed(sessionStorage.getItem(RESTORE_NOTICE_KEY) === restoredAt)
+    } catch {
+      setRestoreDismissed(false)
+    }
+  }, [restoredAt])
 
   function navigation() {
     return <>
@@ -50,10 +63,10 @@ export function AppShell({children}:{children:React.ReactNode}) {
       <header className="workspace-topbar">
         <div className="workspace-breadcrumb"><span>申请工作台</span><Icon name="chevron" /><h1>{title}</h1></div>
         <NavLink className="workspace-help-link" to="/help" aria-label="使用帮助"><Icon name="file" /><span>使用帮助</span></NavLink>
-        <details className="workspace-scenario"><summary><span className="connection-dot" />{scenario === 'live' ? '本地后端' : '预录 / 模拟'}<Icon name="down" /></summary>
+        <details className="workspace-scenario"><summary><BackendStatus key={scenario} live={scenario === 'live'} /><Icon name="down" /></summary>
           <div className="scenario-popover"><label htmlFor="demo-scenario">演示场景</label><select id="demo-scenario" value={scenario} onChange={event => {
-            if (workflow && !window.confirm('切换演示场景会清空本页工作流与未采用的建议。是否继续？')) return
-            setScenario(event.target.value as DemoScenario);navigate('/')
+            if ((workflow || resumeForm?.dirty || Object.keys(reviewDrafts).length) && !window.confirm('切换演示场景会清空当前工作流与未保存编辑。已保存的经历和材料不受影响。是否继续？')) return
+            setScenario(event.target.value as DemoScenario);event.currentTarget.closest('details')?.removeAttribute('open');navigate(event.target.value === 'live' ? '/' : '/jd')
           }}>{SCENARIOS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}</select><p>预录场景展示本地样例；在线模式由后端返回结果。</p></div>
         </details>
         <details className="mobile-navigation" ref={drawer} onKeyDown={event => {
@@ -63,7 +76,24 @@ export function AppShell({children}:{children:React.ReactNode}) {
       <main id="workspace-main" className="workspace-main" tabIndex={-1}>
         {workflow?._prerecorded && <p className="workspace-notice">{zhText(workflow._prerecorded.notice)}</p>}
         {fromPath && workflow?.mock_notice && !workflow._prerecorded && <details className="sample-data-note"><summary>演示与处理说明</summary><p>当前为本地实验版，网申使用模拟表单，最终提交由本人完成。</p><p>{zhText(workflow.mock_notice)}</p></details>}
-        {restoredAt && workflow && <p className="workspace-notice" role="status">已恢复上次申请的文字与编辑进度（{new Date(restoredAt).toLocaleString('zh-CN')}）。材料状态需重新检查。<NavLink to="/resume">继续审核草稿</NavLink></p>}
+        {restoredAt && workflow && !restoreDismissed && (
+          <p className="workspace-notice" role="status">
+            浏览器刚恢复了本机上次未完成的申请进度（{new Date(restoredAt).toLocaleString('zh-CN')}）。
+            这不是新的审核结果；材料与核验状态请再确认一次。
+            {' '}<NavLink to="/resume">打开简历审查</NavLink>
+            {' · '}
+            <button
+              type="button"
+              className="text-action"
+              onClick={() => {
+                try { sessionStorage.setItem(RESTORE_NOTICE_KEY, restoredAt) } catch { /* ignore */ }
+                setRestoreDismissed(true)
+              }}
+            >
+              知道了
+            </button>
+          </p>
+        )}
         {reviewStorageError && <p className="danger-text" role="alert">{reviewStorageError}</p>}
         {!!Object.keys(reviewDrafts).length && location.pathname !== '/resume' && <p className="workspace-notice">审核页有 {Object.keys(reviewDrafts).length} 处暂存输入。<NavLink to="/resume">返回保存修改</NavLink></p>}
         <PageMotion>{children}</PageMotion>

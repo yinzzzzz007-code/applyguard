@@ -86,6 +86,28 @@ export interface ApiClient {
   parseResumePdf(file: File, parseMode?: WorkflowParseMode): Promise<ApiResult<ResumeParseResult>>
   getResumeDraft(): Promise<ApiResult<EditableResumeForm>>
   saveResumeDraft(form: EditableResumeForm, expectedSavedAt?: string | null): Promise<ApiResult<{ saved: boolean; saved_at?: string; notice?: string }>>
+  getWorkflowDraft(): Promise<ApiResult<{
+    exists: boolean
+    stale?: boolean
+    stale_reason?: string | null
+    saved_at?: string
+    jd?: string
+    active_job_id?: string | null
+    job_content_hash?: string | null
+    form?: EditableResumeForm | null
+    drafts?: Record<string, string>
+    workflow?: WorkflowResponse | null
+  }>>
+  saveWorkflowDraft(body: {
+    workflow: WorkflowResponse
+    jd: string
+    active_job_id?: string | null
+    job_content_hash?: string | null
+    resume_saved_at?: string | null
+    form?: EditableResumeForm | null
+    drafts?: Record<string, string>
+  }): Promise<ApiResult<{ saved: boolean; saved_at?: string; notice?: string }>>
+  clearWorkflowDraft(): Promise<ApiResult<{ saved: boolean; cleared?: boolean; notice?: string }>>
   runWorkflow(
     jdText: string,
     options?: { parseMode?: WorkflowParseMode; resumeDraft?: EditableResumeForm | null; applicationId?: string; targetJob?: { id: string; content_hash: string } },
@@ -105,13 +127,19 @@ export interface ApiClient {
   getEvidence(evidenceId: string): Promise<ApiResult<EvidenceRecord>>
   reviewEvidence(
     evidenceId: string,
-    body: { normalized_fields: AwardEvidenceFields; review_state?: string; span_ids?: string[] },
+    body: {
+      normalized_fields: AwardEvidenceFields
+      review_state?: string
+      span_ids?: string[]
+      kind?: string
+    },
   ): Promise<ApiResult<EvidenceRecord>>
   createEvidenceLink(body: {
     target_type: string
     target_id: string
     evidence_id: string
     link_state?: 'ACTIVE' | 'REJECTED' | string
+    field_checks?: import('./types').EvidenceFieldCheck[]
   }): Promise<ApiResult<EvidenceLink>>
   removeEvidenceLink(body: {
     link_id?: string
@@ -125,6 +153,22 @@ export interface ApiClient {
     evidence_id?: string
   }): Promise<ApiResult<EvidenceLink[]>>
   checkClaimEvidence(claimText: string, evidenceId: string): Promise<ApiResult<ClaimEvidenceCheck>>
+  previewEvidenceFieldChecks(body: {
+    target_type: string
+    evidence_id: string
+    experience: Record<string, unknown>
+  }): Promise<ApiResult<{
+    evidence_id: string
+    target_type: string
+    material_kind?: string
+    material_kind_label?: string
+    review_state?: string
+    relative_path?: string
+    normalized_fields?: AwardEvidenceFields
+    field_checks: import('./types').EvidenceFieldCheck[]
+    field_summary?: Record<string, number>
+    notice?: string
+  }>>
   matchResumeEvidence(
     workspaceId: string,
     body: {
@@ -206,10 +250,14 @@ export class ApplyGuardApiClient implements ApiClient {
 
   async getHealth(): Promise<ApiResult<{ status: string; service: string; version: string }>> {
     try {
-      const res = await apiFetch(`${apiBase()}/health`)
+      const res = await apiFetch(`${apiBase()}/health`, { signal: AbortSignal.timeout(5000), cache: 'no-store' })
       const body = await readJson(res)
       if (!res.ok) return { error: toApiError(body, res.status) }
-      return { data: body as { status: string; service: string; version: string } }
+      const health = body as { status?: string; service?: string; version?: string } | null
+      if (health?.status !== 'ok' || health.service !== 'applyguard-foundation') {
+        return { error: { code: 'INVALID_HEALTH', message: '本地服务响应异常，请检查 ApplyGuard 后端是否启动。', retryable: true } }
+      }
+      return { data: health as { status: string; service: string; version: string } }
     } catch {
       return { error: toApiError(null, 0) }
     }
@@ -308,17 +356,79 @@ export class ApplyGuardApiClient implements ApiClient {
     }
   }
 
+  async getWorkflowDraft(): Promise<ApiResult<{
+    exists: boolean
+    stale?: boolean
+    stale_reason?: string | null
+    saved_at?: string
+    jd?: string
+    active_job_id?: string | null
+    job_content_hash?: string | null
+    form?: EditableResumeForm | null
+    drafts?: Record<string, string>
+    workflow?: WorkflowResponse | null
+  }>> {
+    try {
+      const res = await apiFetch(`${apiBase()}/api/v1/workflow/draft`)
+      const body = await readJson(res)
+      if (!res.ok) return { error: toApiError(body, res.status) }
+      return { data: body as {
+        exists: boolean
+        stale?: boolean
+        stale_reason?: string | null
+        saved_at?: string
+        jd?: string
+        active_job_id?: string | null
+        job_content_hash?: string | null
+        form?: EditableResumeForm | null
+        drafts?: Record<string, string>
+        workflow?: WorkflowResponse | null
+      } }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async saveWorkflowDraft(body: {
+    workflow: WorkflowResponse
+    jd: string
+    active_job_id?: string | null
+    job_content_hash?: string | null
+    resume_saved_at?: string | null
+    form?: EditableResumeForm | null
+    drafts?: Record<string, string>
+  }): Promise<ApiResult<{ saved: boolean; saved_at?: string; notice?: string }>> {
+    try {
+      const res = await apiFetch(`${apiBase()}/api/v1/workflow/draft`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const payload = await readJson(res)
+      if (!res.ok) return { error: toApiError(payload, res.status) }
+      return { data: payload as { saved: boolean; saved_at?: string; notice?: string } }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async clearWorkflowDraft(): Promise<ApiResult<{ saved: boolean; cleared?: boolean; notice?: string }>> {
+    try {
+      const res = await apiFetch(`${apiBase()}/api/v1/workflow/draft`, { method: 'DELETE' })
+      const payload = await readJson(res)
+      if (!res.ok) return { error: toApiError(payload, res.status) }
+      return { data: payload as { saved: boolean; cleared?: boolean; notice?: string } }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
   async runWorkflow(
     jdText: string,
     options?: { parseMode?: WorkflowParseMode; resumeDraft?: EditableResumeForm | null; applicationId?: string; targetJob?: { id: string; content_hash: string } },
   ): Promise<ApiResult<WorkflowResponse>> {
     const scenario = activeScenario
     const parseMode: WorkflowParseMode = options?.parseMode ?? 'offline'
-    let resumeDraft = options?.resumeDraft ?? null
-    if (!resumeDraft) {
-      const draftRes = await this.getResumeDraft()
-      resumeDraft = draftRes.data ?? null
-    }
 
     if (scenario === 'error') {
       return {
@@ -363,6 +473,12 @@ export class ApplyGuardApiClient implements ApiClient {
           },
         }
       }
+    }
+
+    let resumeDraft = options?.resumeDraft ?? null
+    if (!resumeDraft) {
+      const draftRes = await this.getResumeDraft()
+      resumeDraft = draftRes.data ?? null
     }
 
     // live: real backend; default offline (zero provider calls). dynamic uses backend env key.
@@ -533,7 +649,12 @@ export class ApplyGuardApiClient implements ApiClient {
 
   async reviewEvidence(
     evidenceId: string,
-    body: { normalized_fields: AwardEvidenceFields; review_state?: string; span_ids?: string[] },
+    body: {
+      normalized_fields: AwardEvidenceFields
+      review_state?: string
+      span_ids?: string[]
+      kind?: string
+    },
   ): Promise<ApiResult<EvidenceRecord>> {
     try {
       const res = await apiFetch(`${apiBase()}/api/v1/evidence/${evidenceId}/review`, {
@@ -554,6 +675,7 @@ export class ApplyGuardApiClient implements ApiClient {
     target_id: string
     evidence_id: string
     link_state?: 'ACTIVE' | 'REJECTED' | string
+    field_checks?: import('./types').EvidenceFieldCheck[]
   }): Promise<ApiResult<EvidenceLink>> {
     try {
       const res = await apiFetch(`${apiBase()}/api/v1/evidence/links`, {
@@ -621,6 +743,47 @@ export class ApplyGuardApiClient implements ApiClient {
       const body = await readJson(res)
       if (!res.ok) return { error: toApiError(body, res.status) }
       return { data: body as ClaimEvidenceCheck }
+    } catch {
+      return { error: toApiError(null, 0) }
+    }
+  }
+
+  async previewEvidenceFieldChecks(body: {
+    target_type: string
+    evidence_id: string
+    experience: Record<string, unknown>
+  }): Promise<ApiResult<{
+    evidence_id: string
+    target_type: string
+    material_kind?: string
+    material_kind_label?: string
+    review_state?: string
+    relative_path?: string
+    normalized_fields?: AwardEvidenceFields
+    field_checks: import('./types').EvidenceFieldCheck[]
+    field_summary?: Record<string, number>
+    notice?: string
+  }>> {
+    try {
+      const res = await apiFetch(`${apiBase()}/api/v1/evidence/field-checks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const payload = await readJson(res)
+      if (!res.ok) return { error: toApiError(payload, res.status) }
+      return { data: payload as {
+        evidence_id: string
+        target_type: string
+        material_kind?: string
+        material_kind_label?: string
+        review_state?: string
+        relative_path?: string
+        normalized_fields?: AwardEvidenceFields
+        field_checks: import('./types').EvidenceFieldCheck[]
+        field_summary?: Record<string, number>
+        notice?: string
+      } }
     } catch {
       return { error: toApiError(null, 0) }
     }

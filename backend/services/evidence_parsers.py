@@ -54,9 +54,14 @@ class ParseResult:
     error: str | None = None
     media_type: str = "application/octet-stream"
     suggested_fields: dict[str, str] = field(default_factory=dict)
+    suggested_kind: str = "DOCUMENT"
     is_conversion: bool = False
     conversion_note: str | None = None
     preview_path: Path | None = None
+
+
+def _suggest(text: str, relative_path: str = "") -> tuple[str, dict[str, str]]:
+    return infer_suggested_fields(text, relative_path)
 
 
 def extension_of(relative_path: str) -> str:
@@ -95,24 +100,18 @@ def guess_media_type(relative_path: str) -> str:
 
 
 def infer_award_fields(text: str) -> dict[str, str]:
-    fields: dict[str, str] = {
-        "recipient": "",
-        "award_name": "",
-        "grade": "",
-        "issuer": "",
-        "date": "",
-    }
-    if m := _PERSON.search(text):
-        fields["recipient"] = m.group(1)
-    if m := _GRADE.search(text):
-        fields["grade"] = m.group(1)
-    if m := _AWARD_NAME.search(text):
-        fields["award_name"] = m.group(1)
-    if m := _ISSUER.search(text):
-        fields["issuer"] = m.group(1).strip(" 。.;；")
-    if m := _DATE.search(text):
-        fields["date"] = f"{m.group(1)}-{int(m.group(2)):02d}"
-    return fields
+    """Backward-compatible award helper; prefer infer_suggested_fields for new code."""
+    from backend.services.evidence_fields import infer_fields_for_kind
+
+    return infer_fields_for_kind(text, "AWARD_CERTIFICATE")
+
+
+def infer_suggested_fields(text: str, relative_path: str = "") -> tuple[str, dict[str, str]]:
+    """Guess material kind and extract kind-appropriate suggested fields."""
+    from backend.services.evidence_fields import guess_material_kind, infer_fields_for_kind
+
+    kind = guess_material_kind(text, relative_path)
+    return kind, infer_fields_for_kind(text, kind)
 
 
 def parse_file(path: Path, relative_path: str, workspace_dir: Path) -> ParseResult:
@@ -153,7 +152,8 @@ def _parse_markdown(path: Path) -> ParseResult:
         spans=spans,
         error=None if joined.strip() else "Markdown 文件为空",
         media_type="text/markdown",
-        suggested_fields=infer_award_fields(joined),
+        suggested_fields=(_s := _suggest(joined))[1],
+        suggested_kind=_s[0],
     )
 
 
@@ -190,7 +190,8 @@ def _parse_pdf(path: Path) -> ParseResult:
             state="NEEDS_REVIEW",
             spans=non_empty,
             media_type="application/pdf",
-            suggested_fields=infer_award_fields(joined),
+            suggested_fields=(_s := _suggest(joined))[1],
+        suggested_kind=_s[0],
         )
 
     # Scanned / image-only PDF → local OCR
@@ -201,7 +202,8 @@ def _parse_pdf(path: Path) -> ParseResult:
             state="NEEDS_REVIEW",
             spans=ocr_spans,
             media_type="application/pdf",
-            suggested_fields=infer_award_fields(joined),
+            suggested_fields=(_s := _suggest(joined))[1],
+        suggested_kind=_s[0],
         )
     return ParseResult(
         state="FAILED",
@@ -233,7 +235,9 @@ def _parse_word(path: Path, relative_path: str, workspace_dir: Path) -> ParseRes
         pdf_result.conversion_note = "预览为 LibreOffice 转换件，页码可能与 Word 原件分页不同"
         pdf_result.preview_path = converted
         if text_parts := [s.raw_text for s in pdf_result.spans if s.raw_text.strip()]:
-            pdf_result.suggested_fields = infer_award_fields("\n".join(text_parts))
+            kind, fields = _suggest("\n".join(text_parts), relative_path)
+            pdf_result.suggested_fields = fields
+            pdf_result.suggested_kind = kind
         return pdf_result
 
     # .docx
@@ -257,7 +261,8 @@ def _parse_word(path: Path, relative_path: str, workspace_dir: Path) -> ParseRes
                 state="NEEDS_REVIEW",
                 spans=image_spans,
                 media_type=media,
-                suggested_fields=infer_award_fields(joined),
+                suggested_fields=(_s := _suggest(joined))[1],
+        suggested_kind=_s[0],
                 conversion_note="正文无文字层，已对 Word 内嵌图片做 OCR",
             )
         # Last resort: LibreOffice → PDF → text/OCR
@@ -295,7 +300,8 @@ def _parse_word(path: Path, relative_path: str, workspace_dir: Path) -> ParseRes
         state="NEEDS_REVIEW",
         spans=spans,
         media_type=media,
-        suggested_fields=infer_award_fields(joined),
+        suggested_fields=(_s := _suggest(joined))[1],
+        suggested_kind=_s[0],
         is_conversion=preview is not None,
         conversion_note="预览为 LibreOffice 转换件，页码可能与 Word 原件分页不同" if preview else None,
         preview_path=preview,
@@ -503,7 +509,8 @@ def _parse_image(path: Path, relative_path: str) -> ParseResult:
             state="NEEDS_REVIEW",
             spans=ocr_spans,
             media_type=media,
-            suggested_fields=infer_award_fields(joined),
+            suggested_fields=(_s := _suggest(joined))[1],
+        suggested_kind=_s[0],
         )
 
     # Keep preview importable, but mark FAILED so UI prompts actionable fix.
@@ -546,16 +553,17 @@ def _parse_ocr_sidecar(sidecar: Path, media: str, extractor: str) -> ParseResult
             )
     joined = "\n".join(s.raw_text for s in spans)
     fields = payload.get("fields") if isinstance(payload, dict) else None
-    suggested = infer_award_fields(joined)
+    kind, suggested = _suggest(joined)
     if isinstance(fields, dict):
-        for key in suggested:
-            if isinstance(fields.get(key), str) and fields[key].strip():
-                suggested[key] = fields[key].strip()
+        for key, value in fields.items():
+            if isinstance(value, str) and value.strip():
+                suggested[key] = value.strip()
     return ParseResult(
         state="NEEDS_REVIEW",
         spans=spans or [SpanDraft(page=1, raw_text=joined, extractor=extractor)],
         media_type=media,
         suggested_fields=suggested,
+        suggested_kind=kind,
     )
 
 

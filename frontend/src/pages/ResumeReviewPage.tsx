@@ -103,7 +103,7 @@ export function ResumeReviewPage() {
         </header>
         <EmptyState
           title="无工作流数据"
-          detail="请先运行工作流。"
+          detail="请先在岗位说明页分析。结果会预存到本机后端，源头变更后需重新分析。"
           actionLabel="去岗位说明"
           onAction={() => navigate('/jd')}
         />

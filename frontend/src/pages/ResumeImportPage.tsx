@@ -1,3 +1,4 @@
+import { DemoQuickStart } from '../components/DemoQuickStart'
 import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getApiClient, type WorkflowParseMode } from '../api/client'
@@ -130,6 +131,7 @@ export function ResumeImportPage() {
         <h2>从真实经历，开始下一份申请。</h2>
         <p>导入简历、整理证据，再把你的经历表达得更好。</p>
       </header>
+      <DemoQuickStart />
       {!guideDismissed && <div className="welcome-guide"><div><strong>第一次使用？先完成一条经历的申请准备。</strong><p>导入简历，补充证明材料，再选择岗位、审核并导出草稿。</p><Link to="/help" className="text-action">查看分步说明</Link></div>
         <button type="button" className="text-action" onClick={() => {setGuideDismissed(true);try {sessionStorage.setItem('applyguard.welcome.dismissed','true')} catch { /* optional preference */ }}}>收起提示</button></div>}
       <div className="import-layout">

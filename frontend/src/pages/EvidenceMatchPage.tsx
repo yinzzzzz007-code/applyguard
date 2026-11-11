@@ -137,7 +137,7 @@ function sectionOf(jdText: string, requirement: ParsedRequirement): Qualificatio
 
 export function EvidenceMatchPage() {
   const navigate = useNavigate()
-  const { workflow, jdRawInput } = useDemo()
+  const { workflow, jdRawInput, workflowSourceNotice } = useDemo()
   const [activeReqId, setActiveReqId] = useState<string | null>(null)
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all')
 
@@ -177,7 +177,7 @@ export function EvidenceMatchPage() {
   }, [workflow, jdRawInput])
 
   const jdText = useMemo(
-    () => (jdRawInput || workflow?.parsed_jd.source_text || '').trim(),
+    () => (workflow?._prerecorded ? workflow.parsed_jd.source_text : jdRawInput || workflow?.parsed_jd.source_text || '').trim(),
     [jdRawInput, workflow],
   )
 
@@ -210,9 +210,10 @@ export function EvidenceMatchPage() {
         <header className="panel-head">
           <h2>证据匹配</h2>
         </header>
+        {workflowSourceNotice && <p className="callout warn">{workflowSourceNotice}</p>}
         <EmptyState
           title="尚未运行工作流"
-          detail="请先在岗位说明页运行在线流程，或加载预录结果。"
+          detail="请先在岗位说明页分析岗位。成功分析后会写入本机后端草稿；刷新或重开页面时可自动恢复。若曾分析过仍看不到结果，请确认本地后端已启动后刷新。"
           actionLabel="去岗位说明"
           onAction={() => navigate('/jd')}
         />
@@ -232,6 +233,10 @@ export function EvidenceMatchPage() {
         <h2>证据匹配</h2>
         <p>只对照任职要求与加分项；职位描述不参与匹配。点击彩色片段查看经历与证据明细。</p>
         <p className="muted">相关度只表示经历与岗位要求的匹配程度，不代表事实可信度或录用概率；材料支持需另行核验。</p>
+        {workflowSourceNotice && <p className="callout warn">{workflowSourceNotice}</p>}
+        {workflow.requires_reverification && !workflowSourceNotice && (
+          <p className="callout warn">源头或正文已变动，当前匹配仅供参考；请回岗位说明重新分析后再继续后续步骤。</p>
+        )}
         {(() => {
           const matcherMode = workflow.component_modes?.evidence_matcher
           const label = matcherMode

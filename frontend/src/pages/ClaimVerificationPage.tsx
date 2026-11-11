@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getApiClient } from '../api/client'
 import type { CareerVaultSeed, ClaimEvidenceCheck, EvidenceLink, EvidenceRecord } from '../api/types'
 import { ClaimBadge, EmptyState } from '../components/States'
@@ -93,8 +93,10 @@ function LocalEvidencePeek({
 
 export function ClaimVerificationPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const {
     workflow,
+    workflowSourceNotice,
     claimDecisions,
     setClaimDecision,
     canProceedFromClaims,
@@ -118,6 +120,15 @@ export function ClaimVerificationPage() {
       .then((res) => setLocalLinks(res.data ?? []))
   }, [])
 
+  useEffect(() => {
+    const id = location.hash.replace(/^#/, '')
+    if (!id || !workflow) return
+    const timer = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 50)
+    return () => window.clearTimeout(timer)
+  }, [location.hash, workflow])
+
   const evidenceIndex = useMemo(() => {
     const map = new Map<string, { description: string; experience_id: string }>()
     vault?.experiences.forEach((exp) => {
@@ -138,9 +149,10 @@ export function ClaimVerificationPage() {
         <header className="panel-head">
           <h2>陈述核验</h2>
         </header>
+        {workflowSourceNotice && <p className="callout warn">{workflowSourceNotice}</p>}
         <EmptyState
           title="无核验数据"
-          detail="请先运行工作流。"
+          detail="请先在岗位说明页完成分析。结果会预存到本机后端；源头变更后会作废并要求重新分析。"
           actionLabel="去岗位说明"
           onAction={() => navigate('/jd')}
         />
@@ -156,6 +168,10 @@ export function ClaimVerificationPage() {
       <header className="panel-head">
         <h2>陈述核验</h2>
         <p>把每一句话，与支持它的原始材料放在一起核对。</p>
+        <p className="muted">
+          「须逐条处理才能继续」只是辅助提醒：未通过或已阻断表示这句话可能与材料不匹配，不代表已判定虚假，也不代表录用结果。请补证、改写或排除后，再进入申请内容检查。
+        </p>
+        {workflowSourceNotice && <p className="callout warn">{workflowSourceNotice}</p>}
       </header>
       <div className="claim-summary" aria-label="核验结果汇总">{(['VERIFIED','NEEDS_REVIEW','BLOCKED'] as const).map(state => <div key={state}><strong>{workflow.claim_verification.filter(v => v.state === state &&
         !(v.state === 'VERIFIED' && workflow.grounding?.results[v.claim_id]?.verification_scope === 'personal')).length}</strong><ClaimBadge status={state} /></div>)}
@@ -176,11 +192,11 @@ export function ClaimVerificationPage() {
         </div>
         <div className="claim-status-guide-item">
           <ClaimBadge status="NEEDS_REVIEW" />
-          <p>证据或措辞还需核对。SAG模式下须补充证据或编辑后重新核验，人工确认不能代替通过。</p>
+          <p>可能不完全匹配材料或措辞待核对。SAG 模式下请补证或编辑后重核验；人工勾选不能把它变成“已核验通过”。</p>
         </div>
         <div className="claim-status-guide-item">
           <ClaimBadge status="BLOCKED" />
-          <p>存在无法支持的内容。不能确认或复制；请编辑重核验，或拒绝并排除。</p>
+          <p>辅助提示：这句话可能与材料不匹配或缺少依据。可「已知悉仍保留」继续，或编辑重核验 / 拒绝排除；不会把它记成材料已支持。</p>
         </div>
       </div>
 
@@ -193,6 +209,7 @@ export function ClaimVerificationPage() {
           return (
             <article
               key={v.claim_id}
+              id={v.claim_id}
               className={
                 v.state === 'BLOCKED'
                   ? 'item-block claim blocked'
@@ -269,7 +286,7 @@ export function ClaimVerificationPage() {
 
               {v.state === 'NEEDS_REVIEW' && (
                 <div className="action-pad">
-                  <p className="warn-text">{workflow.grounding ? '请补充证据或编辑后重新核验，也可拒绝本句。' : '需要处理：确认保留、编辑（将变为待重新核验）、或拒绝。'}</p>
+                  <p className="warn-text">{workflow.grounding ? '这句话可能与材料不完全匹配。可补证或编辑后重核验，也可「已知悉仍保留」或拒绝。' : '可能不匹配：请确认保留、编辑（将变为待重新核验）、或拒绝。'}</p>
                   {d?.decision === 'edit' && (
                     <textarea
                       className="jd-input"
@@ -288,7 +305,6 @@ export function ClaimVerificationPage() {
                     <button
                       type="button"
                       className={d?.decision === 'confirm' ? 'btn primary' : 'btn secondary'}
-                      disabled={Boolean(workflow.grounding)}
                       onClick={() =>
                         setClaimDecision(v.claim_id, {
                           decision: 'confirm',
@@ -297,7 +313,7 @@ export function ClaimVerificationPage() {
                         })
                       }
                     >
-                      确认保留原文
+                      {workflow.grounding ? '已知悉可能不匹配，仍保留' : '确认保留原文'}
                     </button>
                     <button
                       type="button"
@@ -345,12 +361,25 @@ export function ClaimVerificationPage() {
 
               {v.state === 'BLOCKED' && (
                 <div className="action-pad">
-                  <p className="danger-text">
-                    已阻断：禁止确认为通过。请编辑后重新核验或拒绝并排除，相关网申字段也不可靠确认绕过。
+                  <p className="warn-text">
+                    辅助提示：当前材料下这句话可能不匹配或缺少原件。可已知悉后仍保留并继续；这不会变成“材料已支持”，可复制稿也不会收录为已核验陈述。
                   </p>
+                  {d?.decision === 'confirm' && (
+                    <p className="muted">已记录：你已知悉可能不匹配，仍选择保留本句。</p>
+                  )}
                   <div className="btn-row">
-                    <button type="button" className="btn secondary" disabled>
-                      确认（禁用）
+                    <button
+                      type="button"
+                      className={d?.decision === 'confirm' ? 'btn primary' : 'btn secondary'}
+                      onClick={() =>
+                        setClaimDecision(v.claim_id, {
+                          decision: 'confirm',
+                          freshness: 'as_returned',
+                          editedText: undefined,
+                        })
+                      }
+                    >
+                      已知悉可能不匹配，仍保留
                     </button>
                     <button
                       type="button"
@@ -374,8 +403,9 @@ export function ClaimVerificationPage() {
 
       {!proceedOk && (
         <div className="callout warn">
-          请处理全部待复核项；对项目/竞赛/实习等已阻断项点「拒绝并排除」；个人教育资料按填写使用。不要把已编辑未重核验的内容当作通过。工作流状态：
-          {workflow.workflow_status === 'BLOCKED' ? '已阻断' : '等待人工确认'}
+          仍有陈述待处理。阻断只是辅助提醒（可能不匹配），不是终局裁决：可点「已知悉可能不匹配，仍保留」，或「拒绝并排除」，也可编辑后重核验。
+          个人教育资料按填写使用。不要把已编辑、尚未重核验的内容当作材料已支持。工作流状态：
+          {workflow.workflow_status === 'BLOCKED' ? '已阻断（辅助）' : '等待人工确认'}
         </div>
       )}
 
@@ -386,7 +416,7 @@ export function ClaimVerificationPage() {
           disabled={!proceedOk}
           onClick={() => navigate('/ats')}
         >
-          下一步：网申模拟
+          下一步：申请内容检查
         </button>
       </div>
     </section>

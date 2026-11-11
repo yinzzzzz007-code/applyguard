@@ -57,6 +57,10 @@ export function mergeReviewResult(workflow: WorkflowResponse, result: Partial<Wo
 export function currentSupport(workflow: WorkflowResponse, id: string): string {
   const row = workflow.grounding?.results[id]
   const claim = workflow.resume_claims.find(c => c.claim_id === id)
+  if (workflow._prerecorded && !workflow.requires_reverification && !row) {
+    const recorded = workflow.claim_verification.find(item => item.claim_id === id)
+    return recorded?.state === 'BLOCKED' ? '预录结果：已阻断' : '预录结果：请查看核验详情'
+  }
   if (workflow.requires_reverification || row?.final_text !== claim?.text || workflow.grounding?.error) return '当前文字待核验'
   if (row?.verification_scope === 'personal') return '个人资料：按表单填写'
   return row?.relation === 'CONTRADICTED' ? '材料有冲突' : row?.state === 'VERIFIED' ? '材料支持' : '材料不足或待核验'

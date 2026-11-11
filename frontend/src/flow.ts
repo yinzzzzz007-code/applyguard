@@ -17,7 +17,7 @@ export const STEP_META: Record<FlowStep, { label: string; path: string }> = {
   match: { label: '证据匹配', path: '/match' },
   resume: { label: '简历审查', path: '/resume' },
   claims: { label: '陈述核验', path: '/claims' },
-  ats: { label: '网申模拟', path: '/ats' },
+  ats: { label: '申请内容检查', path: '/ats' },
   confirm: { label: '人工确认', path: '/confirm' },
 }
 

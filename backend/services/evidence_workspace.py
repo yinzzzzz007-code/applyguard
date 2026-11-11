@@ -28,6 +28,14 @@ from backend.services.evidence_parsers import (
     is_hidden_path,
     parse_file,
 )
+from backend.services.evidence_fields import (
+    check_experience_fields,
+    clean_normalized_fields,
+    guess_material_kind,
+    material_kind_label,
+    pending_field_checks,
+    summarize_field_checks,
+)
 from backend.services.local_store import local_dir
 
 EXTRACTOR_VERSION = "1.0.0"
@@ -149,6 +157,10 @@ def init_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_link_target ON evidence_link(target_type, target_id);
             """
         )
+        # Additive migration: field-level verification detail on links (legacy rows stay NULL → 待核对)
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(evidence_link)").fetchall()}
+        if "field_checks_json" not in cols:
+            conn.execute("ALTER TABLE evidence_link ADD COLUMN field_checks_json TEXT")
 
 
 def _workspace_dir(workspace_id: str) -> Path:
@@ -708,8 +720,9 @@ def _import_one(
             )
         # Draft evidence record awaiting human review
         evidence_id = _new_id("evloc")
-        evidence_kind = _guess_evidence_kind(
-            "\n".join(s.raw_text for s in parsed.spans if s.raw_text)
+        corpus_text = "\n".join(s.raw_text for s in parsed.spans if s.raw_text)
+        evidence_kind = getattr(parsed, "suggested_kind", None) or _guess_evidence_kind(
+            corpus_text, relative_path
         )
         conn.execute(
             """
@@ -828,8 +841,9 @@ def reparse_file(file_id: str) -> dict[str, Any]:
                 ),
             )
         evidence_id = ev["evidence_id"] if ev else _new_id("evloc")
-        evidence_kind = _guess_evidence_kind(
-            "\n".join(s.raw_text for s in parsed.spans if s.raw_text)
+        corpus_text = "\n".join(s.raw_text for s in parsed.spans if s.raw_text)
+        evidence_kind = getattr(parsed, "suggested_kind", None) or _guess_evidence_kind(
+            corpus_text, relative_path
         )
         if ev:
             # Always refresh OCR fields; keep human-confirmed normalized fields if REVIEWED
@@ -1022,6 +1036,7 @@ def get_evidence(evidence_id: str) -> dict[str, Any]:
         "evidence_id": row["evidence_id"],
         "workspace_id": row["workspace_id"],
         "kind": row["kind"],
+        "kind_label": material_kind_label(row["kind"]),
         "normalized_fields": json.loads(row["normalized_fields_json"] or "{}"),
         "ocr_fields": json.loads(row["ocr_fields_json"] or "{}") if row["ocr_fields_json"] else {},
         "review_state": row["review_state"],
@@ -1038,16 +1053,11 @@ def review_evidence(evidence_id: str, body: dict[str, Any]) -> dict[str, Any]:
     fields = body.get("normalized_fields")
     if not isinstance(fields, dict):
         raise ValueError("normalized_fields 必须为对象")
-    cleaned = {
-        "recipient": str(fields.get("recipient") or "").strip(),
-        "award_name": str(fields.get("award_name") or "").strip(),
-        "grade": str(fields.get("grade") or "").strip(),
-        "issuer": str(fields.get("issuer") or "").strip(),
-        "date": str(fields.get("date") or "").strip(),
-    }
+    cleaned = clean_normalized_fields(fields)
     review_state = str(body.get("review_state") or "REVIEWED").upper()
     if review_state not in {"REVIEWED", "CONFLICT", "UNREVIEWED"}:
         raise ValueError("review_state 无效")
+    kind = str(body.get("kind") or "").strip().upper() or None
     span_ids = body.get("span_ids")
     with _db() as conn:
         row = conn.execute(
@@ -1056,26 +1066,27 @@ def review_evidence(evidence_id: str, body: dict[str, Any]) -> dict[str, Any]:
         ).fetchone()
         if not row:
             raise ValueError("证据不存在")
+        next_kind = kind or row["kind"]
         # Preserve reviewed_at when only saving a draft (UNREVIEWED); set on confirm.
         if review_state == "REVIEWED":
             reviewed_at = _utc_now()
             conn.execute(
                 """
                 UPDATE evidence_record
-                SET normalized_fields_json = ?, review_state = ?, reviewed_at = ?
+                SET normalized_fields_json = ?, review_state = ?, reviewed_at = ?, kind = ?
                 WHERE evidence_id = ?
                 """,
-                (json.dumps(cleaned, ensure_ascii=False), review_state, reviewed_at, evidence_id),
+                (json.dumps(cleaned, ensure_ascii=False), review_state, reviewed_at, next_kind, evidence_id),
             )
         else:
             # Draft save: keep OCR originals, persist corrected fields without clearing history
             conn.execute(
                 """
                 UPDATE evidence_record
-                SET normalized_fields_json = ?, review_state = ?
+                SET normalized_fields_json = ?, review_state = ?, kind = ?
                 WHERE evidence_id = ?
                 """,
-                (json.dumps(cleaned, ensure_ascii=False), review_state, evidence_id),
+                (json.dumps(cleaned, ensure_ascii=False), review_state, next_kind, evidence_id),
             )
         if isinstance(span_ids, list):
             conn.execute("DELETE FROM evidence_span WHERE evidence_id = ?", (evidence_id,))
@@ -1097,6 +1108,38 @@ def review_evidence(evidence_id: str, body: dict[str, Any]) -> dict[str, Any]:
     return get_evidence(evidence_id)
 
 
+def _normalize_field_checks(raw: Any) -> list[dict[str, Any]] | None:
+    """Accept client field_checks; None means 'not provided' (legacy). Empty list is valid."""
+    if raw is None:
+        return None
+    if not isinstance(raw, list):
+        raise ValueError("field_checks 必须为数组")
+    allowed = {"SUPPORTED", "NOT_MENTIONED", "CONFLICT", "PENDING"}
+    out: list[dict[str, Any]] = []
+    for item in raw:
+        if not isinstance(item, dict) or not item.get("key"):
+            continue
+        status = str(item.get("status") or "PENDING").upper()
+        if status not in allowed:
+            status = "PENDING"
+        quote = str(item.get("quote") or "").strip()
+        quote_available = bool(item.get("quote_available")) if "quote_available" in item else bool(quote)
+        out.append(
+            {
+                "key": str(item["key"]),
+                "label": str(item.get("label") or item["key"]),
+                "experience_value": str(item.get("experience_value") or ""),
+                "status": status,
+                "status_label": str(item.get("status_label") or status),
+                "quote": quote if quote_available else "",
+                "quote_available": quote_available,
+                "quote_note": "" if quote_available else "原文定位不可用",
+                "source": str(item.get("source") or "user"),
+            }
+        )
+    return out
+
+
 def create_link(body: dict[str, Any]) -> dict[str, Any]:
     init_db()
     target_type = str(body.get("target_type") or "").strip()
@@ -1109,6 +1152,8 @@ def create_link(body: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("link_state 必须是 ACTIVE 或 REJECTED")
     if not target_id or not evidence_id:
         raise ValueError("target_id 与 evidence_id 必填")
+    field_checks = _normalize_field_checks(body.get("field_checks"))
+    # Confirming association must not invent "all supported". If client omits checks, store null → 待核对.
     with _db() as conn:
         ev = conn.execute(
             "SELECT * FROM evidence_record WHERE evidence_id = ?",
@@ -1117,7 +1162,7 @@ def create_link(body: dict[str, Any]) -> dict[str, Any]:
         if not ev:
             raise ValueError("证据不存在")
         if link_state == "ACTIVE" and ev["review_state"] != "REVIEWED":
-            raise ValueError("仅已核对证据可关联；请先完成人工确认")
+            raise ValueError("仅识别确认后的材料可关联；请先确认材料内容")
         file_sha = ""
         if ev["primary_file_id"]:
             frow = _file_row(conn, ev["primary_file_id"])
@@ -1133,13 +1178,15 @@ def create_link(body: dict[str, Any]) -> dict[str, Any]:
         )
         link_id = _new_id("link")
         linked_at = _utc_now()
+        checks_json = json.dumps(field_checks, ensure_ascii=False) if field_checks is not None else None
         conn.execute(
             """
             INSERT INTO evidence_link(
-              link_id, target_type, target_id, evidence_id, file_sha256, linked_at, link_state
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+              link_id, target_type, target_id, evidence_id, file_sha256, linked_at, link_state,
+              field_checks_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (link_id, target_type, target_id, evidence_id, file_sha, linked_at, link_state),
+            (link_id, target_type, target_id, evidence_id, file_sha, linked_at, link_state, checks_json),
         )
     return {
         "link_id": link_id,
@@ -1149,6 +1196,7 @@ def create_link(body: dict[str, Any]) -> dict[str, Any]:
         "file_sha256": file_sha,
         "linked_at": linked_at,
         "link_state": link_state,
+        "field_checks": field_checks,
     }
 
 
@@ -1230,6 +1278,14 @@ def list_links(target_type: str | None = None, target_id: str | None = None, evi
             item["link_state"] = link_state
             item["normalized_fields"] = json.loads(row["normalized_fields_json"] or "{}")
             del item["normalized_fields_json"]
+            raw_checks = item.pop("field_checks_json", None)
+            if raw_checks:
+                try:
+                    item["field_checks"] = json.loads(raw_checks)
+                except json.JSONDecodeError:
+                    item["field_checks"] = None
+            else:
+                item["field_checks"] = None
             out.append(item)
     return {"links": out}
 
@@ -1408,13 +1464,8 @@ def _experience_core(item: dict[str, Any]) -> str:
     )
 
 
-def _guess_evidence_kind(text: str) -> str:
-    blob = text or ""
-    if any(marker in blob for marker in ("实习证明", "实习期满", "安排至", "实习工作内容")):
-        return "INTERNSHIP_CERTIFICATE"
-    if any(marker in blob for marker in ("奖", "竞赛", "比赛", "奖学金")):
-        return "AWARD_CERTIFICATE"
-    return "DOCUMENT"
+def _guess_evidence_kind(text: str, relative_path: str = "") -> str:
+    return guess_material_kind(text, relative_path)
 
 
 def _collect_vault_items(body: dict[str, Any]) -> list[dict[str, Any]]:
@@ -1436,6 +1487,7 @@ def _collect_vault_items(body: dict[str, Any]) -> list[dict[str, Any]]:
                 "label": label,
                 "text": _experience_blob(raw),
                 "core_text": _experience_core(raw),
+                "raw": raw,
             }
         )
 
@@ -1465,6 +1517,7 @@ def _collect_vault_items(body: dict[str, Any]) -> list[dict[str, Any]]:
                 "label": name,
                 "text": _award_blob(award),
                 "core_text": _award_blob({**award, "description": ""}),
+                "raw": award,
             }
         )
     for claim in body.get("claims") or []:
@@ -1598,6 +1651,40 @@ def _score_item_against_evidence(
     return min(100, score), notes, conflicts
 
 
+def preview_field_checks(body: dict[str, Any]) -> dict[str, Any]:
+    """Programmatic field-check preview for one experience ↔ one evidence (no auto-confirm)."""
+    init_db()
+    target_type = str(body.get("target_type") or "").strip()
+    experience = body.get("experience") if isinstance(body.get("experience"), dict) else {}
+    evidence_id = str(body.get("evidence_id") or "").strip()
+    if target_type not in {"award", "project", "internship"}:
+        raise ValueError("target_type 必须是 award / project / internship")
+    if not evidence_id:
+        raise ValueError("evidence_id 必填")
+    evidence = get_evidence(evidence_id)
+    corpus = "\n".join(s.get("raw_text") or "" for s in (evidence.get("spans") or []))
+    checks = check_experience_fields(
+        target_type,
+        experience,
+        fields=evidence.get("normalized_fields") or {},
+        corpus=corpus,
+        stored_checks=None,
+        force_pending=False,
+    )
+    return {
+        "evidence_id": evidence_id,
+        "target_type": target_type,
+        "material_kind": evidence.get("kind"),
+        "material_kind_label": material_kind_label(str(evidence.get("kind") or "")),
+        "review_state": evidence.get("review_state"),
+        "relative_path": (evidence.get("file") or {}).get("relative_path"),
+        "normalized_fields": evidence.get("normalized_fields") or {},
+        "field_checks": checks,
+        "field_summary": summarize_field_checks(checks),
+        "notice": "以下为程序建议，需用户确认；确认关联不会把全部字段标成支持。",
+    }
+
+
 def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
     """
     Compare 经历库 entries (internship / project / award) against local evidence.
@@ -1656,6 +1743,8 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
             {
                 "evidence_id": row["evidence_id"],
                 "review_state": row["review_state"],
+                "kind": row["kind"],
+                "kind_label": material_kind_label(row["kind"]),
                 "fields": fields,
                 "corpus": span_map.get(row["evidence_id"], ""),
                 "relative_path": row["relative_path"],
@@ -1682,6 +1771,24 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
         stale = [l for l in existing if l["link_state"] == "STALE"]
         rejected_ids = {l["evidence_id"] for l in existing if l["link_state"] == "REJECTED"}
 
+        def _build_field_checks(
+            ev: dict[str, Any] | None,
+            *,
+            stored: list[dict[str, Any]] | None = None,
+            force_pending: bool = False,
+        ) -> list[dict[str, Any]]:
+            raw = item.get("raw") or {}
+            if force_pending or ev is None:
+                return pending_field_checks(item["target_type"], raw)
+            return check_experience_fields(
+                item["target_type"],
+                raw,
+                fields=ev.get("fields") or {},
+                corpus=ev.get("corpus") or "",
+                stored_checks=stored,
+                force_pending=False if stored is None else force_pending,
+            )
+
         def _row(
             status: str,
             *,
@@ -1693,7 +1800,12 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
             review_state: str | None = None,
             candidate_fields: dict[str, Any] | None = None,
             gap_hint: str | None = None,
+            field_checks: list[dict[str, Any]] | None = None,
+            material_kind: str | None = None,
+            material_kind_label: str | None = None,
+            linked_evidence_ids: list[str] | None = None,
         ) -> dict[str, Any]:
+            checks = field_checks or []
             payload: dict[str, Any] = {
                 "target_type": item["target_type"],
                 "target_id": item["target_id"],
@@ -1707,6 +1819,19 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
                 "notes": notes,
                 "action": action,
                 "candidate_fields": candidate_fields or {},
+                "field_checks": checks,
+                "field_summary": summarize_field_checks(checks),
+                "material_kind": material_kind,
+                "material_kind_label": material_kind_label,
+                "linked_evidence_ids": linked_evidence_ids or ([evidence_id] if evidence_id else []),
+                "recognition_state": (
+                    "REVIEWED" if review_state == "REVIEWED"
+                    else "EXTRACTED" if evidence_id else "NONE"
+                ),
+                "association_state": (
+                    "LINKED" if status == "LINKED"
+                    else "CANDIDATE" if evidence_id else "UNLINKED"
+                ),
             }
             if gap_hint:
                 payload["gap_hint"] = gap_hint
@@ -1725,22 +1850,52 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
                     core_text=item.get("core_text"),
                     target_type=item.get("target_type"),
                 )
+            raw_checks = None
+            try:
+                raw_checks = link["field_checks_json"]
+            except (KeyError, IndexError):
+                raw_checks = None
+            stored_checks: list[dict[str, Any]] | None
+            force_pending = False
+            if raw_checks:
+                try:
+                    stored_checks = json.loads(raw_checks)
+                except (TypeError, json.JSONDecodeError):
+                    stored_checks = []
+                    force_pending = True
+            else:
+                # Legacy association without field detail → 待核对, never auto-SUPPORTED
+                stored_checks = []
+                force_pending = True
+            field_checks = _build_field_checks(ev, stored=stored_checks, force_pending=force_pending)
             if conflicts:
                 status = "CONFLICT"
-                action = "核对冲突：经历库表述与已关联证据不一致，请改经历库或更换证据"
+                action = "核对冲突：经历库表述与已关联材料不一致，请改经历或更换材料"
             else:
                 status = "LINKED"
-                action = "已关联本地证据，可打开预览回看原件"
+                supported = summarize_field_checks(field_checks).get("SUPPORTED", 0)
+                pending_n = summarize_field_checks(field_checks).get("PENDING", 0)
+                if pending_n:
+                    action = "已关联材料。字段核验明细缺失或未确认，请逐项核对（待核对 ≠ 已支持）"
+                elif supported:
+                    action = f"已关联材料；其中 {supported} 项信息有材料依据，其余为未提及或待确认"
+                else:
+                    action = "已关联材料；关联完成不等于信息均获支持"
+            linked_ids = [l["evidence_id"] for l in active]
             results.append(
                 _row(
                     status,
                     evidence_id=link["evidence_id"],
                     score=100 if status == "LINKED" else 40,
-                    notes=conflicts or ["存在 ACTIVE 关联"],
+                    notes=conflicts or ["存在已确认关联"],
                     action=action,
                     relative_path=ev["relative_path"] if ev else None,
                     review_state=ev["review_state"] if ev else None,
                     candidate_fields=ev["fields"] if ev else {},
+                    field_checks=field_checks,
+                    material_kind=ev["kind"] if ev else None,
+                    material_kind_label=ev["kind_label"] if ev else None,
+                    linked_evidence_ids=linked_ids,
                 )
             )
             summary[status] += 1
@@ -1764,16 +1919,20 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
 
         if best and best[3] and best[0] >= 40:
             score, ev, notes, conflicts = best
+            field_checks = _build_field_checks(ev)
             results.append(
                 _row(
                     "CONFLICT",
                     evidence_id=ev["evidence_id"],
                     score=score,
                     notes=conflicts + notes,
-                    action="候选可能冲突：可标为「不符合」或核对后关联",
+                    action="候选可能冲突：可标为「不符合」或核对字段后关联",
                     relative_path=ev["relative_path"],
                     review_state=ev["review_state"],
                     candidate_fields=ev["fields"],
+                    field_checks=field_checks,
+                    material_kind=ev["kind"],
+                    material_kind_label=ev["kind_label"],
                 )
             )
             summary["CONFLICT"] += 1
@@ -1781,12 +1940,13 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
 
         if best and best[0] >= 45:
             score, ev, notes, conflicts = best
+            field_checks = _build_field_checks(ev)
             if ev["review_state"] == "REVIEWED" and score >= 70:
                 status = "MATCHED"
-                action = "候选匹配度较高：可「确认关联」，若不对请标「不符合」"
+                action = "自动匹配仅作推荐：请核对字段后确认关联，不会自动证明全部信息"
             else:
                 status = "NEEDS_CONFIRM"
-                action = "找到可能相关材料：请预览后选择「确认关联」或「不符合」"
+                action = "找到可能相关材料：请核对照片/原文与字段，再确认关联或标「不符合」"
             if stale:
                 notes = ["存在过期关联，建议用新版本重新确认", *notes]
             if rejected_ids:
@@ -1801,6 +1961,9 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
                     relative_path=ev["relative_path"],
                     review_state=ev["review_state"],
                     candidate_fields=ev["fields"],
+                    field_checks=field_checks,
+                    material_kind=ev["kind"],
+                    material_kind_label=ev["kind_label"],
                 )
             )
             summary[status] += 1
@@ -1815,14 +1978,16 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
         notes = ["工作区中未找到足够相关的原文"]
         if rejected_ids:
             notes.append(f"已排除 {len(rejected_ids)} 个不符合候选")
+        field_checks = pending_field_checks(item["target_type"], item.get("raw") or {})
         results.append(
             _row(
                 "MISSING",
                 evidence_id=None,
                 score=0,
                 notes=notes,
-                action="未找到自动候选。可为这条经历补充原件，或打开已导入材料人工核对。",
+                action="未找到自动候选。可从已有材料中选择关联，或补充上传新材料。",
                 gap_hint="、".join(hint_bits),
+                field_checks=field_checks,
             )
         )
         summary["MISSING"] += 1
@@ -1839,7 +2004,7 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
         "workspace_id": workspace_id,
         "summary": summary,
         "results": results,
-        "notice": "自动对照经历库条目与本地材料，只给出候选与缺口；请选择关联或标为不符合。不能鉴定材料真伪。",
+        "notice": "自动匹配只推荐，不自动确认关联。识别完成、关联完成、信息获支持是三件不同的事。不能鉴定材料真伪。",
     }
 
 
@@ -1932,6 +2097,9 @@ def handle_evidence_post(path: str, body: dict[str, Any]) -> dict[str, Any]:
 
     if pathname == "/api/v1/evidence/check-claim":
         return check_claim_support(str(body.get("claim_text") or ""), str(body.get("evidence_id") or ""))
+
+    if pathname == "/api/v1/evidence/field-checks":
+        return preview_field_checks(body)
 
     if pathname.startswith("/api/v1/evidence/workspaces/") and pathname.endswith("/match-resume"):
         workspace_id = pathname[len("/api/v1/evidence/workspaces/") : -len("/match-resume")]
