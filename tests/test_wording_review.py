@@ -1,5 +1,6 @@
 import copy
 import unittest
+from unittest.mock import patch
 
 from backend.services.grounded_workflow import GroundingService
 from backend.services.wording_review import review_edit
@@ -8,6 +9,11 @@ from tests.test_grounding_v2 import Model
 
 
 class WordingTests(unittest.TestCase):
+    def setUp(self):
+        self.enterContext(patch.dict('os.environ', {'APPLYGUARD_STRONG_AI_MODEL': ''}))
+        self.enterContext(patch('backend.services.grounded_workflow.HttpModelClient',
+                                side_effect=AssertionError('Wording unit tests must not call a live model')))
+
     def test_one_repair_even_if_judge_accepts_role_upgrade(self):
         original = '参与后端开发。'
         fixed = '参与了后端开发。'

@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -570,6 +571,10 @@ def _get_ocr_engine() -> tuple[Any | None, str | None]:
         return _OCR_ENGINE, None
     if _OCR_ENGINE_ERROR:
         return None, _OCR_ENGINE_ERROR
+
+    package_dir = os.getenv("APPLYGUARD_OCR_PACKAGES", "").strip()
+    if package_dir and Path(package_dir).is_dir() and package_dir not in sys.path:
+        sys.path.append(package_dir)
 
     if os.getenv("APPLYGUARD_OCR_BACKEND") == "rapidocr":
         try:

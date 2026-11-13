@@ -1756,7 +1756,7 @@ export function EvidenceWorkspacePage() {
           </>
         }}
       />
-      <details className="evidence-advanced"><summary>高级功能：连接自己的 Agent</summary><p>可选。手动导入材料即可完成申请准备，无需连接其他工具。</p><AgentConnector ensureWorkspace={ensureWorkspace} onImported={refreshLists} /></details>
+      <div className="evidence-advanced"><AgentConnector ensureWorkspace={ensureWorkspace} onImported={refreshLists} /></div>
       </div>
       <div className="evidence-next-step"><p>{coverage.total ? `已关联 ${coverage.linked}/${coverage.total} 条经历。未关联的内容仍需在审核时补充材料。` : '先在经历库保存自己的项目、实习或获奖经历。'}</p>
         <Link className="btn secondary" to="/vault">返回经历库</Link><Link className="btn primary" to={activeJobId || jdRawInput.trim() ? "/jd" : "/jobs"}>继续准备岗位</Link></div>

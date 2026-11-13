@@ -127,7 +127,7 @@ class DocxExtractTests(unittest.TestCase):
             _build_image_only_docx(docx, buf.getvalue())
             self.assertEqual(ep._docx_extract_text(docx), [])
             spans, err = ep._docx_ocr_embedded_images(docx, Path(tmp))
-            if err and ("paddle" in (err or "").lower() or "未安装" in (err or "")):
+            if err and (err.startswith("未安装 paddleocr") or err.startswith("已安装 paddleocr，但缺少推理引擎") or err.startswith("未安装本机 RapidOCR")):
                 self.skipTest(err)
             self.assertTrue(spans, err)
             joined = "\n".join(s.raw_text for s in spans)

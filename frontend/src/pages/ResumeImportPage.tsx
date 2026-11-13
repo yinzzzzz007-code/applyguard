@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { lazy, Suspense, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getApiClient, type WorkflowParseMode } from '../api/client'
 import type { EditableResumeForm, ResumeParseResult } from '../api/types'
@@ -6,6 +6,8 @@ import { ErrorState, LoadingState } from '../components/States'
 import { Icon } from '../components/Icon'
 import { useDemo } from '../context/DemoContext'
 import { normalizeResumeForm, overwriteFromExtracted, resumeSections, selectImportRows, syncAwardText } from '../resume/formModel'
+
+const ProjectReel = lazy(() => import('../components/ProjectReel').then(module => ({default:module.ProjectReel})))
 
 const sectionLabels = { education: '教育经历', internships: '实习经历', projects: '项目经历', awards: '获奖 / 竞赛' }
 const fieldLabels: Record<string, string> = {
@@ -46,7 +48,6 @@ export function ResumeImportPage() {
   const applying = useRef(false)
   const [dragOver, setDragOver] = useState(false)
   const [parseMode, setParseMode] = useState<WorkflowParseMode>('offline')
-  const [guideDismissed,setGuideDismissed] = useState(() => {try {return sessionStorage.getItem('applyguard.welcome.dismissed') === 'true'} catch {return false}})
 
   async function runParse(target: File) {
     try {sessionStorage.setItem('applyguard.review.importStartedAt',String(Date.now()))} catch { /* optional local timing */ }
@@ -126,13 +127,18 @@ export function ResumeImportPage() {
 
   return (
     <section className="panel import-page">
-      <header className="panel-head">
-        <h2>从真实经历，开始下一份申请。</h2>
-        <p>导入简历、整理证据，再把你的经历表达得更好。</p>
-      </header>
-      {!guideDismissed && <div className="welcome-guide"><div><strong>第一次使用？先完成一条经历的申请准备。</strong><p>导入简历，补充证明材料，再选择岗位、审核并导出草稿。</p><Link to="/help" className="text-action">查看分步说明</Link></div>
-        <button type="button" className="text-action" onClick={() => {setGuideDismissed(true);try {sessionStorage.setItem('applyguard.welcome.dismissed','true')} catch { /* optional preference */ }}}>收起提示</button></div>}
-      <div className="import-layout">
+      <div className="home-intro">
+        <header className="home-intro-copy">
+          <span className="home-eyebrow">你的经历，有据可依</span>
+          <h2>从真实经历，<br />开始下一份申请。</h2>
+          <p>整理经历，找到依据，再把你的故事讲清楚。先用 24 秒，看看一份申请如何从简历走到最终确认。</p>
+          <div className="home-actions"><a className="btn primary" href="#resume-import">导入我的简历 <Icon name="arrow" /></a><Link className="text-action" to="/vault">继续编辑经历库</Link></div>
+          <div className="home-flow"><span>经历</span><span>依据</span><span>岗位</span><span>确认</span></div>
+          <Link to="/help" className="home-help">查看完整操作说明 <Icon name="arrow" /></Link>
+        </header>
+        <Suspense fallback={<div className="home-reel-loading" role="status">正在加载 24 秒操作介绍…</div>}><ProjectReel variant="home" /></Suspense>
+      </div>
+      <div className="import-layout" id="resume-import">
       <div className="import-card">
       <div className="surface-heading"><h3>导入你的简历</h3><span className="quiet-label">PDF 文档</span></div>
       <p className="muted">识别基本信息与经历，写入前由你核对。</p>

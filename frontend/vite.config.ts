@@ -9,7 +9,7 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8000',
-        changeOrigin: true,
+        changeOrigin: false,
         // Evidence import can take a while (decode + parse); avoid premature proxy reset.
         timeout: 180_000,
         proxyTimeout: 180_000,

@@ -34,6 +34,12 @@ class AgentBridgeTests(unittest.TestCase):
         self.assertFalse(self.g['connected']);self.call('task');self.assertTrue(self.g['connected'])
         with self.assertRaises(ValueError):a.ui_call({'action':'status','id':self.c['id'],'ui_token':self.c['token']})
         with self.assertRaises(ValueError):self.call('accept',card_id='fake')
+    def test_launcher_prepare_does_not_claim_harness_is_paired(self):
+        info=self.call('prepare')
+        self.assertEqual(info['disclosure'],'cloud_allowed')
+        self.assertFalse(self.g['connected'])
+        self.assertNotIn('token',info)
+        self.assertNotIn('roots',info)
     def test_expiry_and_revocation(self):
         self.g['expires']=0
         with self.assertRaises(ValueError):self.call('task')

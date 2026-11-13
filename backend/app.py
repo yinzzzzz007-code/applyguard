@@ -411,7 +411,7 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             return
 
         # Serve only known client routes; unknown paths retain the JSON 404 API contract.
-        spa_routes = {"/vault", "/evidence", "/jobs", "/jd", "/match", "/resume", "/claims", "/ats", "/confirm", "/history"}
+        spa_routes = {"/vault", "/evidence", "/jobs", "/jd", "/match", "/resume", "/claims", "/ats", "/confirm", "/history", "/help"}
         if path_only in spa_routes:
             self._send_spa_index()
             return

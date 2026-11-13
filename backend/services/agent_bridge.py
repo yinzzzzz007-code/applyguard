@@ -167,6 +167,8 @@ def search(g, query):
 def agent_call(body, token):
     g=grant(body.get('id'),token)
     action=body.get('action');args=body.get('arguments') or {}
+    if action=='prepare':
+        return {k:g[k] for k in ('id','disclosure','expires')}
     if action=='task':
         g['connected']=True
         return {k:g[k] for k in ('id','task','mode','purpose','disclosure','expires')}
@@ -182,6 +184,9 @@ def agent_call(body, token):
     raise ValueError('不允许的Agent操作')
 
 def ui_call(body):
+    if body.get('action')=='setup':
+        from backend.services.harness_setup import setup_info, render_patch, mcp_entry
+        return {**setup_info(), 'mcp_patch':render_patch([{'insert':[mcp_entry()]}])}
     if body.get('action')=='create':return create(body)
     if body.get('action')=='revoke':
         # A valid UI capability may revoke even after expiry; repeated revoke is

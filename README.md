@@ -1,5 +1,7 @@
 # ApplyGuard
 
+[2026-11-13 指定 GitHub 分支与 Gemini 复测](docs/testing-report-2026-11-13-gemini.md)：OCR 已安装至 E 盘，后端 328 项通过、0 跳过，前端 39 项通过；严格导出续测成功（40.82 秒，HTTP 200）。首页恢复 24 秒视频；真实本机 Harness 完成授权、配对与证据回传。[连接安装流程](docs/agent-connector.md) · [当前架构、页面与代码位置](docs/architecture-2026-11-13.md)。基于 GitHub 提交 `1eab77c` 的后续修改。
+
 ## 2026-11-06 · 姜凌天（Gitvextor）审核与回归版
 
 本分支延续 11.5 工作树，收录本次后端、前端审核交互、冻结测试集及带日期报告。所有文本步骤默认使用 ChatAnywhere 模型 `gemini-3.1-flash-lite-preview`，包括简历初步解析、SAG 建索引、润色、等价判断与原子事实核验。向量化仍使用独立的 embedding 模型。模型 ID 以实际服务列表为准。
@@ -108,6 +110,8 @@ npm run dev -- --host 127.0.0.1
 4. 如果重新导入的同路径文件内容发生变化，系统保留文件版本并提示旧关联待复核。点击证据可回看相应原件；关联或 OCR 结果不能证明原件真实性。
 
 `.docx` 的文字提取依赖 `python-docx`。旧版 `.doc` 需要本机安装 LibreOffice；扫描 PDF 和图片识别需要本地 OCR 模型。默认依赖只含可直接安装的基础组件，缺少可选工具时界面应给出明确提示。单个文件建议不超过页面显示的 6 MB 限额。
+
+PaddleOCR 可安装在独立目录：设置 `APPLYGUARD_OCR_PACKAGES` 为库目录、`PADDLE_PDX_CACHE_HOME` 为模型目录，然后重启后端。本机 OCR 安装和验证过程见 [测试报告](docs/testing-report-2026-11-13-gemini.md)。
 
 详细数据模型与边界见 [本地证据工作区技术设计](docs/evidence-workspace-design-zh.md)。
 
