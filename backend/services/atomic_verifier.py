@@ -74,11 +74,30 @@ When locked_facts are present, preserve each fact's subject, action, technology,
 qualifiers. Use the source quote as a check, not as permission to transfer a fact to someone else.'''
         prompt=POLISH_PROMPT+'\n\n'+upstream+'\n\n'+edit_policy
         self.polish_source['edit_policy_sha256']=fingerprint(edit_policy)
-        inputs = [{'id':c['claim_id'], 'draft':c['text'], 'draft_language':language_family(c['text']), 'context':contexts[c['claim_id']],
-            'sources':hits.get(c['claim_id'], []),
-            'locked_facts':source_bound_ledger(c['text'],(original_checks or {}).get(c['claim_id']),hits.get(c['claim_id'],[])),
-            'protected_qualifiers':qualifier_inventory('\n'.join(a['text'] for a in
-                (original_checks or {}).get(c['claim_id'],{}).get('atoms',[]) if a['relation']=='SUPPORTED'))} for c in claims]
+        inputs = []
+        for c in claims:
+            cid = c['claim_id']
+            check = (original_checks or {}).get(cid, {})
+            available = hits.get(cid, [])
+            ledger = source_bound_ledger(c['text'], check, available)
+            selected = []
+            if check.get('relation') == 'SUPPORTED' and check.get('complete') and len(ledger) == len(check.get('atoms', [])) and ledger:
+                by_id = {source['source_id']: source for source in available}
+                seen = set()
+                for atom in ledger:
+                    for binding in atom['bindings']:
+                        key = (binding['source_id'], binding['start'], binding['end'])
+                        if key not in seen:
+                            seen.add(key)
+                            selected.append({**by_id[binding['source_id']], 'text': binding['quote'], 'text_offset': binding['start']})
+                for source in available:
+                    if set(source.get('retrieval_channels', [])) & {'refutation', 'correction'}:
+                        selected.append(source)
+            inputs.append({'id':cid, 'draft':c['text'], 'draft_language':language_family(c['text']),
+                'context':contexts[cid], 'sources':selected if selected else available,
+                'source_selection':'verified_quotes' if selected else 'retrieved_sources',
+                'locked_facts':ledger, 'protected_qualifiers':qualifier_inventory('\n'.join(a['text'] for a in
+                    check.get('atoms',[]) if a['relation']=='SUPPORTED'))})
         if callable(getattr(type(self.model),'complete_structured',None)):
             from backend.services.structured_verifier import obj, structured
             schema=obj({c['claim_id']:obj({'text':{'type':'string'}}) for c in claims})

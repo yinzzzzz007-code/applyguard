@@ -44,6 +44,53 @@ Python · PyTorch · RAG · Linux
 '''
 
 class ResumeSectionsTests(unittest.TestCase):
+    def test_schools_after_degree_and_english_school_headings(self):
+        cn = '教育经历\n信息技术硕士|示例大学\n2024.03 - 2026.10\n体育教育本科|另一个大学\n2018.09 - 2022.09\n技能\nPython'
+        rows = extract_resume_from_text(cn)['education']
+        self.assertEqual([r['school'] for r in rows], ['示例大学', '另一个大学'])
+        self.assertEqual([(r['start'], r['end']) for r in rows], [('2024-03', '2026-10'), ('2018-09', '2022-09')])
+        en = 'EDUCATION\nEXAMPLE BUSINESS SCHOOL\nMasters in Financial Analysis\n2023 – 2024\nUNIVERSITY OF EXAMPLE\nBA in Economics\n2020 – 2023\nEXPERIENCE\nFICTIONAL BANK\nAnalyst Intern\n• Analysed data.\nEXAMPLE FIRM\nSummer Analyst\n• Prepared research.\nSKILLS\nPython'
+        form = extract_resume_from_text(en)
+        self.assertEqual([r['school'] for r in form['education']], ['EXAMPLE BUSINESS SCHOOL', 'UNIVERSITY OF EXAMPLE'])
+        self.assertEqual(len(form['internships']), 2)
+        self.assertNotIn('Analyst Intern', form['education'][-1]['school'])
+
+    def test_ocr_english_experience_keeps_employer_role_dates_and_sentences_together(self):
+        from backend.services.resume_sections import project_entries
+        lines = ['EXAMPLE BANK', 'London, UK', 'Research Analyst Intern, Fixed Income', 'Jan 2024 - Apr 2024',
+                 'Cleaned daily pricing records using Python.', 'Supported M&A analysis for three targets.',
+                 'SAMPLE FIRM', 'London, UK', 'Investment Banking Summer Analyst', 'Jun 2023 – Aug 2023',
+                 'Supported M&A due diligence for three targets.', 'Prepared research reports.']
+        rows = project_entries(lines, 'internships')
+        self.assertEqual([r['title'] for r in rows], ['EXAMPLE BANK', 'SAMPLE FIRM'])
+        self.assertIn('Research Analyst Intern', rows[0]['description'])
+        self.assertIn('Supported M&A', rows[1]['description'])
+        self.assertEqual((rows[0]['start'], rows[0]['end']), ('2024-01', '2024-04'))
+
+    def test_english_date_only_ocr_lines_belong_to_previous_project(self):
+        from backend.services.resume_sections import project_entries
+        lines = ['Research Assistant', 'Feb 2025 - Apr 2025', 'Built a research tool.',
+                 'Analytics Copilot', 'Nov 2024 - Jan 2025', 'Built an analytics tool.']
+        rows = project_entries(lines, 'projects')
+        self.assertEqual([r['title'] for r in rows], ['Research Assistant', 'Analytics Copilot'])
+        self.assertEqual([(r['start'], r['end']) for r in rows], [('2025-02', '2025-04'), ('2024-11', '2025-01')])
+        self.assertEqual(dates('Dec 2025 - Jan 2025'), ('', ''))
+
+    def test_chinese_project_role_after_comma_starts_new_entry(self):
+        text = ('项目经历\nClinicLab AI，独立开发| GitHub\n项目简介：完成检索原型。\n'
+                '多模态翻译 Agent，核心开发成员\n项目简介：完成协作翻译。\n专业技能\nPython')
+        rows = extract_resume_from_text(text)['projects']
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[1]['role'], '核心开发成员')
+
+    def test_ocr_experience_with_volunteer_header_stays_separate(self):
+        text = ('实习经历\nAI开发实习生|示例咨询公司\n2025.12-2026.04\n负责开发原型。\n'
+                'IT 技术支持志愿者 | 示例市政府\n2025.10 - 至今\n为社区提供技术支持。\n技能\nPython')
+        rows = extract_resume_from_text(text)['internships']
+        self.assertEqual(len(rows), 2)
+        self.assertIn('志愿者', rows[1]['title'])
+        self.assertEqual([(r['start'],r['end']) for r in rows], [('2025-12','2026-04'),('2025-10','至今')])
+
     def test_research_and_awards_with_right_aligned_dates(self):
         text = """科研与项目经历
 2026

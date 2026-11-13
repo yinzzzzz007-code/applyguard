@@ -8,6 +8,8 @@ import unicodedata
 from collections import Counter
 from datetime import date
 from io import BytesIO
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
 from pypdf import PdfReader
@@ -330,7 +332,49 @@ def _pdf_in_reading_order(data: bytes, plain_pages: list[str]) -> str:
     return "\n".join(pages).strip()
 
 
-def pdf_bytes_to_text(data: bytes) -> str:
+def _pdf_local_ocr(data: bytes, count: int) -> str:
+    if count > 5:
+        raise ValueError('本地 OCR 每次最多处理 5 页，请拆分后上传。')
+    try:
+        import pypdfium2 as pdfium
+    except ImportError as exc:
+        raise ValueError('缺少 PDF 渲染组件，请先安装项目依赖。') from exc
+    from backend.services.evidence_parsers import _run_local_ocr
+
+    pages = []
+    document = pdfium.PdfDocument(data)
+    try:
+        with TemporaryDirectory(prefix='applyguard-resume-ocr-') as directory:
+            for index in range(count):
+                page = document[index]
+                try:
+                    width, height = page.get_size()
+                    if width <= 0 or height <= 0:
+                        raise ValueError('页面尺寸无效')
+                    scale = min(2.0, 4096 / max(width, height), (16_000_000 / (width * height)) ** 0.5)
+                    if scale < 0.5:
+                        raise ValueError('页面尺寸过大')
+                    path = Path(directory) / f'page-{index + 1}.png'
+                    page.render(scale=scale).to_pil().save(path)
+                    spans, error = _run_local_ocr(path)
+                    if error or not spans:
+                        raise ValueError(error or '未识别到文字')
+                    pages.append('\n'.join(span.raw_text for span in spans))
+                except Exception as exc:
+                    raise ValueError(f'第{index + 1}页本地 OCR 失败：{exc}；未返回部分结果。') from exc
+                finally:
+                    page.close()
+    finally:
+        document.close()
+    text = '\n'.join(pages).strip()
+    if len(text) > MAX_TEXT_CHARS:
+        raise ValueError(f'PDF 文字超过{MAX_TEXT_CHARS}字符，请拆分后上传；未截断内容。')
+    if len(text) < 8:
+        raise ValueError('本地 OCR 未识别出足够的文字，请检查图片清晰度。')
+    return text
+
+
+def pdf_bytes_to_text(data: bytes, *, local_ocr: bool = False) -> str:
     if len(data) > MAX_PDF_BYTES:
         raise ValueError("PDF 不能超过 5MB")
     try:
@@ -344,6 +388,8 @@ def pdf_bytes_to_text(data: bytes) -> str:
         raise
     except Exception as exc:
         raise ValueError("无法读取该 PDF，请确认文件未损坏且为标准 PDF") from exc
+    if local_ocr:
+        return _pdf_local_ocr(data, count)
     pages: list[str] = []
     length = 0
     for index in range(count):
@@ -417,8 +463,8 @@ def _sanitize_extracted(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def parse_resume_pdf(pdf_base64: str, filename: str, *, parse_mode: str = "offline") -> dict[str, Any]:
-    if not isinstance(parse_mode,str) or parse_mode not in {"offline", "dynamic"}:
-        raise ValueError("parse_mode must be offline or dynamic")
+    if not isinstance(parse_mode,str) or parse_mode not in {"offline", "offline_ocr", "dynamic"}:
+        raise ValueError("parse_mode must be offline, offline_ocr or dynamic")
     if not isinstance(pdf_base64, str) or not pdf_base64.strip():
         raise ValueError("请上传 PDF")
     if not isinstance(filename, str) or not filename.lower().endswith(".pdf"):
@@ -433,10 +479,13 @@ def parse_resume_pdf(pdf_base64: str, filename: str, *, parse_mode: str = "offli
         raise ValueError("PDF 编码无效") from exc
     if not data.startswith(b"%PDF"):
         raise ValueError("文件不是 PDF")
-    text = pdf_bytes_to_text(data)
+    text = pdf_bytes_to_text(data, local_ocr=True) if parse_mode == 'offline_ocr' else pdf_bytes_to_text(data)
     rules = extract_resume_from_text(text)
     extractor = "规则抽取"
     notice = "本次使用本地规则抽取，没有向模型服务发送简历；请在经历库核对。"
+    if parse_mode == 'offline_ocr':
+        extractor = '本地 OCR + 规则抽取'
+        notice = '本次在本机识别图片并按规则抽取，未向模型服务发送简历；OCR 和字段可能遗漏，请逐项核对。'
     client = HttpModelClient() if parse_mode == "dynamic" else None
     if client is not None and not client.api_key:
         notice = "未配置模型密钥，已使用本地规则抽取。"

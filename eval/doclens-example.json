@@ -1,0 +1,8 @@
+{
+  "claim_precision": [{"supported": 1}, {"supported": 0}, {"supported": null}],
+  "claim_recall": [{"supported": 1}, {"supported": 0}],
+  "citations": [
+    {"supported": 1, "citations": ["fictional-source-a", "fictional-source-b"], "provenance": ["fictional-source-a"]},
+    {"supported": 0, "citations": ["fictional-source-c"], "provenance": []}
+  ]
+}

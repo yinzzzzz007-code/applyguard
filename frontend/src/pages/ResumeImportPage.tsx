@@ -1,6 +1,6 @@
 import { lazy, Suspense, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getApiClient, type WorkflowParseMode } from '../api/client'
+import { getApiClient, type ResumeParseMode } from '../api/client'
 import type { EditableResumeForm, ResumeParseResult } from '../api/types'
 import { ErrorState, LoadingState } from '../components/States'
 import { Icon } from '../components/Icon'
@@ -47,7 +47,7 @@ export function ResumeImportPage() {
   const [saveError, setSaveError] = useState('')
   const applying = useRef(false)
   const [dragOver, setDragOver] = useState(false)
-  const [parseMode, setParseMode] = useState<WorkflowParseMode>('offline')
+  const [parseMode, setParseMode] = useState<ResumeParseMode>('offline')
 
   async function runParse(target: File) {
     try {sessionStorage.setItem('applyguard.review.importStartedAt',String(Date.now()))} catch { /* optional local timing */ }
@@ -144,11 +144,12 @@ export function ResumeImportPage() {
       <p className="muted">识别基本信息与经历，写入前由你核对。</p>
       <label className="field-label" htmlFor="resume-parse-mode">识别方式</label>
       <select id="resume-parse-mode" value={parseMode} disabled={status === 'loading' || saving}
-        onChange={(event) => { setParseMode(event.target.value as WorkflowParseMode); setParsed(null); setStatus('idle') }}>
+        onChange={(event) => { setParseMode(event.target.value as ResumeParseMode); setParsed(null); setStatus('idle') }}>
         <option value="offline">本地规则（默认，不调用模型）</option>
+        <option value="offline_ocr">本地 OCR（图片或扫描件）</option>
         <option value="dynamic">模型抽取（发送简历正文，可能产生费用）</option>
       </select>
-      <p className="mode-note">{parseMode === 'offline' ? '本地处理，无需调用模型。支持可复制文字的 PDF。' : '正文和文件名将发送给后端配置的模型服务，可能产生费用；请先脱敏。'}</p>
+      <p className="mode-note">{parseMode === 'offline' ? '本地处理，无需调用模型。支持可复制文字的 PDF。' : parseMode === 'offline_ocr' ? '在本机逐页识别，最多 5 页，需先安装本地 OCR；可能耗时较长，结果须逐项核对。' : '正文和文件名将发送给后端配置的模型服务，可能产生费用；请先脱敏。'}</p>
       <label
         className={dragOver ? 'resume-dropzone is-over' : 'resume-dropzone'}
         aria-busy={status === 'loading'}
@@ -185,7 +186,7 @@ export function ResumeImportPage() {
         <span className="upload-document"><Icon name="file" /><span className="document-format">PDF</span></span>
         <strong>{file ? file.name : '把简历拖到这里'}</strong>
         <span className="upload-choice">或 <span>选择文件</span></span>
-        <span className="muted" id="upload-requirements">单个 PDF · 最大 5 MB · 暂不支持扫描件</span>
+        <span className="muted" id="upload-requirements">单个 PDF · 最大 5 MB · 图片或扫描件请选择本地 OCR</span>
       </label>
       <div className="privacy-line"><Icon name="lock" /><span>只用于整理本次申请，不会提交到招聘网站。</span></div>
 

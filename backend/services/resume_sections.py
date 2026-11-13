@@ -10,18 +10,23 @@ _HEADINGS = {
     'education': (r'教育(?:背景|经历)', r'education(?:al background)?'),
     'projects': (r'(?:重点|主要|精选)?(?:科研|研究)(?:(?:与|及)项目经历|经历|项目)|当前研究|在研项目|(?:工程|个人|重点|精选)?项目(?:经历|经验)?',
                  r'(?:selected |current |ongoing )?research(?: experience| projects)?|(?:engineering |selected |personal )?projects?(?: experience)?'),
-    'internships': (r'实习(?:经历|经验)?|工作(?:经历|经验)?|职业经历', r'(?:work|professional|internship) experience|internships?|employment'),
+    'internships': (r'实习(?:经历|经验)?|工作(?:经历|经验)?|职业经历', r'(?:(?:work|professional|internship) )?experience|internships?|employment'),
     'awards': (r'(?:获奖|荣誉|奖项|竞赛|比赛|学科竞赛)(?:情况|经历|成果|获奖)?|荣誉奖项', r'(?:awards?|honou?rs?|competitions?)(?:\s*(?:&|and)\s*(?:awards?|honou?rs?))?'),
     'mixed': (r'其他经历与荣誉', r'other experience\s*(?:&|and)\s*honou?rs?'),
     'skills': (r'专业技能|技术技能|技能特长|技能', r'(?:technical |professional )?skills'),
     'interests': (r'研究兴趣|科研兴趣|研究方向', r'research interests?'),
     'summary': (r'个人简介|自我评价|个人总结', r'profile|summary|about me'),
 }
-_ROLE = re.compile(r'独立第一作者|独立一作|共同第一作者|共同一作|第一作者|项目负责人|技术负责人|主要贡献者|核心成员|团队成员')
+_ROLE = re.compile(r'独立第一作者|独立一作|共同第一作者|共同一作|第一作者|项目负责人|技术负责人|主要贡献者|核心(?:开发)?成员|团队成员')
 _AWARD = re.compile(r'一等奖|二等奖|三等奖|金奖|银奖|铜奖|银牌|金牌|铜牌|奖学金|优胜|冠军|亚军|季军|\b(?:silver|gold|bronze|meritorious\s+winner|honou?rable\s+mention|scholarship)\b', re.I)
 _SCHOOL = re.compile(r'[\u4e00-\u9fff]{2,20}(?:大学(?!生)|学院)')
+_EN_SCHOOL = re.compile(r"^(?:university of [A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ '&.-]{1,60}|"
+                        r"[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ '&.-]{1,60}\b(?:university|college|school|institute)\b(?:\s+of\s+[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ '&.-]{1,45})?|"
+                        r"lyc[ée]e\s+[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ '&.-]{1,60})", re.I)
 _CONTACT_LABELS = re.compile(r'^(?:(?:电子邮箱|邮箱|联系电话|电话|手机(?:号码)?)\s*[:：]\s*)+')
 _RANGE = re.compile(r'(?<![\d./-])(20\d{2})(?:[./年-](\d{1,2})(?!\d)月?)?\s*(?:[–—~至]|\s-\s|-(?=20))\s*(20\d{2}|至今|现在|present)(?:[./年-](\d{1,2})(?!\d)月?)?(?!\d|[./年-]\d)',re.I)
+_MONTHS = {name: i for i, name in enumerate(('jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'), 1)}
+_EN_RANGE = re.compile(r'\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(20\d{2})\s*[–—-]\s*(?:(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(20\d{2})|(present))\b', re.I)
 
 def heading_kind(line):
     line=line.strip().strip(':：').strip()
@@ -53,7 +58,12 @@ def header_name(text):
 
 def dates(text):
     found=_RANGE.search(text)
-    if not found:return '',''
+    if not found:
+        english = _EN_RANGE.search(text)
+        if not english:return '',''
+        start = f'{english[2]}-{_MONTHS[english[1][:3].lower()]:02d}'
+        end = 'present' if english[5] else f'{english[4]}-{_MONTHS[english[3][:3].lower()]:02d}'
+        return (start, end) if end == 'present' or start <= end else ('','')
     if any(month and not 1<=int(month)<=12 for month in (found[2],found[4])):return '',''
     if found[3].isdigit():
         if int(found[3])<int(found[1]):return '',''
@@ -62,34 +72,50 @@ def dates(text):
     end=found[3]+(f'-{int(found[4]):02d}' if found[4] else '')
     return start,end
 
+def _school_in_line(line):
+    if re.match(r'\s*[•●▪*]', line) or len(line) > 180:
+        return ''
+    for part in re.split(r'[|｜,，;；]', line):
+        part = part.strip()
+        chinese = _SCHOOL.search(part)
+        if chinese:
+            return chinese[0]
+        english = _EN_SCHOOL.match(part)
+        if english:
+            return english[0].strip(' -–—.')
+    return ''
+
+
 def education(lines):
     groups=[];current=[]
     for line in lines:
-        if _SCHOOL.match(line) and current:groups.append(current);current=[]
+        if _school_in_line(line) and current:groups.append(current);current=[]
         current.append(line)
     if current:groups.append(current)
     rows=[]
     for group in groups:
-        text='\n'.join(group);school=_SCHOOL.search(group[0])
+        text='\n'.join(group);school=_school_in_line(group[0])
         if not school:continue
-        degree=re.search(r'博士|硕士|本科|专科|高中',text)
+        degree=re.search(r'博士|硕士|本科|专科|高中|\b(?:masters?|bachelors?|doctorate|ph\.?d\.?|m\.?s\.?|b\.?s\.?|b\.?a\.?)\b',text,re.I)
         major=re.search(r'(?:所学专业|专业)(?!排名|方向|课程)\s*[:：]\s*([^\n，,；;]{2,40})',text)
         if not major:major=re.search(r'^\s*([\u4e00-\u9fff与及 /A-Za-z-]{2,40}?)(?:专业)?\s*[（(]?\s*(?:本科|硕士|博士|专科)',text,re.M)
         rank=re.search(r'(?:专业排名|排名|Rank)\s*[:：]?\s*(\d+\s*/\s*\d+(?:\s*[（(]\s*Top\s*[\d.]+%\s*[）)])?)',text,re.I)
         start,end=dates(text)
-        rows.append({'school':school[0],'degree':degree[0] if degree else '',
+        rows.append({'school':school,'degree':degree[0] if degree else '',
             'major':major[1].strip(' ·') if major else '', 'rank':rank[1] if rank else '',
             'fullTime':'','start':start,'end':end})
     return rows
 
 def _title_line(line):
     if len(line)>180 or re.match(r'[•●▪]|研究[:：]|贡献[:：]|职责[:：]|负责[:：]|项目负责人[。.]',line):return False
+    if len(line) <= 100 and re.search(r'[，,]\s*(?:核心开发成员|核心成员|项目负责人|独立开发)\s*$', line):return True
     if re.search(r'[。；;，]', line):
         return False
     date_range = _RANGE.search(line)
     if date_range and (date_range.start() == 0 or date_range.end() == len(line)) and dates(line)[0]:
         return bool(re.search(r'[^\W\d_]', _RANGE.sub('', line)))
     if re.search(r'(?:^|\s)(?:through|and|with|using)\s',line):return False
+    if re.fullmatch(r"[A-Z][A-Z.&' -]{2,55}", line):return True
     if re.search(r'\s[—–]+\s|\s-\s',line):return True
     # Capitalized English titles; continuation prose with punctuation stays in the body.
     return bool(re.match(r'^[A-Z][A-Za-z0-9-]*(?:\s+[A-Z0-9][A-Za-z0-9/&-]*){1,}',line)
@@ -103,13 +129,30 @@ def project_entries(lines,kind):
             continue
         if current and len(current)==1 and current[0].endswith('-'):
             current[0]+=line;continue
-        if _title_line(line) and current:groups.append(current);current=[]
+        company_header = lambda value: bool(re.fullmatch(r"[A-Z][A-Z.&' -]{2,55}", value))
+        company_group = kind == 'internships' and current and company_header(current[0])
+        role_header = (kind == 'internships' and current and len(current) <= 2
+            and re.search(r'\b(?:intern|analyst|engineer|assistant|associate|researcher)\b', current[0], re.I))
+        experience_detail = (kind == 'internships' and re.match(
+            r'^(?:Built|Designed|Developed|Implemented|Supported|Prepared|Analysed|Analyzed|Collaborated|'
+            r'Assisted|Presented|Cleaned|Led|Processed|Reduced|Improved|Conducted|Created)\b', line))
+        experience_header = (kind == 'internships' and len(line) <= 120 and re.search(r'[|｜]', line)
+            and not re.match(r'[•●▪*]', line)
+            and re.search(r'实习生|志愿者|\b(?:intern|volunteer)\b', line, re.I))
+        keep_with_entry = ((company_group and not company_header(line)) or role_header or experience_detail
+                           or bool(_EN_RANGE.fullmatch(line.strip())))
+        if (_title_line(line) or experience_header) and current and (experience_header or not keep_with_entry):groups.append(current);current=[]
         current.append(line)
     if current:groups.append(current)
     rows=[]
     for group in groups:
         header = group[0]
         start, end = dates(header)
+        if not start:
+            for line in group[1:5]:
+                if _EN_RANGE.fullmatch(line.strip()) or _RANGE.fullmatch(line.strip()):
+                    start, end = dates(line)
+                    break
         metadata_index = 1
         title = header
         date_range = _RANGE.search(header)

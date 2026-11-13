@@ -14,6 +14,18 @@ class WordingTests(unittest.TestCase):
         self.enterContext(patch('backend.services.grounded_workflow.HttpModelClient',
                                 side_effect=AssertionError('Wording unit tests must not call a live model')))
 
+    def test_opt_in_refchecker_can_veto_but_never_promote(self):
+        fixed = 'For Atlas, Alex wrote Python interface tests.'
+        for relation, applied in [('Entailment', True), ('Neutral', False), ('Contradiction', False), ('Abstain', False)]:
+            model = Model(proposal=fixed)
+            model.wording_step = lambda *args: {'decision': 'equivalent', 'reason': 'fixture'}
+            with self.subTest(relation=relation), patch.dict('os.environ', {'APPLYGUARD_REFCHECKER_AUDIT': '1'}), patch(
+                    'backend.services.refchecker_review.review_refchecker', return_value={'relation': relation}):
+                claims, _, report = GroundingService(model=model, retriever=AllSources()).run(
+                    [copy.deepcopy(CLAIM)], [experience()], 'cand_test', 'sag_atomic', polish=True)
+            self.assertEqual(claims[0]['text'], fixed if applied else TEXT)
+            self.assertEqual(report['results'][CLAIM['claim_id']]['refchecker_review']['relation'], relation)
+
     def test_one_repair_even_if_judge_accepts_role_upgrade(self):
         original = '参与后端开发。'
         fixed = '参与了后端开发。'
@@ -25,6 +37,19 @@ class WordingTests(unittest.TestCase):
         self.assertEqual(calls, ['judge','repair','judge'])
         self.assertEqual(text, fixed)
         self.assertTrue(review['equivalent'])
+
+    def test_repair_cannot_add_approximation_to_a_second_metric(self):
+        original = '对甲方案，延迟约下降11%；对乙方案下降18%。'
+        wrong = '对乙方案，延迟约下降11%；对甲方案下降18%。'
+        faulty_repair = '对甲方案，延迟约下降11%；对乙方案，延迟约下降18%。'
+        def step(action, before, text, issues):
+            if action == 'repair':
+                return {'text':faulty_repair}
+            return {'decision':'changed' if text == wrong else 'equivalent', 'reason':'fixture'}
+        _, trace = review_edit(step, original, wrong)
+        self.assertTrue(trace['repair_attempted'])
+        self.assertFalse(trace['equivalent'])
+        self.assertTrue(any('近似限定' in issue for issue in trace['invariants']))
 
     def test_failed_repair_does_not_loop_or_pass(self):
         calls = []

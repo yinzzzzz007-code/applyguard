@@ -3,6 +3,7 @@ import base64,copy,http.client,json,random,threading,unittest
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from unittest.mock import MagicMock,patch
+from types import SimpleNamespace
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic import DictionaryObject,NameObject,DecodedStreamObject
 from backend import app
@@ -108,6 +109,23 @@ class ResumeAbnormalUnitTests(unittest.TestCase):
         with patch.object(parser,'PdfReader',return_value=fake),self.assertRaisesRegex(ValueError,'第2页'):parser.pdf_bytes_to_text(b'%PDF')
     def test_drawing_without_text_is_not_treated_as_blank(self):
         with self.assertRaisesRegex(ValueError,'未能完整读取'):parser.pdf_bytes_to_text(pdf(text='',drawing=True))
+    def test_opt_in_ocr_uses_local_recognizer_and_no_model(self):
+        span=SimpleNamespace(raw_text='Contact: fictional@example.test')
+        with patch('backend.services.evidence_parsers._run_local_ocr',return_value=([span],None)) as ocr, patch.object(parser,'HttpModelClient',side_effect=AssertionError('offline OCR must not send')):
+            result=parser.parse_resume_pdf(**body(pdf(text='',drawing=True),parse_mode='offline_ocr'))
+        self.assertEqual(result['form']['basic']['email'],'fictional@example.test')
+        self.assertEqual(result['extractor'],'本地 OCR + 规则抽取')
+        self.assertEqual(ocr.call_count,1)
+    def test_ocr_page_failure_never_returns_partial_resume(self):
+        span=SimpleNamespace(raw_text='fictional@example.test')
+        with patch('backend.services.evidence_parsers._run_local_ocr',side_effect=[([span],None),([], 'recognizer unavailable')]):
+            with self.assertRaisesRegex(ValueError,'第2页.*未返回部分结果'):
+                parser.parse_resume_pdf(**body(pdf(text='',drawing=True,pages=2),parse_mode='offline_ocr'))
+    def test_ocr_page_limit_applies_before_recognition(self):
+        with patch('backend.services.evidence_parsers._run_local_ocr') as ocr:
+            with self.assertRaisesRegex(ValueError,'最多处理 5 页'):
+                parser.parse_resume_pdf(**body(pdf(text='',drawing=True,pages=6),parse_mode='offline_ocr'))
+        ocr.assert_not_called()
     def test_blank_page_alongside_text_is_allowed(self):
         writer=PdfWriter();writer.append(BytesIO(pdf()));writer.add_blank_page(width=100,height=100)
         stream=BytesIO();writer.write(stream)
@@ -163,6 +181,13 @@ class ResumeAbnormalHTTPTests(unittest.TestCase):
         for payload in [body(parse_mode={}),body(pdf(encrypted=True)),body(pdf(text='')),body(pdf_base64='$$$')]:
             status,result=self.request(payload);self.assertEqual(status,422);self.assertIn('trace_id',result['error']);self.assertNotIn('Traceback',json.dumps(result))
         self.assertEqual(self.request(body())[0],200)
+    def test_local_ocr_mode_reaches_api_without_model(self):
+        span=SimpleNamespace(raw_text='fictional@example.test')
+        with patch('backend.services.evidence_parsers._run_local_ocr',return_value=([span],None)), patch.object(parser,'HttpModelClient',side_effect=AssertionError('offline OCR must not send')):
+            status,result=self.request(body(pdf(text='',drawing=True),parse_mode='offline_ocr'))
+        self.assertEqual(status,200)
+        self.assertEqual(result['form']['basic']['email'],'fictional@example.test')
+        self.assertEqual(result['extractor'],'本地 OCR + 规则抽取')
     def test_repeat_and_concurrent_requests_do_not_cross_contaminate(self):
         payloads=[body(pdf(f'person{i}@example.test')) for i in range(16)];before=copy.deepcopy(payloads)
         with ThreadPoolExecutor(max_workers=4) as pool:results=list(pool.map(self.request,payloads))

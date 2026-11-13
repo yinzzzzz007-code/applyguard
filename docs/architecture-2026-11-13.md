@@ -100,7 +100,8 @@ flowchart TD
 | `atomic_verifier.py` | 事实核验与润色接口；真实客户端走结构化核验，另保留模型桩兼容路径 |
 | `structured_verifier.py` | 拆分事实、核验原句和每个事实、检查拆分完整性、校验逐字引文、检查数值与单位 |
 | `wording_review.py` | OpenAI Agents SDK 驱动的等价判断与最多一次修复；实际文本模型仍为所配置的 Gemini |
-| `fact_lock.py` | 事实账本与规则：数字起止、单位、职责归属、技术、否定和限定语等 |
+| `fact_lock.py` | 事实账本与规则：已核验原文、位置、数字起止、单位、对象和近似限定语等；不保证穷尽所有歧义 |
+| `refchecker_review.py` | 可选逐项复核，用 RefChecker 提示词对已有原子事实及引文做额外否决；默认关闭，不能单独赋予核验通过 |
 | `edit_guard.py`、`edit_invariants.py` | 改写保真检查、变化审计及局部不变量 |
 | `asu_resume.py` | 适配已保留的 ASu 简历写作资源，为润色加入项目约束；上游标签不能替代核验 |
 | `risk_engine.py` | 综合陈述、字段及匹配风险，决定阻断／复核和各字段可操作状态 |
@@ -215,6 +216,13 @@ npm run dev -- --host 127.0.0.1
 | JD 与经历匹配 | `jd_parser.py`、`evidence_matcher.py` | `test_jd_chinese_offline.py`、`test_jd_match_scope.py`、`test_ai_evidence_matcher.py` |
 | SAG 与事实核验 | `grounded_workflow.py`、`sag_grounding.py` | `test_grounding*.py`、`test_quote_alignment.py`；真实模型需额外执行 live 测试 |
 | 改写不能改事实 | `wording_review.py`、`fact_lock.py` | `test_wording_review.py`、`test_numeric_wording_regression.py`、`test_edit_preservation_v2.py` |
+| 扩展歧义压力测试 | `scripts/evaluate_ambiguity_expansion.py`、`fact_lock.py` | 用 `--output <新目录>` 运行 280 条离线合成组合，退出码 1 表示有发现；真实模型抽样使用 `scripts/evaluate_ambiguity_live.py --cases <cases.json> --output <新目录>`，修复结果需复核；[本轮结果和边界](testing-report-2026-11-13-ambiguity.md) |
+| 更多职责、范围与状态歧义 | `scripts/evaluate_ambiguity_broad.py`、`fact_lock.py`、`edit_invariants.py` | `python scripts/evaluate_ambiguity_broad.py --output <新目录>`；2,800 条模板案例不是独立模型准确率；[修复与实测](testing-report-2026-11-13-ambiguity-repair.md) |
+| 图片简历本地 OCR | 首页简历识别方式选择本地 OCR → `resume_parser._pdf_local_ocr` → `evidence_parsers._run_local_ocr` → `resume_sections.py` | `python scripts/evaluate_resume_ocr.py --output <新文件> <pdf...>`；`--replay-ocr` 回放已保存正文，`--expected-education` 等可检查手工计数；统计条数不等于准确率 |
+| 事实与引用人工标注汇总 | `scripts/evaluate_doclens_audit.py` → `third_party/doclens/aggregate_scores.py` | `python scripts/evaluate_doclens_audit.py --input eval/doclens-example.json --output <新文件>`；需可选 `requirements-audit.txt`；只汇总标签，不自动验真 |
+| RefChecker 提示词复核 | `refchecker_review.py`、`third_party/refchecker/`、`scripts/evaluate_refchecker_pilot.py` | `--input eval/refchecker-pilot.json --output <新文件> --live` 只发送给定案例；设置 `APPLYGUARD_REFCHECKER_AUDIT=1` 可启用改写额外否决，额外调用模型，详情见[研究记录](research-2026-11-13-factuality-ocr.md) |
+| JPEG 转图片型 PDF | `scripts/images_to_resume_pdfs.py` | `tests/test_images_to_resume_pdfs.py`；逐页校验原图字节，`--merge` 可另建多页版本。该格式无文字层，应在简历入口选择本地 OCR |
+| 图片简历 OCR 及字段抽取 | `evidence_parsers.py` 的 OCR 引擎、`resume_parser.py`、`resume_sections.py` | 选择本地 OCR 可读取图片 PDF；教育字段仍可能漏提，历史截图结果见[本轮报告](testing-report-2026-11-13-ambiguity.md) |
 | 人工确认与导出分离 | `review_export.py`、`copyRules.ts` | `test_review_export.py`、前端 review／copy-rules／review-session 测试 |
 | 岗位与外部 Agent | `job_radar.py`、`agent_bridge.py` | `test_job_radar.py`、`test_agent_bridge.py`、`test_agent_mcp.py` |
 | 本机 Harness 接入 | `harness_setup.py`、`scripts/connect_harness.py`、`HarnessSetupGuide.tsx` | `test_harness_setup.py`、`agent-connection.test.mjs`、`scripts/agent_browser_smoke.cjs`、`scripts/harness_agent_probe.py` |

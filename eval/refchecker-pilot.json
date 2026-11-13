@@ -1,0 +1,10 @@
+{
+  "notice": "Fictional hand-authored examples, not an independently labelled benchmark.",
+  "cases": [
+    {"id": "supported-zh", "reference": "在测试环境中，延迟约下降12%。", "claim": "测试环境中的延迟约下降12%。", "expected": "Entailment"},
+    {"id": "scope-zh", "reference": "在测试环境中，延迟约下降12%。", "claim": "在生产环境中，延迟约下降12%。", "expected": "Neutral"},
+    {"id": "negation-zh", "reference": "该功能尚未上线。", "claim": "该功能已经上线。", "expected": "Contradiction"},
+    {"id": "role-en", "reference": "Avery tested the API and Blake deployed the service.", "claim": "Blake tested the API.", "expected": "Neutral"},
+    {"id": "numeric-en", "reference": "For plan A, latency fell about 12%; for plan B it fell 20%.", "claim": "For plan A, latency fell about 20%.", "expected": "Contradiction"}
+  ]
+}

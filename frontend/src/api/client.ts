@@ -78,12 +78,13 @@ function toApiError(payload: unknown, httpStatus: number): ApiResult<never>['err
 }
 
 export type WorkflowParseMode = 'offline' | 'dynamic'
+export type ResumeParseMode = WorkflowParseMode | 'offline_ocr'
 
 export interface ApiClient {
   reverifyWorkflow(workflow: WorkflowResponse, claims: Array<{ claim_id: string; text: string }>, draft?: EditableResumeForm | null, mode?: GroundingMode): Promise<ApiResult<Partial<WorkflowResponse>>>
   getHealth(): Promise<ApiResult<{ status: string; service: string; version: string }>>
   getCareerVault(): Promise<ApiResult<CareerVaultSeed>>
-  parseResumePdf(file: File, parseMode?: WorkflowParseMode): Promise<ApiResult<ResumeParseResult>>
+  parseResumePdf(file: File, parseMode?: ResumeParseMode): Promise<ApiResult<ResumeParseResult>>
   getResumeDraft(): Promise<ApiResult<EditableResumeForm>>
   saveResumeDraft(form: EditableResumeForm, expectedSavedAt?: string | null): Promise<ApiResult<{ saved: boolean; saved_at?: string; notice?: string }>>
   runWorkflow(
@@ -242,7 +243,7 @@ export class ApplyGuardApiClient implements ApiClient {
     }
   }
 
-  async parseResumePdf(file: File, parseMode?: WorkflowParseMode): Promise<ApiResult<ResumeParseResult>> {
+  async parseResumePdf(file: File, parseMode?: ResumeParseMode): Promise<ApiResult<ResumeParseResult>> {
     if (file.size > 5 * 1024 * 1024) {
       return {
         error: { code: 'VALIDATION_ERROR', message: 'PDF 不能超过 5MB。', retryable: false },
