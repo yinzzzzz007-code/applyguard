@@ -10,6 +10,7 @@ import json
 import os
 import re
 from concurrent.futures import ThreadPoolExecutor
+from time import sleep
 
 from backend.services.model_client import ModelFailure
 from backend.services.sag_grounding import GroundingUnavailable
@@ -45,15 +46,18 @@ def verdict_schema(source_ids):
 
 def structured(model,prompt,data,schema):
     from jsonschema import validate, ValidationError
+    request_body = json.dumps(data, ensure_ascii=False)
     for attempt in range(2):
         try:
-            result=model.complete_structured(prompt,json.dumps(data,ensure_ascii=False),schema)
+            result=model.complete_structured(prompt,request_body,schema)
             validate(result,schema)
             return result
         except ValidationError:
             if attempt:raise GroundingUnavailable('结构化核验结果缺少必填事实；已停止采用。') from None
         except ModelFailure as error:
             if attempt or not error.retryable:raise
+            if error.http_status == 503:
+                sleep(2)
         # Retry formatting/transport once, never retry a semantic verdict to force a pass.
     raise GroundingUnavailable('结构化核验未完成。')
 

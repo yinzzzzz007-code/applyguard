@@ -15,9 +15,10 @@ class ModelClient(Protocol):
 
 
 class ModelFailure(RuntimeError):
-    def __init__(self, message: str, *, retryable: bool = True) -> None:
+    def __init__(self, message: str, *, retryable: bool = True, http_status: int | None = None) -> None:
         super().__init__(message)
         self.retryable = retryable
+        self.http_status = http_status
 
 
 _OK_FINISH = {None, "stop", "eos", "end_turn"}
@@ -149,7 +150,7 @@ class HttpModelClient:
                 raw = response.read(262145)
         except urllib.error.HTTPError as exc:
             raise ModelFailure(f"Model service returned HTTP {exc.code}",
-                               retryable=exc.code == 429 or exc.code >= 500) from None
+                               retryable=exc.code == 429 or exc.code >= 500, http_status=exc.code) from None
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             raise ModelFailure("Model request failed or timed out") from exc
         if len(raw) > 262144:
