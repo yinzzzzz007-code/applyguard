@@ -83,6 +83,17 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(status, 404)
         self.assertEqual(data["error"]["code"], "NOT_FOUND")
 
+    def test_help_deep_link_serves_spa(self) -> None:
+        connection = http.client.HTTPConnection("127.0.0.1", self.port, timeout=3)
+        try:
+            connection.request("GET", "/help")
+            response = connection.getresponse()
+            self.assertEqual(response.status, 200)
+            self.assertIn("text/html", response.getheader("Content-Type"))
+            self.assertIn(b"<html", response.read())
+        finally:
+            connection.close()
+
     def test_resume_parse_rejects_non_pdf(self) -> None:
         status, data = self.request(
             "POST",

@@ -1,15 +1,20 @@
-# 自带 Agent 检索入口（2026-10-30 实验版）
+# 自带 Agent 与本机 DeepSeek Harness（2026-11-13 更新）
 
-Gitvextor的原型。手动上传保留；证据工作区新增「连接我的 Agent」。默认关闭，用户指定来源、决定外发规则，再点击「授权连接并生成配置」。凭据仅在进程/页面内存，30 分钟到期；撤销后旧凭据不能搜索或回传。折叠入口仍有撤销按钮，离开页面/关闭页面会尽力发送撤权请求；断网、浏览器崩溃时不能保证送达，服务端到期是兜底。撤权不撤回已经被用户 Agent 或云端模型接收的内容。
+入口位于「证明材料」页的「连接 DeepSeek Harness / 其他 Agent」。页面检测实际 Python、连接脚本、MCP 依赖和已安装的 Harness，并生成本机命令。无需替换路径占位符。本机 Harness 0.2.1-rc.3 已完成真实 Gemini 配对、检索与回传，详细证据见 [续测报告](testing-report-2026-11-13-gemini.md#连接修复首页视频与严格导出续测)。
+
+用户指定来源、决定外发规则，再授权。凭据在页面和运行进程中使用，30 分钟到期；撤销后旧凭据失效。离页会尽力撤权，崩溃／断网时由服务端到期兜底。已经传给 Agent／云端的片段不能通过撤权收回。手动上传仍可独立使用。
 
 ## 启动与配对
 
-1. 安装原项目依赖及 `python -m pip install -r requirements-agent.txt`；构建前端 `npm ci`、`npm run build`。
-2. PowerShell 设置 `$env:APPLYGUARD_PORT='8897'`，在仓库根目录运行 `python -m backend.app`。访问 `http://127.0.0.1:8897/evidence`。
-3. 保留手动上传，或展开 Agent 入口。目录须为具体文件夹；GitHub 首版用 `owner/repo@40位提交SHA` 固定范围与版本，不自动扩展整个账号。自动模式只搜索已授权目录和仓库。
-4. 选择「寻找本人贡献」或「查技术背景」。后者禁止直接导入为个人经历。私有仓库须独立勾选，并在服务进程配置 `APPLYGUARD_GITHUB_TOKEN`，不会借用用户已有 gh 登录。
-5. 读取前选择允许云端模型接收片段，或确认自己已隔离本地模型。应用无法审计或限制第三方 Agent 自带工具/网络；本地选项是用户对运行环境的确认，不是本应用提供的系统沙箱。
-6. 将页面生成的临时配置交给自己的 Agent，修改 Python/脚本绝对路径。模型调用 `get_task` 后页面刷新才显示已配对。点击「刷新配对与候选证据」查看回传结果。
+1. 启动 ApplyGuard 后端及前端，访问 `/evidence`。开发默认 `http://127.0.0.1:5173/evidence`；构建后也可直接访问后端的同一路径。保持页面和后端开启。
+2. 展开连接入口，查看环境状态。缺依赖时安装说明自动展开，授权按钮不可用。Python MCP 依赖安装在运行 ApplyGuard 的 Python 环境：复制页面生成的 `python.exe -m pip install -r requirements-agent.txt` 完整命令，到 PowerShell 执行，再点“重新检测环境”。不在 Harness 聊天内安装 Python 包。
+3. 已装桌面版时自动发现其自带 `dsh.cmd`，也会查找 PATH 中的 `dsh`。未安装请从 [官方页面](https://deepseek.com/harness) 获取。自定义路径通过 `APPLYGUARD_HARNESS_COMMAND` 配置并重启后端。快捷启动自动加载 `@deepseek-ai/dsh-mcp-client`；缺该插件时更新 Harness，参考 [官方 MCP 文档](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/mcp/mcp-client/README.md)。
+4. 填查找任务和具体目录，选择材料外发规则。GitHub 范围为 `owner/repo@40位提交SHA`，不自动搜索整个账号。私有仓库须另行勾选并配置独立 `APPLYGUARD_GITHUB_TOKEN`；“查技术背景”不能导入为本人贡献。
+5. 点击授权，页面显示“等待 Agent 连接”。允许云端时，复制 PowerShell 启动命令并执行；终端依次隐藏询问临时连接令牌和模型 API Key。令牌从页面单独复制，两者不是同一个值。默认模型为 `gemini-3.1-flash-lite-preview`，地址取后端配置，命令不含密钥。
+6. 启动器创建独立临时 `DSH_HOME` 和检索 patch，禁用其他通用工具，退出后清理临时目录。不会修改原 Harness 会话配置。安装检测和预检都不等于配对；只有 Harness 调用 `get_task` 后显示“已配对”，页面每 3 秒自动刷新候选。
+7. 核对回传原文、本人归属及数字，再导入材料。完成后撤销连接。离页／撤销后的旧刷新响应不能重新恢复配对；过期后需要新命令与新令牌。
+
+若选择“隔离本地模型，禁止外发”，快捷云端启动器会明确拒绝。请把下面 MCP 片段接入自己已隔离的检索 profile，并配置本地模型和网络隔离；这个选择不会自动完成操作系统隔离。已有 Harness 聊天不会自动获得新授权。
 
 DeepSeek Harness 支持 MCP stdio；在**独立检索 profile** 中加入以下 patch（临时 ID/token 通过环境变量提供，不写进仓库）：
 
@@ -29,7 +34,21 @@ DeepSeek Harness 支持 MCP stdio；在**独立检索 profile** 中加入以下 
       failOnStartupError: true
 ```
 
-不要把这个 patch 当作完整隔离配置。真实联调脚本 `scripts/harness_agent_probe.py` 在独立主目录禁用了 shell、文件、web、subagent、技能读取、遥测等入口，仅加入此 MCP；这种工具隔离仍不等于操作系统权限隔离。若需要严格本地运行，应再使用系统沙箱和网络隔离。参考 [Harness MCP](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/mcp/mcp-client/README.md)、[SDK范围限制](https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/python-sdk.md)、[MCP边界说明](https://modelcontextprotocol.io/docs/learn/client-concepts)。
+手动接入时，将页面实际生成的 YAML 保存为 `applyguard-mcp.patch.yml`；通用 JSON 的 `env` 提供本次 URL、ID、TOKEN，在启动 Harness 的终端设置对应进程环境变量。使用 `dsh --profile <已隔离的配置名> --patch <该文件绝对路径>`，要求模型先调用 `get_task`。请勿把临时凭据提交到仓库。通用 JSON 可直接交给支持 `mcpServers` 的其他客户端。
+
+此 MCP 片段本身不禁用其他工具。完整快捷检索配置由 `backend/services/harness_setup.py` 生成，启动器和真实探针共用；禁用 shell、文件、web、subagent、技能和遥测等入口。工具限制仍不等于操作系统隔离。
+
+## 用户入口与验证地图
+
+| 用户操作／预期证据 | 实现位置 | 验证入口 |
+| --- | --- | --- |
+| 环境检测，显示真实安装路径和依赖状态 | `HarnessSetupGuide.tsx`、`harness_setup.py`；UI `setup` | `tests/test_harness_setup.py` |
+| 授权后等待；真正调用工具后已配对 | `AgentConnector.tsx`、`agentConnection.ts`、`agent_bridge.py` | `frontend/scripts/agent-connection.test.mjs`、`tests/test_agent_bridge.py` |
+| PowerShell 启动、预检外发规则、独立会话 | `scripts/connect_harness.py`、共享检索 patch | `tests/test_agent_mcp.py`、`scripts/harness_agent_probe.py` |
+| 本机同源代理，不放开外站访问 | `frontend/vite.config.ts`、`backend/app.py` | `scripts/agent_browser_smoke.cjs` |
+| 自动回传、撤销、忽略旧响应、缺依赖提示 | `AgentConnector.tsx` | `scripts/agent_browser_smoke.cjs` |
+
+浏览器测试使用 Playwright 和本机 Edge：在仓库根目录设置 `PLAYWRIGHT_MODULE` 为已安装 `playwright` 模块目录，执行 `node scripts/agent_browser_smoke.cjs`。有 `APPLYGUARD_AI_API_KEY` 时真实启动 Harness；无 Key 时仅模拟配对，报告明确区分。只使用脚本生成的虚构材料；报告及截图写入 `output/test-reports/`。`APPLYGUARD_TEST_URL` 可覆盖默认 5173 地址。
 
 ## 证据与修改保护
 

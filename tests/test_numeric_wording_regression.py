@@ -16,6 +16,34 @@ from tests.test_numeric_unit_guard import AlwaysSupports
 
 
 class NumericWordingRegression(unittest.TestCase):
+    def test_named_targets_keep_their_values_with_safe_reordering(self):
+        original = '对甲方案，延迟约下降11%；对乙方案下降18%。'
+        self.assertFalse(wording_invariants(original, '对乙方案延迟下降18%；对甲方案延迟约下降11%。'))
+        self.assertTrue(wording_invariants(original, '对乙方案延迟约下降11%；对甲方案延迟下降18%。'))
+        self.assertTrue(wording_invariants(original, '两种方案延迟分别下降约11%和18%。'))
+        en = 'For plan A, latency fell about 11%; for plan B it fell 18%.'
+        self.assertFalse(wording_invariants(en, 'For plan B it fell 18%; for plan A latency fell about 11%.'))
+        self.assertTrue(wording_invariants(en, 'For plan B latency fell about 11%; for plan A it fell 18%.'))
+
+    def test_named_metrics_keep_values_and_qualifiers(self):
+        original = '准确率提升约5%，召回率提升8%。'
+        self.assertFalse(wording_invariants(original, '召回率提升8%，准确率提升约5%。'))
+        self.assertTrue(wording_invariants(original, '准确率提升8%，召回率提升约5%。'))
+        self.assertTrue(wording_invariants(original, '准确率提升5%，召回率提升约8%。'))
+
+    def test_approximation_must_stay_bound_to_the_same_number(self):
+        cases = [
+            ('对甲方案，延迟约下降11%；对乙方案下降18%。', '对甲方案，延迟约下降11%；对乙方案，延迟约下降18%。', True),
+            ('对甲方案，延迟约下降11%；对乙方案下降18%。', '对乙方案延迟下降18%；对甲方案延迟约下降11%。', False),
+            ('Plan A fell about 11%; plan B fell 18%.', 'Plan A fell about 11%; plan B fell approximately 18%.', True),
+            ('Plan A fell about 11%; plan B fell 18%.', 'Plan B fell 18%; plan A fell approximately 11%.', False),
+            ('延迟降低18%。', '延迟降低约18%。', True),
+            ('Latency fell about 18%.', 'Latency fell 18%.', True),
+        ]
+        for before, after, should_hold in cases:
+            with self.subTest(before=before, after=after):
+                self.assertEqual(bool(wording_invariants(before, after)), should_hold)
+
     def test_bilingual_numeric_matrix_against_an_optimistic_judge(self):
         for name,old,new,label in numeric_pairs():
             with self.subTest(case=name):

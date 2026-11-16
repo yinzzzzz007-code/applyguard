@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { EmptyState, RiskBadge } from '../components/States'
+import { getApiClient } from '../api/client'
+import type { ApiResult, EditableResumeForm } from '../api/types'
+import { EmptyState, ErrorState, LoadingState, RiskBadge } from '../components/States'
 import { useDemo } from '../context/DemoContext'
 import { loadApplicationHistory, removeApplicationHistory } from '../history'
 import {
@@ -12,7 +14,6 @@ import {
   type ResumeTemplateId,
 } from '../resume/generate'
 import { normalizeResumeForm } from '../resume/formModel'
-import type { EditableResumeForm } from '../api/types'
 
 function storedResumeForm(): EditableResumeForm | null {
   try {
@@ -393,18 +394,27 @@ function ResumePreview({
 
 export function ApplicationHistoryPage() {
   const navigate = useNavigate()
-  const { resumeForm, workflow } = useDemo()
+  const { resumeForm, scenario, workflow } = useDemo()
   const [records, setRecords] = useState(loadApplicationHistory)
   const [error, setError] = useState('')
   const [template, setTemplate] = useState<ResumeTemplateId>('cn-academic')
   const [copied, setCopied] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState<EditableResumeForm | null>(null)
+  const [savedResume, setSavedResume] = useState<ApiResult<EditableResumeForm> | null>(null)
 
-  const sourceForm = useMemo(() => {
-    const source = resumeForm ?? storedResumeForm()
-    return source ? normalizeResumeForm(source) : null
-  }, [resumeForm])
+  const activeForm = useMemo(() => resumeForm ?? storedResumeForm(), [resumeForm])
+  const loadSavedResume = scenario === 'live' && !activeForm
+  useEffect(() => {
+    if (!loadSavedResume) return
+    let cancelled = false
+    void getApiClient().getResumeDraft().then((result) => {
+      if (!cancelled) setSavedResume(result)
+    })
+    return () => { cancelled = true }
+  }, [loadSavedResume])
+  const source = activeForm ?? (loadSavedResume ? savedResume?.data : null)
+  const sourceForm = useMemo(() => source ? normalizeResumeForm(source) : null, [source])
 
   useEffect(() => {
     if (!sourceForm) {
@@ -467,7 +477,11 @@ export function ApplicationHistoryPage() {
         </p>
       </header>
 
-      {!form || !sourceForm ? (
+      {loadSavedResume && !savedResume ? (
+        <LoadingState label="正在读取已保存的简历资料…" />
+      ) : loadSavedResume && savedResume?.error ? (
+        <ErrorState message={savedResume.error.message} onFallback={() => navigate('/vault')} fallbackLabel="去经历库" />
+      ) : !form || !sourceForm ? (
         <EmptyState
           title="还没有可生成的简历资料"
           detail="请先到经历库填写并保存，再回到本页选择模板生成。"

@@ -9,7 +9,7 @@ import re
 from collections import Counter
 from decimal import Decimal
 
-from backend.services.edit_invariants import equivalent_point_detail, lost_qualifiers
+from backend.services.edit_invariants import equivalent_point_detail, lost_qualifiers, qualifier_inventory
 
 QUANTITY = (r"-?\d+(?:\.\d+)?(?:\s*(?:[%％]|个百分点|percentage\s+points?|pp\b|"
             r"milliseconds?\b|ms\b|seconds?\b|secs?\b|s\b|毫秒|秒|个?星期|个?周|天|人|个|次|年|万元|万|GB\b|MB\b))?")
@@ -25,6 +25,12 @@ TRANSITION = re.compile(
     rf"|\bto\s+(?P<last>{QUANTITY})\s+from\s+(?P<first>{QUANTITY})", re.I)
 METRIC = re.compile(r"\b(?:precision|recall|accuracy|latency|duration|throughput|cost|revenue|pass rate)\b"
                     r"|精确率|召回率|准确率|延迟|时延|耗时|吞吐量|成本|收入|通过率", re.I)
+TARGET = re.compile(r"(?:[甲乙丙丁]方案|\bplan\s+[a-z]\b)", re.I)
+EXPLICIT_SCOPE = re.compile(r'测试环境|生产环境|预生产环境|预发布环境|\b(?:test|testing|production|staging|sandbox)\s+environment\b|\bin\s+(?:production|staging|sandbox)\b', re.I)
+ASSIGNED_ACTION = re.compile(
+    r'(?P<person>[\u4e00-\u9fff]{1,4}?|\b[A-Z][a-z]{1,20})\s*'
+    r'(?P<verb>负责|测试|部署|开发|实现|\b(?:tested|handled|deployed|implemented|developed)\b)\s*'
+    r'(?P<object>[^，,；;。.!?\n]{1,100})', re.I)
 APPROX_BEFORE = re.compile(
     r"(?:\b(?:approximately|roughly|about|around)|[约≈~]|近似|大约)"
     r"(?:为|(?:降低|提升|减少|增加|提高|下降)(?:了)?)?\s*$", re.I)
@@ -64,12 +70,15 @@ def source_bound_ledger(original: str, check: dict | None, sources: list[dict]) 
                     and quote in source.get("text", "")
                     and citation.get("source_sha256") == source.get("sha256")
                     and citation.get("source_version") == source.get("version")):
+                start = source.get('text_offset', 0) + source['text'].find(quote)
                 bindings.append({"source_id": source["source_id"], "quote": quote,
+                                 "start": start, "end": start + len(quote),
                                  "source_sha256": source["sha256"],
                                  "source_version": source["version"]})
         if len(bindings) == len(citations):
             rows.append({"atom_id": atom.get("atom_id"), "text": atom["text"],
-                         "bindings": bindings})
+                         "bindings": bindings,
+                         "quantity_links": _quantity_links(atom['text'])})
     return rows
 
 
@@ -125,6 +134,36 @@ def _approximate_values(text: str) -> Counter:
     return result
 
 
+def _quantity_links(text: str) -> list[dict]:
+    """Extract explicit named targets and metrics; missing syntax is not evidence."""
+    links = []
+    for kind, pattern in (('target', TARGET), ('metric', METRIC)):
+        matches = list(pattern.finditer(text))
+        for index, match in enumerate(matches):
+            end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+            segment = text[match.end():end]
+            values = _numbers(segment)
+            if values:
+                links.append({'kind': kind, 'name': re.sub(r'\s+', '', match.group()).casefold(),
+                              'values': sorted(values.elements()),
+                              'approximate': sorted(_approximate_values(segment).elements())})
+    return links
+
+
+def _linked_quantity_findings(original: str, proposal: str) -> list[str]:
+    issues = []
+    for kind, label in (('target', '对象'), ('metric', '指标')):
+        before = [row for row in _quantity_links(original) if row['kind'] == kind]
+        if len(before) < 2:
+            continue
+        after = [row for row in _quantity_links(proposal) if row['kind'] == kind]
+        def indexed(rows):
+            return Counter((row['name'], tuple(row['values']), tuple(row['approximate'])) for row in rows)
+        if indexed(before) != indexed(after):
+            issues.append(f'{label}与数值或近似限定的对应关系改变或无法确认')
+    return issues
+
+
 def _numeric_links(original: str, proposal: str) -> list[str]:
     """Catch explicit rebindings while allowing independent clauses to be reordered."""
     old, new = _transitions(original), _transitions(proposal)
@@ -135,12 +174,11 @@ def _numeric_links(original: str, proposal: str) -> list[str]:
         if before.total() == after.total() and before != after:
             issues.append("改变指标的起止数值：" + (metric or "原文数值区间"))
     old_approx, new_approx = _approximate_values(original), _approximate_values(proposal)
-    if old_approx and new_approx and old_approx != new_approx:
-        # An unparsed paraphrase can still reach the semantic judge. Flag a number
-        # that was explicitly approximate and is now written without that qualifier.
-        lost = (old_approx - new_approx) & _numbers(proposal)
-        if lost:
-            issues.append("近似限定改变了对应数值：" + "、".join(sorted(lost)))
+    lost = (old_approx - new_approx) & _numbers(proposal)
+    added = (new_approx - old_approx) & _numbers(original)
+    changed = lost | added
+    if changed:
+        issues.append("近似限定改变了对应数值：" + "、".join(sorted(changed)))
     return issues
 
 
@@ -225,6 +263,28 @@ def _actor_changes(original: str, proposal: str) -> list[str]:
     return changes
 
 
+def _assignment_changes(original: str, proposal: str) -> list[str]:
+    def assignments(text):
+        return {(m['person'].casefold(), re.sub(r'\s+', ' ', (m['verb'] + ' ' + m['object']).strip()).casefold())
+                for clause in CLAUSE.split(text) for m in ASSIGNED_ACTION.finditer(clause)}
+    old, new = assignments(original), assignments(proposal)
+    if (len({p for p, _ in old}) >= 2 and {p for p, _ in old} == {p for p, _ in new}
+            and Counter(a for _, a in old) == Counter(a for _, a in new) and old != new):
+        return ['改变了明确人员与具体职责的对应关系']
+    return []
+
+
+def _scope_changes(original: str, proposal: str) -> list[str]:
+    def scopes(text):
+        normal = {'测试环境': 'test', 'test environment': 'test', 'testing environment': 'test',
+                  '生产环境': 'production', 'production environment': 'production', 'in production': 'production',
+                  '预生产环境': 'staging', '预发布环境': 'staging', 'staging environment': 'staging',
+                  'in staging': 'staging', 'sandbox environment': 'sandbox', 'in sandbox': 'sandbox'}
+        return {normal[m.group().casefold()] for m in EXPLICIT_SCOPE.finditer(text)}
+    old, new = scopes(original), scopes(proposal)
+    return ['改变或遗漏明确的测试／生产环境'] if old != new and (old or new) else []
+
+
 def _participial_estimate(original_estimate: str, proposal: str, person: str) -> bool:
     """Recognise 'Rae drafted a plan, estimating 20%' with one unambiguous subject."""
     pattern = (rf"(?:^|[.;!?]\s*){re.escape(person)}\s+(?:completed|prepared|drafted|created|wrote|finished)"
@@ -253,7 +313,13 @@ def reversed_cited_transition(text: str, quoted: str) -> bool:
 
 def wording_invariants(original: str, proposal: str) -> list[str]:
     """Text-only constraints; this comparison establishes no source support."""
-    findings = _numeric_links(original, proposal) + _actor_changes(original, proposal)
+    findings = (_numeric_links(original, proposal) + _linked_quantity_findings(original, proposal)
+                + _actor_changes(original, proposal) + _assignment_changes(original, proposal)
+                + _scope_changes(original, proposal))
+    old_deployed = 'not_deployed' in qualifier_inventory(original)
+    new_deployed = 'not_deployed' in qualifier_inventory(proposal)
+    if old_deployed != new_deployed:
+        findings.append('改变或遗漏尚未部署的状态')
     # A passive estimate can keep the number while dropping the named estimator.
     for match in re.finditer(r"\b([A-Z][a-z]+)\s+(?:estimated|projected|forecast)\b", original):
         person = match[1]

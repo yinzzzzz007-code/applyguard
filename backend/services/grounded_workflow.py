@@ -202,6 +202,7 @@ class GroundingService:
         polish_violations = {}
         original_hits = {}
         risk_escalation = {}
+        refchecker_reviews = {}
         wording = {}
         applied_wording = set()
         empty_check = {'relation':'INSUFFICIENT', 'complete':False, 'atoms':[]}
@@ -283,9 +284,14 @@ class GroundingService:
                 for original in changed_originals:
                     cid = original['claim_id']
                     final_check = atomic.get(cid, empty_check)
+                    refchecker_blocked = False
+                    if mode == 'sag_atomic' and os.getenv('APPLYGUARD_REFCHECKER_AUDIT', '').strip().lower() in {'1', 'true', 'yes'}:
+                        from backend.services.refchecker_review import review_refchecker
+                        refchecker_reviews[cid] = review_refchecker(self.model, proposals[cid]['text'], final_check)
+                        refchecker_blocked = refchecker_reviews[cid]['relation'] != 'Entailment'
                     if mode == 'sag_atomic' and may_apply_wording(
                         wording.get(cid, {}), original_checks[cid], final_check,
-                        polish_violations.get(cid), cid in escalated_rejections,
+                        polish_violations.get(cid), cid in escalated_rejections or refchecker_blocked,
                         original_text[cid], proposals[cid]['text'], preservation_checks.get(cid, {})
                     ):
                         applied_wording.add(cid)
@@ -353,10 +359,12 @@ class GroundingService:
                     wording_review=wording.get(cid), wording_auto_applied=cid in applied_wording and not error,
                     proposal_constraint_violations=polish_violations.get(cid,[]),
                     risk_escalation=risk_escalation.get(cid),
+                    refchecker_review=refchecker_reviews.get(cid),
                     preservation=preservation_checks.get(cid),change_audit=change_audit(original_text[cid],proposed),
                     proposal_applied=not error and proposed==claim['text'],
                     proposal_rejected=proposed!=claim['text'],
                     proposal_notice=('；'.join(polish_violations[cid]) if polish_violations.get(cid)
+                        else '逐项复核未确认支持，已保留原文；请人工核对。' if refchecker_reviews.get(cid, {}).get('relation') in {'Neutral', 'Contradiction', 'Abstain'}
                         else '建议未确认事实等价，已保留原文；原文状态单独核验。') if proposed!=claim['text'] else '')
         from backend.services.structured_verifier import SPLIT_PROMPT, CHECK_PROMPT
         from backend.services.atomic_verifier import POLISH_PROMPT

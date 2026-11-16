@@ -1,0 +1,58 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+(async()=>{
+ const out=path.resolve('output/test-reports',new Date().toISOString().replace(/[:.]/g,'-')+'_home-browser');fs.mkdirSync(out,{recursive:true});
+ const base=process.env.APPLYGUARD_TEST_URL||'http://127.0.0.1:5173';
+ const browser=await chromium.launch({channel:'msedge',headless:true,args:['--no-proxy-server']});
+ const page=await browser.newPage({viewport:{width:1440,height:1100}}),checks=[],errors=[],consoleMessages=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ page.on('console',message=>{if(['warning','error'].includes(message.type()))consoleMessages.push(message.text())});
+ try {
+  await page.addInitScript(()=>sessionStorage.setItem('applyguard.guide.collapsed','true'));
+  await page.goto(base+'/');
+  await page.getByRole('heading',{name:'24 秒操作介绍',exact:true}).waitFor();
+  await page.waitForFunction(()=>document.querySelector('.homepage-reel .project-player')?.dataset.playing==='true'||document.querySelector('.kinetic-poster button'));
+  assert.equal(await page.locator('.kinetic-poster button').count(),0,'Renderer failed: '+consoleMessages.join('\n'));
+  await page.locator('.homepage-reel .project-player[data-playing=true]').waitFor({timeout:30000});
+  assert.equal(await page.locator('.homepage-reel audio').evaluate(el=>el.paused),true);
+  checks.push('homepage-reel-expanded-despite-old-preference','canvas-ready-and-playing','default-muted');
+  await page.getByRole('button',{name:'暂停新手引导',exact:true}).click();
+  await page.locator('.homepage-reel .project-player[data-playing=false]').waitFor();
+  await page.getByRole('button',{name:'回到开头',exact:true}).click();
+  await page.locator('.homepage-reel .reel-chapters button').nth(0).click();
+  assert.equal(await page.locator('.homepage-reel .reel-chapters button').nth(0).getAttribute('aria-pressed'),'true');
+  checks.push('pause-restart-and-chapter-navigation');
+  await page.screenshot({path:path.join(out,'homepage-desktop.png'),fullPage:true});
+  await page.locator('.homepage-reel').scrollIntoViewIfNeeded();
+  await page.waitForFunction(()=>document.querySelector('.homepage-reel canvas')&&!document.querySelector('.homepage-reel .kinetic-poster'));
+  await page.locator('.home-intro').screenshot({path:path.join(out,'homepage-hero.png')});
+  await page.getByRole('link',{name:'导入我的简历',exact:false}).click();
+  assert.equal(new URL(page.url()).hash,'#resume-import');
+  assert.ok(await page.getByLabel('选择 PDF 简历').isEnabled());checks.push('import-cta-retains-existing-form');
+  await page.getByRole('link',{name:'查看完整操作说明',exact:false}).click();
+  await page.getByRole('heading',{name:'准备一份有依据的申请',exact:true}).waitFor();
+  checks.push('help-navigation');
+  await page.goto(base+'/');
+  await page.setViewportSize({width:1280,height:900});
+  await page.locator('.homepage-reel .reel-stage').scrollIntoViewIfNeeded();
+  await page.waitForFunction(()=>!document.querySelector('.homepage-reel .kinetic-poster'));
+  assert.ok(!await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth));
+  await page.screenshot({path:path.join(out,'homepage-1280.png'),fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  await page.locator('.homepage-reel .reel-stage').scrollIntoViewIfNeeded();
+  await page.waitForFunction(()=>!document.querySelector('.homepage-reel .kinetic-poster'));
+  assert.ok(!await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth));
+  await page.screenshot({path:path.join(out,'homepage-mobile.png'),fullPage:true});
+  checks.push('1280-and-mobile-no-overflow');
+  await page.emulateMedia({reducedMotion:'reduce'});
+  assert.ok(await page.getByRole('button',{name:'系统已开启减少动态效果',exact:true}).isDisabled());
+  await page.locator('.homepage-reel .project-player[data-playing=false]').waitFor();
+  checks.push('respects-reduced-motion');assert.deepEqual(errors,[]);
+  fs.writeFileSync(path.join(out,'report.json'),JSON.stringify({date:new Date().toISOString(),base,status:'PASS',checks,errors,consoleMessages},null,2));
+  console.log('PASS '+out);
+ }catch(e){
+  await page.screenshot({path:path.join(out,'failure.png'),fullPage:true});
+  fs.writeFileSync(path.join(out,'report.json'),JSON.stringify({date:new Date().toISOString(),status:'FAIL',checks,error:String(e),errors,consoleMessages},null,2));
+  console.error('FAIL '+out);throw e;
+ }finally{await browser.close()}
+})().catch(e=>{console.error(e.message);process.exitCode=1});

@@ -13,7 +13,7 @@ function remember(key: string, value: boolean) {
   try { sessionStorage.setItem(key, String(value)) } catch { /* Optional UI preference. */ }
 }
 
-function ReelPlayer() {
+function ReelPlayer({home=false}:{home?:boolean}) {
   const projects = ONBOARDING_STEPS
   const root = useRef<HTMLDivElement>(null)
   const clock = useRef(0)
@@ -24,6 +24,7 @@ function ReelPlayer() {
   const [paused, setPaused] = useState(() => preference('applyguard.reel.paused'))
   const [reduced, setReduced] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   const [visible, setVisible] = useState(false)
+  const [activated, setActivated] = useState(false)
   const [rendererReady, setRendererReady] = useState(false)
   const [pageVisible, setPageVisible] = useState(!document.hidden)
   const frame = reelFrame(time, projects.length)
@@ -37,7 +38,7 @@ function ReelPlayer() {
     const observer = new IntersectionObserver(([entry]) => {
       const inView = entry.isIntersecting && entry.intersectionRatio >= .12
       setVisible(inView)
-      if (!inView) setRendererReady(false)
+      if (inView) setActivated(true)
     }, { threshold: .12 })
     if (root.current) observer.observe(root.current)
     media.addEventListener('change', onMotion)
@@ -85,7 +86,7 @@ function ReelPlayer() {
   }
 
   return <div className="project-player" ref={root} data-playing={playing} data-phase={frame.phase}>
-    <div className="reel-stage" role="img" aria-label={frame.phase === 'project' ? `阶段：${current.title}。${current.excerpt}` : frame.phase === 'open' ? '第一次使用 ApplyGuard：建立经历、补充依据、准备岗位、核对保存。' : '先核对，再申请。完整操作说明在下方。'}>{visible && <KineticCanvas projects={projects} time={time} still={reduced || (paused && time === 0)} onReady={setRendererReady} />}</div>
+    <div className="reel-stage" role="img" aria-label={frame.phase === 'project' ? `阶段：${current.title}。${current.excerpt}` : frame.phase === 'open' ? '第一次使用 ApplyGuard：建立经历、补充依据、准备岗位、核对保存。' : '先核对，再申请。完整操作说明在下方。'}>{activated && <KineticCanvas projects={projects} time={time} still={reduced || (paused && time === 0)} onReady={setRendererReady} portraitBelow={home?420:600} />}</div>
     <audio ref={audio} src="/assets/kinetic-score.wav" preload="none" loop onError={() => { setSound(false); setSoundError('配乐暂时无法播放，画面可继续浏览。') }} />
     <div className="reel-transport">
       <button type="button" className="reel-play" onClick={togglePause} disabled={reduced} aria-label={reduced ? '系统已开启减少动态效果' : paused ? '播放新手引导' : '暂停新手引导'}><Icon name={paused || reduced ? 'play' : 'pause'} /><span>{reduced ? '静态浏览' : paused ? '播放' : '暂停'}</span></button>
@@ -97,15 +98,16 @@ function ReelPlayer() {
     <div className="reel-chapters" role="group" aria-label="跳到引导阶段并暂停">{projects.map((project, index) => <button type="button" key={project.id} aria-pressed={frame.phase === 'project' && frame.index === index} onClick={() => selectProject(index)}><span>{index + 1}</span><span>{project.title}</span></button>)}</div>
     {reduced && <p className="reel-motion-note">已遵循系统的减少动态效果设置，可点击阶段或拖动进度查看。</p>}
     {soundError && <p className="reel-motion-note" role="status">{soundError}</p>}
-    <div className="onboarding-next"><p>第一次只准备一个岗位，从自己的简历开始。</p><Link to="/" className="btn primary">开始准备我的申请<Icon name="arrow" /></Link></div>
+    {!home&&<div className="onboarding-next"><p>第一次只准备一个岗位，从自己的简历开始。</p><Link to="/" className="btn primary">开始准备我的申请<Icon name="arrow" /></Link></div>}
     <details className="reel-sources"><summary><Icon name="file" />查看完整操作说明<Icon name="down" /></summary><div>{projects.map((stage: OnboardingStep) => <article key={stage.id}><h3>{stage.title}</h3><p>{stage.original}</p><p><strong>为什么：</strong>{stage.why}</p><p><strong>完成标志：</strong>{stage.completion}</p></article>)}<p className="reel-motion-note">首次使用不需要先安装其他工具或连接 Agent，先用自己的简历和相关材料完成一次申请准备。</p></div></details>
   </div>
 }
 
-export function ProjectReel() {
-  const [collapsed, setCollapsed] = useState(() => preference('applyguard.guide.collapsed'))
-  return <section className={`project-reel${collapsed ? ' is-collapsed' : ''}`} aria-labelledby="project-reel-title">
-    <div className="project-reel-heading"><div><h2 id="project-reel-title">第一次使用 ApplyGuard</h2><p>24 秒，了解从简历到申请稿的四个阶段。</p></div><button type="button" className="reel-collapse" aria-expanded={!collapsed} aria-controls="project-reel-body" onClick={() => { remember('applyguard.guide.collapsed', !collapsed); setCollapsed(!collapsed) }}><span>{collapsed ? '展开引导' : '收起'}</span><Icon name={collapsed ? 'play' : 'down'} /></button></div>
-    {!collapsed && <div id="project-reel-body"><ReelPlayer /></div>}
+export function ProjectReel({variant='default'}:{variant?:'default'|'home'}) {
+  const home=variant==='home'
+  const [collapsed, setCollapsed] = useState(() => home?false:preference('applyguard.guide.collapsed'))
+  return <section className={`project-reel${home?' homepage-reel':''}${collapsed ? ' is-collapsed' : ''}`} aria-labelledby="project-reel-title">
+    <div className="project-reel-heading"><div><h2 id="project-reel-title">{home?'24 秒操作介绍':'第一次使用 ApplyGuard'}</h2><p>{home?'从简历到申请稿 · 默认静音，可开启配乐':'24 秒，了解从简历到申请稿的四个阶段。'}</p></div><button type="button" className="reel-collapse" aria-expanded={!collapsed} aria-controls="project-reel-body" onClick={() => { if(!home)remember('applyguard.guide.collapsed', !collapsed); setCollapsed(!collapsed) }}><span>{collapsed ? '展开引导' : '收起'}</span><Icon name={collapsed ? 'play' : 'down'} /></button></div>
+    {!collapsed && <div id="project-reel-body"><ReelPlayer home={home} /></div>}
   </section>
 }
