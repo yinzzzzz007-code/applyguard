@@ -69,3 +69,17 @@ scripts/build-kinetic-adapter.py 和 scripts/kinetic-score.mjs。
 Anton、Archivo Black、Instrument Serif 字体本机托管，
 各自 OFL 许可保存在 frontend/public/assets/fonts/ 中。
 配乐由模板合成器适配生成，无外部音频采样；用户主动开启声音后播放。
+# DocLens evaluation aggregation
+
+`third_party/doclens/aggregate_scores.py` is the unmodified upstream file from
+https://github.com/yiqingxyq/DocLens at commit `e77cfc9f200c03cde23c6a8d1ca7b5f2c499e0c7`.
+Copyright (c) 2024 Yiqing Xie. MIT License; the complete license is retained in
+`third_party/doclens/LICENSE`.
+
+# RefChecker prompt and aggregation
+
+`third_party/refchecker/checker_prompts.py` and `aggregator.py` are unmodified
+upstream files from https://github.com/amazon-science/RefChecker at commit
+`1df1b25cee792ba2b171302e31ca4f768bd67703`. Copyright Amazon.com, Inc. or its
+affiliates. Apache License 2.0; the full license and upstream notice are retained
+in `third_party/refchecker/LICENSE` and `NOTICE`.

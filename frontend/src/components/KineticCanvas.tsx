@@ -2,24 +2,24 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReelProject } from '../motion/reel'
 import type { KineticRenderer } from '../motion/kineticEngine'
 
-export function KineticCanvas({projects, time, still, onReady}: {projects: ReelProject[]; time: number; still: boolean; onReady: (ready: boolean) => void}) {
+export function KineticCanvas({projects, time, still, onReady, portraitBelow=600}: {projects: ReelProject[]; time: number; still: boolean; onReady: (ready: boolean) => void; portraitBelow?: number}) {
   const holder = useRef<HTMLDivElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const engine = useRef<KineticRenderer | null>(null)
   const latest = useRef({time, still})
-  const [compact, setCompact] = useState(window.innerWidth < 700)
+  const [compact, setCompact] = useState(window.innerWidth < portraitBelow)
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading')
   const [attempt, setAttempt] = useState(0)
   useEffect(() => { latest.current = {time, still}; engine.current?.draw(time, still) }, [time, still])
   useEffect(() => {
     if (!holder.current) return
     const observer = new ResizeObserver(([entry]) => {
-      const next = entry.contentRect.width < 600
+      const next = entry.contentRect.width < portraitBelow
       if (next !== compact) { onReady(false); setState('loading'); setCompact(next) }
     })
     observer.observe(holder.current)
     return () => observer.disconnect()
-  }, [compact, onReady])
+  }, [compact, onReady, portraitBelow])
   useEffect(() => {
     if (!canvas.current) return
     let disposed = false
@@ -28,6 +28,7 @@ export function KineticCanvas({projects, time, still, onReady}: {projects: ReelP
     const onLoss = (event: Event) => { event.preventDefault(); onReady(false); setState('error') }
     node.addEventListener('webglcontextlost', onLoss)
     import('../motion/kineticEngine.js').then(async module => {
+      if (disposed) return
       // A canvas cannot change from a disposed WebGL context back into a new one.
       instance = await module.createKineticReel(node, projects, {compact})
       if (disposed) { instance.dispose(); return }

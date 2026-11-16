@@ -44,4 +44,22 @@ class MCPIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(err.exception.code,422)
         finally:server.shutdown();server.server_close();thread.join()
 
+    async def test_launcher_preflight_honors_disclosure_without_marking_paired(self):
+        from scripts.connect_harness import prepare
+        with tempfile.TemporaryDirectory() as folder:
+            server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
+            thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+            url=f'http://127.0.0.1:{server.server_port}'
+            try:
+                for disclosure in ['cloud_allowed','isolated_local']:
+                    c=a.create({'mode':'local','roots':[folder],'task':'Find Atlas evidence','disclosure':disclosure,'purpose':'contribution'})
+                    if disclosure=='cloud_allowed':
+                        self.assertEqual(prepare(url,c['id'],c['token'])['id'],c['id'])
+                    else:
+                        with self.assertRaisesRegex(ValueError,'禁止材料外发'):prepare(url,c['id'],c['token'])
+                    self.assertFalse(a.GRANTS[c['id']]['connected'])
+                    a.ui_call({**c,'action':'revoke'})
+                    with self.assertRaisesRegex(ValueError,'过期、撤销或不匹配'):prepare(url,c['id'],c['token'])
+            finally:server.shutdown();server.server_close();thread.join()
+
 if __name__=='__main__':unittest.main()

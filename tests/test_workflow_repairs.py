@@ -132,8 +132,8 @@ class StaticRepairTests(unittest.TestCase):
         self.tmp=tempfile.TemporaryDirectory();root=Path(self.tmp.name)
         self.front=root/'frontend';(self.front/'dist/assets').mkdir(parents=True)
         (self.front/'dist/assets/good.js').write_text('ok')
-        (root/'private.txt').write_text('fictional sentinel')
-        (self.front/'dist/assets/escape.txt').symlink_to(root/'private.txt')
+        self.private_file = root/'private.txt'
+        self.private_file.write_text('fictional sentinel')
         self.scope=patch.object(app,'FRONTEND_DIR',self.front);self.scope.start()
         self.server=app.create_server('127.0.0.1',0)
         self.thread=threading.Thread(target=self.server.serve_forever,daemon=True);self.thread.start()
@@ -144,10 +144,18 @@ class StaticRepairTests(unittest.TestCase):
         conn.request('GET',path,headers={'Origin':origin} if origin else {})
         res=conn.getresponse();body=res.read();headers=dict(res.getheaders());conn.close()
         return res.status,body,headers
-    def test_plain_encoded_and_symlink_traversal_denied(self):
+    def test_plain_and_encoded_traversal_denied(self):
         self.assertEqual(self.get('/assets/good.js')[:2],(200,b'ok'))
-        for path in ('/assets/../../../private.txt','/assets/%2e%2e/%2e%2e/%2e%2e/private.txt','/assets/escape.txt'):
+        for path in ('/assets/../../../private.txt','/assets/%2e%2e/%2e%2e/%2e%2e/private.txt'):
             with self.subTest(path=path):self.assertEqual(self.get(path)[0],404)
+    def test_symlink_traversal_denied(self):
+        try:
+            (self.front/'dist/assets/escape.txt').symlink_to(self.private_file)
+        except OSError as exc:
+            if getattr(exc, 'winerror', None) != 1314:
+                raise
+            self.skipTest('Windows symlink permission unavailable')
+        self.assertEqual(self.get('/assets/escape.txt')[0],404)
     def test_cors_does_not_allow_credentials_disguised_as_loopback(self):
         self.assertNotIn('Access-Control-Allow-Origin',self.get('/health','http://localhost:8000@evil.invalid')[2])
         self.assertEqual(self.get('/health','http://127.0.0.1:5173')[2]['Access-Control-Allow-Origin'],'http://127.0.0.1:5173')

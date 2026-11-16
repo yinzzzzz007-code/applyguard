@@ -11,7 +11,7 @@ QUALIFIERS = {
     'estimated': r'预计|预估|估算|预测|测算|估计|estimat(?:e[ds]?|ing|ion)|projected|projecting|forecast(?:ed)?|expected',
     'offline': r'离线|offline',
     'prototype': r'原型|概念验证|proof.of.concept|prototype|\bPoC\b',
-    'not_deployed': r'未(?:正式)?(?:上线|部署)|尚未(?:上线|部署)|未进入生产|未投产|未发布到生产|not\s+(?:yet\s+)?(?:deployed|released)|(?:did\s+not|never)\s+deploy|no\s+production\s+deployment',
+    'not_deployed': r'未(?:正式)?(?:上线|部署)|尚未(?:上线|部署)|还未(?:上线|部署)|未进入生产|未投产|未发布到生产|not\s+(?:yet\s+)?(?:been\s+)?(?:deployed|released)|(?:did\s+not|never)\s+deploy|no\s+production\s+deployment',
     'not_trained': r'未(?:参与|负责|进行)(?:模型)?训练|未训练|(?:did\s+not|never)\s+train|not\s+(?:involved\s+in\s+)?(?:model\s+)?training|without\s+(?:(?:participating|being\s+involved)\s+in\s+)?(?:model\s+)?training',
     'assisting': r'协助|辅助|配合|assisted|supported\s+(?:the\s+)?team|helped',
     'not_leader': r'非(?:项目)?负责人|并非(?:项目)?负责人|未(?:主导|领导)|不是(?:项目)?负责人|not\s+(?:the\s+)?(?:project\s+)?lead(?:er)?|did\s+not\s+lead',
