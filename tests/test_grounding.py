@@ -16,6 +16,7 @@ from backend.services.grounded_workflow import (GroundingService, collect_source
     grounding_mode, load_grounding_experiences)
 from backend.services.model_client import HttpModelClient, ModelFailure
 from backend.services.sag_grounding import GroundingUnavailable, search_queries
+from backend.services.structured_verifier import structured
 
 TEXT = 'Alex wrote Python interface tests for Atlas.'
 CLAIM = {'claim_id':'claim_atlas','text':TEXT}
@@ -123,6 +124,20 @@ class GroundingPolicyTests(unittest.TestCase):
         with patch('urllib.request.urlopen',return_value=response), self.assertRaises(ModelFailure):
             HttpModelClient(api_key='test-only',require_complete=True).complete_json('s','u')
 
+    def test_structured_model_retries_a_503_after_a_short_delay(self):
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = json.dumps({
+            'choices': [{'finish_reason': 'stop', 'message': {'content': '{"ok":true}'}}]
+        }).encode()
+        unavailable = urllib.error.HTTPError('https://fixture.invalid', 503, 'Unavailable', {}, None)
+        with patch('urllib.request.urlopen', side_effect=[unavailable, response]) as transport, patch(
+                'backend.services.structured_verifier.sleep') as delay:
+            result = structured(HttpModelClient(api_key='test-only', base_url='https://fixture.invalid'),
+                                'test prompt', {}, {'type': 'object'})
+        delay.assert_called_once_with(2)
+        self.assertEqual(transport.call_count, 2)
+        self.assertEqual(result, {'ok': True})
+
 class GroundingHTTPTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory()
@@ -175,6 +190,22 @@ class GroundingHTTPTests(unittest.TestCase):
         self.assertEqual(status,200);self.assertEqual(result['text'],TEXT)
         self.service.model=ScriptedModel(complete=False)
         self.assertEqual(self.post('resume/export')[0],422)
+
+    def test_export_distinguishes_model_outage_from_unverified_facts(self):
+        class UnavailableModel:
+            def complete_structured(self, prompt, data, schema):
+                raise ModelFailure('provider outage', http_status=503)
+
+        self.request['human_confirmed'] = True
+        self.assertEqual(self.post('resume/export')[0], 200)
+        self.service.model = UnavailableModel()
+        with patch('backend.services.structured_verifier.sleep'):
+            status, result = self.post('resume/export')
+        self.assertEqual(status, 503)
+        self.assertEqual(result['error']['code'], 'GROUNDING_UNAVAILABLE')
+        self.assertIn('请稍后重试', result['error']['message'])
+        self.assertNotIn('text', result)
+
     def test_revoked_link_and_midflight_change_invalidate_result(self):
         self.service.model=ScriptedModel(callback=lambda:ew.create_link({
             'target_type':'project','target_id':'atlas','evidence_id':self.eid,'link_state':'REJECTED'}))

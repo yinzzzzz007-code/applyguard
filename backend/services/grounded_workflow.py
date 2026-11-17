@@ -23,6 +23,9 @@ from backend.services.resume_draft_vault import (
 )
 from backend.services.sag_grounding import SAGRetriever, GroundingUnavailable, evidence_snapshot, fingerprint
 
+_MODEL_UNAVAILABLE = 'MODEL_SERVICE_UNAVAILABLE'
+_MODEL_UNAVAILABLE_MESSAGE = '模型服务暂时不可用，事实核验尚未完成。请稍后重试。'
+
 _HIGH_RISK = re.compile(r'\d|[%％]|主导|负责|协助|参与|领导|成果|提升|降低|上线|部署|试点|离线|预计|未|不|'
     r'\b(?:lead|led|own|owned|assist|help|contribut|achiev|deliver|improv|reduc|deploy|pilot|offline|'
     r'planned|estimated|not|never|Python|SQL|Java|Go|Rust|Spark|Redis|Docker)\w*\b', re.I)
@@ -193,6 +196,7 @@ class GroundingService:
         snapshot = evidence_snapshot(sources)
         active = [c for c in claims if c['claim_id'] in contexts and allowed.get(c['claim_id'])]
         error = None
+        error_code = None
         hits, atomic = {}, {}
         original_text = {c['claim_id']:c['text'] for c in claims}
         originals = copy.deepcopy(claims)
@@ -309,9 +313,13 @@ class GroundingService:
                     if mode == 'sag_atomic':
                         atomic.update({c['claim_id']:copy.deepcopy(original_checks[c['claim_id']]) for c in fallback})
                         reused_checks.update(restored)
-        except (GroundingUnavailable,ModelFailure,OSError,ValueError,TypeError,KeyError):
+        except (GroundingUnavailable,ModelFailure,OSError,ValueError,TypeError,KeyError) as exc:
             # No fallback to a stale VERIFIED result, even for unchanged old text.
-            error = 'SAG或模型核验未完成；当前文本不可按已核验内容导出。请检查配置后重试。'
+            if isinstance(exc, ModelFailure) and exc.http_status == 503:
+                error_code = _MODEL_UNAVAILABLE
+                error = _MODEL_UNAVAILABLE_MESSAGE
+            else:
+                error = 'SAG或模型核验未完成；当前文本不可按已核验内容导出。请检查配置后重试。'
             if polish:claims = originals;atomic = {}
         results, verifications = {}, []
         for claim in claims:
@@ -371,7 +379,7 @@ class GroundingService:
         from backend.services.edit_guard import PRESERVE_PROMPT
         return claims, verifications, {'mode':mode,'engine':'zleap-sag 0.15.0','snapshot':snapshot,
             'prompt_version':fingerprint([ATOM_PROMPT,JUDGE_PROMPT,JUDGE,REPAIR,SPLIT_PROMPT,CHECK_PROMPT,PRESERVE_PROMPT,POLISH_PROMPT,polish_source]),
-            'polish_source':polish_source,'results':results,'error':error,
+            'polish_source':polish_source,'results':results,'error':error,'error_code':error_code,
             'export_requires_atomic':True, 'model_routing':{
                 'requested_model':getattr(self._model,'model',None),
                 'response_models':sorted(getattr(self._model,'response_models',[])),
@@ -389,6 +397,7 @@ def apply_grounding(vault_path, request, response, *, polish=False):
     current, _, _ = collect_sources(load_grounding_experiences(vault_path,request),request['candidate_id'])
     if evidence_snapshot(current) != report['snapshot']:
         report['error'] = '核验过程中材料或关联已变化，请重新核验。'
+        report['error_code'] = None
         for result in verified:
             if report['results'][result['claim_id']].get('verification_scope') == 'personal':continue
             result.update(state='NEEDS_REVIEW',grounded=False,support_score=0.0,explanation=report['error'])
@@ -450,6 +459,8 @@ def export_grounded(vault_path, request):
         raise ValueError('未知导出策略')
     result = reverify_workflow(vault_path,{**request,'grounding_mode':'sag_atomic'})
     verified = result['claim_verification']
+    if result['grounding'].get('error_code') == _MODEL_UNAVAILABLE:
+        raise GroundingUnavailable(_MODEL_UNAVAILABLE_MESSAGE)
     if (not verified or result['grounding'].get('error') or result['risk_result']['action'] == 'BLOCKED'
             or any(row['state'] != 'VERIFIED' for row in verified)):
         raise ValueError('仅已核验稿要求全部事实通过原子核验。请复核材料，或选择用户确认稿导出。')
