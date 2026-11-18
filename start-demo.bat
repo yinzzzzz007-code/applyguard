@@ -72,6 +72,23 @@ if exist "%ROOT%.env" (
   echo [ApplyGuard] No .env found. Offline demo still works. For model path, copy .env.example to .env and set APPLYGUARD_AI_API_KEY.
 )
 
+REM Configure SAG before starting the backend. These settings are local to this launch.
+set "RUNTIME_TEMP=%ROOT%output\sag-tmp"
+if not exist "%RUNTIME_TEMP%\" mkdir "%RUNTIME_TEMP%"
+if exist "%RUNTIME_TEMP%\" (
+  set "TEMP=%RUNTIME_TEMP%"
+  set "TMP=%RUNTIME_TEMP%"
+) else (
+  echo [ApplyGuard] WARNING: Could not create the SAG temporary directory.
+)
+
+if not defined APPLYGUARD_GROUNDING_STRATEGY (
+  for /f "tokens=2 delims=/" %%H in ("%APPLYGUARD_AI_BASE_URL%") do (
+    if /i "%%H"=="api.deepseek.com" set "APPLYGUARD_GROUNDING_STRATEGY=vector"
+  )
+)
+if /i "%APPLYGUARD_GROUNDING_STRATEGY%"=="vector" echo [ApplyGuard] SAG retrieval: vector.
+
 echo [ApplyGuard] Freeing ports 8000 / 5173 / 5174 if stale backends are holding them...
 powershell -NoProfile -Command ^
   "foreach ($p in 8000,5173,5174) { Get-NetTCPConnection -LocalPort $p -ErrorAction SilentlyContinue | ForEach-Object { if ($_.OwningProcess -gt 0) { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } } }; Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -like '*backend.app*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"

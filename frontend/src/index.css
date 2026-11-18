@@ -578,32 +578,6 @@ code {
   color: var(--steel);
 }
 
-.claim-status-guide {
-  display: grid;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-}
-
-.claim-status-guide-item {
-  padding: 0.9rem;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-}
-
-.claim-status-guide-item p {
-  margin: 0.55rem 0 0;
-  color: var(--steel);
-  font-size: 0.88rem;
-  line-height: 1.55;
-}
-
-@media (min-width: 840px) {
-  .claim-status-guide {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
 .state-panel {
   text-align: center;
   padding: 2.2rem 1rem;

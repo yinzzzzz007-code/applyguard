@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { GroundedExport } from '../components/GroundedExport'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ClaimBadge, RiskBadge } from '../components/States'
 import { useDemo } from '../context/DemoContext'
 import type { EditableResumeForm, LocalClaimDecision, LocalFieldDecision, WorkflowResponse } from '../api/types'
@@ -225,9 +225,10 @@ export function HumanConfirmationPage() {
           <h2>人工确认</h2>
           <p>尚未完成申请内容检查。</p>
         </header>
-        <button type="button" className="btn primary" onClick={() => navigate('/vault')}>
-          回到经历库
-        </button>
+        <div className="btn-row">
+          <Link className="btn secondary" to="/vault">回到经历库</Link>
+          <Link className="btn primary" to="/history">去简历生成</Link>
+        </div>
       </section>
     )
   }
@@ -238,13 +239,14 @@ export function HumanConfirmationPage() {
   const previewCopy = blocked || viewOnly || !copyReady
   const canConfirm = !readOnlyView && allowed.includes('CONFIRM') && !blocked && copyReady
   const finishSimulation = (outcome: HistoryOutcome) => {
-    if (simulatedConfirmed) return
+    if (simulatedConfirmed) return true
     if (!saveApplicationHistory(workflow, outcome)) {
       setHistoryError('本地历史保存失败，请检查浏览器存储权限。')
-      return
+      return false
     }
     setHistoryError('')
     setSimulatedConfirmed(true)
+    return true
   }
   const parsedTitle = workflow.parsed_jd.title === 'UNKNOWN' ? '未知岗位' : workflow.parsed_jd.title
   const parsedCompany = workflow.parsed_jd.company === 'UNKNOWN' ? '未知公司' : workflow.parsed_jd.company
@@ -544,7 +546,7 @@ export function HumanConfirmationPage() {
 
       {blocked && (
         <div className="callout danger">
-          本次 <strong>不可投递</strong>。允许操作为编辑 / 取消，没有确认提交。下面只能回退改材料，或结束这场模拟。
+          本次 <strong>不可投递</strong>。可返回核对材料，或去简历生成，使用经历库资料制作简历。
         </div>
       )}
       {simulatedConfirmed && (
@@ -572,27 +574,29 @@ export function HumanConfirmationPage() {
           <button
             type="button"
             className="btn primary"
-            disabled={simulatedConfirmed}
             onClick={() => {
-              finishSimulation('BLOCKED_REVIEWED')
+              if (finishSimulation('BLOCKED_REVIEWED')) navigate('/history')
             }}
           >
-            结束演示（已知悉不可投递）
+            去简历生成
           </button>
         ) : (
-          <button
-            type="button"
-            className="btn primary"
-            disabled={!canConfirm || simulatedConfirmed}
-            onClick={() => {
-              void validateExport().then((valid) => {
-                if (valid) finishSimulation('SIMULATED_CONFIRMED')
-                else setHistoryError('证据状态已改变或无法连接后端，请重新核验。')
-              })
-            }}
-          >
-            模拟确认（非投递）
-          </button>
+          <>
+            <button
+              type="button"
+              className="btn primary"
+              disabled={!canConfirm || simulatedConfirmed}
+              onClick={() => {
+                void validateExport().then((valid) => {
+                  if (valid) finishSimulation('SIMULATED_CONFIRMED')
+                  else setHistoryError('证据状态已改变或无法连接后端，请重新核验。')
+                })
+              }}
+            >
+              模拟确认（非投递）
+            </button>
+            <Link className="btn secondary" to="/history">去简历生成</Link>
+          </>
         )}
       </div>
     </section>

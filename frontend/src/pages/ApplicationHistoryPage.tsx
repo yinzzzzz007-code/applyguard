@@ -546,6 +546,12 @@ export function ApplicationHistoryPage() {
             editing={editing}
             onChange={setDraft}
           />
+          <div className="btn-row end">
+            <button type="button" className="btn primary" onClick={() =>
+              navigate('/interview', { state: { form } })}>
+              下一步：生成面经
+            </button>
+          </div>
         </>
       )}
 

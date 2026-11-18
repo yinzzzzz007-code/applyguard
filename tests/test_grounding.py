@@ -7,6 +7,7 @@ import tempfile
 import threading
 import unittest
 import urllib.request
+from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 from backend import app
@@ -15,7 +16,7 @@ from backend.services.atomic_verifier import AtomicVerifier
 from backend.services.grounded_workflow import (GroundingService, collect_sources,
     grounding_mode, load_grounding_experiences)
 from backend.services.model_client import HttpModelClient, ModelFailure
-from backend.services.sag_grounding import GroundingUnavailable, search_queries
+from backend.services.sag_grounding import GroundingUnavailable, SAGRetriever, _retrieval_strategy, search_queries
 from backend.services.structured_verifier import structured
 
 TEXT = 'Alex wrote Python interface tests for Atlas.'
@@ -57,6 +58,34 @@ class GroundingPolicyTests(unittest.TestCase):
         _, checks, report=self.run_service(mode='sag')
         self.assertEqual(checks[0]['state'],'NEEDS_REVIEW')
         self.assertEqual(report['results']['claim_atlas']['atoms'],[])
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows runtime temp setup')
+    def test_backend_startup_configures_writable_runtime_temp(self):
+        with tempfile.TemporaryDirectory() as path, patch.object(app, 'ROOT', Path(path)), patch.dict(os.environ):
+            app._configure_runtime_temp()
+            target = Path(path) / 'output' / 'sag-tmp'
+            self.assertTrue(target.is_dir())
+            self.assertEqual(os.environ['TEMP'], str(target))
+            self.assertEqual(os.environ['TMP'], str(target))
+
+    def test_sag_reports_index_failure_without_leaking_provider_details(self):
+        class IndexFailure(RuntimeError):
+            stage = 'index'
+
+        retriever = SAGRetriever()
+        with patch.object(retriever, '_retrieve', side_effect=IndexFailure('private fixture')), self.assertLogs(
+                'backend.services.sag_grounding', level='WARNING') as logs, self.assertRaisesRegex(
+                    GroundingUnavailable, '写入材料索引失败') as error:
+            retriever.retrieve_many([{'claim_id': 'claim_atlas'}], [{'source_id': 'src_test'}], 'cand_test')
+        self.assertNotIn('private fixture', str(error.exception))
+        self.assertNotIn('private fixture', ' '.join(logs.output))
+
+    def test_deepseek_defaults_to_vector_with_an_explicit_graph_override(self):
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(_retrieval_strategy('https://api.deepseek.com/v1'), 'vector')
+            self.assertEqual(_retrieval_strategy('https://fixture.invalid/v1'), 'full_expand')
+        with patch.dict(os.environ, {'APPLYGUARD_GROUNDING_STRATEGY': 'full_expand'}):
+            self.assertEqual(_retrieval_strategy('https://api.deepseek.com/v1'), 'full_expand')
 
     def test_exact_citation_and_current_text_are_bound(self):
         _, checks, report=self.run_service()
@@ -137,6 +166,25 @@ class GroundingPolicyTests(unittest.TestCase):
         delay.assert_called_once_with(2)
         self.assertEqual(transport.call_count, 2)
         self.assertEqual(result, {'ok': True})
+
+    def test_deepseek_json_mode_still_validates_the_required_schema(self):
+        response = MagicMock()
+        payload = response.__enter__.return_value
+        schema = {'type': 'object', 'properties': {'ok': {'type': 'boolean'}}, 'required': ['ok']}
+        client = HttpModelClient(api_key='test-only', base_url='https://api.deepseek.com/v1')
+        with patch('urllib.request.urlopen', return_value=response) as transport:
+            payload.read.return_value = json.dumps({
+                'choices': [{'finish_reason': 'stop', 'message': {'content': '{"ok":true}'}}]
+            }).encode()
+            self.assertEqual(client.complete_structured('test', 'fixture', schema), {'ok': True})
+            sent = json.loads(transport.call_args.args[0].data)
+            self.assertEqual(sent['response_format'], {'type': 'json_object'})
+            self.assertIn(json.dumps(schema), sent['messages'][0]['content'])
+            payload.read.return_value = json.dumps({
+                'choices': [{'finish_reason': 'stop', 'message': {'content': '{}'}}]
+            }).encode()
+            with self.assertRaisesRegex(ModelFailure, 'required schema'):
+                client.complete_structured('test', 'fixture', schema)
 
 class GroundingHTTPTests(unittest.TestCase):
     def setUp(self):

@@ -15,6 +15,21 @@ import type {
   WorkflowResponse,
   GroundingMode,
 } from './types'
+import type { InterviewGuide, InterviewResume } from '../resume/interview'
+
+export async function generateInterview(jd: string, resume: InterviewResume, signal: AbortSignal): Promise<ApiResult<InterviewGuide>> {
+  try {
+    const response = await apiFetch(`${apiBase()}/api/v1/interview/generate`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jd_text: jd, resume }), signal,
+    })
+    const result = await readJson(response)
+    if (!response.ok) return { error: toApiError(result, response.status) }
+    return { data: result as InterviewGuide }
+  } catch {
+    return { error: { code: 'NETWORK_ERROR', message: '面经生成未完成，请检查连接后重试。', retryable: true } }
+  }
+}
 
 const DEFAULT_CANDIDATE = 'cand_demo_001'
 const MIN_JD_LEN = 20
