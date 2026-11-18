@@ -29,5 +29,5 @@ export function agentMcpConfig(setup:HarnessSetup, connection:AgentConnection, o
 export function connectionStage(connection:AgentConnection|null, paired:boolean, now=Date.now()):string {
   if (!connection) return '尚未授权'
   if (now >= connection.expires * 1000) return '授权已过期'
-  return paired ? '已配对，可让 Agent 搜索材料' : '等待 Agent 连接'
+  return paired ? '已配对，可搜索材料' : '等待连接'
 }

@@ -1548,9 +1548,6 @@ export function EvidenceWorkspacePage() {
   const renderEvidenceEditor = (expanded = false) => (
     <details className="relation-field-editor" open={expanded || undefined}>
       <summary>确认识别内容</summary>
-      <p className="material-helper">
-        先标明材料类型，再按需修正提取字段。这是「识别完成」，不等于已经证明经历里的每一项信息。
-      </p>
       <label className="resume-field">
         材料类型
         <select
@@ -1582,10 +1579,8 @@ export function EvidenceWorkspacePage() {
         void flushFieldDraft()
       }}>重试保存</button></p>}
       {draftSavedAt ? (
-        <p className="muted">最近保存：{new Date(draftSavedAt).toLocaleString('zh-CN')}</p>
-      ) : (
-        <p className="muted">修改会自动保存为草稿；确认内容无误后点「确认识别完成」。</p>
-      )}
+        <p>最近保存：{new Date(draftSavedAt).toLocaleString('zh-CN')}</p>
+      ) : null}
       <div className="btn-row">
         <button type="button" className="btn primary" disabled={!!busy || !detail || detail.evidence_id !== selectedEvidenceId} onClick={() => void confirmReview()}>
           确认识别完成
@@ -1858,9 +1853,6 @@ export function EvidenceWorkspacePage() {
                   }}
                 />
               </div>
-              <p className="muted evidence-progress-hint">
-                正在处理，请稍候；已识别文件会跳过 OCR。列表会随每个文件完成而更新。
-              </p>
             </div>
           ) : null}
         </>}
@@ -1889,7 +1881,7 @@ export function EvidenceWorkspacePage() {
             {tab === 'text' && (waiting ? <p role="status">正在读取识别文字…</p> : currentDetail?.spans?.some((span) => span.raw_text.trim()) ?
               <div className="material-transcript">{currentDetail.spans.map((span) => <p key={span.span_id}>{span.raw_text}</p>)}</div> :
               <div className="material-empty"><strong>暂无识别文字</strong><p>仍可查看原件并人工核对。识别功能就绪后，可点击下方「重新识别」。</p></div>)}
-            {tab === 'fields' && (waiting ? <p role="status">正在读取识别内容…</p> : currentDetail ? renderEvidenceEditor(true) : <p className="material-helper">该文件尚未生成识别条目，请先重新识别。</p>)}
+            {tab === 'fields' && (waiting ? <p role="status">正在读取识别内容…</p> : currentDetail ? renderEvidenceEditor(true) : <p>该文件尚未生成识别条目，请先重新识别。</p>)}
             <div className="material-detail-actions">
               <span>版本 {file.version} · {file.span_count || 0} 个文字片段</span>
               <button type="button" className="btn secondary" disabled={!!busy} onClick={() => void reparseOne(file.file_id)}>重新识别</button>

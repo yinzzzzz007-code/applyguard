@@ -23,7 +23,7 @@ test('MCP config shares only agent capability and uses the detected Python',()=>
 })
 test('authorization is not pairing and expiration overrides earlier pairing',()=>{
   assert.equal(connectionStage(null,false,0),'尚未授权')
-  assert.equal(connectionStage(connection,false,0),'等待 Agent 连接')
-  assert.equal(connectionStage(connection,true,0),'已配对，可让 Agent 搜索材料')
+  assert.equal(connectionStage(connection,false,0),'等待连接')
+  assert.equal(connectionStage(connection,true,0),'已配对，可搜索材料')
   assert.equal(connectionStage(connection,true,100000),'授权已过期')
 })

@@ -9,7 +9,7 @@ const destinations = ['/', '/evidence', '/jd', '/resume']
 export function HelpPage() {
   const [animationOpen,setAnimationOpen] = useState(false)
   return <section className="panel help-page">
-    <header className="panel-head"><h2>准备一份有依据的申请</h2><p>第一次从一个岗位、一条经历和几份相关材料开始。随时从顶部“使用帮助”回到这里。</p></header>
+    <header className="panel-head"><h2>使用帮助</h2></header>
       <DemoQuickStart />
     <div className="help-steps">{ONBOARDING_STEPS.map((step,index) => <article key={step.id}>
       <span className="help-step-number">{index+1}</span><div><h3>{step.title}</h3><p>{step.original}</p><p className="help-completion">完成标志：{step.completion}</p>

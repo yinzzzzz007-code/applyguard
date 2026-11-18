@@ -99,7 +99,7 @@ function ReelPlayer({home=false}:{home?:boolean}) {
     {reduced && <p className="reel-motion-note">已遵循系统的减少动态效果设置，可点击阶段或拖动进度查看。</p>}
     {soundError && <p className="reel-motion-note" role="status">{soundError}</p>}
     {!home&&<div className="onboarding-next"><p>第一次只准备一个岗位，从自己的简历开始。</p><Link to="/" className="btn primary">开始准备我的申请<Icon name="arrow" /></Link></div>}
-    <details className="reel-sources"><summary><Icon name="file" />查看完整操作说明<Icon name="down" /></summary><div>{projects.map((stage: OnboardingStep) => <article key={stage.id}><h3>{stage.title}</h3><p>{stage.original}</p><p><strong>为什么：</strong>{stage.why}</p><p><strong>完成标志：</strong>{stage.completion}</p></article>)}<p className="reel-motion-note">首次使用不需要先安装其他工具或连接 Agent，先用自己的简历和相关材料完成一次申请准备。</p></div></details>
+    <details className="reel-sources"><summary><Icon name="file" />查看完整操作说明<Icon name="down" /></summary><div>{projects.map((stage: OnboardingStep) => <article key={stage.id}><h3>{stage.title}</h3><p>{stage.original}</p><p><strong>为什么：</strong>{stage.why}</p><p><strong>完成标志：</strong>{stage.completion}</p></article>)}</div></details>
   </div>
 }
 

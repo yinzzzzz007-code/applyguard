@@ -149,16 +149,14 @@ export function ResumeImportPage() {
       <DemoQuickStart />
       <div className="import-layout" id="resume-import">
       <div className="import-card">
-      <div className="surface-heading"><h3>导入你的简历</h3><span className="quiet-label">PDF 文档</span></div>
-      <p className="muted">识别基本信息与经历，写入前由你核对。</p>
+      <div className="surface-heading"><h3>导入你的简历</h3></div>
       <label className="field-label" htmlFor="resume-parse-mode">识别方式</label>
       <select id="resume-parse-mode" value={parseMode} disabled={status === 'loading' || saving}
         onChange={(event) => { setParseMode(event.target.value as ResumeParseMode); setParsed(null); setStatus('idle') }}>
-        <option value="offline">本地规则（默认，不调用模型）</option>
-        <option value="offline_ocr">本地 OCR（图片或扫描件）</option>
-        <option value="dynamic">模型抽取（发送简历正文，可能产生费用）</option>
+        <option value="offline">本地规则</option>
+        <option value="offline_ocr">本地 OCR</option>
+        <option value="dynamic">服务端抽取</option>
       </select>
-      <p className="mode-note">{parseMode === 'offline' ? '本地处理，无需调用模型。支持可复制文字的 PDF。' : parseMode === 'offline_ocr' ? '在本机逐页识别，最多 5 页，需先安装本地 OCR；可能耗时较长，结果须逐项核对。' : '正文和文件名将发送给后端配置的模型服务，可能产生费用；请先脱敏。'}</p>
       <label
         className={dragOver ? 'resume-dropzone is-over' : 'resume-dropzone'}
         aria-busy={status === 'loading'}
@@ -182,7 +180,6 @@ export function ResumeImportPage() {
           accept="application/pdf,.pdf"
           className="import-file-input"
           aria-label="选择 PDF 简历"
-          aria-describedby="upload-requirements"
           disabled={status === 'loading' || saving}
           onChange={(event) => {
             const next = event.target.files?.[0]
@@ -195,9 +192,7 @@ export function ResumeImportPage() {
         <span className="upload-document"><Icon name="file" /><span className="document-format">PDF</span></span>
         <strong>{file ? file.name : '把简历拖到这里'}</strong>
         <span className="upload-choice">或 <span>选择文件</span></span>
-        <span className="muted" id="upload-requirements">单个 PDF · 最大 5 MB · 图片或扫描件请选择本地 OCR</span>
       </label>
-      <div className="privacy-line"><Icon name="lock" /><span>只用于整理本次申请，不会提交到招聘网站。</span></div>
 
       {status === 'loading' && <LoadingState label="正在识别简历…" />}
       {status === 'error' && (
@@ -230,7 +225,6 @@ export function ResumeImportPage() {
               <ImportFields row={preview.next.intention} previous={preview.previous?.intention} />
               <ImportFields row={preview.next.extras} previous={preview.previous?.extras} />
             </details>
-            <p className="muted">展开每条经历核对字段。已有关联会随同一经历保留。旧条目默认保留，可勾选移除。</p>
             {resumeSections.map(section => <details key={section} className="sample-data-note">
               <summary>{sectionLabels[section]}（本次识别 {preview.next[section].length} 条）</summary>
               {preview.next[section].map((row, index) => {
@@ -279,16 +273,15 @@ export function ResumeImportPage() {
       </div>
       </div>
       <aside className="import-context">
-        <div className="context-title"><h3>好表达，始于有依据。</h3><p>从原始材料到最终陈述，每一步都能回头查看。</p></div>
+        <div className="context-title"><h3>整理经历，核对材料</h3></div>
         <ol className="import-journey">
-          <li><Icon name="folder" /><div><strong>把经历整理好</strong><p>集中保存教育、项目和实习，建立自己的经历库。</p></div></li>
-          <li><Icon name="spark" /><div><strong>让表达更贴合岗位</strong><p>检索相关经历，生成可对照原文的润色建议。</p></div></li>
-          <li><Icon name="shield" /><div><strong>逐项核对，再由你确认</strong><p>检查职责、技术、数字与时间，保留版本和修改记录。</p></div></li>
+          <li><Icon name="folder" /><div><strong>整理经历</strong></div></li>
+          <li><Icon name="file" /><div><strong>匹配岗位</strong></div></li>
+          <li><Icon name="shield" /><div><strong>核对确认</strong></div></li>
         </ol>
-        <div className="context-footnote"><span className="mini-evidence-mark"><Icon name="layers" /></span><p>表达可以变得更好，<br /><strong>事实始终需要支持。</strong></p></div>
       </aside>
       </div>
-      <div className="import-bottom"><span>已有经历记录？可以直接继续编辑。</span><button className="text-action" type="button" onClick={() => navigate('/vault')}>打开经历库 <Icon name="arrow" /></button></div>
+      <div className="import-bottom"><button className="text-action" type="button" onClick={() => navigate('/vault')}>打开经历库 <Icon name="arrow" /></button></div>
     </section>
   )
 }

@@ -18,7 +18,7 @@ const SCENARIOS: {id:DemoScenario;label:string}[] = [
 ]
 
 export function AppShell({children}:{children:React.ReactNode}) {
-  const {scenario,setScenario,setStep,dataSourceLabel,workflow,restoredAt,reviewStorageError,reviewDrafts,resumeForm} = useDemo()
+  const {scenario,setScenario,setStep,workflow,restoredAt,reviewStorageError,reviewDrafts,resumeForm} = useDemo()
   const location = useLocation()
   const navigate = useNavigate()
   const drawer = useRef<HTMLDetailsElement>(null)
@@ -26,7 +26,6 @@ export function AppShell({children}:{children:React.ReactNode}) {
     try { return sessionStorage.getItem(RESTORE_NOTICE_KEY) === restoredAt } catch { return false }
   })
   const [theme, setTheme] = useState<ThemeMode>(() => readStoredTheme())
-  const fromPath = stepFromPath(location.pathname)
   const title = location.pathname === '/help' ? '使用帮助' : NAV_GROUPS.flatMap(group => group.items).find(item => item.path === location.pathname)?.label ?? '申请工作台'
   useEffect(() => {
     applyTheme(theme)
@@ -47,7 +46,7 @@ export function AppShell({children}:{children:React.ReactNode}) {
 
   function navigation() {
     return <>
-      <div className="workspace-scope"><span className="scope-mark">个</span><div><strong>个人工作台</strong><small>本地申请空间</small></div></div>
+      <div className="workspace-scope"><span className="scope-mark">个</span><div><strong>个人工作台</strong></div></div>
       {NAV_GROUPS.map(group => <nav className="workspace-nav grouped-nav" key={group.label} aria-label={group.label}>
         <p className="nav-group-label">{group.label}</p>
         {group.items.map(item => <NavLink key={item.path} end={item.path === '/'} to={item.path} className={({isActive}) => `workspace-nav-item${isActive ? ' is-current' : ''}`}>
@@ -61,11 +60,10 @@ export function AppShell({children}:{children:React.ReactNode}) {
     <aside className="workspace-sidebar">
       <NavLink to="/" className="workspace-brand" aria-label="ApplyGuard 申请护栏首页">
         <Icon name="brand" />
-        <span>ApplyGuard<small>申请护栏</small></span>
+        <span>ApplyGuard</span>
       </NavLink>
       {navigation()}
-      <div className="sidebar-note"><Icon name="shield" /><div><strong>每一条陈述，都有来处</strong><p>原始材料 · 事实核验 · 人工确认</p></div></div>
-      <div className="sidebar-bottom"><span className="scope-mark small">我</span><div><strong>我的申请空间</strong><small>课程实验版</small></div><Icon name="lock" /></div>
+      <div className="sidebar-bottom"><span className="scope-mark small">我</span><div><strong>我的申请空间</strong></div><Icon name="lock" /></div>
     </aside>
     <div className="workspace-body">
       <header className="workspace-topbar">
@@ -85,7 +83,7 @@ export function AppShell({children}:{children:React.ReactNode}) {
           <div className="scenario-popover"><label htmlFor="demo-scenario">演示场景</label><select id="demo-scenario" value={scenario} onChange={event => {
             if ((workflow || resumeForm?.dirty || Object.keys(reviewDrafts).length) && !window.confirm('切换演示场景会清空当前工作流与未保存编辑。已保存的经历和材料不受影响。是否继续？')) return
             setScenario(event.target.value as DemoScenario);event.currentTarget.closest('details')?.removeAttribute('open');navigate(event.target.value === 'live' ? '/' : '/jd')
-          }}>{SCENARIOS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}</select><p>预录场景展示本地样例；在线模式由后端返回结果。</p></div>
+          }}>{SCENARIOS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}</select></div>
         </details>
         <details className="mobile-navigation" ref={drawer} onKeyDown={event => {
           if(event.key === 'Escape' && drawer.current) {drawer.current.open=false;drawer.current.querySelector('summary')?.focus()}
@@ -93,11 +91,9 @@ export function AppShell({children}:{children:React.ReactNode}) {
       </header>
       <main id="workspace-main" className="workspace-main" tabIndex={-1}>
         {workflow?._prerecorded && <p className="workspace-notice">{zhText(workflow._prerecorded.notice)}</p>}
-        {fromPath && workflow?.mock_notice && !workflow._prerecorded && <details className="sample-data-note"><summary>演示与处理说明</summary><p>当前为本地实验版，网申使用模拟表单，最终提交由本人完成。</p><p>{zhText(workflow.mock_notice)}</p></details>}
         {restoredAt && workflow && !restoreDismissed && (
           <p className="workspace-notice" role="status">
-            浏览器刚恢复了本机上次未完成的申请进度（{new Date(restoredAt).toLocaleString('zh-CN')}）。
-            这不是新的审核结果；材料与核验状态请再确认一次。
+            已恢复本机上次进度（{new Date(restoredAt).toLocaleString('zh-CN')}）。
             {' '}<NavLink to="/resume">打开简历审查</NavLink>
             {' · '}
             <button
@@ -116,7 +112,7 @@ export function AppShell({children}:{children:React.ReactNode}) {
         {!!Object.keys(reviewDrafts).length && location.pathname !== '/resume' && <p className="workspace-notice">审核页有 {Object.keys(reviewDrafts).length} 处暂存输入。<NavLink to="/resume">返回保存修改</NavLink></p>}
         <PageMotion>{children}</PageMotion>
       </main>
-      <footer className="workspace-footer"><span>ApplyGuard · 让表达有据可依</span><details><summary>数据与模型说明</summary><p>数据来源：{dataSourceLabel}。{workflow?.mock_notice ? zhText(workflow.mock_notice) : ''} 岗位解析与 SAG 分别配置；SAG 启用时会向所配置的模型服务发送材料。</p></details></footer>
+      <footer className="workspace-footer"><span>ApplyGuard</span></footer>
     </div>
   </div>
 }

@@ -192,15 +192,6 @@ export function ClaimVerificationPage() {
 
       {workflow.requires_reverification && <p className="callout warn" role="status">请重新核验当前草稿，更新材料支持状态。</p>}
       {recheckError && <p className="danger-text" role="alert">{recheckError}</p>}
-      <details className="claim-help">
-        <summary>核验状态说明</summary>
-        <ul>
-          <li><strong>已核验</strong> · 当前表述有材料支持，仍需核对原文和归属。</li>
-          <li><strong>待复核 / 已阻断</strong> · 可以补充材料、修改陈述、保留或排除。保留后，材料核验状态仍会显示。</li>
-          <li><strong>个人资料</strong> · 按表单填写的信息使用。</li>
-        </ul>
-      </details>
-
       <div className="stack claim-cards">
         {workflow.claim_verification.map((verification, index) => {
           const id = verification.claim_id

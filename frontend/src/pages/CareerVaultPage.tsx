@@ -782,7 +782,6 @@ export function CareerVaultPage() {
             <div role="status" className={saveKind === 'ok' ? 'callout ok' : 'callout warn'}>{saveMsg}</div>
           ) : null}
 
-          <p className="resume-hint">星号表示建议优先填写，可先保存不完整草稿。网申补充信息为选填，不影响准备度。</p>
           <div className="resume-layout">
             <aside className="resume-side">
               <p className="resume-side-title">简历模块</p>
@@ -863,7 +862,6 @@ export function CareerVaultPage() {
                   />
                 </div>
                 <details className="vault-optional"><summary>网申补充信息（选填）</summary>
-                  <p className="resume-hint">仅在目标招聘表单确有需要时填写。演示请使用虚构信息；留空不影响整理经历和材料。</p>
                   <div className="resume-fields">
                     <FieldSelect label="性别" options={GENDER_OPTIONS} value={form.basic.gender} onChange={v => patchForm(p => ({...p,basic:{...p.basic,gender:v}}))} />
                     <BirthDateSelect value={form.basic.birthday} onChange={v => patchForm(p => ({...p,basic:{...p.basic,birthday:v}}))} />
@@ -941,7 +939,6 @@ export function CareerVaultPage() {
                   <i />
                   教育经历
                 </h3>
-                <p className="resume-hint">请按照从新到旧的顺序填写</p>
                 {form.education.map((edu, idx) => (
                   <div key={edu.id} className="resume-entry">
                     <div className="resume-fields">
@@ -1116,7 +1113,6 @@ export function CareerVaultPage() {
                   <i />
                   实习经历
                 </h3>
-                <p className="resume-hint">按时间从新到旧；建议用数据展现实习成果</p>
                 {form.internships.map((entry) => (
                   <ExperienceEditor
                     key={entry.id}
@@ -1171,7 +1167,6 @@ export function CareerVaultPage() {
                   <i />
                   项目经历
                 </h3>
-                <p className="resume-hint">可填写校园项目、竞赛、课程实践等</p>
                 {form.projects.map((entry) => (
                   <ExperienceEditor
                     key={entry.id}
@@ -1224,7 +1219,6 @@ export function CareerVaultPage() {
                   <i />
                   获奖 / 竞赛
                 </h3>
-                <p className="resume-hint">竞赛、比赛、奖学金、荣誉称号等，可增删条目</p>
                 {(form.awards ?? []).map((entry) => (
                   <AwardEditor
                     key={entry.id}
@@ -1288,7 +1282,7 @@ export function CareerVaultPage() {
                     label="研究兴趣"
                     wide
                     value={form.extras.researchFocus}
-                    placeholder="大模型评测、AI Infra、分布式训练…"
+                    placeholder="评测平台、分布式训练、推理服务…"
                     onChange={(v) =>
                       patchForm((p) => ({ ...p, extras: { ...p.extras, researchFocus: v } }))
                     }

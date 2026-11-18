@@ -339,8 +339,8 @@ export function AtsSimulatorPage() {
             {offlineRules
               ? '岗位要求由规则提取，请与原文核对。'
               : jdFallbackReason
-                ? '模型解析未通过，已用规则结果继续。'
-                : '模型未启用，已用规则结果继续。'}
+                ? '服务端解析未通过，已用规则结果继续。'
+                : '服务端解析未启用，已用规则结果继续。'}
             {jdFallbackReason && !offlineRules ? ` ${zhText(jdFallbackReason)}` : ''}
           </div>
         )}

@@ -82,19 +82,19 @@ export function ReviewDraft() {
       </div>
       <aside className="review-rail">
         <details className="review-tools" open={toolsOpen} onToggle={e => setToolsOpen(e.currentTarget.open)}>
-          <summary>当前句子的建议与依据</summary>
+          <summary>当前句子</summary>
           <div className="selected-review" aria-live="polite">
             <h3>{selected ? `第 ${workflow.resume_claims.indexOf(selected)+1} 条` : '选择一句草稿'}</h3>
             {selected && <p className="selected-original">{drafts[selected.claim_id] ?? selected.text}</p>}
             {proposedChange && proposal && parts && selected ? <div className="review-proposal">
               <h4>建议预览</h4><p>{parts[0]}<mark>{parts[1] || '〔此处有删除〕'}</mark>{parts[2]}</p>
-              {row && needsAttention(row) && <p className="warn-text">建议包含需要复核的变化。请对照原件；采用后也不会自动获得材料支持。</p>}
+              {row && needsAttention(row) && <p className="warn-text">建议包含需要复核的变化。</p>}
               {row?.proposal_notice && <p className="warn-text">{row.proposal_notice}</p>}
               {row?.preservation?.lost_supported_details.map((detail,i) => <p key={i} className="warn-text">请核对：{detail}</p>)}
               <div className="btn-row"><button type="button" className="btn primary" disabled={editing} onClick={() => commit(selected.claim_id,proposal,'accept')}>采用此建议</button>
                 <button type="button" className="btn secondary" disabled={editing} onClick={() => commit(selected.claim_id,selected.text,'original')}>保留当前句</button></div>
-            </div> : <p className="muted">尚无待采用的改写。可生成建议，正文会保持不变。</p>}
-            <details><summary>材料检查记录{row?.final_text !== selected?.text ? '（历史记录）' : ''}</summary>{row ? <AtomicEvidence result={row} /> : <p>尚无此句的检查记录。请补充材料后核验。</p>}</details>
+            </div> : null}
+            <details><summary>材料检查记录{row?.final_text !== selected?.text ? '（历史记录）' : ''}</summary>{row ? <AtomicEvidence result={row} /> : <p>尚无此句的检查记录。</p>}</details>
           </div>
           <SAGPolishPanel />
         </details>

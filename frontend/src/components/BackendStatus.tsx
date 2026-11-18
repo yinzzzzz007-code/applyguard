@@ -29,7 +29,7 @@ export function BackendStatus({ live }: { live: boolean }) {
     }
   }, [live])
   const status = live ? state : 'demo'
-  return <span className="backend-status" role="status" title={live ? '每 15 秒检查本地服务；连接正常不代表模型服务可用。' : '使用内置样例，不依赖后端或模型服务。'}>
+  return <span className="backend-status" role="status" title={live ? '每 15 秒检查本地服务。' : '使用内置样例。'}>
     <span className={`connection-dot is-${status}`} aria-hidden="true" />
     {{ checking: '正在检查连接', online: '本地服务已连接', offline: '本地服务未连接', demo: '预录 / 模拟' }[status]}
   </span>

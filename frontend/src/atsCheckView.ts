@@ -268,7 +268,7 @@ export function buildCheckNotices(workflow: WorkflowResponse): {
       kind: 'offline',
       key: 'offline-merged',
       count: offlineCount,
-      message: offlineMessage || '当前为全离线模式。已按现有资料继续，模型核验未执行。',
+      message: offlineMessage || '当前为全离线模式。已按现有资料继续，远程核验未执行。',
     })
   }
 

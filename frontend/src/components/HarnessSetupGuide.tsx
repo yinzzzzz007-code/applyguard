@@ -5,8 +5,8 @@ export function HarnessSetupGuide({setup, loading, error, onRefresh}:{
   setup:HarnessSetup|null; loading:boolean; error:string; onRefresh:()=>void
 }) {
   return <div className="harness-setup">
-    <div className="harness-heading"><div><span className="harness-eyebrow">本机 Agent · MCP 连接</span>
-      <h3>连接 DeepSeek Harness</h3><p>准备环境 → 授权材料 → 在 Harness 发起检索。找到的原文会回到这里，等你核对。</p></div>
+    <div className="harness-heading"><div>
+      <h3>连接 DeepSeek Harness</h3></div>
       <button className="btn secondary" disabled={loading} onClick={onRefresh}>{loading?'正在检测…':'重新检测环境'}</button>
     </div>
     <ol className="harness-steps">
@@ -29,7 +29,7 @@ export function HarnessSetupGuide({setup, loading, error, onRefresh}:{
           {setup&&<pre>{installConnectorCommand(setup)}</pre>}</li>
         <li><strong>Harness 需要 MCP stdio 客户端。</strong>下面的快捷启动会加载 <code>@deepseek-ai/dsh-mcp-client</code>。
           若终端报告找不到该插件，请更新 Harness；手动配置方式见 <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/mcp/mcp-client/README.md" target="_blank" rel="noreferrer">官方 MCP 说明</a>。</li>
-        <li><strong>准备模型 API Key。</strong>快捷检索使用 {setup?.model||'配置的文本模型'}，连接令牌与模型 Key 是两个不同值，运行时分别隐藏输入。已有的 Harness 聊天不会自动接入本次授权。</li>
+        <li><strong>准备服务密钥。</strong>连接令牌与服务密钥是两个不同值，运行时分别隐藏输入。</li>
       </ol>
       {setup&&<details><summary>本机检测到的路径</summary><dl><dt>Python</dt><dd>{setup.python}</dd><dt>连接器</dt><dd>{setup.connector_path}</dd><dt>Harness</dt><dd>{setup.harness_command||'未检测到'}</dd></dl></details>}
     </details>

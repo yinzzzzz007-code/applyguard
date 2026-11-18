@@ -169,19 +169,16 @@ export function JobRadarPage() {
           }} />
         </div>
       </form>
-      <p className="muted">同一来源岗位再次导入会去重或建立新版本。需要完整 JD；雷达的列表 CSV 不含完整详情，不能直接用于申请。</p>
     </details>
 
     <details className="radar-import">
-      <summary>连接本机 AI Career Radar</summary>
-      <p>先独立启动 AI Career Radar（默认本机 8787 端口），再读取岗位。此处只读它已保存的数据，刷新官网数据请在雷达中操作。</p>
+      <summary>连接本机 Career Radar</summary>
       <div className="btn-row">
         <input aria-label="搜索雷达岗位" placeholder="公司、岗位或技术关键词" value={radarQuery} onChange={(e) => setRadarQuery(e.target.value)} />
         <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(() => browseRadar())}>读取雷达岗位</button>
       </div>
       {radar && <>
-        <p className="muted">{radar.notice}</p>
-        {!radar.items.length && <p>当前筛选没有岗位；这不代表市场上没有岗位。</p>}
+        {!radar.items.length && <p>当前筛选没有岗位。</p>}
         <ul className="radar-upstream">{radar.items.map((job) => <li key={job.id}>
           <label><input type="checkbox" checked={radarIds.includes(job.id)} disabled={busy} onChange={(e) => setRadarIds(e.target.checked ? [...radarIds, job.id] : radarIds.filter((id) => id !== job.id))} />
             <span><strong>{job.title}</strong> · {job.company} · {job.location || '地点未知'}<small>上次来源观察：{job.last_seen_at || '未知'}</small></span>
@@ -240,10 +237,10 @@ export function JobRadarPage() {
           <span className="radar-job-foot"><span>{job.factors.slice(0,3).map(f => f.label).join(' / ') || '查看岗位详情'}</span><span>v{job.version}<Icon name="chevron" /></span></span>
         </button>)}
       </nav>
-      {library && !filtered.length && <div className="radar-next-guide"><h3>从岗位到申请，一步一步来。</h3><ol>
-        <li><strong>收藏目标岗位</strong><p>保留完整原文和来源，之后随时回看。</p></li>
-        <li><strong>先看证据缺口</strong><p>对照自己的经历，找到需要补充的材料。</p></li>
-        <li><strong>准备有依据的表达</strong><p>整理草稿，润色后逐项核验，再由你确认。</p></li>
+      {library && !filtered.length && <div className="radar-next-guide"><h3>从岗位到申请</h3><ol>
+        <li><strong>收藏目标岗位</strong></li>
+        <li><strong>查看证据缺口</strong></li>
+        <li><strong>准备申请表达</strong></li>
       </ol><Link to="/vault" className="text-action">整理我的经历<Icon name="arrow" /></Link></div>}
       {selected && <article className="radar-detail">
         <button type="button" className="radar-mobile-back text-action" onClick={() => {setDetailOpen(false);requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.radar-job.selected')?.focus())}}><Icon name="back" />返回岗位列表</button>
@@ -305,15 +302,14 @@ export function JobRadarPage() {
         <div id="job-detail-panel" role="tabpanel" aria-labelledby={'job-tab-'+detailTab} tabIndex={0}>
         {detailTab === 'description' && <div><h4>岗位说明</h4><pre className="radar-jd">{selected.description}</pre>
         <details className="radar-import"><summary>技术与能力标签（{selected.factors.length}）</summary>
-          <p className="muted">按原文词组命中，含优先项或否定表达；标签不判断是否为硬性条件。</p>
           {selected.factors.map((f) => <div key={f.slug} className="radar-factor"><strong>{f.label} · {f.category}</strong>{f.evidence.map((ev, i) => <blockquote key={i}>{ev.text}</blockquote>)}</div>)}
-          {!selected.factors.length && <p>规则暂无命中，请以原文为准。</p>}
+          {!selected.factors.length && <p>暂无命中标签。</p>}
         </details>
         </div>}
-        {detailTab === 'versions' && <div className="radar-versions"><h4>来源版本记录</h4>{versions && versionsFor === selected.id ? versions.map(v => <details key={v.version}><summary>v{v.version} · {new Date(v.imported_at).toLocaleString()} · {JOB_STATUS[v.job.status]}</summary><pre className="radar-jd">{v.job.description}</pre></details>) : <div className="radar-inline-empty"><Icon name="history" /><p>对照每次导入和修改，确认当前使用的原文。</p><button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(async () => {const data = await jobsRequest<{items:NonNullable<typeof versions>}>('/'+selected.id+'/versions');setVersions(data.items);setVersionsFor(selected.id)})}>读取版本记录</button></div>}</div>}
-        {detailTab === 'analysis' && !freshAnalysis && <div className="radar-inline-empty"><Icon name="shield" /><h4>先看看，还缺哪些证据。</h4><p>按当前经历进行规则预检，不调用付费模型。预检不替代陈述核验。</p><button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(analyze)}>开始证据预检</button></div>}
+        {detailTab === 'versions' && <div className="radar-versions"><h4>来源版本记录</h4>{versions && versionsFor === selected.id ? versions.map(v => <details key={v.version}><summary>v{v.version} · {new Date(v.imported_at).toLocaleString()} · {JOB_STATUS[v.job.status]}</summary><pre className="radar-jd">{v.job.description}</pre></details>) : <div className="radar-inline-empty"><Icon name="history" /><button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(async () => {const data = await jobsRequest<{items:NonNullable<typeof versions>}>('/'+selected.id+'/versions');setVersions(data.items);setVersionsFor(selected.id)})}>读取版本记录</button></div>}</div>}
+        {detailTab === 'analysis' && !freshAnalysis && <div className="radar-inline-empty"><Icon name="shield" /><h4>证据预检</h4><button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(analyze)}>开始证据预检</button></div>}
         {detailTab === 'analysis' && freshAnalysis && analysis && <section className="radar-analysis" aria-label="证据缺口结果">
-          <div className="coverage-heading"><div><span>有已核验证据支持</span><strong>{analysis.supported}<small> / {analysis.total} 条要求</small></strong></div><Link to="/evidence" className="btn secondary">补充证据<Icon name="arrow" /></Link></div><p className="muted">{analysis.notice}</p>
+          <div className="coverage-heading"><div><span>有已核验证据支持</span><strong>{analysis.supported}<small> / {analysis.total} 条要求</small></strong></div><Link to="/evidence" className="btn secondary">补充证据<Icon name="arrow" /></Link></div>
           {!analysis.has_resume && <p className="callout warn">尚未提供有效经历，请先 <Link to="/">导入简历</Link> 或完善经历库。这里不会使用演示种子替代你的经历。</p>}
           {!analysis.total && <p className="callout warn">{analysis.excluded ? '任职要求与加分项中没有可匹配条目。职位描述不参与证据匹配。' : '规则未识别出要求，请人工检查完整 JD；这不表示没有要求。'}</p>}
           <div className="scope-switch" aria-label="预检结果筛选">{[['all','全部'],['missing','待补证'],['supported','已支持']].map(([id,label]) => <button type="button" key={id} aria-pressed={coverageFilter === id} onClick={() => setCoverageFilter(id)}>{label}</button>)}</div>
@@ -332,7 +328,6 @@ export function JobRadarPage() {
     </div>
     {library && <div className="radar-secondary">      <details className="radar-import">
         <summary>收藏岗位的高频需求（{library.stats.analyzed_jobs} 个岗位）</summary>
-        <p className="muted">{library.notice}</p>
         <div className="radar-tags">{library.stats.factors.map((f) => <span className="badge muted" key={f.slug}>{f.label} · {f.jobs} 个岗位</span>)}</div>
         {!library.stats.factors.length && <p>暂无可统计的标签。</p>}
       </details></div>}
