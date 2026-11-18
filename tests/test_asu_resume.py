@@ -3,10 +3,13 @@ import copy,hashlib,json,tempfile,unittest
 from pathlib import Path
 from unittest.mock import patch
 from backend.services import asu_resume as a
+from backend.services.atomic_verifier import AtomicVerifier
+from backend.services.evidence_parsers import parse_file
 from backend.services.grounded_workflow import GroundingService
 from backend.services.sag_grounding import GroundingUnavailable
 from tests.test_grounding import AllSources,experience,CLAIM,TEXT
 from tests.test_grounding_v2 import Model
+from tests.test_resume_abnormal import pdf
 
 class ASuReuseTests(unittest.TestCase):
     def test_unsolicited_translation_is_not_applied_even_if_judge_supports_it(self):
@@ -39,6 +42,32 @@ class ASuReuseTests(unittest.TestCase):
         self.assertIn((a.DIRECTORY/a.LEDGER).read_bytes().decode('utf8'),prompt)
         self.assertEqual(report['polish_source']['commit'],a.COMMIT)
         self.assertEqual(report['polish_source']['role'],'rewrite_proposal_only')
+
+    def test_readme_guidance_uses_linked_text_and_jd_for_markdown_and_pdf(self):
+        jd = 'Backend developer: Python interface testing and automation.'
+        contexts = {CLAIM['claim_id']: {'experience_id': 'exp_atlas', 'project': 'Atlas'}}
+        with tempfile.TemporaryDirectory() as folder:
+            directory = Path(folder)
+            markdown = directory / 'README.md'
+            markdown.write_text(TEXT, encoding='utf8')
+            pdf_path = directory / 'project-overview.pdf'
+            pdf_path.write_bytes(pdf(TEXT))
+            for source_file in (markdown, pdf_path):
+                with self.subTest(file=source_file.name):
+                    parsed = parse_file(source_file, source_file.name, directory)
+                    self.assertEqual(parsed.state, 'NEEDS_REVIEW')
+                    source = {'source_id': 'src_atlas', 'text': '\n'.join(span.raw_text for span in parsed.spans)}
+                    model = Model()
+                    with patch.object(model, 'complete_structured', wraps=model.complete_structured) as call:
+                        AtomicVerifier(model).polish([CLAIM], contexts, {CLAIM['claim_id']: [source]}, jd)
+                    prompt, payload, _ = call.call_args.args
+                    self.assertIn('project README or an equivalent project document', prompt)
+                    self.assertIn('supports that specific personal contribution', prompt)
+                    self.assertIn('preserve each fact\'s subject', prompt)
+                    request = json.loads(payload)
+                    self.assertEqual(request['target_job'], jd)
+                    self.assertIn(TEXT, request['items'][0]['sources'][0]['text'])
+
     def test_business_reference_is_loaded_only_when_relevant(self):
         text,info=a.proposal_policy([CLAIM],{},'Backend testing')
         self.assertNotIn(a.BUSINESS,info['resources'])

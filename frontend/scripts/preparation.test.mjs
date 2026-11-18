@@ -6,7 +6,7 @@ import {resumeCompleteness,normalizeResumeForm} from '../src/resume/formModel.ts
 test('evidence belongs to primary preparation, and every existing route appears exactly once',()=>{
  const paths=NAV_GROUPS.flatMap(group=>group.items.map(item=>item.path))
  assert.equal(new Set(paths).size,paths.length)
- assert.deepEqual(new Set(paths),new Set(['/','/vault','/evidence','/jobs','/jd','/match','/resume','/claims','/ats','/confirm','/history']))
+ assert.deepEqual(new Set(paths),new Set(['/','/vault','/evidence','/jobs','/jd','/match','/resume','/claims','/ats','/confirm','/history','/interview']))
  assert.ok(NAV_GROUPS[0].items.some(item=>item.path==='/evidence'))
 })
 test('optional identity and demographic fields never increase core readiness',()=>{

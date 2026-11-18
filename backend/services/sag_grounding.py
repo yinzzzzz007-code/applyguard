@@ -3,11 +3,12 @@
 """Local, version-scoped retrieval using the real optional zleap-sag engine."""
 from __future__ import annotations
 
-from backend.services.model_client import DEFAULT_TEXT_MODEL
+from backend.services.model_client import DEFAULT_TEXT_MODEL, uses_deepseek_api
 
 import asyncio
 import hashlib
 import json
+import logging
 import os
 import threading
 from pathlib import Path
@@ -16,6 +17,22 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 _LOCKS: dict[str, threading.Lock] = {}
 _LOCK = threading.Lock()
+_DEFAULT_API_URL = 'https://api.chatanywhere.tech/v1'
+_STAGE_ERRORS = {
+    'index': 'SAG 写入材料索引失败；请重试，或检查本机目录权限和剩余空间。',
+    'extract': 'SAG 从材料提取结构化事实失败；请重试，或检查模型服务。',
+    'search': 'SAG 检索材料失败；请重试，或检查本机索引与模型服务。',
+}
+
+
+def _local_embedding_dir() -> Path:
+    return Path(os.getenv('APPLYGUARD_LOCAL_EMBEDDING_DIR',
+                          str(ROOT / 'data/local/models/multilingual-minilm'))).resolve()
+
+
+def _retrieval_strategy(base_url: str) -> str:
+    default = 'vector' if uses_deepseek_api(base_url) else 'full_expand'
+    return os.getenv('APPLYGUARD_GROUNDING_STRATEGY', default)
 
 
 class GroundingUnavailable(RuntimeError):
@@ -60,6 +77,11 @@ class SAGRetriever:
         directory = Path(os.getenv('APPLYGUARD_GROUNDING_DIR', str(ROOT / 'data/local/grounding')))
         settings = [os.getenv(name,'') for name in ['APPLYGUARD_AI_MODEL','APPLYGUARD_AI_BASE_URL',
             'APPLYGUARD_EMBEDDING_MODEL','APPLYGUARD_EMBEDDING_DIMENSIONS']]
+        base_url = os.getenv('APPLYGUARD_AI_BASE_URL', _DEFAULT_API_URL)
+        if uses_deepseek_api(base_url):
+            settings.extend(['json_object', 'local_minilm_384_v1', str(_local_embedding_dir())])
+        if _retrieval_strategy(base_url) == 'vector':
+            settings.append('document_vectors_only')
         directory = directory / fingerprint(candidate_id)[:20] / digest / fingerprint(['0.15.0','minimal',os.getenv('APPLYGUARD_AI_MODEL', DEFAULT_TEXT_MODEL),settings])[:20]
         with _LOCK:
             lock = _LOCKS.setdefault(str(directory.resolve()), threading.Lock())
@@ -69,9 +91,13 @@ class SAGRetriever:
                 return asyncio.run(self._retrieve(queries, sources, candidate_id, directory))
             except GroundingUnavailable:
                 raise
-            except Exception:
-                # Provider exceptions can contain request/configuration data.
-                raise GroundingUnavailable('SAG索引或检索失败；请检查本机依赖、模型配置与网络。') from None
+            except Exception as exc:
+                stage = getattr(exc, 'stage', None)
+                message = _STAGE_ERRORS.get(stage, 'SAG核验准备失败；请检查本机依赖、模型配置与网络。')
+                logging.getLogger(__name__).warning('SAG failed: stage=%s kind=%s',
+                    stage if stage in _STAGE_ERRORS else 'unknown', type(exc).__name__)
+                # Provider exception messages can include credentials or document text.
+                raise GroundingUnavailable(message) from None
 
     async def _retrieve(self, queries: list[dict], sources: list[dict], candidate: str, directory: Path) -> dict:
         try:
@@ -88,7 +114,8 @@ class SAGRetriever:
         key = os.getenv('APPLYGUARD_AI_API_KEY', '')
         if not key:
             raise GroundingUnavailable('未配置模型密钥，SAG无法建立事件与实体索引。')
-        strategy = os.getenv('APPLYGUARD_GROUNDING_STRATEGY', 'full_expand')
+        base_url = os.getenv('APPLYGUARD_AI_BASE_URL', _DEFAULT_API_URL)
+        strategy = _retrieval_strategy(base_url)
         if strategy not in {'vector', 'full_expand'}:
             raise GroundingUnavailable('检索策略必须为vector或full_expand。')
         directory.mkdir(parents=True, exist_ok=True)
@@ -96,14 +123,24 @@ class SAGRetriever:
         if not 1 <= dimensions <= 8192:
             raise GroundingUnavailable('向量维度配置无效。')
         timeout = float(os.getenv('APPLYGUARD_GROUNDING_TIMEOUT', '110'))
+        output_mode = 'json_schema'
+        if uses_deepseek_api(base_url):
+            directory_path = _local_embedding_dir()
+            if not all((directory_path / name).is_file() for name in ('model_quantized.onnx', 'tokenizer.json')):
+                raise GroundingUnavailable('DeepSeek 检索需要本机 MiniLM 模型；请检查 APPLYGUARD_LOCAL_EMBEDDING_DIR。')
+            from backend.services.local_sag_embedding import local_embedding
+            embedding = local_embedding(directory_path)
+            output_mode = 'json_object'
+        else:
+            embedding = EmbeddingConfig(model=os.getenv('APPLYGUARD_EMBEDDING_MODEL', 'text-embedding-3-small'),
+                schema_dimensions=dimensions, timeout=timeout, max_retries=0)
         config = EngineConfig(
             storage_mode='normal', data_dir=str(directory / 'index'), language='en', log_level='ERROR',
             llm=LLMConfig(api_key=key, model=os.getenv('APPLYGUARD_AI_MODEL', DEFAULT_TEXT_MODEL),
-                base_url=os.getenv('APPLYGUARD_AI_BASE_URL', 'https://api.chatanywhere.tech/v1'),
+                base_url=base_url,
                 temperature=0, max_tokens=4000, timeout=timeout, max_retries=0,
-                structured_output_mode='json_schema'),
-            embedding=EmbeddingConfig(model=os.getenv('APPLYGUARD_EMBEDDING_MODEL', 'text-embedding-3-small'),
-                schema_dimensions=dimensions, timeout=timeout, max_retries=0),
+                structured_output_mode=output_mode),
+            embedding=embedding,
             runtime_limits=RuntimeLimits(llm_concurrency=2, embedding_concurrency=2),
         )
         by_id = {source['source_id']: source for source in sources}
@@ -122,9 +159,10 @@ class SAGRetriever:
                         source_type='article', source_id=source['source_id'], title=source['title'],
                         creator_id=candidate, metadata={'experience_id':source['experience_id'],
                             'evidence_id':source['evidence_id'], 'sha256':source['sha256']}))
-                    await engine.extract(reference, ExtractionOptions(contract='minimal', max_retries=1,
-                        limits=ExtractionLimits(max_events_per_chunk=5, max_entities_per_event=8),
-                        execution=ExtractionExecutionOptions(max_concurrency=2, request_rejection_retries=0)))
+                    if strategy == 'full_expand':
+                        await engine.extract(reference, ExtractionOptions(contract='minimal', max_retries=1,
+                            limits=ExtractionLimits(max_events_per_chunk=5, max_entities_per_event=8),
+                            execution=ExtractionExecutionOptions(max_concurrency=2, request_rejection_retries=0)))
                 temporary = marker.with_suffix('.tmp')
                 temporary.write_text(json.dumps({'snapshot':evidence_snapshot(sources)}), encoding='utf-8')
                 temporary.replace(marker)
@@ -155,7 +193,7 @@ class SAGRetriever:
                         result = await engine.search(SearchRequest(query=search_text,
                         scope=SearchScope(data_source_ids=(source_group,), source_ids=tuple(sorted(allowed))),
                         options=SearchOptions(strategy=strategy, top_k=5, return_type='chunk', guard=False,
-                            structured_output_mode='json_schema',
+                            structured_output_mode=output_mode,
                             query=QueryProcessingOptions(rewrite=False,
                                 entity_extraction='llm' if strategy == 'full_expand' else 'disabled'),
                             graph=GraphSearchOptions(enabled=strategy == 'full_expand',

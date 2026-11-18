@@ -433,7 +433,7 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             return
 
         # Serve only known client routes; unknown paths retain the JSON 404 API contract.
-        spa_routes = {"/vault", "/evidence", "/jobs", "/jd", "/match", "/resume", "/claims", "/ats", "/confirm", "/history", "/help"}
+        spa_routes = {"/vault", "/evidence", "/jobs", "/jd", "/match", "/resume", "/claims", "/ats", "/confirm", "/history", "/interview", "/help"}
         if path_only in spa_routes:
             self._send_spa_index()
             return
@@ -502,7 +502,7 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             return
         if self.path == "/api/v1/resume/parse":
             max_bytes = 8_000_000
-        elif self.path == "/api/v1/resume/draft":
+        elif self.path in {"/api/v1/resume/draft", "/api/v1/interview/generate"}:
             max_bytes = 400_000
         elif self.path == "/api/v1/workflow/draft":
             max_bytes = 800_000
@@ -529,6 +529,9 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
                 raise ValueError("request body must be a JSON object")
             if self.path == "/api/v1/resume/parse":
                 response = parse_resume_pdf(request.get("pdf_base64", ""), request.get("filename", "resume.pdf"), parse_mode=request.get("parse_mode", "offline"))
+            elif self.path == "/api/v1/interview/generate":
+                from backend.services.interview_guide import generate_interview
+                response = generate_interview(request)
             elif self.path == "/api/v1/resume/draft":
                 response = save_resume_draft(request)
             elif self.path == "/api/v1/workflow/draft":
@@ -588,6 +591,20 @@ def create_server(host: str = "127.0.0.1", port: int = 8000) -> ThreadingHTTPSer
     return ThreadingHTTPServer((host, port), ApplyGuardHandler)
 
 
+def _configure_runtime_temp() -> None:
+    if os.name != "nt":
+        return
+    directory = ROOT / "output" / "sag-tmp"
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        logging.warning("Could not create the ApplyGuard runtime temp directory")
+        return
+    # LanceDB's native code reads the Windows temp directory from the process environment.
+    os.environ["TEMP"] = os.environ["TMP"] = str(directory)
+    logging.info("ApplyGuard runtime temp directory configured")
+
+
 def main() -> None:
     host = os.getenv("APPLYGUARD_HOST", "127.0.0.1")
     port = int(os.getenv("APPLYGUARD_PORT", "8000"))
@@ -597,6 +614,7 @@ def main() -> None:
         stream=sys.stdout,
         format="%(asctime)s %(levelname)s %(message)s",
     )
+    _configure_runtime_temp()
     server = create_server(host, port)
     logging.info("ApplyGuard foundation listening at http://%s:%s", host, port)
     logging.info(

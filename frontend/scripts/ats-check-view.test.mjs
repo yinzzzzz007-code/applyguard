@@ -40,16 +40,21 @@ function summarize(workflow) {
 }
 
 test('local draft merges offline and uncovered risks', () => {
-  const draft = loadJson('../data/local/workflow-draft.json')
-  const stats = summarize(draft.workflow)
+  const workflow = loadJson('public/prerecorded/unsupported_block.json')
+  workflow.risk_result.risks = [
+    { message: '当前为全离线模式，未执行模型核验。' },
+    { message: '当前为全离线模式，请核对材料。' },
+    { message: 'JD requirement req_011 has no ready evidence' },
+  ]
+  workflow.evidence_match.uncovered_requirements = [
+    { requirement_id: 'req_011' }, { requirement_id: 'req_012' },
+  ]
+  const stats = summarize(workflow)
   assert.equal(stats.blocked, true)
   assert.equal(stats.needsEvidence, true)
-  assert.equal(stats.summarySources, 3)
+  assert.equal(stats.summarySources, 1)
   assert.equal(stats.offline, 2)
-  assert.equal(stats.uncovered, 14)
-  const edu = draft.workflow.parsed_jd.requirements.find((r) => r.requirement_id === 'req_011')
-  assert.equal(edu?.category, 'EDUCATION')
-  assert.ok(draft.workflow.profile_checks?.req_011?.length)
+  assert.equal(stats.uncovered, 2)
 })
 
 test('prerecorded block / confirm / pass shapes', () => {

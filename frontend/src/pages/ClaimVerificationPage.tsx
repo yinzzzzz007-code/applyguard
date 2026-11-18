@@ -36,8 +36,8 @@ function LocalEvidencePeek({
 
   return (
     <div className="local-evidence-peek">
-      <button type="button" className="linkish" onClick={() => setOpen((v) => !v)}>
-        {open ? '收起本地原件' : '查看本地证据原件'}
+      <button type="button" className="linkish" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        {open ? '收起原件预览' : '查看原件'}
       </button>
       {' · '}
       <Link to={`/evidence?evidence_id=${evidenceId}`}>在工作区打开</Link>
@@ -130,16 +130,13 @@ export function ClaimVerificationPage() {
   }, [location.hash, workflow])
 
   const evidenceIndex = useMemo(() => {
-    const map = new Map<string, { description: string; experience_id: string }>()
+    const map = new Map<string, string>()
     vault?.experiences.forEach((exp) => {
       exp.evidence_sources.forEach((ev) => {
-        map.set(ev.evidence_id, {
-          description: ev.description,
-          experience_id: exp.experience_id,
-        })
+        map.set(ev.evidence_id, ev.description)
       })
     })
-    workflow?.evidence_sources?.forEach((ev) => map.set(ev.evidence_id, {description: ev.description, experience_id: '本机证据'}))
+    workflow?.evidence_sources?.forEach((ev) => map.set(ev.evidence_id, ev.description))
     return map
   }, [vault, workflow])
 
@@ -160,262 +157,165 @@ export function ClaimVerificationPage() {
     )
   }
 
-  const claimsById = Object.fromEntries(workflow.resume_claims.map((c) => [c.claim_id, c]))
+  const claimsById = Object.fromEntries(workflow.resume_claims.map((claim) => [claim.claim_id, claim]))
   const proceedOk = canProceedFromClaims()
 
   return (
-    <section className="panel">
+    <section className="panel claim-verification-page">
       <header className="panel-head">
         <h2>陈述核验</h2>
-        <p>把每一句话，与支持它的原始材料放在一起核对。</p>
-        <p className="muted">
-          「须逐条处理才能继续」只是辅助提醒：未通过或已阻断表示这句话可能与材料不匹配，不代表已判定虚假，也不代表录用结果。请补证、改写或排除后，再进入申请内容检查。
-        </p>
+        <p>核对每条陈述的材料依据，再决定如何处理。</p>
         {workflowSourceNotice && <p className="callout warn">{workflowSourceNotice}</p>}
       </header>
-      <div className="claim-summary" aria-label="核验结果汇总">{(['VERIFIED','NEEDS_REVIEW','BLOCKED'] as const).map(state => <div key={state}><strong>{workflow.claim_verification.filter(v => v.state === state &&
-        !(v.state === 'VERIFIED' && workflow.grounding?.results[v.claim_id]?.verification_scope === 'personal')).length}</strong><ClaimBadge status={state} /></div>)}
-        <div><strong>{workflow.claim_verification.filter(v => v.state === 'VERIFIED' && workflow.grounding?.results[v.claim_id]?.verification_scope === 'personal').length}</strong><ClaimBadge status="VERIFIED" personal /></div>
-      </div>
-      <div className="btn-row">
+
+      <div className="claim-overview">
+        <div className="claim-summary" aria-label="核验结果汇总">
+          {(['VERIFIED', 'NEEDS_REVIEW', 'BLOCKED'] as const).map(state => (
+            <div key={state}>
+              <strong>{workflow.claim_verification.filter(row => row.state === state &&
+                !(state === 'VERIFIED' && workflow.grounding?.results[row.claim_id]?.verification_scope === 'personal')).length}</strong>
+              <ClaimBadge status={state} />
+            </div>
+          ))}
+          <div>
+            <strong>{workflow.claim_verification.filter(row => row.state === 'VERIFIED' &&
+              workflow.grounding?.results[row.claim_id]?.verification_scope === 'personal').length}</strong>
+            <ClaimBadge status="VERIFIED" personal />
+          </div>
+        </div>
         <button type="button" className="btn primary" disabled={rechecking} onClick={() => {
           setRechecking(true)
+          setRecheckError('')
           void reverifyClaims().then((error) => setRecheckError(error ?? '')).finally(() => setRechecking(false))
-        }}>{rechecking ? '正在重新核验…' : '重新核验并更新风险'}</button>
-      </div>
-      {workflow.requires_reverification && <p className="warn-text">内容已改变，旧核验结果暂不可用于复制或确认。请重新核验。</p>}
-      {recheckError && <p className="danger-text">{recheckError}</p>}
-      <div className="claim-status-guide" aria-label="核验状态说明">
-        <div className="claim-status-guide-item">
-          <ClaimBadge status="VERIFIED" />
-          <p>当前表述有经历库证据支持，可继续使用；这不等于外部事实已被独立证明。</p>
-        </div>
-        <div className="claim-status-guide-item">
-          <ClaimBadge status="NEEDS_REVIEW" />
-          <p>可能不完全匹配材料或措辞待核对。SAG 模式下请补证或编辑后重核验；人工勾选不能把它变成“已核验通过”。</p>
-        </div>
-        <div className="claim-status-guide-item">
-          <ClaimBadge status="BLOCKED" />
-          <p>辅助提示：这句话可能与材料不匹配或缺少依据。可「已知悉仍保留」继续，或编辑重核验 / 拒绝排除；不会把它记成材料已支持。</p>
-        </div>
+        }}>{rechecking ? '正在重新核验…' : '重新核验'}</button>
       </div>
 
-      <div className="stack">
-        {workflow.claim_verification.map((v) => {
-          const claim = claimsById[v.claim_id]
-          const d = claimDecisions[v.claim_id]
-          const displayText =
-            d?.decision === 'edit' && d.editedText != null ? d.editedText : claim?.text
+      {workflow.requires_reverification && <p className="callout warn" role="status">请重新核验当前草稿，更新材料支持状态。</p>}
+      {recheckError && <p className="danger-text" role="alert">{recheckError}</p>}
+      <details className="claim-help">
+        <summary>核验状态说明</summary>
+        <ul>
+          <li><strong>已核验</strong> · 当前表述有材料支持，仍需核对原文和归属。</li>
+          <li><strong>待复核 / 已阻断</strong> · 可以补充材料、修改陈述、保留或排除。保留后，材料核验状态仍会显示。</li>
+          <li><strong>个人资料</strong> · 按表单填写的信息使用。</li>
+        </ul>
+      </details>
+
+      <div className="stack claim-cards">
+        {workflow.claim_verification.map((verification, index) => {
+          const id = verification.claim_id
+          const claim = claimsById[id]
+          const decision = claimDecisions[id]
+          const result = workflow.grounding?.results[id]
+          const personal = result?.verification_scope === 'personal'
+          const editing = decision?.decision === 'edit'
+          const needsDecision = verification.state !== 'VERIFIED'
+          const canEdit = verification.state === 'NEEDS_REVIEW' || Boolean(workflow.grounding)
+          const needsRecheck = workflow.requires_reverification || decision?.freshness === 'edited_pending_reverify'
+          const text = editing ? decision.editedText ?? claim?.text ?? '' : claim?.text
+          const materials = new Map<string, { id: string; state?: EvidenceLink['link_state'] }>()
+          const evidenceKey = (rawId: string) => rawId.replace(/^ev_local_/, 'evloc_')
+          for (const evidenceId of claim?.evidence_ids ?? []) {
+            materials.set(evidenceKey(evidenceId), { id: evidenceId })
+          }
+          for (const link of localLinks.filter(link => link.target_id === id)) {
+            const key = evidenceKey(link.evidence_id)
+            materials.set(key, { id: materials.get(key)?.id ?? link.evidence_id, state: link.link_state })
+          }
+          const atomTexts = new Set(result?.atoms.map(atom => atom.text))
+          const extraFragments = (verification.unsupported_fragments ?? []).filter(fragment => !atomTexts.has(fragment))
+          const stateClass = verification.state === 'BLOCKED' ? 'blocked' : verification.state === 'NEEDS_REVIEW' ? 'needs' : ''
+          const title = `第 ${index + 1} 条陈述`
+
           return (
-            <article
-              key={v.claim_id}
-              id={v.claim_id}
-              className={
-                v.state === 'BLOCKED'
-                  ? 'item-block claim blocked'
-                  : v.state === 'NEEDS_REVIEW'
-                    ? 'item-block claim needs'
-                    : 'item-block claim'
-              }
-            >
-              <div className="item-head">
-                <ClaimBadge status={v.state} personal={workflow.grounding?.results[v.claim_id]?.verification_scope === 'personal'} />
-                <span>
-                  {v.claim_id.replace(/^claim_/, '陈述·')}: {displayText ?? '（草稿中缺失）'}
-                </span>
-              </div>
-              <p>
-                <strong>说明：</strong>
-                {zhText(v.explanation)}
-              </p>
-              <p className="muted">
-                {workflow.grounding ? '逐事实核验结果（不表示正确概率）' : `支持度 ${(v.support_score * 100).toFixed(0)}%`} · 是否锚定原文{' '}
-                {v.grounded ? '是' : '否'}
-              </p>
-              {v.unsupported_fragments?.length ? (
-                <div className="callout danger">
-                  <h4>未支持片段</h4>
-                  <ul>
-                    {v.unsupported_fragments.map((f) => (
-                      <li key={f}>{f}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-              <div className="evidence-box">
-                <h4>证据</h4>
-                {(claim?.evidence_ids ?? []).length === 0 ? (
-                  <p className="danger-text">无证据编号</p>
-                ) : (
-                  <ul>
-                    {claim!.evidence_ids.map((id) => (
-                      <li key={id}>
-                        <strong>{id}</strong> —{' '}
-                        {evidenceIndex.get(id)?.description ?? '（种子中未找到描述）'}
-                        {(id.startsWith('evloc_') || id.startsWith('ev_local_')) ? (
-                          <LocalEvidencePeek
-                            evidenceId={id.startsWith('ev_local_') ? id.replace('ev_local_', 'evloc_') : id}
-                            claimText={displayText ?? claim?.text ?? ''}
-                          />
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {localLinks
-                  .filter((l) => l.target_id === v.claim_id)
-                  .map((l) => (
-                    <div key={l.link_id}>
-                      <p className={l.link_state === 'STALE' ? 'danger-text' : 'muted'}>
-                        本地关联 {l.evidence_id} · {l.link_state}
-                      </p>
-                      <LocalEvidencePeek
-                        evidenceId={l.evidence_id}
-                        claimText={displayText ?? claim?.text ?? ''}
-                      />
+            <article key={id} id={id} className={`item-block claim ${stateClass}`} aria-labelledby={`title-${id}`}>
+              <header className="claim-card-heading">
+                <h3 id={`title-${id}`}>{title}</h3>
+                <ClaimBadge status={verification.state} personal={personal} />
+                {decision?.decision === 'confirm' && <span className="claim-choice">已选择保留</span>}
+                {decision?.decision === 'reject' && <span className="claim-choice">已排除</span>}
+                {editing && <span className="claim-choice">编辑中 · 待重新核验</span>}
+              </header>
+
+              {editing ? (
+                <textarea className="jd-input" rows={3} aria-label={`编辑${title}`} value={text}
+                  onChange={(event) => setClaimDecision(id, {
+                    decision: 'edit', editedText: event.target.value, freshness: 'edited_pending_reverify',
+                  })} />
+              ) : <p className="claim-statement">{text ?? '草稿中缺少该条陈述。'}</p>}
+
+              {materials.size === 0 && !personal && <p className="claim-meta">暂无关联材料</p>}
+
+              <div className="claim-card-controls">
+                <details className="claim-details">
+                  <summary>
+                    {needsRecheck ? '材料与上次核验' : '材料与核验明细'}
+                    <span>{` · ${materials.size} 份材料`}</span>
+                  </summary>
+                  {verification.explanation && <p className="claim-detail-note">{zhText(verification.explanation)}</p>}
+                  {extraFragments.length > 0 && (
+                    <div className="claim-details-group">
+                      <h4>待核对片段</h4>
+                      <ul>{extraFragments.map((fragment, index) => <li key={index}>{fragment}</li>)}</ul>
                     </div>
-                  ))}
+                  )}
+                  <AtomicEvidence result={result} />
+                  {materials.size > 0 && (
+                    <div className="claim-details-group">
+                      <h4>关联材料</h4>
+                      <ul className="claim-material-list">
+                        {[...materials].map(([key, material], index) => {
+                          const title = result?.retrieved_sources.find(source => evidenceKey(source.evidence_id) === key)?.title
+                          const description = evidenceIndex.get(material.id)
+                          return (
+                            <li key={key}>
+                              <strong>{title || `材料 ${index + 1}`}</strong>
+                              {material.state === 'STALE' && <span className="danger-text"> · 关联已过期</span>}
+                              {material.state === 'REJECTED' && <span className="muted"> · 已撤销关联</span>}
+                              {key.startsWith('evloc_') && <LocalEvidencePeek evidenceId={key} claimText={text ?? ''} />}
+                              {description && (
+                                <details className="claim-source">
+                                  <summary>展开材料正文</summary>
+                                  <div className="claim-source-text" tabIndex={0} role="region" aria-label="材料正文">{description}</div>
+                                </details>
+                              )}
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </div>
+                  )}
+                </details>
+
+                {(needsDecision || canEdit) && <div className="btn-row claim-action-bar">
+                  {needsDecision && (
+                    <button type="button" className="btn secondary" aria-pressed={decision?.decision === 'confirm'}
+                      onClick={() => setClaimDecision(id, { decision: 'confirm', editedText: undefined, freshness: 'as_returned' })}>
+                      {workflow.grounding || verification.state === 'BLOCKED' ? '知悉并保留' : '保留原文'}
+                    </button>
+                  )}
+                  {canEdit && !editing && (
+                    <button type="button" className="btn secondary"
+                      onClick={() => setClaimDecision(id, { decision: 'edit', editedText: claim?.text, freshness: 'edited_pending_reverify' })}>
+                      编辑陈述
+                    </button>
+                  )}
+                  {needsDecision && (
+                    <button type="button" className="btn secondary" aria-pressed={decision?.decision === 'reject'}
+                      onClick={() => setClaimDecision(id, { decision: 'reject', freshness: 'rejected' })}>
+                      排除
+                    </button>
+                  )}
+                </div>}
               </div>
-              <AtomicEvidence result={workflow.grounding?.results[v.claim_id]} />
-
-              {v.state === 'VERIFIED' && (
-                <p className="muted">
-                  当前材料支持这句陈述；仍须核对原文和归属。修改后应重新核验。
-                </p>
-              )}
-
-              {v.state === 'NEEDS_REVIEW' && (
-                <div className="action-pad">
-                  <p className="warn-text">{workflow.grounding ? '这句话可能与材料不完全匹配。可补证或编辑后重核验，也可「已知悉仍保留」或拒绝。' : '可能不匹配：请确认保留、编辑（将变为待重新核验）、或拒绝。'}</p>
-                  {d?.decision === 'edit' && (
-                    <textarea
-                      className="jd-input"
-                      rows={3}
-                      value={d.editedText ?? claim?.text ?? ''}
-                      onChange={(e) =>
-                        setClaimDecision(v.claim_id, {
-                          decision: 'edit',
-                          editedText: e.target.value,
-                          freshness: 'edited_pending_reverify',
-                        })
-                      }
-                    />
-                  )}
-                  <div className="btn-row">
-                    <button
-                      type="button"
-                      className={d?.decision === 'confirm' ? 'btn primary' : 'btn secondary'}
-                      onClick={() =>
-                        setClaimDecision(v.claim_id, {
-                          decision: 'confirm',
-                          freshness: 'as_returned',
-                          editedText: undefined,
-                        })
-                      }
-                    >
-                      {workflow.grounding ? '已知悉可能不匹配，仍保留' : '确认保留原文'}
-                    </button>
-                    <button
-                      type="button"
-                      className={d?.decision === 'edit' ? 'btn primary' : 'btn secondary'}
-                      onClick={() =>
-                        setClaimDecision(v.claim_id, {
-                          decision: 'edit',
-                          editedText: claim?.text,
-                          freshness: 'edited_pending_reverify',
-                        })
-                      }
-                    >
-                      编辑（待重新核验）
-                    </button>
-                    <button
-                      type="button"
-                      className={d?.decision === 'reject' ? 'btn danger' : 'btn secondary'}
-                      onClick={() =>
-                        setClaimDecision(v.claim_id, {
-                          decision: 'reject',
-                          freshness: 'rejected',
-                        })
-                      }
-                    >
-                      拒绝
-                    </button>
-                  </div>
-                  {d?.freshness === 'edited_pending_reverify' && (
-                    <p className="danger-text">
-                      内容已修改。请点击「重新核验并更新风险」，在后端检查完成前不可导出。
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {workflow.grounding && v.state !== 'NEEDS_REVIEW' && <div className="action-pad">
-                <button type="button" className="btn secondary" onClick={() => setClaimDecision(v.claim_id, {
-                  decision:'edit', editedText:claim?.text, freshness:'edited_pending_reverify',
-                })}>编辑后重新核验</button>
-                {d?.decision === 'edit' && <textarea className="jd-input" rows={3}
-                  value={d.editedText ?? claim?.text ?? ''} onChange={event => setClaimDecision(v.claim_id, {
-                    decision:'edit',editedText:event.target.value,freshness:'edited_pending_reverify',
-                  })} />}
-              </div>}
-
-              {v.state === 'BLOCKED' && (
-                <div className="action-pad">
-                  <p className="warn-text">
-                    辅助提示：当前材料下这句话可能不匹配或缺少原件。可已知悉后仍保留并继续；这不会变成“材料已支持”，可复制稿也不会收录为已核验陈述。
-                  </p>
-                  {d?.decision === 'confirm' && (
-                    <p className="muted">已记录：你已知悉可能不匹配，仍选择保留本句。</p>
-                  )}
-                  <div className="btn-row">
-                    <button
-                      type="button"
-                      className={d?.decision === 'confirm' ? 'btn primary' : 'btn secondary'}
-                      onClick={() =>
-                        setClaimDecision(v.claim_id, {
-                          decision: 'confirm',
-                          freshness: 'as_returned',
-                          editedText: undefined,
-                        })
-                      }
-                    >
-                      已知悉可能不匹配，仍保留
-                    </button>
-                    <button
-                      type="button"
-                      className={d?.decision === 'reject' ? 'btn danger' : 'btn secondary'}
-                      onClick={() =>
-                        setClaimDecision(v.claim_id, {
-                          decision: 'reject',
-                          freshness: 'rejected',
-                        })
-                      }
-                    >
-                      拒绝并排除
-                    </button>
-                  </div>
-                </div>
-              )}
             </article>
           )
         })}
       </div>
 
-      {!proceedOk && (
-        <div className="callout warn">
-          仍有陈述待处理。阻断只是辅助提醒（可能不匹配），不是终局裁决：可点「已知悉可能不匹配，仍保留」，或「拒绝并排除」，也可编辑后重核验。
-          个人教育资料按填写使用。不要把已编辑、尚未重核验的内容当作材料已支持。工作流状态：
-          {workflow.workflow_status === 'BLOCKED' ? '已阻断（辅助）' : '等待人工确认'}
-        </div>
-      )}
-
-      <div className="btn-row end">
-        <button
-          type="button"
-          className="btn primary"
-          disabled={!proceedOk}
-          onClick={() => navigate('/ats')}
-        >
+      <div className="claim-page-footer">
+        {!proceedOk && !workflow.requires_reverification && <p className="muted">请完成陈述核验与待处理项。</p>}
+        <button type="button" className="btn primary" disabled={!proceedOk} onClick={() => navigate('/ats')}>
           下一步：申请内容检查
         </button>
       </div>

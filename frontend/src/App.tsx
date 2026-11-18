@@ -7,6 +7,7 @@ import { AppShell } from './components/AppShell'
 import { DemoProvider } from './context/DemoContext'
 const AtsSimulatorPage = lazy(() => import('./pages/AtsSimulatorPage').then(module => ({ default: module.AtsSimulatorPage })))
 const ApplicationHistoryPage = lazy(() => import('./pages/ApplicationHistoryPage').then(module => ({ default: module.ApplicationHistoryPage })))
+const InterviewPage = lazy(() => import('./pages/InterviewPage').then(module => ({ default: module.InterviewPage })))
 const ResumeImportPage = lazy(() => import('./pages/ResumeImportPage').then(module => ({ default: module.ResumeImportPage })))
 const CareerVaultPage = lazy(() => import('./pages/CareerVaultPage').then(module => ({ default: module.CareerVaultPage })))
 const ClaimVerificationPage = lazy(() => import('./pages/ClaimVerificationPage').then(module => ({ default: module.ClaimVerificationPage })))
@@ -33,6 +34,7 @@ function PageRoutes() {
             <Route path="/ats" element={<AtsSimulatorPage />} />
             <Route path="/confirm" element={<HumanConfirmationPage />} />
             <Route path="/history" element={<ApplicationHistoryPage />} />
+            <Route path="/interview" element={<InterviewPage />} />
             <Route path="/help" element={<HelpPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

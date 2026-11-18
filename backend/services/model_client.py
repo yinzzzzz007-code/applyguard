@@ -8,6 +8,7 @@ import threading
 import urllib.error
 import urllib.request
 from typing import Any, Protocol
+from urllib.parse import urlsplit
 
 
 class ModelClient(Protocol):
@@ -60,6 +61,14 @@ def _json_object(content: str) -> dict[str, Any] | None:
 DEFAULT_TEXT_MODEL = "gemini-3.1-flash-lite-preview"
 
 
+def uses_deepseek_api(base_url: str) -> bool:
+    return urlsplit(base_url).hostname == 'api.deepseek.com'
+
+
+def json_schema_instruction(schema: dict) -> str:
+    return 'Return exactly one JSON object matching this JSON Schema:\n' + json.dumps(schema, ensure_ascii=False)
+
+
 class HttpModelClient:
     def wording_step(self, action, original, proposal, issues):
         from backend.services.wording_review import sdk_step
@@ -110,6 +119,8 @@ class HttpModelClient:
         return self._complete(system_prompt, user_prompt)
 
     def complete_structured(self, system_prompt: str, user_prompt: str, schema: dict) -> dict[str, Any]:
+        if uses_deepseek_api(self.base_url):
+            system_prompt += '\n' + json_schema_instruction(schema)
         result = self._complete(system_prompt, user_prompt, schema=schema)
         from jsonschema import validate, ValidationError
         try:
@@ -135,7 +146,7 @@ class HttpModelClient:
         }
         if self.disable_thinking:
             payload["thinking"] = {"type": "disabled"}
-        if schema is not None:
+        if schema is not None and not uses_deepseek_api(self.base_url):
             payload['response_format'] = {'type':'json_schema','json_schema':{
                 'name':'applyguard_checked_output','strict':True,'schema':schema}}
         body = json.dumps(payload).encode()

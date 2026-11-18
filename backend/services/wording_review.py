@@ -7,7 +7,7 @@ from typing import Literal
 
 from backend.services.asu_resume import proposal_violations
 from backend.services.fact_lock import wording_invariants
-from backend.services.model_client import ModelFailure
+from backend.services.model_client import ModelFailure, uses_deepseek_api
 
 JUDGE = """Decide if BOTH sentences assert exactly the same facts in both directions.
 Check actor, ownership, technology, metric, approximation, denominator, causality, negation,
@@ -23,8 +23,6 @@ def sdk_step(client, action, original, proposal, issues):
     """One typed turn, no tools, no trace export, no hidden HTTP retries."""
     if not client.api_key or not client.base_url.startswith("https://"):
         raise ModelFailure("Wording review requires a configured HTTPS provider", retryable=False)
-    from agents import Agent, ModelSettings, OpenAIChatCompletionsModel, RunConfig, Runner
-    from openai import AsyncOpenAI
     from pydantic import BaseModel
 
     class Verdict(BaseModel):
@@ -33,6 +31,16 @@ def sdk_step(client, action, original, proposal, issues):
 
     class Repair(BaseModel):
         text: str
+
+    if uses_deepseek_api(client.base_url):
+        judge = action == "judge"
+        output = Verdict if judge else Repair
+        return client.complete_structured(JUDGE if judge else REPAIR,
+            json.dumps({"original": original, "proposal": proposal, "issues": issues}, ensure_ascii=False),
+            output.model_json_schema())
+
+    from agents import Agent, ModelSettings, OpenAIChatCompletionsModel, RunConfig, Runner
+    from openai import AsyncOpenAI
 
     async def run():
         async with AsyncOpenAI(api_key=client.api_key, base_url=client.base_url,

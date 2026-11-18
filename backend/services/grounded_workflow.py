@@ -318,6 +318,8 @@ class GroundingService:
             if isinstance(exc, ModelFailure) and exc.http_status == 503:
                 error_code = _MODEL_UNAVAILABLE
                 error = _MODEL_UNAVAILABLE_MESSAGE
+            elif isinstance(exc, GroundingUnavailable):
+                error = str(exc)
             else:
                 error = 'SAG或模型核验未完成；当前文本不可按已核验内容导出。请检查配置后重试。'
             if polish:claims = originals;atomic = {}
