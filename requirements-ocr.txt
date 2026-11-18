@@ -1,0 +1,4 @@
+# Optional local OCR for image-only and scanned PDF resumes.
+# Install this file in the same Python environment that starts backend.app.
+paddlepaddle>=3.0
+paddleocr>=3.0

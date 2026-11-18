@@ -99,6 +99,14 @@ Invoke-WebRequest "$modelBase/tokenizer.json" -OutFile (Join-Path $embeddingDir 
 .\.venv\Scripts\python.exe -m pip install paddlepaddle paddleocr
 ```
 
+也可以只安装 OCR 可选依赖，不安装完整 SAG 环境。macOS、Linux 和 Windows 建议在项目虚拟环境中执行：
+
+```bash
+python -m pip install -r requirements-ocr.txt
+```
+
+PaddlePaddle 和 PaddleOCR 体积较大，首次识别还会下载 OCR 模型。没有安装时，文字型 PDF 仍可导入，扫描件会提示安装本地 OCR。
+
 首次 OCR 可能下载模型。可通过 `APPLYGUARD_OCR_PACKAGES` 指定独立库目录，通过 `PADDLE_PDX_CACHE_HOME` 指定 OCR 模型缓存。识别结果应逐项核对。
 
 ### 手动启动
