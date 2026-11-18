@@ -2,7 +2,11 @@
 @font-face { font-family:"Reel Anton"; src:url('/assets/fonts/Anton-Regular.ttf') format('truetype'); font-display:swap; }
 @font-face { font-family:"Reel Archivo"; src:url('/assets/fonts/ArchivoBlack-Regular.ttf') format('truetype'); font-display:swap; }
 @font-face { font-family:"Reel Instrument"; src:url('/assets/fonts/InstrumentSerif-Italic.ttf') format('truetype'); font-style:italic; font-display:swap; }
-:root { --motion-fast:140ms; --motion-page:220ms; --motion-ease:cubic-bezier(.16,1,.3,1); --reel-ink:#334155; --reel-paper:#f8fafc; --reel-light:#e2e8f0; --reel-dim:#cbd5e1; }
+:root { --motion-fast:140ms; --motion-page:320ms; --motion-ease:cubic-bezier(.16,1,.3,1); --reel-ink:#0b100e; --reel-paper:#eef5f1; --reel-light:#2a3531; --reel-dim:#93a39b; }
+.reel-play,.reel-restart { color:var(--slate); }
+.reel-chapters button { background:var(--surface); color:var(--slate); }
+.reel-chapters button[aria-pressed=true] { background:var(--tag-bg); color:var(--brand-green); }
+.reel-empty { background:var(--surface); }
 .page-motion { min-width:0; }
 .kinetic-canvas { position:relative; width:100%; aspect-ratio:16/9; background:#111318; }
 .kinetic-canvas.is-portrait { aspect-ratio:4/5; }

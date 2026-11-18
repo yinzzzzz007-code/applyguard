@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getApiClient, SAMPLE_JD, type WorkflowParseMode } from '../api/client'
 import { EmptyState, ErrorState, LoadingState } from '../components/States'
 import { useDemo } from '../context/DemoContext'
 import { ZH_EXEC, ZH_MAPPER, ZH_PARSER, ZH_WORKFLOW, zhLookup, zhText } from '../i18n'
-import { jobsRequest, type Opportunity } from '../api/jobs'
+import { jobsRequest, type JobLibrary, type Opportunity } from '../api/jobs'
 import { invalidateRestoredWorkflow } from '../resume/reviewSession'
-import { canPrepareJob } from '../jobs'
+import { canPrepareJob, JOB_STATUS } from '../jobs'
 
 export function JdInputPage() {
   const [params] = useSearchParams()
@@ -34,6 +34,11 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
   const [backendHint, setBackendHint] = useState('')
   const [lastParseMode, setLastParseMode] = useState<WorkflowParseMode | null>(null)
   const [parseMode, setParseMode] = useState<WorkflowParseMode>('offline')
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [library, setLibrary] = useState<JobLibrary | null>(null)
+  const [libraryError, setLibraryError] = useState('')
+  const [libraryBusy, setLibraryBusy] = useState(false)
+  const [pickerQuery, setPickerQuery] = useState('')
   const prerecorded = scenario.startsWith('prerecorded')
   const requestId = useRef(0)
   useEffect(() => {
@@ -69,6 +74,50 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
       invalidateWorkflow()
     }
   }, [target, workflow, invalidateWorkflow])
+
+  const selectableJobs = useMemo(() => {
+    const items = library?.items ?? []
+    const terms = pickerQuery.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean)
+    return items.filter((job) => {
+      if (!canPrepareJob(job)) return false
+      if (!terms.length) return true
+      const text = [job.title, job.company, job.location].join(' ').toLocaleLowerCase()
+      return terms.every((term) => text.includes(term))
+    })
+  }, [library, pickerQuery])
+
+  async function openRadarPicker() {
+    if (Object.keys(reviewDrafts).length) {
+      setErrorMsg('请先返回简历审查保存或取消暂存修改，再更换岗位。')
+      return
+    }
+    setPickerOpen(true)
+    setLibraryBusy(true)
+    setLibraryError('')
+    try {
+      const data = await jobsRequest<JobLibrary>()
+      setLibrary(data)
+    } catch (error) {
+      setLibraryError(error instanceof Error ? error.message : '无法读取岗位雷达。')
+    } finally {
+      setLibraryBusy(false)
+    }
+  }
+
+  function selectRadarJob(job: Opportunity) {
+    if (Object.keys(reviewDrafts).length) {
+      setErrorMsg('请先返回简历审查保存或取消暂存修改，再更换岗位。')
+      return
+    }
+    if (workflow?.resume_claims.length && workflow.target_job?.id !== job.id &&
+        !window.confirm('更换岗位会替换当前申请准备对象。已写正文可能需要重新核验。继续？')) return
+    setPickerOpen(false)
+    setPickerQuery('')
+    setActiveJobId(job.id)
+    setParams({ job: job.id }, { replace: true })
+    setStatus('idle')
+    setErrorMsg('')
+  }
 
   const changeInput = (text: string) => {
     if (Object.keys(reviewDrafts).length) {setErrorMsg('请先返回简历审查保存或取消暂存修改，再更换岗位。');return}
@@ -151,29 +200,84 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
   )
 
   return (
-    <section className="panel">
-      <header className="panel-head">
+    <section className="panel workbench-page">
+      <header className="panel-head workbench-head">
+        <p className="workbench-kicker">工作流 · 目标岗位</p>
         <h2>岗位说明</h2>
         <p>
-          粘贴招聘原文，查看哪些经历适合这个岗位。之后再检查每条表述的材料支持。
+          粘贴招聘原文，或从岗位雷达选择已收藏岗位。分析后查看哪些经历适合这个岗位。
         </p>
       </header>
-      <p><Link className="btn secondary" to="/jobs">从岗位雷达选择岗位</Link></p>
+      <div className="jd-source-bar">
+        <button type="button" className="btn secondary" disabled={prerecorded || status === 'loading'} onClick={() => void openRadarPicker()}>
+          从岗位雷达选择
+        </button>
+        <Link className="text-action" to="/jobs">管理岗位雷达</Link>
+      </div>
+      {pickerOpen && (
+        <div className="jd-radar-picker" role="dialog" aria-label="从岗位雷达选择岗位">
+          <div className="jd-radar-picker-head">
+            <strong>从岗位雷达选择</strong>
+            <button type="button" className="text-action" onClick={() => setPickerOpen(false)}>收起</button>
+          </div>
+          <input
+            className="resume-input jd-radar-picker-search"
+            aria-label="搜索收藏岗位"
+            placeholder="搜索岗位、公司或城市"
+            value={pickerQuery}
+            onChange={(event) => setPickerQuery(event.target.value)}
+          />
+          {libraryBusy && <p className="muted" role="status">正在读取岗位雷达…</p>}
+          {libraryError && <p className="danger-text" role="alert">{libraryError}</p>}
+          {!libraryBusy && !libraryError && (
+            <div className="jd-radar-picker-list" role="listbox" aria-label="可准备申请的收藏岗位">
+              {selectableJobs.map((job) => (
+                <button
+                  type="button"
+                  key={job.id}
+                  role="option"
+                  aria-selected={job.id === jobId}
+                  className={`jd-radar-picker-item${job.id === jobId ? ' is-selected' : ''}`}
+                  disabled={status === 'loading'}
+                  onClick={() => selectRadarJob(job)}
+                >
+                  <strong>{job.title}</strong>
+                  <span>{job.company} · {job.location || '地点未知'} · {JOB_STATUS[job.status] || job.status}</span>
+                </button>
+              ))}
+              {!selectableJobs.length && (
+                <p className="muted">
+                  {library?.items.length
+                    ? '没有可准备申请的匹配岗位。可换关键词，或到岗位雷达调整状态。'
+                    : '岗位雷达还是空的。先去收藏岗位，或在下方直接粘贴 JD。'}
+                </p>
+              )}
+            </div>
+          )}
+          <div className="btn-row">
+            <Link className="btn secondary" to="/jobs">打开岗位雷达</Link>
+            <button type="button" className="btn secondary" disabled={libraryBusy} onClick={() => void openRadarPicker()}>刷新列表</button>
+          </div>
+        </div>
+      )}
       {Object.keys(reviewDrafts).length > 0 && <p className="callout warn">审核页有暂存修改，请先 <Link to="/resume">返回保存修改</Link>。保存前不能重新分析或更换岗位。</p>}
       {errorMsg && status !== 'error' && status !== 'empty' && <p role="alert" className="danger-text">{errorMsg}</p>}
       {loadingTarget && <LoadingState label="正在载入收藏岗位…" />}
       {loadingResume && <LoadingState label="正在读取本机经历…" />}
       {resumeError && <ErrorState message={resumeError} onFallback={() => navigate('/vault')} fallbackLabel="检查经历库" />}
       {jobId && !loadingResume && !resumeForm && <p className="callout warn">收藏岗位需先使用自己的经历。请先 <Link to="/">导入简历</Link> 或在经历库保存草稿。</p>}
-      {targetError && <ErrorState message={targetError} onFallback={() => navigate('/jobs')} fallbackLabel="返回岗位雷达" />}
+      {targetError && <ErrorState message={targetError} onFallback={() => { setPickerOpen(true); void openRadarPicker() }} fallbackLabel="重新选择岗位" />}
       {targetError && jobId && <button type="button" className="text-action" onClick={detachTarget}>解除岗位关联</button>}
       {target && <div className="callout">
         <strong>{target.title} · {target.company} · v{target.version}</strong>
-        <p>已关联收藏岗位。要手动编辑原文，请先解除关联。</p>
+        <p>已关联岗位雷达中的收藏。要手动编辑原文，请先解除关联。</p>
         {workflow?.target_job?.id === target.id && workflow.target_job.content_hash !== target.content_hash &&
           <p role="status">岗位已更新，请重新分析新版。已写正文会保留。</p>}
-        <button type="button" className="text-action" onClick={detachTarget}>解除岗位关联</button>
-        {target.url && <a href={target.url} target="_blank" rel="noreferrer">核对招聘原文 ↗</a>}
+        <div className="btn-row">
+          <button type="button" className="btn secondary" onClick={() => void openRadarPicker()}>更换收藏岗位</button>
+          <button type="button" className="text-action" onClick={detachTarget}>解除岗位关联</button>
+          {target.url && <a href={target.url} target="_blank" rel="noreferrer">核对招聘原文 ↗</a>}
+        </div>
       </div>}
 
       <label className="field-label" htmlFor="jd-input">

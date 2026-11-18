@@ -734,12 +734,18 @@ export function CareerVaultPage() {
   }
 
   return (
-    <section className={`panel resume-panel ${form && !form.dirty && form.savedAt ? 'is-saved' : 'is-unsaved'}`}>
-      <header className="panel-head">
+    <section className={`panel resume-panel workbench-page ${form && !form.dirty && form.savedAt ? 'is-saved' : 'is-unsaved'}`}>
+      <header className="panel-head workbench-head">
+        <p className="workbench-kicker">经历库</p>
         <h2>整理自己的经历</h2>
         <p>
-          优先核对项目、实习与技能，保存后到 <Link to="/evidence">证明材料</Link> 补充依据。个人资料和教育信息按填写使用，不代表已被证据核验。
+          优先核对项目、实习与技能。保存后去证明材料补依据；个人资料和教育信息按填写使用，不代表已被证据核验。
         </p>
+        <div className="workbench-flow" aria-label="下一步">
+          <span>填写经历</span>
+          <span>保存草稿</span>
+          <Link to="/evidence">补充证明材料</Link>
+        </div>
       </header>
 
       {status === 'loading' && <LoadingState label="正在加载简历库…" />}
@@ -1078,7 +1084,7 @@ export function CareerVaultPage() {
                 ))}
                 <button
                   type="button"
-                  className="btn secondary"
+                  className="btn secondary resume-add-btn"
                   onClick={() =>
                     patchForm((p) => ({
                       ...p,
@@ -1134,7 +1140,7 @@ export function CareerVaultPage() {
                 ))}
                 <button
                   type="button"
-                  className="btn secondary"
+                  className="btn secondary resume-add-btn"
                   onClick={() =>
                     patchForm((p) => ({
                       ...p,
@@ -1187,7 +1193,7 @@ export function CareerVaultPage() {
                 ))}
                 <button
                   type="button"
-                  className="btn secondary"
+                  className="btn secondary resume-add-btn"
                   onClick={() =>
                     patchForm((p) => ({
                       ...p,
@@ -1239,7 +1245,7 @@ export function CareerVaultPage() {
                 ))}
                 <button
                   type="button"
-                  className="btn secondary"
+                  className="btn secondary resume-add-btn"
                   onClick={() =>
                     patchForm((p) => {
                       const awards = [

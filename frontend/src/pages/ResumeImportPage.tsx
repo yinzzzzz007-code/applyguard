@@ -130,14 +130,21 @@ export function ResumeImportPage() {
     <section className="panel import-page">
       <div className="home-intro">
         <header className="home-intro-copy">
-          <span className="home-eyebrow">你的经历，有据可依</span>
+          <p className="home-brand">ApplyGuard<span>申请护栏 · 有据可依</span></p>
           <h2>从真实经历，<br />开始下一份申请。</h2>
           <p>整理经历，找到依据，再把你的故事讲清楚。先用 24 秒，看看一份申请如何从简历走到最终确认。</p>
-          <div className="home-actions"><a className="btn primary" href="#resume-import">导入我的简历 <Icon name="arrow" /></a><Link className="text-action" to="/vault">继续编辑经历库</Link></div>
-          <div className="home-flow"><span>经历</span><span>依据</span><span>岗位</span><span>确认</span></div>
+          <div className="home-actions">
+            <a className="btn primary" href="#resume-import">导入我的简历 <Icon name="arrow" /></a>
+            <Link className="btn secondary" to="/vault">继续编辑经历库</Link>
+          </div>
+          <div className="home-flow" aria-label="申请准备流程"><span>经历</span><span>依据</span><span>岗位</span><span>确认</span></div>
           <Link to="/help" className="home-help">查看完整操作说明 <Icon name="arrow" /></Link>
         </header>
-        <Suspense fallback={<div className="home-reel-loading" role="status">正在加载 24 秒操作介绍…</div>}><ProjectReel variant="home" /></Suspense>
+        <div className="home-intro-stage">
+          <Suspense fallback={<div className="home-reel-loading" role="status">正在加载 24 秒操作介绍…</div>}>
+            <ProjectReel variant="home" />
+          </Suspense>
+        </div>
       </div>
       <DemoQuickStart />
       <div className="import-layout" id="resume-import">

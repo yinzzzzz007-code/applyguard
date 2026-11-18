@@ -123,9 +123,13 @@ export function JobRadarPage() {
   const freshAnalysis = analysis && analysis.resumeSignature === resumeSignature && analysis.job_id === selected?.id && analysis.content_hash === selected?.content_hash
   const visibleRequirements = analysis?.requirements.filter(req => coverageFilter === 'all' || (coverageFilter === 'supported' ? req.coverage === 'SUPPORTED' : req.coverage !== 'SUPPORTED')) ?? []
 
-  return <section className={'panel radar-page radar-workbench'+(detailOpen ? ' has-detail' : '')}>
-    <header className="panel-head radar-page-heading">
-      <div><h2>岗位雷达</h2><p>找到值得申请的机会，看清要求，也看清还缺什么。</p></div>
+  return <section className={'panel radar-page radar-workbench workbench-page'+(detailOpen ? ' has-detail' : '')}>
+    <header className="panel-head radar-page-heading workbench-head">
+      <div>
+        <p className="workbench-kicker">岗位收藏库</p>
+        <h2>岗位雷达</h2>
+        <p>单独管理想投的岗位与证据预检。准备申请时，到「岗位说明」里从这里选择即可。</p>
+      </div>
       <button type="button" className={'btn '+(library?.items.length ? 'secondary' : 'primary')} onClick={openForm}><Icon name="plus" />{editingId ? '继续编辑岗位' : '添加岗位'}</button>
     </header>
     {scenario !== 'live' && <p className="callout warn">当前是预录演示场景。岗位库仍显示本机数据；准备真实岗位时请先在顶部切换「正常·在线」。</p>}

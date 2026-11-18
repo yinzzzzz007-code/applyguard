@@ -6,6 +6,7 @@ import { useDemo } from '../context/DemoContext'
 import { zhText } from '../i18n'
 import { rememberMaxStep, stepFromPath } from '../flow'
 import { NAV_GROUPS } from '../navigation'
+import { applyTheme, readStoredTheme, toggleTheme, type ThemeMode } from '../theme'
 import { Icon } from './Icon'
 import { PageMotion } from './PageMotion'
 
@@ -24,8 +25,12 @@ export function AppShell({children}:{children:React.ReactNode}) {
   const [restoreDismissed, setRestoreDismissed] = useState(() => {
     try { return sessionStorage.getItem(RESTORE_NOTICE_KEY) === restoredAt } catch { return false }
   })
+  const [theme, setTheme] = useState<ThemeMode>(() => readStoredTheme())
   const fromPath = stepFromPath(location.pathname)
   const title = location.pathname === '/help' ? '使用帮助' : NAV_GROUPS.flatMap(group => group.items).find(item => item.path === location.pathname)?.label ?? '申请工作台'
+  useEffect(() => {
+    applyTheme(theme)
+  }, [theme])
   useEffect(() => {
     const target = stepFromPath(location.pathname)
     if (target) {setStep(target);rememberMaxStep(target)}
@@ -54,7 +59,10 @@ export function AppShell({children}:{children:React.ReactNode}) {
   return <div className="workspace-shell">
     <a className="skip-link" href="#workspace-main">跳到主要内容</a>
     <aside className="workspace-sidebar">
-      <NavLink to="/" className="workspace-brand" aria-label="ApplyGuard 申请护栏首页"><Icon name="brand" /><span>ApplyGuard<small>申请护栏</small></span></NavLink>
+      <NavLink to="/" className="workspace-brand" aria-label="ApplyGuard 申请护栏首页">
+        <Icon name="brand" />
+        <span>ApplyGuard<small>申请护栏</small></span>
+      </NavLink>
       {navigation()}
       <div className="sidebar-note"><Icon name="shield" /><div><strong>每一条陈述，都有来处</strong><p>原始材料 · 事实核验 · 人工确认</p></div></div>
       <div className="sidebar-bottom"><span className="scope-mark small">我</span><div><strong>我的申请空间</strong><small>课程实验版</small></div><Icon name="lock" /></div>
@@ -63,6 +71,16 @@ export function AppShell({children}:{children:React.ReactNode}) {
       <header className="workspace-topbar">
         <div className="workspace-breadcrumb"><span>申请工作台</span><Icon name="chevron" /><h1>{title}</h1></div>
         <NavLink className="workspace-help-link" to="/help" aria-label="使用帮助"><Icon name="file" /><span>使用帮助</span></NavLink>
+        <button
+          type="button"
+          className="theme-toggle"
+          aria-label={theme === 'dark' ? '切换到浅色主题' : '切换到深色主题'}
+          title={theme === 'dark' ? '浅色' : '深色'}
+          onClick={() => setTheme(current => toggleTheme(current))}
+        >
+          <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
+          <span>{theme === 'dark' ? '浅色' : '深色'}</span>
+        </button>
         <details className="workspace-scenario"><summary><BackendStatus key={scenario} live={scenario === 'live'} /><Icon name="down" /></summary>
           <div className="scenario-popover"><label htmlFor="demo-scenario">演示场景</label><select id="demo-scenario" value={scenario} onChange={event => {
             if ((workflow || resumeForm?.dirty || Object.keys(reviewDrafts).length) && !window.confirm('切换演示场景会清空当前工作流与未保存编辑。已保存的经历和材料不受影响。是否继续？')) return

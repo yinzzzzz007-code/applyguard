@@ -261,7 +261,7 @@ function PreviewPane({
 
 export function EvidenceWorkspacePage() {
   const api = getApiClient()
-  const { resumeForm, setResumeForm, activeJobId, jdRawInput } = useDemo()
+  const { resumeForm, setResumeForm } = useDemo()
   const [params,setParams] = useSearchParams()
   const linkTargetType = params.get('target_type') || 'award'
   const linkTargetId = params.get('target_id') || ''
@@ -1609,31 +1609,28 @@ export function EvidenceWorkspacePage() {
   )
 
   return (
-    <section className="panel evidence-workspace">
-      <header className="panel-head">
-        <h2>证明材料</h2>
+    <section className="panel evidence-workspace workbench-page">
+      <header className="panel-head workbench-head">
+        <p className="workbench-kicker">证明材料</p>
+        <h2>让每条经历，都能指回来处</h2>
         <p>
-          流程：保存经历 → 导入材料 → 推荐对应经历 → 核对信息 → 确认关联。识别完成、关联完成、信息获支持是三件不同的事。
+          导入材料、推荐对应、核对信息、确认关联。识别完成、关联完成、信息获支持，是三件不同的事。
         </p>
-        <p>
+        <div className="workbench-meta">
           <Link to="/vault">去经历库编辑</Link>
-          {' · '}
-          可对照{' '}
-          <strong>
-            实习 {vaultPayload.internships.length} · 项目 {vaultPayload.projects.length} · 获奖{' '}
-            {vaultPayload.awards.length}
-          </strong>
-          {' · '}
-          数据来源：
-          <strong>
+          <span>
+            实习 {vaultPayload.internships.length} · 项目 {vaultPayload.projects.length} · 获奖 {vaultPayload.awards.length}
+          </span>
+          <span>
+            来源{' '}
             {vaultSourceHint ||
               (vaultPayload.source === 'seed'
                 ? '种子数据'
                 : vaultPayload.source === 'editing'
                   ? '经历库未保存编辑'
                   : '本机草稿')}
-          </strong>
-        </p>
+          </span>
+        </div>
         {vaultPayload.source === 'seed' ? (
           <p className="warn-text">
             当前仍是种子数据。请先到经历库填写并点「保存」，再回这里对照；或确认后端草稿可读。
@@ -1676,38 +1673,43 @@ export function EvidenceWorkspacePage() {
       </div>
       {!files.length && activeTab === 'materials' && <p className="evidence-first-step">先在经历库保存条目，再在这里导入材料。识别完成后到「经历关联」查看推荐；没有推荐时可从已有材料中选择。</p>}
       <div id="evidence-panel-relations" role="tabpanel" aria-labelledby="evidence-tab-relations" hidden={activeTab !== 'relations'} tabIndex={0}>
-      <details className="relation-add"><summary>＋ 添加一条经历</summary>
-      <div className="evidence-add-bar">
-        <label className="field-label">经历类型
-        <select
-          className="resume-input resume-select"
-          value={addKind}
-          onChange={(e) => setAddKind(e.target.value as 'internship' | 'project' | 'award')}
-        >
-          <option value="award">获奖/竞赛</option>
-          <option value="project">项目</option>
-          <option value="internship">实习</option>
-        </select></label>
-        <label className="field-label">{addKind === "award" ? "奖项名称" : "标题"}
-        <input
-          className="resume-input"
-          placeholder={addKind === 'award' ? '奖项名称' : '标题'}
-          value={addLabel}
-          onChange={(e) => setAddLabel(e.target.value)}
-        /></label>
-        <label className="field-label">{addKind === "award" ? "颁发方（可选）" : "组织（可选）"}
-        <input
-          className="resume-input"
-          placeholder={addKind === 'award' ? '颁发方（可选）' : '组织（可选）'}
-          value={addOrg}
-          onChange={(e) => setAddOrg(e.target.value)}
-        /></label>
-        <button type="button" className="btn secondary" onClick={addVaultItem}>
-          添加条目
-        </button>
+      <div className="evidence-relations-tools">
+        <details className="relation-add">
+          <summary>＋ 添加一条经历</summary>
+          <div className="evidence-add-bar">
+            <label className="field-label">经历类型
+              <select
+                className="resume-input resume-select"
+                value={addKind}
+                onChange={(e) => setAddKind(e.target.value as 'internship' | 'project' | 'award')}
+              >
+                <option value="award">获奖/竞赛</option>
+                <option value="project">项目</option>
+                <option value="internship">实习</option>
+              </select>
+            </label>
+            <label className="field-label">{addKind === 'award' ? '奖项名称' : '标题'}
+              <input
+                className="resume-input"
+                placeholder={addKind === 'award' ? '奖项名称' : '标题'}
+                value={addLabel}
+                onChange={(e) => setAddLabel(e.target.value)}
+              />
+            </label>
+            <label className="field-label">{addKind === 'award' ? '颁发方（可选）' : '组织（可选）'}
+              <input
+                className="resume-input"
+                placeholder={addKind === 'award' ? '颁发方（可选）' : '组织（可选）'}
+                value={addOrg}
+                onChange={(e) => setAddOrg(e.target.value)}
+              />
+            </label>
+            <button type="button" className="btn secondary" onClick={addVaultItem}>
+              添加条目
+            </button>
+          </div>
+        </details>
       </div>
-
-      </details>
       <input
         ref={supplementInputRef}
         type="file"
@@ -1913,7 +1915,7 @@ export function EvidenceWorkspacePage() {
       <div className="evidence-advanced"><AgentConnector ensureWorkspace={ensureWorkspace} onImported={refreshLists} /></div>
       </div>
       <div className="evidence-next-step"><p>{coverage.total ? `已关联 ${coverage.linked}/${coverage.total} 条经历。未关联的内容仍需在审核时补充材料。` : '先在经历库保存自己的项目、实习或获奖经历。'}</p>
-        <Link className="btn secondary" to="/vault">返回经历库</Link><Link className="btn primary" to={activeJobId || jdRawInput.trim() ? "/jd" : "/jobs"}>继续准备岗位</Link></div>
+        <Link className="btn secondary" to="/vault">返回经历库</Link><Link className="btn primary" to="/jd">继续准备岗位</Link></div>
     </section>
   )
 }
