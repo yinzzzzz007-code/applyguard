@@ -106,7 +106,21 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await importLink.hover();
   assert.equal(await importLink.evaluate(el=>getComputedStyle(el).transform),'none');
   assert.equal(await stage.locator('.watercolor-reel-sheet').evaluate(el=>getComputedStyle(el).getPropertyValue('--wash-reveal').trim()),'1');
-  checks.push('respects-reduced-motion');assert.deepEqual(errors,[]);
+  checks.push('respects-reduced-motion');
+  await page.setViewportSize({width:1440,height:1100});
+  await page.emulateMedia({colorScheme:'dark'});
+  await page.goto(base+'/history');
+  await page.getByRole('heading',{name:'简历生成',exact:true,level:2}).waitFor();
+  assert.equal(await page.locator('meta[name="color-scheme"]').getAttribute('content'),'only light');
+  assert.deepEqual(await page.evaluate(()=>getComputedStyle(document.documentElement).colorScheme.split(/\s+/).sort()),['light','only']);
+  const paperCorner={x:0,y:0,width:12,height:12};
+  const before=await page.screenshot({clip:paperCorner});
+  const cdp=await page.context().newCDPSession(page);
+  await cdp.send('Emulation.setAutoDarkModeOverride',{enabled:true});
+  assert.deepEqual(await page.screenshot({clip:paperCorner}),before);
+  await page.screenshot({path:path.join(out,'history-browser-auto-dark.png')});
+  checks.push('history-retains-paper-color-with-browser-auto-dark');
+  assert.deepEqual(errors,[]);
   fs.writeFileSync(path.join(out,'report.json'),JSON.stringify({date:new Date().toISOString(),base,status:'PASS',checks,errors,consoleMessages},null,2));
   console.log('PASS '+out);
  }catch(e){

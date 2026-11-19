@@ -226,7 +226,7 @@ npm run dev -- --host 127.0.0.1
 | 人工确认与导出分离 | `review_export.py`、`copyRules.ts` | `test_review_export.py`、前端 review／copy-rules／review-session 测试 |
 | 岗位与外部 Agent | `job_radar.py`、`agent_bridge.py` | `test_job_radar.py`、`test_agent_bridge.py`、`test_agent_mcp.py` |
 | 本机 Harness 接入与迁移 | `harness_setup.py`、`scripts/connect_harness.py`、`HarnessSetupGuide.tsx`。检测项目根目录并生成可复制安装命令 | `test_harness_setup.py`、`agent-connection.test.mjs`、`scripts/agent_browser_smoke.cjs`、`scripts/harness_agent_probe.py` |
-| 首页水彩导览、卡片与导入入口 | `ResumeImportPage.tsx`、`ProjectReel.tsx`、`WatercolorReelStage.tsx`、`workspace-polish.css`、`components/ui/` | `scripts/home_browser_smoke.cjs`（验证纸色、晕染卡片、按钮反馈、键盘焦点、四章节、进度和移动布局，输出截图） |
+| 水彩配色、首页导览与导入入口 | `frontend/index.html`、`palette.css`、`ResumeImportPage.tsx`、`ProjectReel.tsx`、`WatercolorReelStage.tsx`、`workspace-polish.css`、`components/ui/` | `scripts/home_browser_smoke.cjs`（验证样式、按钮、键盘、章节、移动布局和浏览器强制深色下的历史页纸色，输出截图） |
 | 工作台视觉规范 | `DESIGN.md`、`frontend/src/palette.css`、`frontend/src/workspace.css`、`frontend/src/workspace-polish.css`、`frontend/src/components/ui/` | `npm run build`、`npm run smoke`。首页浏览器回归检查配色、字号层级、键盘焦点和减少动态效果 |
 | `/help` 后端直达／刷新 | `backend/app.py` SPA 路径表 | `tests/test_api.py` 的 `test_help_deep_link_serves_spa` |
 

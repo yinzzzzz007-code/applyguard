@@ -6,7 +6,7 @@
   --color-rose: #c38d94;
   --color-ochre: #d4a373;
 
-  color-scheme: light;
+  color-scheme: only light;
   --primary: var(--color-blue);
   --primary-hover: rgb(from var(--color-blue) calc(r * .84) calc(g * .84) calc(b * .84));
   --on-primary: var(--color-paper);
