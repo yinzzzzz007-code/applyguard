@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { WorkflowResponse } from '../api/types'
 import { useDemo } from '../context/DemoContext'
 import { changeClaim, changedSpan, currentSupport, needsAttention, reviewPriority, session } from '../resume/review'
@@ -8,11 +9,20 @@ import { GroundedExport } from './GroundedExport'
 import { SAGPolishPanel } from './SAGPolishPanel'
 
 export function ReviewDraft() {
+  const location = useLocation()
   const {workflow,setWorkflow,reviewDrafts:drafts,setReviewDraft:onEdit,reviewStorageError} = useDemo()
   const [undo,setUndo] = useState<WorkflowResponse[]>([])
   const [notice,setNotice] = useState('')
   const [selectedId,setSelectedId] = useState('')
   const [toolsOpen,setToolsOpen] = useState(() => window.matchMedia('(min-width:761px)').matches)
+  const exportPanel = useRef<HTMLDetailsElement>(null)
+  useLayoutEffect(() => {
+    const panel = exportPanel.current
+    if (location.hash !== '#review-export' || !panel) return
+    panel.open = true
+    const frame = requestAnimationFrame(() => panel.scrollIntoView({ block: 'start' }))
+    return () => cancelAnimationFrame(frame)
+  }, [location.hash])
   if (!workflow) return null
   const priority = [...workflow.resume_claims].sort((a,b) => reviewPriority(workflow,b.claim_id)-reviewPriority(workflow,a.claim_id))
     .filter(c => reviewPriority(workflow,c.claim_id)>0).slice(0,3)
@@ -100,6 +110,6 @@ export function ReviewDraft() {
         </details>
       </aside>
     </div>
-    <details className="review-export-section" id="review-export"><summary>检查并导出个人草稿</summary><GroundedExport editing={editing} /></details>
+    <details className="review-export-section" id="review-export" ref={exportPanel}><summary>检查并导出个人草稿</summary><GroundedExport editing={editing} /></details>
   </div>
 }

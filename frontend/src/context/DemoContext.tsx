@@ -31,6 +31,8 @@ import { invalidateRestoredWorkflow, loadReviewSession, saveReviewSession } from
 
 interface DemoState {
   loadingWorkflow: boolean
+  workflowLoadError: string
+  retryWorkflow: () => void
   reviewDrafts: Record<string, string>
   setReviewDraft: (id: string, text: string | null) => void
   reviewStorageError: string
@@ -99,12 +101,13 @@ function sourceLabel(scenario: DemoScenario, workflow: WorkflowResponse | null):
   return '尚未运行工作流'
 }
 
-const WORKFLOW_PAGES = new Set(['/match', '/resume', '/claims', '/ats', '/confirm', '/history'])
+const WORKFLOW_PAGES = new Set(['/match', '/resume', '/claims', '/ats', '/confirm', '/history', '/interview'])
 
 export function DemoProvider({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()
   const reviewPage = WORKFLOW_PAGES.has(pathname)
   const demoAttempted = useRef(false)
+  const [workflowLoadError, setWorkflowLoadError] = useState('')
   const [restored] = useState(() => loadReviewSession(sessionStorage))
   const [loadingWorkflow, setLoadingWorkflow] = useState(getActiveScenario() === 'live' && !restored)
   const [reviewDrafts, setReviewDrafts] = useState<Record<string,string>>(restored?.drafts ?? {})
@@ -125,6 +128,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const activeApplication = useRef(restored?.workflow.application_id)
   const skipSourceInvalidate = useRef(Boolean(restored?.workflow))
   const backendHydrated = useRef(Boolean(restored?.workflow) || getActiveScenario() !== 'live')
+  const restoredWorkflow = useRef<WorkflowResponse | null>(null)
+  const serverDrafts = useRef<Record<string, string> | undefined>(undefined)
   const setReviewDraft = useCallback((id: string, text: string | null) => {
     revision.current += 1
     setReviewDrafts(values => {const next = {...values}; if (text === null) delete next[id]; else next[id] = text; return next})
@@ -141,22 +146,21 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       return false
     }
     const draft = res.data
-    let next = draft.workflow!
-    let notice = draft.saved_at ? `已从本机后端恢复分析草稿（${new Date(draft.saved_at).toLocaleString()}）。` : '已从本机后端恢复分析草稿。'
-    if (draft.stale) {
-      next = invalidateRestoredWorkflow(next, draft.stale_reason || '岗位或经历源头已变化，请重新分析。')
-      notice = draft.stale_reason || notice
-    }
+    const notice = draft.stale ? draft.stale_reason || '岗位或经历源头已变化，请重新分析。' : ''
+    const next = notice ? invalidateRestoredWorkflow(draft.workflow!, notice) : draft.workflow!
     skipSourceInvalidate.current = true
     setJdRawInput(draft.jd || next.parsed_jd.source_text || '')
     setActiveJobId(draft.active_job_id || next.target_job?.id || null)
     if (opts?.replaceForm !== false && draft.form) setResumeForm(draft.form)
-    setReviewDrafts(draft.drafts ?? {})
+    serverDrafts.current = draft.drafts ?? {}
+    setReviewDrafts(serverDrafts.current)
     activeApplication.current = next.application_id
-    setWorkflowState({
-      ...next,
+    const snapshot = {...next,
       review_session: next.review_session ?? { startedAt: Date.now(), actions: 0, interruptions: 0, choices: {} },
-    })
+    }
+    restoredWorkflow.current = snapshot
+    setWorkflowLoadError('')
+    setWorkflowState(snapshot)
     setClaimDecisions({})
     setFieldDecisions({})
     setSimulatedConfirmed(false)
@@ -172,16 +176,28 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     void applyBackendDraft().finally(() => setLoadingWorkflow(false))
   }, [applyBackendDraft, scenario, workflow])
 
+  const retryWorkflow = useCallback(() => {
+    const started = revision.current
+    setWorkflowLoadError('')
+    setLoadingWorkflow(true)
+    void (async () => {
+      if (await applyBackendDraft() || started !== revision.current) return
+      const result = await loadClassroomDemo()
+      if (started !== revision.current) return
+      if (!result.data?.saved) {
+        setWorkflowLoadError(result.error?.message ?? '无法载入课堂示例。')
+      } else if (!await applyBackendDraft() && started === revision.current) {
+        setWorkflowLoadError('无法读取课堂草稿，请重试。')
+      }
+    })().finally(() => setLoadingWorkflow(false))
+  }, [applyBackendDraft])
+
   useEffect(() => {
     if (!reviewPage || loadingWorkflow || scenario !== 'live' || workflow || resumeForm?.dirty ||
         Object.keys(reviewDrafts).length || demoAttempted.current) return
     demoAttempted.current = true
-    const started = revision.current
-    setLoadingWorkflow(true)
-    void loadClassroomDemo().then(async result => {
-      if (result.data?.saved && started === revision.current) await applyBackendDraft()
-    }).finally(() => setLoadingWorkflow(false))
-  }, [reviewPage, loadingWorkflow, scenario, workflow, resumeForm?.dirty, reviewDrafts, applyBackendDraft])
+    retryWorkflow()
+  }, [reviewPage, loadingWorkflow, scenario, workflow, resumeForm?.dirty, reviewDrafts, retryWorkflow])
 
   useEffect(() => {
     let active = true
@@ -199,6 +215,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (scenario !== 'live' || !workflow || workflow._prerecorded) return
+    // Restoring a browser session intentionally drops approvals. Persist only after a change.
+    if (workflow === (restoredWorkflow.current ?? restored?.workflow) &&
+        reviewDrafts === (restoredWorkflow.current ? serverDrafts.current : restored?.drafts)) return
     const analyzedJd = workflow.parsed_jd?.source_text?.trim()
     if (!analyzedJd) return
     const timer = window.setTimeout(() => {
@@ -217,7 +236,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       })
     }, 450)
     return () => window.clearTimeout(timer)
-  }, [workflow, activeJobId, resumeForm, reviewDrafts, scenario])
+  }, [workflow, activeJobId, resumeForm, reviewDrafts, scenario, restored])
 
   useEffect(() => {
     if (!Object.keys(reviewDrafts).length && !reviewStorageError && !resumeForm?.dirty) return
@@ -257,9 +276,10 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   )
 
   const invalidateWorkflow = useCallback((reason = '岗位或经历材料有变动，请重新核验当前草稿。') => {
+    if (!activeApplication.current) return
     revision.current += 1
     setWorkflowState(previous => previous ? invalidateRestoredWorkflow(previous, reason) : previous)
-    if (activeApplication.current) setWorkflowSourceNotice(reason)
+    setWorkflowSourceNotice(reason)
     setClaimDecisions({})
     setFieldDecisions({})
     setSimulatedConfirmed(false)
@@ -468,6 +488,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     () => ({
       scenario,
       loadingWorkflow: reviewPage && loadingWorkflow,
+      workflowLoadError, retryWorkflow,
       reviewDrafts, setReviewDraft, reviewStorageError, restoredAt,
       step,
       jdRawInput, activeJobId, invalidateWorkflow,
@@ -499,7 +520,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     }),
     [
       scenario,
-      reviewPage, loadingWorkflow,
+      reviewPage, loadingWorkflow, workflowLoadError, retryWorkflow,
       reviewDrafts, setReviewDraft, reviewStorageError, restoredAt,
       step,
       jdRawInput, activeJobId, invalidateWorkflow,

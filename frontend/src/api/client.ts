@@ -385,7 +385,7 @@ export class ApplyGuardApiClient implements ApiClient {
     workflow?: WorkflowResponse | null
   }>> {
     try {
-      const res = await apiFetch(`${apiBase()}/api/v1/workflow/draft`)
+      const res = await apiFetch(`${apiBase()}/api/v1/workflow/draft`, { cache: 'no-store' })
       const body = await readJson(res)
       if (!res.ok) return { error: toApiError(body, res.status) }
       return { data: body as {

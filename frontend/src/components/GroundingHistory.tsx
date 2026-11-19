@@ -10,15 +10,17 @@ export function GroundingHistory() {
   const [notice,setNotice] = useState('')
   if (!workflow) return null
   const versions = loadTextVersions(workflow.candidate_id).filter(v => v.applicationId === workflow.application_id)
-  return <details className="grounding-history"><summary>历史版本与状态回滚（本浏览器最近20版）</summary>
-    <p>保存正文、删改记录及当时的核验状态。回滚创建新版本，历史通过状态只供查阅，恢复后须重新核验。清除浏览器存储会失去历史。</p>
+  return <details className="grounding-history"><summary><span>历史版本</span><small>{versions.length} / 20 版</small></summary>
+    <p>版本保存在本浏览器。回滚后需重新核验。</p>
     <button className="btn secondary" type="button" onClick={() => {
       try {saveTextVersion(workflow,'手动保存');setNotice(`当前版本已保存 · ${new Date().toLocaleTimeString()}`)}
       catch {setNotice('保存失败，尚未更改当前内容。')}
     }}>保存当前版本</button>
     {!versions.length && <p className="muted">尚无历史版本，可先保存当前版本。</p>}
     {versions.map(version => <details className="item-block grounding-history-version" key={version.id}>
-      <summary>{version.label} · {new Date(version.createdAt).toLocaleString()} · {version.claims.length} 条草稿</summary>
+      <summary>{version.label} · {version.claims.length} 条
+        <small>{new Date(version.createdAt).toLocaleString()}</small>
+      </summary>
       {version.stateSnapshot && <p className="muted">当时状态：{zhLookup(ZH_WORKFLOW, version.stateSnapshot.workflowStatus)}
         {version.stateSnapshot.requiresReverification && ' · 当时待重新核验'}</p>}
       {version.claims.length > 0 && <ol className="grounding-history-claims">

@@ -220,8 +220,19 @@ a { text-underline-offset:3px; }
 .rr-card-out .btn.primary:hover { background:var(--surface); color:var(--ink); border-color:var(--tag-edge); }
 .rr-tip-title { font-family:var(--font); }
 .sample-data-note { color:var(--steel); font-size:var(--text-meta); line-height:1.7; margin:0 0 22px; padding:10px 14px; border:1px solid var(--hairline); border-radius:8px; background:var(--canvas); }
-.grounding-history { border-top:1px solid var(--hairline); margin-top:22px; padding-top:15px; font-size:var(--text-meta); }
-.grounding-history summary { min-height:32px; padding:6px 0; color:var(--steel); }
+.grounding-history { margin-top:16px; padding:12px 16px; min-width:0; font-size:var(--text-meta); }
+.grounding-history summary { min-height:32px; padding:6px 0; color:var(--steel); overflow-wrap:anywhere; }
+.grounding-history > summary { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; list-style:none; padding:0; }
+.grounding-history > summary::before {
+  content:""; width:7px; height:7px; flex:none; border-right:1.5px solid currentColor;
+  border-bottom:1.5px solid currentColor; transform:rotate(-45deg);
+}
+.grounding-history[open] > summary::before { transform:rotate(45deg); }
+.grounding-history > summary > span { font-weight:600; color:var(--ink); }
+.grounding-history > summary > small { margin-inline-start:auto; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.grounding-history .grounding-history-version { padding:12px; min-width:0; }
+.grounding-history-version > summary > small { display:block; margin-inline-start:1em; }
+.classroom-label { display:inline-flex; margin-bottom:8px; }
 .grounding-history > p { line-height:1.8; margin:12px 0; color:var(--steel); }
 .grounding-history-version { margin-top:8px; }
 .grounding-history-claims { margin:12px 0; padding-inline-start:1.5em; }

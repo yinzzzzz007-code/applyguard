@@ -24,8 +24,7 @@ export function GroundedExport({editing = false}: {editing?: boolean}) {
     .map(c => ({claim_id:c.claim_id,text:(claimDecisions[c.claim_id]?.editedText ?? c.text).trim()}))
   return <div className="review-export">
     <h3>导出个人草稿</h3>
-    <p>下载你确认的正文 TXT。未核验和冲突状态保留在审核记录中；此操作不代表材料已通过检查，也不进入网申填写。</p>
-    <p className="muted">如需准备网申，请返回并选择“继续核验并准备网申”，通过材料检查后再模拟填写。</p>
+    <p>导出正文 TXT。待核验和冲突仍记入审核记录。</p>
     {editing && <p role="status">请先保存或取消正在编辑的句子，再确认导出。</p>}
     <div className="export-preview"><h4>将导出的正文（{claims.length} 条）</h4><p style={{whiteSpace:'pre-wrap'}}>{claims.map(c => c.text).join('\n')}</p></div>
     <label><input type="checkbox" checked={!editing && confirmed === signature} disabled={busy || editing || !claims.length}

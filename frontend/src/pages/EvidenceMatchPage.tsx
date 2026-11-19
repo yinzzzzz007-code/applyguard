@@ -231,12 +231,8 @@ export function EvidenceMatchPage() {
     <section className="panel">
       <header className="panel-head">
         <h2>证据匹配</h2>
-        <p>只对照任职要求与加分项；职位描述不参与匹配。点击彩色片段查看经历与证据明细。</p>
-        <p className="muted">相关度与材料核验分别计算。</p>
+        <p>点击岗位要求，查看对应经历与材料。</p>
         {workflowSourceNotice && <p className="callout warn">{workflowSourceNotice}</p>}
-        {workflow.requires_reverification && !workflowSourceNotice && (
-          <p className="callout warn">源头或正文已变动，当前匹配仅供参考；请回岗位说明重新分析后再继续后续步骤。</p>
-        )}
         {(() => {
           const matcherMode = workflow.component_modes?.evidence_matcher
           const label = matcherMode

@@ -563,7 +563,10 @@ export function ApplicationHistoryPage() {
               <h3>{workflow.parsed_jd.title === 'UNKNOWN' ? '当前申请' : workflow.parsed_jd.title}</h3>
               <span className="tag">当前草稿 · 待确认</span>
             </div>
-            <Link className="btn secondary" to="/ats">继续检查</Link>
+            <div className="btn-row">
+              <Link className="btn secondary" to="/ats">继续检查</Link>
+              <Link className="btn secondary" to="/resume#review-export">导出个人草稿</Link>
+            </div>
           </article>
         )}
         {!records.length ? (

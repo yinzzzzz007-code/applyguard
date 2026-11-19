@@ -4,6 +4,7 @@ import type { EditableResumeForm } from '../api/types'
 import { generateInterview, getApiClient } from '../api/client'
 import { useDemo } from '../context/DemoContext'
 import { interviewResume, type InterviewGuide, type InterviewResume } from '../resume/interview'
+import { classroomInterview } from '../resume/classroomInterview'
 import { normalizeResumeForm } from '../resume/formModel'
 import { LoadingState } from '../components/States'
 import { Button } from '../components/ui/button'
@@ -46,7 +47,10 @@ export function InterviewPage() {
   const [duration, setDuration] = useState<'one_minute' | 'three_minutes'>('one_minute')
   const request = useRef<AbortController | null>(null)
   const signature = JSON.stringify([jd.trim(), resume])
-  const guide = result?.signature === signature && result.guide.coverage_version === 2 ? result.guide : null
+  const generated = result?.signature === signature && result.guide.coverage_version === 2 ? result.guide : null
+  const sample = !generated && workflow?.application_id === 'app_classroom_sample'
+    && jd.trim() === workflow.parsed_jd.source_text.trim()
+  const guide = generated ?? (sample ? classroomInterview : null)
 
   useEffect(() => () => { request.current?.abort() }, [])
   useEffect(() => {
@@ -132,7 +136,7 @@ export function InterviewPage() {
       <Button
         disabled={busy || !resume || jd.trim().length < 20 || consent !== signature ||
           (!resume.projects.length && !resume.internships.length)} onClick={() => void generate()}>
-        {busy ? '正在生成面经…' : guide ? '重新生成面经' : '生成自我介绍与模拟问答'}
+        {busy ? '正在生成面经…' : generated ? '重新生成面经' : '生成自我介绍与模拟问答'}
       </Button>
       {jd.trim().length > 0 && jd.trim().length < 20 && <p className="muted">请补充至少 20 字的岗位说明。</p>}
       {resume && !resume.projects.length && !resume.internships.length &&
@@ -144,7 +148,7 @@ export function InterviewPage() {
 
     {guide && <div className="interview-output">
       <section className="profile-card">
-        <div className="item-head"><h3>自我介绍</h3>
+        <div className="item-head"><h3>{sample ? '课堂面经示例' : '自我介绍'}</h3>
           <button type="button" className="btn secondary" onClick={download}>下载面经 TXT</button>
         </div>
         <div className="btn-row" aria-label="自我介绍时长">

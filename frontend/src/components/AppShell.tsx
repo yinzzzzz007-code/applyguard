@@ -18,14 +18,14 @@ const SCENARIOS: {id:DemoScenario;label:string}[] = [
 ]
 
 export function AppShell({children}:{children:React.ReactNode}) {
-  const {loadingWorkflow,scenario,setScenario,setStep,dataSourceLabel,workflow,restoredAt,reviewStorageError,reviewDrafts,resumeForm} = useDemo()
+  const {loadingWorkflow,workflowLoadError,retryWorkflow,scenario,setScenario,setStep,dataSourceLabel,workflow,restoredAt,reviewStorageError,reviewDrafts,resumeForm} = useDemo()
   const location = useLocation()
   const navigate = useNavigate()
   const drawer = useRef<HTMLDetailsElement>(null)
   const [restoreDismissed, setRestoreDismissed] = useState(() => {
     try { return sessionStorage.getItem(RESTORE_NOTICE_KEY) === restoredAt } catch { return false }
   })
-  const fromPath = stepFromPath(location.pathname)
+  const classroom = workflow?.application_id === 'app_classroom_sample'
   const title = location.pathname === '/help' ? '使用帮助' : NAV_GROUPS.flatMap(group => group.items).find(item => item.path === location.pathname)?.label ?? '申请工作台'
   useEffect(() => {
     const target = stepFromPath(location.pathname)
@@ -74,11 +74,9 @@ export function AppShell({children}:{children:React.ReactNode}) {
       </header>
       <main id="workspace-main" className="workspace-main" tabIndex={-1}>
         {workflow?._prerecorded && <p className="workspace-notice">{zhText(workflow._prerecorded.notice)}</p>}
-        {fromPath && workflow?.mock_notice && !workflow._prerecorded && <details className="sample-data-note"><summary>演示与处理说明</summary><p>当前为本地实验版，网申使用模拟表单，最终提交由本人完成。</p><p>{zhText(workflow.mock_notice)}</p></details>}
-        {restoredAt && workflow && !restoreDismissed && (
+        {restoredAt && workflow && !classroom && !restoreDismissed && (
           <p className="workspace-notice" role="status">
-            浏览器刚恢复了本机上次未完成的申请进度（{new Date(restoredAt).toLocaleString('zh-CN')}）。
-            这不是新的审核结果；材料与核验状态请再确认一次。
+            已恢复草稿。
             {' '}<NavLink to="/resume">打开简历审查</NavLink>
             {' · '}
             <button
@@ -95,7 +93,11 @@ export function AppShell({children}:{children:React.ReactNode}) {
         )}
         {reviewStorageError && <p className="danger-text" role="alert">{reviewStorageError}</p>}
         {!!Object.keys(reviewDrafts).length && location.pathname !== '/resume' && <p className="workspace-notice">审核页有 {Object.keys(reviewDrafts).length} 处暂存输入。<NavLink to="/resume">返回保存修改</NavLink></p>}
-        {workflow?.application_id === 'app_classroom_sample' && <p className="workspace-notice">课堂示例</p>}
+        {classroom && <span className="badge muted classroom-label">课堂示例</span>}
+        {!workflow && !loadingWorkflow && workflowLoadError && <div className="workspace-notice" role="status">
+          {workflowLoadError}{' '}
+          {!resumeForm?.dirty && !Object.keys(reviewDrafts).length && <button className="text-action" type="button" onClick={retryWorkflow}>重试载入</button>}
+        </div>}
         <PageMotion>{loadingWorkflow && !workflow ? <LoadingState label="正在打开申请草稿…" /> : children}</PageMotion>
       </main>
       <footer className="workspace-footer"><span>ApplyGuard · 让表达有据可依</span><details><summary>数据与模型说明</summary><p>数据来源：{dataSourceLabel}。{workflow?.mock_notice ? zhText(workflow.mock_notice) : ''} 岗位解析与 SAG 分别配置；SAG 启用时会向所配置的模型服务发送材料。</p></details></footer>
