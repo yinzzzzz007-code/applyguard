@@ -5,6 +5,7 @@ import { generateInterview, getApiClient } from '../api/client'
 import { useDemo } from '../context/DemoContext'
 import { interviewResume, type InterviewGuide, type InterviewResume } from '../resume/interview'
 import { classroomInterview } from '../resume/classroomInterview'
+import { CLASSROOM_APPLICATION_ID } from '../resume/classroomSample'
 import { normalizeResumeForm } from '../resume/formModel'
 import { LoadingState } from '../components/States'
 import { Button } from '../components/ui/button'
@@ -48,7 +49,7 @@ export function InterviewPage() {
   const request = useRef<AbortController | null>(null)
   const signature = JSON.stringify([jd.trim(), resume])
   const generated = result?.signature === signature && result.guide.coverage_version === 2 ? result.guide : null
-  const sample = !generated && workflow?.application_id === 'app_classroom_sample'
+  const sample = !generated && workflow?.application_id === CLASSROOM_APPLICATION_ID
     && jd.trim() === workflow.parsed_jd.source_text.trim()
   const guide = generated ?? (sample ? classroomInterview : null)
 

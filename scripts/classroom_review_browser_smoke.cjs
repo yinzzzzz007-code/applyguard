@@ -36,6 +36,14 @@ async function openReviewPages(browser, base, local) {
     await page.locator(routes.claims).first().waitFor();
   }
 
+  await page.goto(base + '/history');
+  const classroomRecord = page.getByRole('region', { name: '申请记录' }).getByText('岗位分析已完成，初稿已保存。申请待确认，未投递。');
+  await classroomRecord.waitFor();
+  assert.equal(await page.locator('.resume-history-block').evaluate(el => el.getBoundingClientRect().top < innerHeight), true);
+  await page.reload();
+  await classroomRecord.waitFor();
+  if (local) await page.locator('.resume-history-block').screenshot({ path: path.join(output, 'checked-application-records.png') });
+
   for (const [name, selector] of Object.entries(routes)) {
     await page.goto(base + '/' + name);
     await page.locator(selector).first().waitFor();
@@ -91,8 +99,12 @@ async function checkExports(page, base) {
   if (!await tools.evaluate(element => element.open)) await tools.locator('summary').first().click();
   const history = page.locator('.grounding-history');
   await history.locator('summary').first().click();
+  const initialDraft = history.locator('.grounding-history-version').filter({ hasText: '课堂初稿' });
+  assert.match(await history.locator('summary').first().textContent(), /本地 0 \/ 20/);
+  await initialDraft.locator('summary').click();
+  await initialDraft.getByText(/使用 Python 和 PyTorch/).waitFor();
   await history.getByRole('button', { name: '保存当前版本' }).click();
-  await history.locator('.grounding-history-version').first().waitFor();
+  await history.locator('.grounding-history-version').filter({ hasText: '手动保存' }).waitFor();
   const bounds = await history.evaluate(element => ({
     padding: parseFloat(getComputedStyle(element).paddingLeft),
     width: element.clientWidth,
@@ -109,10 +121,10 @@ async function checkExports(page, base) {
   const title = history.locator('summary').first();
   assert.match(await title.textContent(), /1 \/ 20/);
   await title.click();
-  await history.locator('.grounding-history-version summary').click();
-  await history.getByRole('button', { name: '回滚至此版' }).click();
+  await initialDraft.locator('summary').click();
+  await initialDraft.getByRole('button', { name: '回滚至此版' }).click();
   assert.match(await title.textContent(), /2 \/ 20/);
-  await history.getByText('回滚至：手动保存', { exact: false }).waitFor();
+  await history.getByText('回滚至：课堂初稿', { exact: false }).waitFor();
   console.log('PASS exports and mobile history card');
 }
 

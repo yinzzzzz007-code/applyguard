@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useDemo } from '../context/DemoContext'
 import { ZH_CLAIM, ZH_WORKFLOW, zhLookup } from '../i18n'
+import { classroomInitialVersion } from '../resume/classroomSample'
 import { loadTextVersions, restoreTextVersion, saveTextVersion } from '../resume/groundingHistory'
 
 const CHOICE_LABELS: Record<string, string> = { original: '用原句', edit: '自己改', accept: '确认采用' }
@@ -10,16 +11,19 @@ export function GroundingHistory() {
   const [notice,setNotice] = useState('')
   if (!workflow) return null
   const versions = loadTextVersions(workflow.candidate_id).filter(v => v.applicationId === workflow.application_id)
-  return <details className="grounding-history"><summary><span>历史版本</span><small>{versions.length} / 20 版</small></summary>
-    <p>版本保存在本浏览器。回滚后需重新核验。</p>
+  const hasClassroomDraft = workflow.application_id === classroomInitialVersion.applicationId
+    && workflow.candidate_id === classroomInitialVersion.candidateId
+  const visibleVersions = hasClassroomDraft ? [...versions, classroomInitialVersion] : versions
+  return <details className="grounding-history"><summary><span>历史版本</span><small>本地 {versions.length} / 20 版</small></summary>
+    <p>本地版本保存在本浏览器，回滚后需重新核验。</p>
     <button className="btn secondary" type="button" onClick={() => {
       try {saveTextVersion(workflow,'手动保存');setNotice(`当前版本已保存 · ${new Date().toLocaleTimeString()}`)}
       catch {setNotice('保存失败，尚未更改当前内容。')}
     }}>保存当前版本</button>
-    {!versions.length && <p className="muted">尚无历史版本，可先保存当前版本。</p>}
-    {versions.map(version => <details className="item-block grounding-history-version" key={version.id}>
+    {!visibleVersions.length && <p className="muted">尚无历史版本，可先保存当前版本。</p>}
+    {visibleVersions.map(version => <details className="item-block grounding-history-version" key={version.id}>
       <summary>{version.label} · {version.claims.length} 条
-        <small>{new Date(version.createdAt).toLocaleString()}</small>
+        <small>{version.createdAt ? new Date(version.createdAt).toLocaleString() : '课堂示例'}</small>
       </summary>
       {version.stateSnapshot && <p className="muted">当时状态：{zhLookup(ZH_WORKFLOW, version.stateSnapshot.workflowStatus)}
         {version.stateSnapshot.requiresReverification && ' · 当时待重新核验'}</p>}

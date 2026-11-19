@@ -6,6 +6,7 @@ import { useDemo } from '../context/DemoContext'
 import { zhText } from '../i18n'
 import { rememberMaxStep, stepFromPath } from '../flow'
 import { NAV_GROUPS } from '../navigation'
+import { CLASSROOM_APPLICATION_ID } from '../resume/classroomSample'
 import { Icon } from './Icon'
 import { LoadingState } from './States'
 import { PageMotion } from './PageMotion'
@@ -25,7 +26,7 @@ export function AppShell({children}:{children:React.ReactNode}) {
   const [restoreDismissed, setRestoreDismissed] = useState(() => {
     try { return sessionStorage.getItem(RESTORE_NOTICE_KEY) === restoredAt } catch { return false }
   })
-  const classroom = workflow?.application_id === 'app_classroom_sample'
+  const classroom = workflow?.application_id === CLASSROOM_APPLICATION_ID
   const title = location.pathname === '/help' ? '使用帮助' : NAV_GROUPS.flatMap(group => group.items).find(item => item.path === location.pathname)?.label ?? '申请工作台'
   useEffect(() => {
     const target = stepFromPath(location.pathname)

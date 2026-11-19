@@ -13,6 +13,7 @@ import {
   splitBullets,
   type ResumeTemplateId,
 } from '../resume/generate'
+import { CLASSROOM_APPLICATION_ID } from '../resume/classroomSample'
 import { normalizeResumeForm } from '../resume/formModel'
 
 function storedResumeForm(): EditableResumeForm | null {
@@ -395,6 +396,7 @@ function ResumePreview({
 export function ApplicationHistoryPage() {
   const navigate = useNavigate()
   const { resumeForm, scenario, workflow } = useDemo()
+  const classroom = workflow?.application_id === CLASSROOM_APPLICATION_ID
   const [records, setRecords] = useState(loadApplicationHistory)
   const [error, setError] = useState('')
   const [template, setTemplate] = useState<ResumeTemplateId>('cn-academic')
@@ -477,6 +479,53 @@ export function ApplicationHistoryPage() {
         </p>
       </header>
 
+      <section className="stack resume-history-block" aria-labelledby="application-records-title">
+        <h3 id="application-records-title">申请记录</h3>
+        {error && <div className="callout danger">{error}</div>}
+        {workflow && !workflow._prerecorded && (classroom || !records.some(record => record.applicationId === workflow.application_id)) && (
+          <article className="item-block">
+            <div className="item-head">
+              <h3>{workflow.parsed_jd.title === 'UNKNOWN' ? '当前申请' : workflow.parsed_jd.title}</h3>
+              <span className="tag">{classroom ? '课堂示例' : '当前草稿 · 待确认'}</span>
+            </div>
+            {classroom && (
+              <p>岗位分析已完成，初稿已保存。申请待确认，未投递。</p>
+            )}
+            <div className="btn-row">
+              <Link className="btn secondary" to="/ats">继续检查</Link>
+              <Link className="btn secondary" to="/resume#review-export">导出个人草稿</Link>
+            </div>
+          </article>
+        )}
+        {!records.length ? (
+          (!workflow || workflow._prerecorded) && (
+            <p className="muted">完成最终确认后，记录会保存在当前浏览器。</p>
+          )
+        ) : (
+          records.map((record) => (
+            <article className="item-block" key={record.id}>
+              <div className="item-head">
+                <h3>
+                  {record.title === 'UNKNOWN' ? '未知岗位' : record.title} ·{' '}
+                  {record.company === 'UNKNOWN' ? '未知公司' : record.company}
+                </h3>
+                <RiskBadge level={record.riskLevel} />
+              </div>
+              <p>
+                <strong>结果：</strong>
+                {record.outcome === 'BLOCKED_REVIEWED' ? '已知悉阻断，未投递' : '本地模拟确认，未投递'}
+              </p>
+              <p className="muted">
+                记录时间：{new Date(record.recordedAt).toLocaleString()} · 来源：{record.source}
+              </p>
+              <button type="button" className="btn secondary" onClick={() => remove(record.id)}>
+                删除本地记录
+              </button>
+            </article>
+          ))
+        )}
+      </section>
+
       {loadSavedResume && !savedResume ? (
         <LoadingState label="正在读取已保存的简历资料…" />
       ) : loadSavedResume && savedResume?.error ? (
@@ -553,48 +602,6 @@ export function ApplicationHistoryPage() {
           </div>
         </>
       )}
-
-      <div className="stack resume-history-block">
-        <h3>申请记录</h3>
-        {error && <div className="callout danger">{error}</div>}
-        {workflow && !workflow._prerecorded && !records.some(record => record.applicationId === workflow.application_id) && (
-          <article className="item-block">
-            <div className="item-head">
-              <h3>{workflow.parsed_jd.title === 'UNKNOWN' ? '当前申请' : workflow.parsed_jd.title}</h3>
-              <span className="tag">当前草稿 · 待确认</span>
-            </div>
-            <div className="btn-row">
-              <Link className="btn secondary" to="/ats">继续检查</Link>
-              <Link className="btn secondary" to="/resume#review-export">导出个人草稿</Link>
-            </div>
-          </article>
-        )}
-        {!records.length ? (
-          !workflow && <p className="muted">暂无模拟记录。</p>
-        ) : (
-          records.map((record) => (
-            <article className="item-block" key={record.id}>
-              <div className="item-head">
-                <h3>
-                  {record.title === 'UNKNOWN' ? '未知岗位' : record.title} ·{' '}
-                  {record.company === 'UNKNOWN' ? '未知公司' : record.company}
-                </h3>
-                <RiskBadge level={record.riskLevel} />
-              </div>
-              <p>
-                <strong>结果：</strong>
-                {record.outcome === 'BLOCKED_REVIEWED' ? '已知悉阻断，未投递' : '本地模拟确认，未投递'}
-              </p>
-              <p className="muted">
-                记录时间：{new Date(record.recordedAt).toLocaleString()} · 来源：{record.source}
-              </p>
-              <button type="button" className="btn secondary" onClick={() => remove(record.id)}>
-                删除本地记录
-              </button>
-            </article>
-          ))
-        )}
-      </div>
     </section>
   )
 }
