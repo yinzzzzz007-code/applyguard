@@ -1,0 +1,77 @@
+{
+  "candidateId": "cand_demo_ai_fullstack",
+  "basic": {
+    "name": "张三",
+    "gender": "",
+    "birthday": "",
+    "ethnicity": "",
+    "politics": "",
+    "phone": "",
+    "email": "",
+    "idType": "",
+    "idNo": "",
+    "city": "",
+    "hukou": "",
+    "github": "",
+    "linkedin": "",
+    "website": ""
+  },
+  "dirty": false,
+  "intention": {
+    "projectType": "实习生",
+    "expectRole": "后端开发",
+    "expectCity": "",
+    "availability": ""
+  },
+  "education": [
+    {
+      "id": "demo_a_scut",
+      "school": "华南理工大学",
+      "degree": "",
+      "major": "",
+      "fullTime": "",
+      "start": "",
+      "end": "",
+      "rank": "",
+      "gpa": "",
+      "location": "",
+      "coursework": ""
+    }
+  ],
+  "internships": [],
+  "projects": [
+    {
+      "id": "demo_a_llm",
+      "title": "轻量大语言模型训练与对齐",
+      "role": "独立开发",
+      "description": "使用 Python 和 PyTorch 搭建轻量 Llama 3 模型的训练流程，完成预训练、SFT、LoRA 微调和 DPO 偏好对齐实验。",
+      "techStack": "Python、PyTorch、SFT、LoRA、DPO",
+      "start": "2026-03",
+      "end": "2026-05",
+      "organization": "",
+      "location": "",
+      "link": ""
+    },
+    {
+      "id": "demo_a_agent",
+      "title": "代码维护助手",
+      "role": "",
+      "description": "使用 Python 实现工具调用流程，把文件检索、代码定位和测试验证串起来，根据测试结果迭代修改并记录变更。",
+      "techStack": "Python、Agent、Tool Calling、测试验证",
+      "start": "2026-06",
+      "end": "2026-08",
+      "organization": "",
+      "location": "",
+      "link": ""
+    }
+  ],
+  "awards": [],
+  "extras": {
+    "skills": "Python、PyTorch、SFT、LoRA、DPO、Spring Boot、MySQL、SQL、Redis",
+    "awards": "",
+    "languages": "",
+    "researchFocus": "",
+    "publications": "",
+    "summary": "做过轻量语言模型的训练与对齐实验，也做过结合工具调用和测试反馈的代码维护助手。"
+  }
+}

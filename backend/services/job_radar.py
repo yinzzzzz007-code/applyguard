@@ -31,11 +31,13 @@ FACTORS = (
     ("torch", "深度学习框架", "技术", ("PyTorch", "TensorFlow", "深度学习框架")),
     ("llm", "大语言模型", "技术", ("LLM", "大语言模型", "大模型")),
     ("multimodal", "多模态", "技术", ("multimodal", "多模态", "vision-language")),
-    ("agent", "智能体", "技术", ("LLM agent", "agentic", "智能体", "工具调用")),
+    ("agent", "智能体", "技术", ("Agent", "agentic", "智能体", "工具调用", "tool calling")),
+    ("alignment", "微调与对齐", "技术", ("SFT", "LoRA", "DPO", "模型微调", "偏好对齐")),
     ("rag", "检索增强", "技术", ("RAG", "检索增强", "retrieval augmented")),
     ("systems", "训练与推理系统", "技术", ("CUDA", "分布式训练", "vLLM", "推理引擎")),
-    ("web", "接口开发", "技术", ("HTTP API", "FastAPI", "接口服务", "后端开发")),
-    ("testing", "自动化测试", "技术", ("automated tests", "unit tests", "自动化测试", "单元测试")),
+    ("web", "接口开发", "技术", ("HTTP API", "FastAPI", "Spring Boot", "接口服务", "后端开发")),
+    ("sql", "SQL 与关系数据库", "技术", ("SQL", "MySQL", "PostgreSQL", "关系数据库")),
+    ("testing", "自动化测试", "技术", ("automated tests", "automated testing", "unit tests", "自动化测试", "单元测试")),
     ("deployment", "部署与落地", "能力要求", ("部署", "上线", "deployment", "production")),
     ("research", "研究与论文", "能力要求", ("论文", "publication", "research experience", "研究经历")),
     ("degree", "学历", "背景要求", ("本科", "硕士", "博士", "bachelor", "master", "PhD")),
@@ -305,6 +307,20 @@ def extract_factors(text: str) -> list[dict[str, Any]]:
     return factors
 
 
+def _matching_resume():
+    from backend.services.local_store import load_resume_draft
+    try:
+        return load_resume_draft()
+    except (OSError, ValueError):
+        return None
+
+
+def _apply_current_match(job, resume):
+    from backend.services.job_matching import match_job
+    result = match_job(job, resume)
+    job.update(match_score=result["score"], match_level=result["level"], match_reasons=result)
+
+
 def list_jobs(path: str) -> dict[str, Any]:
     from backend.services.job_matching import ai_enabled
     query = parse_qs(urlsplit(path).query)
@@ -312,6 +328,10 @@ def list_jobs(path: str) -> dict[str, Any]:
     stage = query.get("stage", [""])[0]
     with database() as conn:
         jobs = [_view(row) for row in conn.execute(JOB_WITH_UNREAD + " ORDER BY imported_at DESC, id")]
+    # The resume can change independently of the last official source refresh.
+    resume = _matching_resume()
+    for job in jobs:
+        _apply_current_match(job, resume)
     for parameter, field in {"source": "source_id", "match_level": "match_level", "recruitment_type": "recruitment_type",
                              "status": "status"}.items():
         if parameter in query:
@@ -547,6 +567,7 @@ def handle_get(path: str) -> dict[str, Any]:
                              "job": json.loads(row["payload"])} for row in conn.execute(
                     "SELECT * FROM opportunity_versions WHERE job_id=? ORDER BY version DESC", (job["id"],))]
             return {"items": versions}
+        _apply_current_match(job, _matching_resume())
         return {"job": job}
     raise ValueError("Route not found")
 

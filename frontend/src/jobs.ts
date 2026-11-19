@@ -26,8 +26,8 @@ export function importMessage(result: { created: number; updated: number; unchan
 }
 
 export type JobScope = 'active' | 'preparing' | 'archived' | 'all'
-export type JobSort = 'newest' | 'company'
-export function filterJobs<T extends Pick<Opportunity,'title'|'company'|'location'|'description'|'status'|'stage'|'imported_at'>>(
+export type JobSort = 'match' | 'newest' | 'company'
+export function filterJobs<T extends Pick<Opportunity,'title'|'company'|'location'|'description'|'status'|'stage'|'imported_at'|'match_score'|'match_level'|'match_reasons'>>(
   items:T[], query:string, scope:JobScope, status:string, sort:JobSort,
 ):T[] {
   const terms = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean)
@@ -35,7 +35,19 @@ export function filterJobs<T extends Pick<Opportunity,'title'|'company'|'locatio
     const inScope = scope === 'all' || (scope === 'archived' ? job.stage === 'archived' : scope === 'preparing' ? job.stage === 'preparing' : job.stage !== 'archived')
     const text = [job.title,job.company,job.location,job.description].join(' ').toLocaleLowerCase()
     return inScope && (status === 'all' || job.status === status) && terms.every(term => text.includes(term))
-  }).sort((a,b) => sort === 'company'
-    ? a.company.localeCompare(b.company,'zh-CN') || a.title.localeCompare(b.title,'zh-CN')
-    : (Date.parse(b.imported_at) || 0) - (Date.parse(a.imported_at) || 0))
+  }).sort((a,b) => {
+    if (sort === 'company') {
+      return a.company.localeCompare(b.company,'zh-CN') || a.title.localeCompare(b.title,'zh-CN')
+    }
+    if (sort === 'match') {
+      const scoreA = a.match_score ?? a.match_reasons?.score ?? -1
+      const scoreB = b.match_score ?? b.match_reasons?.score ?? -1
+      if (scoreA !== scoreB) return scoreB - scoreA
+      const levelA = a.match_level ?? a.match_reasons?.level ?? 'insufficient'
+      const levelB = b.match_level ?? b.match_reasons?.level ?? 'insufficient'
+      const rank = { high: 3, medium: 2, low: 1, insufficient: 0 }
+      if (rank[levelA] !== rank[levelB]) return rank[levelB] - rank[levelA]
+    }
+    return (Date.parse(b.imported_at) || 0) - (Date.parse(a.imported_at) || 0)
+  })
 }

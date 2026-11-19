@@ -12,16 +12,14 @@ const fixtureServer = [
   'from backend import app',
   'from backend.services.job_sources.base import Snapshot, SourceError',
   'from backend.services.job_sources.registry import SOURCES',
-  'from backend.services.local_store import save_resume_draft',
   'from tests.test_official_jobs import sample',
-  'save_resume_draft({"candidateId":"cand_demo_001","basic":{"name":"Synthetic"},"projects":[{"id":"test","title":"Test","description":"Python HTTP API and automated testing"}],"intention":{"expectCity":"上海"}})',
   'counts={}',
   'def fetch(adapter):',
   '    key=adapter.source_id',
   '    counts[key]=counts.get(key,0)+1',
   '    time.sleep(0.35)',
   '    if key=="huawei" and counts[key]>1: raise SourceError("模拟官网超时")',
-  '    job=sample(key)',
+  '    job=sample(key, "熟练使用 Python、PyTorch 和大语言模型微调，有工具调用项目经验。")',
   '    job.update(title=key+" 浏览器岗位",company=adapter.company,url=adapter.source_url,source_url=adapter.source_url)',
   '    if key=="baidu" and counts[key]>2: job["requirements"] += " 欢迎熟悉 SQL。"',
   '    return Snapshot([job], True)',
@@ -46,7 +44,8 @@ async function run() {
       once(backend.stdout, 'data'), once(backend, 'exit').then(() => { throw new Error(startup || 'Fixture backend exited') }),
     ])
     const base = 'http://127.0.0.1:' + String(address).trim()
-    browser = await chromium.launch({ channel: 'msedge', headless: true, args: ['--no-proxy-server'] })
+    browser = await chromium.launch({ channel: process.env.APPLYGUARD_TEST_BROWSER || 'msedge',
+      headless: true, args: ['--no-proxy-server'] })
     const page = await browser.newPage({ viewport: { width: 1440, height: 1080 } })
     const errors = []
     page.on('pageerror', error => errors.push(error.message))
@@ -79,12 +78,24 @@ async function run() {
     assert.equal(await refreshAll.evaluate(element => getComputedStyle(element).borderRadius), '999px')
     await refreshAll.click()
     let runId = await checkStatus('success', '')
+    const before = await page.request.get(base + '/api/v1/jobs?source=baidu').then(response => response.json())
+    assert.equal(before.items[0].match_level, 'insufficient')
+    await page.goto(base)
+    await page.getByRole('button', { name: '载入模板简历并看岗位' }).click()
+    await page.waitForURL('**/jobs')
+    assert.equal(await page.getByLabel('岗位排序').inputValue(), 'match')
+    const draft = await page.request.get(base + '/api/v1/resume/draft').then(response => response.json())
+    assert.equal(draft.form.education[0].school, '华南理工大学')
+    assert.equal(draft.form.projects.length, 2)
     await page.getByLabel('官网来源').selectOption('baidu')
     await page.getByLabel('提醒', { exact: true }).selectOption('new')
     await page.getByLabel('匹配等级').selectOption('high')
     await page.getByRole('button', { name: /baidu 浏览器岗位/ }).click()
     const match = page.getByRole('region', { name: '岗位匹配' })
     await match.getByText(/岗位提到Python/).waitFor()
+    const tags = page.locator('.radar-factor-panel')
+    await tags.locator('summary').click()
+    assert.equal(await tags.locator('blockquote').filter({ hasText: '熟练使用 Python' }).count(), 1)
     await page.screenshot({ path: path.join(out, 'matched-desktop.png') })
     await page.getByRole('button', { name: '标记岗位已读' }).click()
     await page.getByLabel('提醒', { exact: true }).selectOption('unread')
@@ -120,6 +131,7 @@ async function run() {
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
     await page.getByRole('button', { name: /baidu 浏览器岗位/ }).click()
     assert.ok(await dashboard.isHidden())
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
     await page.getByRole('button', { name: '返回岗位列表' }).click()
     await dashboard.waitFor()
     assert.deepEqual(errors, [])

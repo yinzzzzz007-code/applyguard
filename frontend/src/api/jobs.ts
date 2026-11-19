@@ -42,6 +42,7 @@ export interface Opportunity extends JobTarget {
   unread?: boolean
   details_available?: boolean
   match_level?: JobMatch['level']
+  match_score?: number | null
   match_reasons?: JobMatch
 }
 export interface JobMatch {

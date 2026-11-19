@@ -46,7 +46,7 @@ interface DemoState {
   fieldDecisions: Record<string, LocalFieldDecision>
   confirmationNote: string
   simulatedConfirmed: boolean
-  setScenario: (s: DemoScenario) => void
+  setScenario: (s: DemoScenario, options?: { restoreWorkflow?: boolean }) => void
   setStep: (s: FlowStep) => void
   setJdRawInput: (v: string) => void
   setWorkflow: (w: WorkflowResponse | null) => void
@@ -270,7 +270,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   }, [invalidateWorkflow])
 
   const setScenario = useCallback(
-    (s: DemoScenario) => {
+    (s: DemoScenario, options?: { restoreWorkflow?: boolean }) => {
       setScenarioInClient(s)
       setScenarioState(s)
       setStep('import')
@@ -281,7 +281,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       setWorkflowSourceNotice('')
       if (s === 'live') {
         backendHydrated.current = true
-        void applyBackendDraft({ replaceForm: true })
+        if (options?.restoreWorkflow !== false) void applyBackendDraft({ replaceForm: true })
       }
     },
     [setWorkflow, applyBackendDraft],

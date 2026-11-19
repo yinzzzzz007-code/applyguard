@@ -21,6 +21,11 @@ function savedView():Record<string,string> {
 
 const initialForm = { title: '', company: '', location: '', url: '', status: 'unknown', description: '' }
 
+function formatJobTime(value: string) {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })
+}
+
 export function JobRadarPage() {
   const navigate = useNavigate()
   const { resumeForm, setWorkflow, scenario, workflow, activeJobId, setActiveJobId, reviewDrafts } = useDemo()
@@ -37,7 +42,7 @@ export function JobRadarPage() {
   const [matchLevel, setMatchLevel] = useState('')
   const [recruitmentType, setRecruitmentType] = useState('')
   const [semantic, setSemantic] = useState<{id: string; hash: string; result: JobMatch}>()
-  const [sort,setSort] = useState<JobSort>('newest')
+  const [sort,setSort] = useState<JobSort>('match')
   const [detailOpen,setDetailOpen] = useState(false)
   const [detailTab,setDetailTab] = useState('description')
   const [coverageFilter,setCoverageFilter] = useState('all')
@@ -82,7 +87,7 @@ export function JobRadarPage() {
   async function reload(preferId?: string) {
     const data = await jobsRequest<JobLibrary>()
     setLibrary(data)
-    setSelectedId((prev) => preferId ?? (data.items.some((job) => job.id === prev) ? prev : data.items[0]?.id ?? ''))
+    setSelectedId((prev) => preferId ?? (data.items.some(job => job.id === prev) ? prev : ''))
     revision.current += 1
     setAnalysis(null)
     setVersions(null)
@@ -92,7 +97,6 @@ export function JobRadarPage() {
     void jobsRequest<JobLibrary>().then((data) => {
       if (!cancelled) {
         setLibrary(data)
-        setSelectedId(current => data.items.some(job => job.id === current) ? current : data.items[0]?.id ?? '')
       }
     }).catch((e) => { if (!cancelled) setError(String(e.message)) })
     return () => { cancelled = true }
@@ -115,6 +119,12 @@ export function JobRadarPage() {
     await reload(result.items[0]?.id)
     setMessage(importMessage(result))
   }
+  async function loadExampleJobs() {
+    const response = await fetch(`${import.meta.env.BASE_URL}data/job-opportunities.example.json`)
+    if (!response.ok) throw new Error('无法读取岗位示例，请重试。')
+    await importRows(parseJobImport(await response.text()))
+  }
+
   async function browseRadar(offset = 0) {
     const params = new URLSearchParams({ search: radarQuery, offset: String(offset) })
     const result = await jobsRequest<RadarPage>(`/radar?${params}`)
@@ -140,6 +150,14 @@ export function JobRadarPage() {
     && (!recruitmentType || job.recruitment_type === recruitmentType)
     && (inboxFilter !== 'new' || job.is_new) && (inboxFilter !== 'unread' || job.unread))
   const selected = filtered.find(job => job.id === selectedId) ?? filtered[0]
+  const match = selected?.match_reasons
+  const excerpts = new Map<string, string[]>()
+  for (const factor of selected?.factors ?? []) {
+    for (const evidence of factor.evidence) {
+      const labels = excerpts.get(evidence.text) ?? []
+      if (!labels.includes(factor.label)) excerpts.set(evidence.text, [...labels, factor.label])
+    }
+  }
   const freshAnalysis = analysis && analysis.resumeSignature === resumeSignature && analysis.job_id === selected?.id && analysis.content_hash === selected?.content_hash
   const visibleRequirements = analysis?.requirements.filter(req => coverageFilter === 'all' || (coverageFilter === 'supported' ? req.coverage === 'SUPPORTED' : req.coverage !== 'SUPPORTED')) ?? []
 
@@ -176,7 +194,8 @@ export function JobRadarPage() {
           <button className="btn primary" disabled={busy}>{editingId ? '保存新版本' : '保存岗位'}</button>
           {editingId && <button type="button" className="btn secondary" disabled={busy} onClick={() => { setEditingId(null); setForm(initialForm) }}>取消编辑</button>}
           <button type="button" className="btn secondary" disabled={busy} onClick={() => fileInput.current?.click()}>导入 JSON / JSONL</button>
-          <a className="btn secondary" href="/data/job-opportunities.example.json" download>下载虚构岗位模板</a>
+          <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(loadExampleJobs)}>载入岗位示例</button>
+          <a className="btn secondary" href="/data/job-opportunities.example.json" download>下载岗位模板</a>
           <input ref={fileInput} type="file" accept=".json,.jsonl,application/json" hidden aria-label="选择岗位数据文件" onChange={(e) => {
             const file = e.target.files?.[0]; e.target.value = ''
             if (file) void perform(async () => {
@@ -232,7 +251,7 @@ export function JobRadarPage() {
         onKeyDown={e => {if(e.key === 'Escape') setQuery('')}} />
         {query && <button type="button" aria-label="清除岗位搜索" onClick={() => setQuery('')}><Icon name="close" /></button>}
       </label>
-      <label className="radar-sort"><span>排序</span><select aria-label="岗位排序" value={sort} onChange={e => setSort(e.target.value as JobSort)}><option value="newest">最近导入</option><option value="company">公司名称</option></select></label>
+      <label className="radar-sort"><span>排序</span><select aria-label="岗位排序" value={sort} onChange={e => setSort(e.target.value as JobSort)}><option value="match">经历匹配优先</option><option value="newest">最近导入</option><option value="company">公司名称</option></select></label>
       <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(() => reload())}><Icon name="refresh" />重读本地列表</button>
     </div>
     <div className="official-radar-filters">
@@ -261,14 +280,22 @@ export function JobRadarPage() {
         {!library && !error && <p>正在读取收藏…</p>}
         {library && !filtered.length && <div className="radar-empty"><Icon name="compass" /><h3>{library.items.length ? '没有匹配的岗位' : '把想投的岗位，放在这里。'}</h3>
           <p>{library.items.length ? '试试减少关键词，或重置筛选条件。' : '粘贴招聘原文即可收藏，再对照经历与证据。'}</p>
-          <button type="button" className="btn secondary" onClick={library.items.length ? resetFilters : openForm}>{library.items.length ? '重置筛选' : '添加第一个岗位'}</button></div>}
+          <button type="button" className="btn secondary" onClick={library.items.length ? resetFilters : openForm}>{library.items.length ? '重置筛选' : '添加第一个岗位'}</button>
+          {!library.items.length && <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(loadExampleJobs)}>载入岗位示例</button>}
+        </div>}
         {filtered.map((job) => <button type="button" key={job.id} disabled={busy} aria-current={selected?.id === job.id ? 'true' : undefined} className={'radar-job '+(selected?.id === job.id ? 'selected' : '')} onClick={() => {
           revision.current += 1; setSelectedId(job.id); setAnalysis(null); setVersions(null);setDetailTab('description');setDetailOpen(true)
           requestAnimationFrame(() => detailHeading.current?.focus({preventScroll:true}))
         }}>
           <span className="radar-job-company">{job.company}<span className={'job-state '+job.status}>{job.stage === 'preparing' ? '准备中' : JOB_STATUS[job.status]}</span></span>
           <strong>{job.title}</strong><span className="radar-job-location"><Icon name="pin" />{job.location || '地点未知'}</span>
-          {job.source_id && <span className="muted">{[job.is_new && '新增', job.unread && '未读', job.match_level && MATCH_LABELS[job.match_level], (job.published_at || job.first_seen_at)?.slice(0, 10)].filter(Boolean).join(' · ')}</span>}
+          <span className="radar-job-meta">
+            {job.match_level && <span className={'job-match-label ' + job.match_level}>
+              {MATCH_LABELS[job.match_level]}{job.match_score != null && ` · ${job.match_score} 分`}
+            </span>}
+            {job.is_new && <span>新增</span>}{job.unread && <span>未读</span>}
+            {job.published_at && <time dateTime={job.published_at}>{job.published_at.slice(0, 10)}</time>}
+          </span>
           <span className="radar-job-foot"><span>{job.factors.slice(0,3).map(f => f.label).join(' / ') || '查看岗位详情'}</span><span>v{job.version}<Icon name="chevron" /></span></span>
         </button>)}
       </nav>
@@ -289,18 +316,32 @@ export function JobRadarPage() {
           {selected.graduation_window && <div><dt>毕业窗口</dt><dd>{selected.graduation_window.class_year ? selected.graduation_window.class_year + ' 届 · ' : ''}
             {selected.graduation_window.start_date} 至 {selected.graduation_window.end_date}</dd></div>}
         </dl>}
-        <p className="radar-provenance">来源：{({manual:'手动收藏',local_edit:'本地编辑',radar:'本机雷达',peer_benchmark:'参考样例',official:'公司官网'} as Record<string,string>)[selected.source_kind] || '来源记录'} · 最近更新：{new Date(selected.last_changed_at || selected.imported_at).toLocaleString()}<br />来源观察时间：{selected.source_observed_at || '未记录；导入时间不代表官网核验时间'}</p>
-        {selected.url && <p><a className="radar-source" href={selected.url} target="_blank" rel="noreferrer">查看原始招聘页面 ↗</a></p>}
-        {selected.source_id && selected.match_reasons && <section className="radar-import" aria-label="岗位匹配">
-          <h4>{MATCH_LABELS[selected.match_reasons.level]}{selected.match_reasons.score === null ? '' : ' · ' + selected.match_reasons.score + ' / 100'}</h4>
-          <p className="muted">根据已保存的本机简历和官网原文匹配。</p>
-          <ul>{[...selected.match_reasons.reasons, ...selected.match_reasons.missing].map(reason => <li key={reason}>{reason}</li>)}</ul>
+        <div className="radar-provenance">
+          <span>来源：{({manual:'手动收藏',local_edit:'本地编辑',radar:'本机雷达',peer_benchmark:'参考样例',official:'公司官网',fictional_example:'课程示例'} as Record<string,string>)[selected.source_kind] || '来源记录'}</span>
+          <span>最近更新：{formatJobTime(selected.last_changed_at || selected.imported_at)}</span>
+          {selected.source_observed_at && <span>官网观察：{formatJobTime(selected.source_observed_at)}</span>}
+          {selected.url && <a className="radar-source" href={selected.url} target="_blank" rel="noreferrer">查看招聘原文 ↗</a>}
+        </div>
+        {match && <section className="radar-job-match" aria-label="岗位匹配">
+          <header><h4>经历匹配</h4>
+            <span className={'job-match-label ' + match.level}>{MATCH_LABELS[match.level]}{match.score != null && ` · ${match.score} / 100`}</span>
+          </header>
+          <p>对照已保存的项目、实习和技能。分数反映已识别要求的匹配程度。</p>
+          <div className="radar-match-reasons">
+            {match.reasons.length > 0 && <div><h5>有相关记录</h5><ul>{match.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul></div>}
+            {match.missing.length > 0 && <div><h5>需要核对</h5><ul>{match.missing.slice(0, 3).map(reason => <li key={reason}>{reason}</li>)}</ul>
+              {match.missing.length > 3 && <details><summary>其余 {match.missing.length - 3} 项</summary>
+                <ul>{match.missing.slice(3).map(reason => <li key={reason}>{reason}</li>)}</ul>
+              </details>}
+            </div>}
+          </div>
           <div className="btn-row">
-            <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(async () => {
+            {match.missing.includes('缺少已保存的简历或经历') && <Link to="/" className="btn secondary">导入简历或载入模板</Link>}
+            {selected.source_id && <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(async () => {
               await jobsRequest('/alerts/read', { job_id: selected.id, unread: !selected.unread })
               await reload(selected.id)
               window.dispatchEvent(new Event('applyguard:official-jobs-updated'))
-            })}>{selected.unread ? '标记岗位已读' : '重新提醒'}</button>
+            })}>{selected.unread ? '标记岗位已读' : '重新提醒'}</button>}
             {library?.ai_matching && (selected.match_level === 'high' || selected.match_level === 'medium') && <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(async () => {
               const response = await jobsRequest<{match: JobMatch}>('/' + selected.id + '/match', { semantic: true })
               setSemantic({id: selected.id, hash: selected.content_hash, result: response.match})
@@ -353,10 +394,16 @@ export function JobRadarPage() {
         <Tabs id="job-tab" label="岗位详情视图" panelId="job-detail-panel" value={detailTab} onChange={setDetailTab} items={[{id:'description',label:'岗位原文'},{id:'analysis',label:'证据预检'},{id:'versions',label:'版本记录'}]} />
         <div id="job-detail-panel" role="tabpanel" aria-labelledby={'job-tab-'+detailTab} tabIndex={0}>
         {detailTab === 'description' && <div><h4>岗位说明</h4><pre className="radar-jd">{selected.description}</pre>
-        <details className="radar-import"><summary>技术与能力标签（{selected.factors.length}）</summary>
-          <p className="muted">按原文词组命中，含优先项或否定表达；标签不判断是否为硬性条件。</p>
-          {selected.factors.map((f) => <div key={f.slug} className="radar-factor"><strong>{f.label} · {f.category}</strong>{f.evidence.map((ev, i) => <blockquote key={i}>{ev.text}</blockquote>)}</div>)}
-          {!selected.factors.length && <p>规则暂无命中，请以原文为准。</p>}
+        <details className="radar-factor-panel" key={selected.id}>
+          <summary>技术与能力标签（{selected.factors.length}）</summary>
+          <div className="radar-factor-content">
+            <div className="radar-tags">{selected.factors.map(factor => <span className="badge muted" key={factor.slug}>{factor.label} · {factor.category}</span>)}</div>
+            <p className="muted">标签来自岗位原文中的关键词。是否属于硬性要求，请结合原文判断。</p>
+            {Array.from(excerpts, ([quote, labels]) => <div key={quote} className="radar-factor">
+              <strong>{labels.join(' · ')}</strong><blockquote>{quote}</blockquote>
+            </div>)}
+            {!selected.factors.length && <p>暂无可识别的标签。</p>}
+          </div>
         </details>
         </div>}
         {detailTab === 'versions' && <div className="radar-versions"><h4>来源版本记录</h4>{versions && versionsFor === selected.id ? versions.map(v => <details key={v.version}><summary>v{v.version} · {new Date(v.imported_at).toLocaleString()} · {JOB_STATUS[v.job.status]}</summary><pre className="radar-jd">{v.job.description}</pre></details>) : <div className="radar-inline-empty"><Icon name="history" /><p>对照每次导入和修改，确认当前使用的原文。</p><button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(async () => {const data = await jobsRequest<{items:NonNullable<typeof versions>}>('/'+selected.id+'/versions');setVersions(data.items);setVersionsFor(selected.id)})}>读取版本记录</button></div>}</div>}

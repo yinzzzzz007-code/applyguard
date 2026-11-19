@@ -16,6 +16,7 @@ from backend.services.job_sources.baidu import Baidu
 from backend.services.job_sources.base import Snapshot, SourceError
 from backend.services.job_sources.bytedance_seed import BytedanceSeed
 from backend.services.job_sources.huawei import Huawei
+from backend.services.local_store import save_resume_draft
 
 
 def sample(key="one", requirements="熟练使用 Python 开发接口服务，能补充自动化测试。"):
@@ -184,6 +185,26 @@ class OfficialRefreshTests(unittest.TestCase):
         with patch.dict(os.environ, {"APPLYGUARD_JOB_AI_MATCH": "true", "APPLYGUARD_AI_API_KEY": ""}):
             score = job_matching.match_job(job, resume)
             self.assertEqual(job_matching.explain_job(job, score), score)
+
+    def test_latest_saved_experience_matches_existing_jobs_without_refresh(self):
+        with patch.object(Baidu, "fetch", return_value=Snapshot([sample()], True)):
+            self.refresh("baidu")
+        self.assertEqual(job_radar.list_jobs("/api/v1/jobs")["items"][0]["match_level"], "insufficient")
+        form = {"candidateId": "demo", "basic": {}, "projects": [
+            {"title": "接口服务", "description": "负责自动化测试", "techStack": "Python"},
+        ]}
+        save_resume_draft(form)
+        jobs = job_radar.list_jobs("/api/v1/jobs?match_level=high")["items"]
+        self.assertEqual(len(jobs), 1)
+        self.assertEqual(jobs[0]["version"], 1)
+        detail = job_radar.handle_get(f"/api/v1/jobs/{jobs[0]['id']}")["job"]
+        self.assertEqual(detail["match_reasons"], jobs[0]["match_reasons"])
+        self.assertTrue(any("项目或实习" in reason for reason in jobs[0]["match_reasons"]["reasons"]))
+        save_resume_draft({**form, "projects": [{"description": "使用 Python"}],
+                           "extras": {"skills": "接口服务、自动化测试"}})
+        self.assertEqual(job_radar.list_jobs("/api/v1/jobs")["items"][0]["match_level"], "medium")
+        save_resume_draft({**form, "projects": []})
+        self.assertFalse(job_radar.list_jobs("/api/v1/jobs?match_level=high")["items"])
 
 
 if __name__ == "__main__":

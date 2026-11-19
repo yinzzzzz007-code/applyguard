@@ -62,3 +62,14 @@ test('job sorting is deterministic and does not reorder the stored collection', 
   const companies=filterJobs(uiRows,'','all','all','company').map(j => j.company)
   assert.deepEqual(companies,[...companies].sort((a,b) => a.localeCompare(b,'zh-CN')))
 })
+
+test('experience sorting keeps scored roles ahead of unscored roles and breaks ties by recency', () => {
+  const rows = [
+    { ...uiRows[0], title: '旧高分', match_score: 84, match_level: 'high' },
+    { ...uiRows[1], title: '新高分', match_score: 84, match_level: 'high' },
+    { ...uiRows[2], title: '待匹配' },
+    { ...uiRows[2], title: '零分', match_score: 0, match_level: 'low' },
+  ]
+  assert.deepEqual(filterJobs(rows, '', 'all', 'all', 'match').map(job => job.title),
+    ['新高分', '旧高分', '零分', '待匹配'])
+})

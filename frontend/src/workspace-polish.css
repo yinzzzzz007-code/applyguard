@@ -314,12 +314,80 @@ body { font: 400 var(--text-body)/1.7 var(--font); }
   box-shadow: var(--inset-shadow);
   overflow-wrap: anywhere;
 }
+.workspace-main .radar-detail,
+.workspace-main .radar-detail-heading,
+.workspace-main .radar-detail-heading > div,
+.workspace-main .radar-detail .radar-import,
+.workspace-main .radar-detail #job-detail-panel { min-width: 0; max-width: 100%; }
+.workspace-main .radar-detail-heading > div { flex: 1 1 auto; }
+.workspace-main .radar-detail-heading h3,
+.workspace-main .radar-detail p,
+.workspace-main .radar-detail li,
+.workspace-main .radar-detail blockquote { overflow-wrap: anywhere; word-break: break-word; }
+.workspace-main .radar-detail > .btn-row { display: flex; flex-wrap: wrap; align-items: stretch; }
+.workspace-main .radar-detail > .btn-row .btn { max-width: 100%; white-space: normal; text-align: center; }
+.workspace-main .radar-detail .radar-jd { max-width: 100%; white-space: pre-wrap; overflow: auto; }
+.radar-detail .radar-provenance { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.radar-job-company { flex-wrap: wrap; }
+.radar-job-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: var(--text-small); }
+.job-match-label {
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--steel);
+  font-size: var(--text-small);
+  font-weight: 650;
+}
+.job-match-label.high { background: var(--ok-bg); color: var(--brand-annotate); }
+.job-match-label.medium { background: var(--tag-bg); color: var(--primary); }
+.radar-job-match, .radar-factor-panel {
+  padding: clamp(12px, 1.7vw, 20px);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+.radar-job-match { display: grid; gap: 10px; }
+.radar-job-match header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.radar-detail .radar-job-match h4, .radar-job-match h5 { margin: 0; }
+.radar-job-match p, .radar-match-reasons li, .radar-match-reasons summary { font-size: var(--text-meta); line-height: 1.65; }
+.radar-job-match p { margin: 0; color: var(--steel); }
+.radar-match-reasons { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 165px), 1fr)); }
+.radar-match-reasons h5 { font-size: var(--text-label); }
+.radar-match-reasons ul { margin: 6px 0 0; padding-inline-start: 1.2em; }
+.radar-match-reasons li + li { margin-top: 4px; }
+.radar-match-reasons summary { margin-top: 6px; color: var(--primary); }
+.radar-job-match .btn-row { flex-wrap: wrap; }
+.radar-job-match .btn-row:empty { display: none; }
+.radar-factor-panel > summary { font-size: var(--text-label); font-weight: 650; }
+.radar-factor-content { margin-top: 12px; }
+.radar-factor-content > p { margin: 8px 0; font-size: var(--text-meta); }
+.radar-factor-panel .radar-factor { padding-block: 10px; }
+.radar-factor-panel .radar-factor:last-child { padding-bottom: 0; }
+.radar-factor-panel blockquote { margin: 6px 0 0; line-height: 1.7; }
+.radar-empty > .btn { margin: 0 8px 8px 0; }
+.resume-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.resume-fields > *, .resume-triple > * { min-width: 0; }
+.resume-triple { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.resume-dual { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .official-radar-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(136px, 1fr)); gap: var(--space-1); }
 .official-radar-filters label { display: grid; gap: var(--space-1); font-size: var(--text-control); min-width: 0; }
 .harness-install-actions { flex-wrap: wrap; margin-block: var(--space-2); }
 .harness-setup :is(pre, dd) { overflow-wrap: anywhere; }
 @media (max-width: 760px) {
   .radar-workbench.has-detail > :is(.official-job-radar, .official-radar-filters) { display: none; }
+  .resume-fields { grid-template-columns: minmax(0, 1fr); }
+  .radar-workbench .radar-detail { gap: 12px; }
+  .radar-detail .work-tabs { gap: clamp(8px, 4vw, 20px); }
+  .radar-detail .work-tabs button { white-space: normal; text-align: left; }
+}
+@media (max-width: 980px) {
+  .official-job-radar .radar-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .workspace-main .radar-workbench .radar-layout { grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); }
+}
+@media (max-width: 820px) and (min-width: 761px) {
+  .workspace-main .radar-workbench .radar-layout { display: block; }
+  .workspace-main .radar-workbench .radar-job-list { max-height: 420px; margin-bottom: var(--space-3); }
 }
 
 .workspace-main :is(.resume-toolbar, .resume-side, .radar-empty, .radar-next-guide) {
