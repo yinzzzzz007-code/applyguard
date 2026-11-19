@@ -299,7 +299,7 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
       <select id="jd-parse-mode" value={parseMode} disabled={prerecorded || status === 'loading'} onChange={e => setParseMode(e.target.value as WorkflowParseMode)}>
         <option value="offline">本地规则</option><option value="dynamic">AI 解析（需要配置模型）</option>
       </select>
-      <p className="muted">{prerecorded ? '当前加载固定的预录岗位与核验结果，不分析输入或调用模型。加载后显示样例原文。' : parseMode === 'offline' ? '岗位解析、经历匹配和材料核验均在本机进行。仅在你主动请求 AI 润色并确认后，才会发送相关内容。' : '岗位正文和参与匹配的经历可能发送给配置的模型服务。'}</p>
+      <p className="muted">{prerecorded ? '将显示预录样例。' : parseMode === 'offline' ? '在本机分析，无需调用模型。' : '将向模型服务发送岗位和相关经历。'}</p>
       <div className="btn-row">
         <button type="button" className="btn secondary" disabled={prerecorded || Boolean(jobId) || loadingTarget || status === 'loading'} onClick={() => changeInput(SAMPLE_JD)}>
           填入示例岗位

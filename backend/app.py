@@ -531,6 +531,8 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             max_bytes = 400_000
         elif self.path == "/api/v1/workflow/draft":
             max_bytes = 800_000
+        elif self.path == "/api/v1/demo/classroom":
+            max_bytes = 2048
         elif self.path in {"/api/v1/workflow/mock", "/api/v1/workflow/reverify", "/api/v1/resume/polish", "/api/v1/resume/export"}:
             max_bytes = 262144
         elif self.path.startswith("/api/v1/evidence"):
@@ -559,6 +561,9 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
                 response = generate_interview(request)
             elif self.path == "/api/v1/resume/draft":
                 response = save_resume_draft(request)
+            elif self.path == "/api/v1/demo/classroom":
+                from backend.services.classroom_demo import load_demo
+                response = load_demo(build_mock_workflow)
             elif self.path == "/api/v1/workflow/draft":
                 response = save_workflow_draft(request)
             elif self.path.startswith("/api/v1/evidence"):

@@ -303,9 +303,6 @@ export function ResumeReviewPage() {
     <section className="panel">
       <header className="panel-head">
         <h2>审核申请草稿</h2>
-        <p>
-          对照建议修改正文，检查材料支持，再选择导出草稿或继续准备网申。
-        </p>
       </header>
 
       {seedLike ? (

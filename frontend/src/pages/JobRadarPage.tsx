@@ -163,7 +163,7 @@ export function JobRadarPage() {
 
   return <section className={'panel radar-page radar-workbench'+(detailOpen ? ' has-detail' : '')}>
     <header className="panel-head radar-page-heading">
-      <div><h2>岗位雷达</h2><p>找到值得申请的机会，看清要求，也看清还缺什么。</p></div>
+      <div><h2>岗位雷达</h2></div>
       <button type="button" className={'btn '+(library?.items.length ? 'secondary' : 'primary')} onClick={openForm}><Icon name="plus" />{editingId ? '继续编辑岗位' : '添加岗位'}</button>
     </header>
     {scenario !== 'live' && <p className="callout warn">当前是预录演示场景。岗位库仍显示本机数据；准备真实岗位时请先在顶部切换「正常·在线」。</p>}
@@ -205,7 +205,7 @@ export function JobRadarPage() {
           }} />
         </div>
       </form>
-      <p className="muted">同一来源岗位再次导入会去重或建立新版本。需要完整 JD；雷达的列表 CSV 不含完整详情，不能直接用于申请。</p>
+      <p className="muted">请导入包含完整 JD 的 JSON 或 JSONL。</p>
     </details>
 
     <details className="radar-import">
@@ -326,7 +326,7 @@ export function JobRadarPage() {
           <header><h4>经历匹配</h4>
             <span className={'job-match-label ' + match.level}>{MATCH_LABELS[match.level]}{match.score != null && ` · ${match.score} / 100`}</span>
           </header>
-          <p>对照已保存的项目、实习和技能。分数反映已识别要求的匹配程度。</p>
+          <p>按已保存的经历和技能评分。</p>
           <div className="radar-match-reasons">
             {match.reasons.length > 0 && <div><h5>有相关记录</h5><ul>{match.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul></div>}
             {match.missing.length > 0 && <div><h5>需要核对</h5><ul>{match.missing.slice(0, 3).map(reason => <li key={reason}>{reason}</li>)}</ul>
@@ -398,7 +398,7 @@ export function JobRadarPage() {
           <summary>技术与能力标签（{selected.factors.length}）</summary>
           <div className="radar-factor-content">
             <div className="radar-tags">{selected.factors.map(factor => <span className="badge muted" key={factor.slug}>{factor.label} · {factor.category}</span>)}</div>
-            <p className="muted">标签来自岗位原文中的关键词。是否属于硬性要求，请结合原文判断。</p>
+            <p className="muted">标签仅标记原文关键词。</p>
             {Array.from(excerpts, ([quote, labels]) => <div key={quote} className="radar-factor">
               <strong>{labels.join(' · ')}</strong><blockquote>{quote}</blockquote>
             </div>)}

@@ -226,7 +226,7 @@ export function ResumeImportPage() {
               <ImportFields row={preview.next.intention} previous={preview.previous?.intention} />
               <ImportFields row={preview.next.extras} previous={preview.previous?.extras} />
             </details>
-            <p className="muted">展开每条经历核对字段。已有关联会随同一经历保留。旧条目默认保留，可勾选移除。</p>
+            <p className="muted">旧条目默认保留，可勾选移除。</p>
             {resumeSections.map(section => <details key={section} className="sample-data-note">
               <summary>{sectionLabels[section]}（本次识别 {preview.next[section].length} 条）</summary>
               {preview.next[section].map((row, index) => {

@@ -232,7 +232,7 @@ export function EvidenceMatchPage() {
       <header className="panel-head">
         <h2>证据匹配</h2>
         <p>只对照任职要求与加分项；职位描述不参与匹配。点击彩色片段查看经历与证据明细。</p>
-        <p className="muted">相关度只表示经历与岗位要求的匹配程度，不代表事实可信度或录用概率；材料支持需另行核验。</p>
+        <p className="muted">相关度与材料核验分别计算。</p>
         {workflowSourceNotice && <p className="callout warn">{workflowSourceNotice}</p>}
         {workflow.requires_reverification && !workflowSourceNotice && (
           <p className="callout warn">源头或正文已变动，当前匹配仅供参考；请回岗位说明重新分析后再继续后续步骤。</p>
@@ -301,7 +301,7 @@ export function EvidenceMatchPage() {
           </div>
           <p className="muted em-jd-hint">
             {highlights.length
-              ? '彩色片段来自任职要求或加分项，可点击查看。职位描述不会着色。'
+              ? '点击着色词组查看对应经历。'
               : '未能在任职要求或加分项中定位片段，可点下方条目查看详情。'}
           </p>
         </section>

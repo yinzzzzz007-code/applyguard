@@ -49,6 +49,7 @@ const SECTIONS = [
   { id: 'awards', label: '获奖 / 竞赛' },
   { id: 'skills', label: '技能 / 其他' },
 ] as const
+type ResumeSection = typeof SECTIONS[number]['id']
 
 function FieldShell({
   label,
@@ -568,7 +569,8 @@ export function CareerVaultPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'empty' | 'error'>('loading')
   const [vault, setVault] = useState<CareerVaultSeed | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
-  const [activeSection, setActiveSection] = useState<string>('basic')
+  const [activeSection, setActiveSection] = useState<ResumeSection>('basic')
+  const resumeMain = useRef<HTMLDivElement>(null)
   const [saveMsg, setSaveMsg] = useState('')
   const [saveKind, setSaveKind] = useState<'ok' | 'warn' | ''>('')
   const [saving,setSaving] = useState(false)
@@ -645,6 +647,35 @@ export function CareerVaultPage() {
   }, [load, scenario])
 
   const form = resumeForm
+  const hasSections = status === 'success' && Boolean(form)
+  useEffect(() => {
+    const main = resumeMain.current
+    if (!hasSections || !main) return
+    const sections = SECTIONS.map(({ id }) => ({ id, element: main.querySelector(`#resume-${id}`)! }))
+    let frame = 0
+    function update() {
+      frame = 0
+      const readingLine = Math.min(110, window.innerHeight * 0.15)
+      const current = sections.findLast(({ element }) => element.getBoundingClientRect().top <= readingLine)
+      const root = document.scrollingElement
+      const atBottom = root && root.scrollTop > 0 && root.scrollHeight - root.clientHeight - root.scrollTop <= 2
+      setActiveSection(atBottom ? SECTIONS[SECTIONS.length - 1].id : current?.id ?? SECTIONS[0].id)
+    }
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update)
+    }
+    const observer = new ResizeObserver(schedule)
+    sections.forEach(({ element }) => observer.observe(element))
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    schedule()
+    return () => {
+      cancelAnimationFrame(frame)
+      observer.disconnect()
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
+    }
+  }, [hasSections])
   const phone = form?.basic.phone.trim() ?? ''
   const email = form?.basic.email.trim() ?? ''
   const phoneError = phone && !/^(?:1[3-9]\d{9}|\+861[3-9]\d{9}|\+(?!86)[1-9]\d{6,14})$/.test(phone.replace(/[\s()-]/g, ''))
@@ -662,9 +693,9 @@ export function CareerVaultPage() {
 
   const completeness = useMemo(() => (form ? resumeCompleteness(form) : 0), [form])
 
-  const scrollTo = (id: string) => {
-    setActiveSection(id)
-    document.getElementById(`resume-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const scrollTo = (id: ResumeSection) => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    document.getElementById(`resume-${id}`)?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
   }
 
   const saveLocal = async (): Promise<boolean> => {
@@ -738,7 +769,7 @@ export function CareerVaultPage() {
       <header className="panel-head">
         <h2>整理自己的经历</h2>
         <p>
-          优先核对项目、实习与技能，保存后到 <Link to="/evidence">证明材料</Link> 补充依据。个人资料和教育信息按填写使用，不代表已被证据核验。
+          保存经历后，可添加<Link to="/evidence">证明材料</Link>。
         </p>
       </header>
 
@@ -776,15 +807,17 @@ export function CareerVaultPage() {
             <div role="status" className={saveKind === 'ok' ? 'callout ok' : 'callout warn'}>{saveMsg}</div>
           ) : null}
 
-          <p className="resume-hint">星号表示建议优先填写，可先保存不完整草稿。网申补充信息为选填，不影响准备度。</p>
+          <p className="resume-hint">带星号的字段建议填写，可留空保存。</p>
           <div className="resume-layout">
             <aside className="resume-side">
               <p className="resume-side-title">简历模块</p>
-              <nav>
+              <nav aria-label="简历模块">
                 {SECTIONS.map((s) => (
                   <button
                     key={s.id}
                     type="button"
+                    aria-current={activeSection === s.id ? 'location' : undefined}
+                    aria-controls={`resume-${s.id}`}
                     className={activeSection === s.id ? 'resume-side-item active' : 'resume-side-item'}
                     onClick={() => scrollTo(s.id)}
                   >
@@ -794,7 +827,7 @@ export function CareerVaultPage() {
               </nav>
             </aside>
 
-            <div className="resume-main">
+            <div className="resume-main" ref={resumeMain}>
               <section id="resume-basic" className="resume-section">
                 <h3>
                   <i />
@@ -857,7 +890,7 @@ export function CareerVaultPage() {
                   />
                 </div>
                 <details className="vault-optional"><summary>网申补充信息（选填）</summary>
-                  <p className="resume-hint">仅在目标招聘表单确有需要时填写。演示请使用虚构信息；留空不影响整理经历和材料。</p>
+                  <p className="resume-hint">按目标表单需要填写。</p>
                   <div className="resume-fields">
                     <FieldSelect label="性别" options={GENDER_OPTIONS} value={form.basic.gender} onChange={v => patchForm(p => ({...p,basic:{...p.basic,gender:v}}))} />
                     <BirthDateSelect value={form.basic.birthday} onChange={v => patchForm(p => ({...p,basic:{...p.basic,birthday:v}}))} />
@@ -935,7 +968,6 @@ export function CareerVaultPage() {
                   <i />
                   教育经历
                 </h3>
-                <p className="resume-hint">请按照从新到旧的顺序填写</p>
                 {form.education.map((edu, idx) => (
                   <div key={edu.id} className="resume-entry">
                     <div className="resume-fields">
@@ -1110,7 +1142,6 @@ export function CareerVaultPage() {
                   <i />
                   实习经历
                 </h3>
-                <p className="resume-hint">按时间从新到旧；建议用数据展现实习成果</p>
                 {form.internships.map((entry) => (
                   <ExperienceEditor
                     key={entry.id}
@@ -1165,7 +1196,6 @@ export function CareerVaultPage() {
                   <i />
                   项目经历
                 </h3>
-                <p className="resume-hint">可填写校园项目、竞赛、课程实践等</p>
                 {form.projects.map((entry) => (
                   <ExperienceEditor
                     key={entry.id}
@@ -1218,7 +1248,6 @@ export function CareerVaultPage() {
                   <i />
                   获奖 / 竞赛
                 </h3>
-                <p className="resume-hint">竞赛、比赛、奖学金、荣誉称号等，可增删条目</p>
                 {(form.awards ?? []).map((entry) => (
                   <AwardEditor
                     key={entry.id}

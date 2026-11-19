@@ -164,7 +164,6 @@ export function ClaimVerificationPage() {
     <section className="panel claim-verification-page">
       <header className="panel-head">
         <h2>陈述核验</h2>
-        <p>核对每条陈述的材料依据，再决定如何处理。</p>
         {workflowSourceNotice && <p className="callout warn">{workflowSourceNotice}</p>}
       </header>
 

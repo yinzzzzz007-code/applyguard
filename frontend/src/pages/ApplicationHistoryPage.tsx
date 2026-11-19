@@ -473,7 +473,7 @@ export function ApplicationHistoryPage() {
       <header className="panel-head">
         <h2>简历生成</h2>
         <p>
-          用经历库资料生成预览。可在下方直接删除不想要的段落；只影响本次导出，不会改经历库原文。
+          选择模板，编辑预览并导出。
         </p>
       </header>
 
@@ -497,7 +497,7 @@ export function ApplicationHistoryPage() {
                 ? ` · 关联岗位 ${workflow.parsed_jd.title === 'UNKNOWN' ? '未知岗位' : workflow.parsed_jd.title}`
                 : ''}
             </p>
-            <p className="muted">预览编辑只用于生成稿；要永久改内容请回经历库。</p>
+            <p className="muted">预览修改仅用于本次导出。</p>
             <div className="btn-row">
               <Link className="btn secondary" to="/vault">
                 编辑经历库
@@ -513,7 +513,6 @@ export function ApplicationHistoryPage() {
                 </button>
               ))}
             </div>
-            <p className="muted">{RESUME_TEMPLATES.find((item) => item.id === template)?.hint}</p>
             <div className="btn-row">
               <button
                 type="button"
@@ -536,7 +535,7 @@ export function ApplicationHistoryPage() {
               </button>
             </div>
             {editing && (
-              <p className="muted">点击预览里的「删除」去掉整段、整条经历或单条要点。打印前会自动退出编辑态。</p>
+              <p className="muted">可删除段落或要点。</p>
             )}
           </div>
 
@@ -556,13 +555,19 @@ export function ApplicationHistoryPage() {
       )}
 
       <div className="stack resume-history-block">
-        <h3>本地申请模拟记录</h3>
-        <p className="muted">
-          仍保留本浏览器的模拟结果摘要，不含姓名、联系方式、证件号与简历正文。可用于对照目标岗位再改经历库。
-        </p>
+        <h3>申请记录</h3>
         {error && <div className="callout danger">{error}</div>}
+        {workflow && !workflow._prerecorded && !records.some(record => record.applicationId === workflow.application_id) && (
+          <article className="item-block">
+            <div className="item-head">
+              <h3>{workflow.parsed_jd.title === 'UNKNOWN' ? '当前申请' : workflow.parsed_jd.title}</h3>
+              <span className="tag">当前草稿 · 待确认</span>
+            </div>
+            <Link className="btn secondary" to="/ats">继续检查</Link>
+          </article>
+        )}
         {!records.length ? (
-          <p className="muted">还没有模拟记录。完成人工确认或阻断回顾后会出现在这里。</p>
+          !workflow && <p className="muted">暂无模拟记录。</p>
         ) : (
           records.map((record) => (
             <article className="item-block" key={record.id}>

@@ -105,7 +105,6 @@ export function InterviewPage() {
   return <section className="panel interview-page">
     <header className="panel-head">
       <h2>生成面经</h2>
-      <p>围绕目标岗位，准备自我介绍和项目追问。</p>
     </header>
     <Card className="profile-card interview-input">
       <div className="item-head">
@@ -153,11 +152,9 @@ export function InterviewPage() {
           <button className="btn secondary" type="button" aria-pressed={duration === 'three_minutes'} onClick={() => setDuration('three_minutes')}>3 分钟版</button>
         </div>
         <p className="interview-text">{guide[duration]}</p>
-        <p className="muted">按个人语速试读调整时长，使用前核对经历事实。</p>
       </section>
       <section className="interview-questions">
         <h3>模拟问题与参考回答</h3>
-        <p className="muted">每个项目至少一题。先尝试回答，再展开对照。</p>
         {guide.questions.map((item, index) => <details className="item-block" key={index}>
           <summary><span className="muted">{item.project_name || item.category}</span><strong>{index + 1}. {item.question}</strong></summary>
           <p className="interview-text">{item.answer}</p>

@@ -257,7 +257,7 @@ export function HumanConfirmationPage() {
       <header className="panel-head">
         <h2>人工确认</h2>
         <p>
-          把经历库里的个人信息和拟填内容汇总在这里，方便复制到招聘网站网申。本页只做本地模拟，不会真实投递。
+          仅在本机模拟确认，不会投递。
         </p>
       </header>
 

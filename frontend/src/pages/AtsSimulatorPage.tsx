@@ -84,7 +84,7 @@ export function AtsSimulatorPage() {
     <section className="panel">
       <header className="panel-head">
         <h2>申请内容检查</h2>
-        <p>核对准备填写的内容，并补充缺失的信息。本页使用演示表单。</p>
+        <p>使用演示表单。</p>
       </header>
 
       <article className={`profile-card ${blockedWorkflow ? 'callout danger' : needsEvidence || !acksComplete ? 'callout warn' : 'callout ok'}`}>
@@ -331,7 +331,6 @@ export function AtsSimulatorPage() {
 
       <div className="stack">
         <h3>其他检查结果</h3>
-        <p className="muted">优先展示需要处理的问题；重复提醒已合并。</p>
 
         {workflow.component_modes?.jd_parser === 'RULE_FALLBACK' && (
           <div className="callout warn">
