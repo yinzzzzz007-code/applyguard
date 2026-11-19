@@ -3,8 +3,8 @@ import type { Opportunity } from './api/jobs'
 export const JOB_STATUS: Record<string, string> = { open: '来源标记在招', unknown: '状态待核对', closed: '已关闭', reference: '参考快照' }
 export const JOB_STAGE: Record<string, string> = { saved: '已收藏', preparing: '准备申请', archived: '已归档' }
 
-export function canPrepareJob(job: Pick<Opportunity, 'stage' | 'status'>): boolean {
-  return job.stage !== 'archived' && ['open', 'unknown'].includes(job.status)
+export function canPrepareJob(job: Pick<Opportunity, 'stage' | 'status' | 'details_available'>): boolean {
+  return job.details_available !== false && job.stage !== 'archived' && ['open', 'unknown'].includes(job.status)
 }
 
 export function parseJobImport(text: string): unknown[] {

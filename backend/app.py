@@ -258,7 +258,7 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
                 and not parsed_origin.username and not parsed_origin.password and not parsed_origin.path
                 and not parsed_origin.query and not parsed_origin.fragment):
             self.send_header("Access-Control-Allow-Origin", origin)
-            self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
             self.send_header("Access-Control-Allow-Headers", "Content-Type")
             self.send_header("Vary", "Origin")
 
@@ -470,6 +470,31 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             return
         self._send_json(HTTPStatus.OK, response)
 
+    def do_PATCH(self) -> None:  # noqa: N802
+        trace_id = f"trace_{uuid.uuid4().hex[:12]}"
+        if not self.path.startswith("/api/v1/jobs/sources/"):
+            self._send_json(HTTPStatus.NOT_FOUND, _error("NOT_FOUND", "Route not found", trace_id))
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            if not 0 < length <= 2048:
+                self.close_connection = True
+                raise ValueError("请求过大或为空")
+            body = json.loads(self.rfile.read(length))
+            if not isinstance(body, dict):
+                raise ValueError("需要 JSON 对象")
+            response = job_radar.handle_patch(self.path, body)
+        except ValueError as exc:
+            missing = str(exc) == "Route not found"
+            self._send_json(HTTPStatus.NOT_FOUND if missing else HTTPStatus.UNPROCESSABLE_ENTITY,
+                            _error("NOT_FOUND" if missing else "VALIDATION_ERROR", str(exc), trace_id))
+            return
+        except Exception:
+            logging.exception("Job source configuration failed, trace_id=%s", trace_id)
+            self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, _error("INTERNAL_ERROR", "岗位源配置保存失败", trace_id))
+            return
+        self._send_json(HTTPStatus.OK, response)
+
     def do_POST(self) -> None:  # noqa: N802
         trace_id = f"trace_{uuid.uuid4().hex[:12]}"
         if self.path in {'/api/v1/agent/ui', '/api/v1/agent/call'}:
@@ -616,6 +641,8 @@ def main() -> None:
     )
     _configure_runtime_temp()
     server = create_server(host, port)
+    from backend.services.job_refresh import start_scheduler
+    start_scheduler()
     logging.info("ApplyGuard foundation listening at http://%s:%s", host, port)
     logging.info(
         "AI config: key=%s base=%s model=%s",

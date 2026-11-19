@@ -1,0 +1,59 @@
+:root {
+  --color-blue: #4a6fa5;
+  --color-paper: #faf8f5;
+  --color-peach: #e8a87c;
+  --color-teal: #85cdca;
+  --color-rose: #c38d94;
+  --color-ochre: #d4a373;
+
+  color-scheme: light;
+  --primary: var(--color-blue);
+  --primary-hover: rgb(from var(--color-blue) calc(r * .84) calc(g * .84) calc(b * .84));
+  --on-primary: var(--color-paper);
+  --brand-green: var(--primary);
+  --brand-green-deep: var(--primary-hover);
+  --brand-green-soft: var(--ok-bg);
+  --brand-tag: var(--primary);
+  --brand-warn: rgb(from var(--color-ochre) calc(r * .46) calc(g * .46) calc(b * .46));
+  --brand-annotate: rgb(from var(--color-teal) calc(r * .41) calc(g * .41) calc(b * .41));
+  --brand-error: rgb(from var(--color-rose) calc(r * .49) calc(g * .49) calc(b * .49));
+
+  --canvas: var(--color-paper);
+  --surface-soft: var(--canvas);
+  --surface: var(--canvas);
+  --surface-code: var(--surface);
+  --ink: rgb(from var(--color-blue) calc(r * .47) calc(g * .47) calc(b * .47));
+  --charcoal: var(--ink);
+  --slate: rgb(from var(--color-blue) calc(r * .57) calc(g * .57) calc(b * .57));
+  --steel: rgb(from var(--color-blue) calc(r * .68) calc(g * .68) calc(b * .68));
+  --stone: var(--steel);
+  --muted: var(--stone);
+  --hairline: color-mix(in srgb, var(--color-blue) 34%, transparent);
+  --hairline-soft: color-mix(in srgb, var(--color-blue) 18%, transparent);
+  --control-border: color-mix(in srgb, var(--color-blue) 78%, var(--canvas));
+
+  --ok-bg: color-mix(in srgb, var(--color-teal) 23%, transparent);
+  --warn-bg: color-mix(in srgb, var(--color-peach) 21%, transparent);
+  --danger-bg: color-mix(in srgb, var(--color-rose) 18%, transparent);
+  --tag-bg: color-mix(in srgb, var(--color-blue) 10%, transparent);
+  --ok-edge: var(--color-teal);
+  --warn-edge: var(--color-ochre);
+  --danger-edge: var(--color-rose);
+  --tag-edge: color-mix(in srgb, var(--color-blue) 53%, transparent);
+  --hero-sky-from: var(--canvas);
+  --hero-sky-to: var(--canvas);
+  --accent: var(--primary);
+  --accent-soft: var(--surface-soft);
+  --neutral-active: var(--warn-bg);
+  --wash-warm: color-mix(in srgb, var(--color-peach) 19%, transparent);
+  --wash-cool: color-mix(in srgb, var(--color-teal) 23%, transparent);
+  --wash-rose: color-mix(in srgb, var(--color-rose) 11%, transparent);
+  --wash-border: color-mix(in srgb, var(--color-blue) 23%, transparent);
+  --wash-shadow: color-mix(in srgb, var(--color-blue) 10%, transparent);
+  --wash-shadow-hover: color-mix(in srgb, var(--color-blue) 16%, transparent);
+  --shadow: none;
+  --shadow-green: none;
+}
+
+body { accent-color: var(--primary); }
+mark { color: var(--ink); background: var(--warn-bg); }

@@ -25,7 +25,13 @@ ENVIRONMENT_NAMES = ('APPLYGUARD_AGENT_URL', 'APPLYGUARD_AGENT_ID', 'APPLYGUARD_
 def find_harness() -> str | None:
     override = os.getenv('APPLYGUARD_HARNESS_COMMAND', '').strip()
     if override:
-        resolved = shutil.which(override) or (override if Path(override).is_file() else None)
+        path = Path(override).expanduser()
+        if path.is_absolute() or '/' in override or '\\' in override:
+            path = ROOT / path
+            resolved = shutil.which(str(path)) or (path if path.is_file() else None)
+        else:
+            local = ROOT / path
+            resolved = shutil.which(override) or (local if local.is_file() else None)
         return str(Path(resolved).resolve()) if resolved else None
     found = shutil.which('dsh')
     if found:
@@ -37,8 +43,16 @@ def find_harness() -> str | None:
 
 
 def setup_info() -> dict:
+    try:
+        relative = Path(os.path.relpath(sys.executable, ROOT))
+        install_python = str(relative) if relative.parts[0] == '..' else '.' + os.sep + str(relative)
+    except ValueError:
+        install_python = sys.executable
     return {
         'python': sys.executable,
+        'install_python': install_python,
+        'project_root': str(ROOT),
+        'shell': 'powershell' if os.name == 'nt' else 'posix',
         'connector_path': str(ROOT / 'scripts/agent_mcp.py'),
         'launcher_path': str(ROOT / 'scripts/connect_harness.py'),
         'requirements_path': str(ROOT / 'requirements-agent.txt'),

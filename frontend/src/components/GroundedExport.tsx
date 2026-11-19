@@ -48,7 +48,7 @@ export function GroundedExport({editing = false}: {editing?: boolean}) {
             elapsed_seconds:Math.round((Date.now()-metrics.startedAt)/1000),
             metric_notice:'从本次导入开始（未导入时从工作流载入）到导出，包括等待与离开时间；不是人工可用性测评。'},
             prior_model_checks:workflow.grounding ? {snapshot:workflow.grounding.snapshot,
-              results:workflow.grounding.results,notice:'历史核验记录；不代表导出时再次核验，须逐句比对 final_text。'} : null}})
+              results:workflow.grounding.results,notice:'历史模型记录；不代表导出时再次核验，须逐句比对 final_text。'} : null}})
           download(result.data.text,'ApplyGuard-个人草稿.txt','text/plain;charset=utf-8')
           setNotice(result.data.notice)
         } catch {setNotice('导出未完成，请检查连接后重试。草稿已保留。')}

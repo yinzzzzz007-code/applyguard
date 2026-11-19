@@ -4,14 +4,14 @@ const LABEL = {SUPPORTED:'支持',CONTRADICTED:'矛盾',INSUFFICIENT:'证据不�
 
 export function AtomicEvidence({result}: {result?: GroundingClaimResult}) {
   if (!result) return null
-  if (result.verification_scope === 'personal') return <div className="evidence-box"><p>{result.scope_notice || '个人资料按填写使用，不进行材料核验。'}</p></div>
+  if (result.verification_scope === 'personal') return <div className="evidence-box"><p>{result.scope_notice || '个人资料按填写使用，不进行SAG核验或AI润色。'}</p></div>
   return <div className="evidence-box atomic-evidence">
     <h4>逐事实依据</h4>
     {result.atoms.length > 0 && !result.complete && <p className="warn-text">整句覆盖检查未通过；即使部分事实有支持，也不能通过整句核验。</p>}
-    {!result.atoms.length && <p>尚无可通过的事实结论。</p>}
+    {!result.atoms.length && <p className="muted">仅完成检索或核验未完成；尚无可通过的原子事实结论。</p>}
     {result.atoms.map(atom => <div className="atomic-item" key={atom.atom_id}>
       <p><strong className={`atomic-relation ${atom.relation.toLowerCase()}`}>{LABEL[atom.relation]}</strong> {atom.text}</p>
-      <p>{atom.reason}</p>
+      <p className="muted">{atom.reason}</p>
       {atom.citations.map((citation,index) => <blockquote key={`${citation.source_id}-${index}`}>
         <p>{citation.quote}</p>
         <small>{citation.evidence_id} · 原文字符 [{citation.start}, {citation.end})

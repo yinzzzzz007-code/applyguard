@@ -6,6 +6,8 @@ import { useDemo } from '../context/DemoContext'
 import { interviewResume, type InterviewGuide, type InterviewResume } from '../resume/interview'
 import { normalizeResumeForm } from '../resume/formModel'
 import { LoadingState } from '../components/States'
+import { Button } from '../components/ui/button'
+import { Card } from '../components/ui/card'
 
 const STORAGE_KEY = 'applyguard.interview.v1'
 interface SavedPreparation {
@@ -105,11 +107,12 @@ export function InterviewPage() {
       <h2>生成面经</h2>
       <p>围绕目标岗位，准备自我介绍和项目追问。</p>
     </header>
-    <div className="profile-card interview-input">
+    <Card className="profile-card interview-input">
       <div className="item-head">
         <h3>本次准备</h3>
         <Link className="text-action" to="/history">返回简历生成</Link>
       </div>
+      {resume && <p className="muted">当前简历 · {resume.projects.length} 段项目 · {resume.internships.length} 段实习</p>}
       {!resume && <p>请先<Link to="/history">生成简历</Link>，或到<Link to="/vault">经历库</Link>保存项目资料。</p>}
       <label className="field-label" htmlFor="interview-jd">目标岗位 JD</label>
       <textarea id="interview-jd" className="jd-input" rows={5} maxLength={20000} value={jd}
@@ -125,20 +128,20 @@ export function InterviewPage() {
       <label className="interview-consent">
         <input type="checkbox" checked={consent === signature} disabled={busy}
           onChange={event => setConsent(event.target.checked ? signature : '')} />
-        将本次 JD 与经历发送给后端服务生成面经。
+        将本次 JD、自我介绍资料及项目经历发送给已配置的模型生成面经，可能产生费用。
       </label>
-      <button type="button" className="btn primary"
+      <Button
         disabled={busy || !resume || jd.trim().length < 20 || consent !== signature ||
           (!resume.projects.length && !resume.internships.length)} onClick={() => void generate()}>
         {busy ? '正在生成面经…' : guide ? '重新生成面经' : '生成自我介绍与模拟问答'}
-      </button>
-      {jd.trim().length > 0 && jd.trim().length < 20 && <p role="status">请补充至少 20 字的岗位说明。</p>}
+      </Button>
+      {jd.trim().length > 0 && jd.trim().length < 20 && <p className="muted">请补充至少 20 字的岗位说明。</p>}
       {resume && !resume.projects.length && !resume.internships.length &&
-        <p role="status">请先在经历库补充至少一段项目或实习经历。</p>}
+        <p className="muted">请先在经历库补充至少一段项目或实习经历。</p>}
       {error && <p className="danger-text" role="alert">{error}</p>}
       {storageError && <p className="warn-text" role="status">{storageError}</p>}
-      {result && !guide && <p role="status">请重新生成面经。</p>}
-    </div>
+      {result && !guide && <p className="muted">请重新生成面经，确保内容对应当前资料并覆盖每个项目。</p>}
+    </Card>
 
     {guide && <div className="interview-output">
       <section className="profile-card">
@@ -150,13 +153,15 @@ export function InterviewPage() {
           <button className="btn secondary" type="button" aria-pressed={duration === 'three_minutes'} onClick={() => setDuration('three_minutes')}>3 分钟版</button>
         </div>
         <p className="interview-text">{guide[duration]}</p>
+        <p className="muted">按个人语速试读调整时长，使用前核对经历事实。</p>
       </section>
       <section className="interview-questions">
         <h3>模拟问题与参考回答</h3>
+        <p className="muted">每个项目至少一题。先尝试回答，再展开对照。</p>
         {guide.questions.map((item, index) => <details className="item-block" key={index}>
-          <summary><span>{item.project_name || item.category}</span><strong>{index + 1}. {item.question}</strong></summary>
+          <summary><span className="muted">{item.project_name || item.category}</span><strong>{index + 1}. {item.question}</strong></summary>
           <p className="interview-text">{item.answer}</p>
-          <p>对应内容 · {item.basis}</p>
+          <p className="muted">对应内容 · {item.basis}</p>
           {item.to_confirm.length > 0 && <div className="interview-gaps">
             <h4>请补充确认</h4>
             <ul>{item.to_confirm.map((value, i) => <li key={i}>{value}</li>)}</ul>

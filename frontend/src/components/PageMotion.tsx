@@ -13,9 +13,9 @@ export function PageMotion({ children }: { children: React.ReactNode }) {
     if (!node) return
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const animation = node.animate(reduced
-      ? [{ opacity: .9 }, { opacity: 1 }]
-      : [{ opacity: .55, transform: 'translateY(12px)' }, { opacity: 1, transform: 'translateY(0)' }],
-    { duration: reduced ? 90 : 320, easing: 'cubic-bezier(.16,1,.3,1)' })
+      ? [{ opacity: .88 }, { opacity: 1 }]
+      : [{ opacity: .65, transform: 'translateY(7px)' }, { opacity: 1, transform: 'translateY(0)' }],
+    { duration: reduced ? 80 : 220, easing: 'cubic-bezier(.16,1,.3,1)' })
     const onPreference = () => animation.cancel()
     const media = window.matchMedia('(prefers-reduced-motion: reduce)')
     media.addEventListener('change', onPreference)

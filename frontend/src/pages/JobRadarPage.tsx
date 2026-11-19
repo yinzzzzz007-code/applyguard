@@ -2,13 +2,14 @@ import { ProfileCheckList } from '../components/ProfileCheckList'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getApiClient } from '../api/client'
-import { analyzeOpportunity, jobsRequest, type ImportResult, type JobAnalysis, type JobLibrary, type RadarPage } from '../api/jobs'
+import { analyzeOpportunity, jobsRequest, MATCH_LABELS, OFFICIAL_SOURCES, type ImportResult, type JobAnalysis, type JobLibrary, type JobMatch, type RadarPage } from '../api/jobs'
 import { ErrorState } from '../components/States'
 import { useDemo } from '../context/DemoContext'
 import { canPrepareJob, importMessage, JOB_STAGE, JOB_STATUS, parseJobImport } from '../jobs'
 import { zhText, ZH_REQ_TYPE, zhLookup } from '../i18n'
 import { Icon } from '../components/Icon'
 import { Tabs } from '../components/Tabs'
+import { OfficialJobRadar } from '../components/OfficialJobRadar'
 import { filterJobs, type JobScope, type JobSort } from '../jobs'
 
 function savedView():Record<string,string> {
@@ -31,6 +32,11 @@ export function JobRadarPage() {
     return ['active','preparing','archived','all'].includes(value) ? value as JobScope : 'active'
   })
   const [sourceFilter,setSourceFilter] = useState('all')
+  const [officialSource, setOfficialSource] = useState('')
+  const [inboxFilter, setInboxFilter] = useState('')
+  const [matchLevel, setMatchLevel] = useState('')
+  const [recruitmentType, setRecruitmentType] = useState('')
+  const [semantic, setSemantic] = useState<{id: string; hash: string; result: JobMatch}>()
   const [sort,setSort] = useState<JobSort>('newest')
   const [detailOpen,setDetailOpen] = useState(false)
   const [detailTab,setDetailTab] = useState('description')
@@ -61,7 +67,17 @@ export function JobRadarPage() {
     formPanel.current.scrollIntoView({block:'start',behavior:'auto'})
     formPanel.current.querySelector<HTMLInputElement>('input')?.focus()
   }
-  function resetFilters() {setQuery('');setStatusFilter('active');setSourceFilter('all');setDetailOpen(false)}
+  function resetFilters() {
+    setQuery(''); setStatusFilter('active'); setSourceFilter('all'); setDetailOpen(false)
+    setOfficialSource(''); setInboxFilter(''); setMatchLevel(''); setRecruitmentType('')
+  }
+
+  function selectAlertJob(id: string) {
+    resetFilters()
+    setStatusFilter('all')
+    setSelectedId(id); setDetailOpen(true); setDetailTab('description')
+    requestAnimationFrame(() => detailHeading.current?.focus())
+  }
 
   async function reload(preferId?: string) {
     const data = await jobsRequest<JobLibrary>()
@@ -118,24 +134,25 @@ export function JobRadarPage() {
     if (version === revision.current) {setAnalysis({ ...report, resumeSignature });setDetailTab('analysis');setCoverageFilter('all')}
     else setMessage('经历或证据已变化，请重新预检查。')
   }
-  const filtered = filterJobs(library?.items ?? [],query,statusFilter,sourceFilter,sort)
+  const allJobs = library?.items ?? []
+  const filtered = filterJobs(allJobs,query,statusFilter,sourceFilter,sort).filter(job =>
+    (!officialSource || job.source_id === officialSource) && (!matchLevel || job.match_level === matchLevel)
+    && (!recruitmentType || job.recruitment_type === recruitmentType)
+    && (inboxFilter !== 'new' || job.is_new) && (inboxFilter !== 'unread' || job.unread))
   const selected = filtered.find(job => job.id === selectedId) ?? filtered[0]
   const freshAnalysis = analysis && analysis.resumeSignature === resumeSignature && analysis.job_id === selected?.id && analysis.content_hash === selected?.content_hash
   const visibleRequirements = analysis?.requirements.filter(req => coverageFilter === 'all' || (coverageFilter === 'supported' ? req.coverage === 'SUPPORTED' : req.coverage !== 'SUPPORTED')) ?? []
 
-  return <section className={'panel radar-page radar-workbench workbench-page'+(detailOpen ? ' has-detail' : '')}>
-    <header className="panel-head radar-page-heading workbench-head">
-      <div>
-        <p className="workbench-kicker">岗位收藏库</p>
-        <h2>岗位雷达</h2>
-        <p>单独管理想投的岗位与证据预检。准备申请时，到「岗位说明」里从这里选择即可。</p>
-      </div>
+  return <section className={'panel radar-page radar-workbench'+(detailOpen ? ' has-detail' : '')}>
+    <header className="panel-head radar-page-heading">
+      <div><h2>岗位雷达</h2><p>找到值得申请的机会，看清要求，也看清还缺什么。</p></div>
       <button type="button" className={'btn '+(library?.items.length ? 'secondary' : 'primary')} onClick={openForm}><Icon name="plus" />{editingId ? '继续编辑岗位' : '添加岗位'}</button>
     </header>
     {scenario !== 'live' && <p className="callout warn">当前是预录演示场景。岗位库仍显示本机数据；准备真实岗位时请先在顶部切换「正常·在线」。</p>}
     {error && <ErrorState message={error} />}
     {message && <p className="radar-feedback" role="status"><Icon name="check" />{message}<button type="button" aria-label="关闭操作提示" onClick={() => setMessage('')}><Icon name="close" /></button></p>}
     {busy && <p className="radar-busy" role="status">正在处理，请稍候…</p>}
+    <OfficialJobRadar jobs={allJobs} onReload={reload} onSelect={selectAlertJob} />
 
     <div className="radar-tools-row">
     <details className="radar-import" ref={formPanel}>
@@ -169,16 +186,19 @@ export function JobRadarPage() {
           }} />
         </div>
       </form>
+      <p className="muted">同一来源岗位再次导入会去重或建立新版本。需要完整 JD；雷达的列表 CSV 不含完整详情，不能直接用于申请。</p>
     </details>
 
     <details className="radar-import">
-      <summary>连接本机 Career Radar</summary>
+      <summary>连接本机 AI Career Radar</summary>
+      <p>先独立启动 AI Career Radar（默认本机 8787 端口），再读取岗位。此处只读它已保存的数据，刷新官网数据请在雷达中操作。</p>
       <div className="btn-row">
         <input aria-label="搜索雷达岗位" placeholder="公司、岗位或技术关键词" value={radarQuery} onChange={(e) => setRadarQuery(e.target.value)} />
         <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(() => browseRadar())}>读取雷达岗位</button>
       </div>
       {radar && <>
-        {!radar.items.length && <p>当前筛选没有岗位。</p>}
+        <p className="muted">{radar.notice}</p>
+        {!radar.items.length && <p>当前筛选没有岗位；这不代表市场上没有岗位。</p>}
         <ul className="radar-upstream">{radar.items.map((job) => <li key={job.id}>
           <label><input type="checkbox" checked={radarIds.includes(job.id)} disabled={busy} onChange={(e) => setRadarIds(e.target.checked ? [...radarIds, job.id] : radarIds.filter((id) => id !== job.id))} />
             <span><strong>{job.title}</strong> · {job.company} · {job.location || '地点未知'}<small>上次来源观察：{job.last_seen_at || '未知'}</small></span>
@@ -213,14 +233,28 @@ export function JobRadarPage() {
         {query && <button type="button" aria-label="清除岗位搜索" onClick={() => setQuery('')}><Icon name="close" /></button>}
       </label>
       <label className="radar-sort"><span>排序</span><select aria-label="岗位排序" value={sort} onChange={e => setSort(e.target.value as JobSort)}><option value="newest">最近导入</option><option value="company">公司名称</option></select></label>
-      <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(() => reload())}><Icon name="refresh" />刷新</button>
+      <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(() => reload())}><Icon name="refresh" />重读本地列表</button>
+    </div>
+    <div className="official-radar-filters">
+      <label>官网来源<select aria-label="官网来源" value={officialSource} onChange={e => { setOfficialSource(e.target.value); setDetailOpen(false) }}>
+        <option value="">全部来源</option>{Object.entries(OFFICIAL_SOURCES).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+      </select></label>
+      <label>提醒<select aria-label="提醒" value={inboxFilter} onChange={e => { setInboxFilter(e.target.value); setDetailOpen(false) }}>
+        <option value="">全部岗位</option><option value="new">新增岗位</option><option value="unread">未读岗位</option>
+      </select></label>
+      <label>匹配等级<select aria-label="匹配等级" value={matchLevel} onChange={e => { setMatchLevel(e.target.value); setDetailOpen(false) }}>
+        <option value="">全部等级</option>{Object.entries(MATCH_LABELS).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+      </select></label>
+      <label>招聘类型<select aria-label="招聘类型" value={recruitmentType} onChange={e => { setRecruitmentType(e.target.value); setDetailOpen(false) }}>
+        <option value="">全部类型</option>{Array.from(new Set(allJobs.map(job => job.recruitment_type).filter(Boolean))).sort().map(type => <option key={type}>{type}</option>)}
+      </select></label>
     </div>
     <div className="radar-scope-row">
       <div className="scope-switch" aria-label="收藏范围">{([
         ['active','未归档'],['preparing','准备中'],['archived','已归档'],['all','全部']
       ] as const).map(([id,label]) => <button type="button" key={id} aria-pressed={statusFilter === id} onClick={() => {setStatusFilter(id);setDetailOpen(false)}}>{label}</button>)}</div>
       <span className="radar-result-count" role="status">{filtered.length} 个结果{sourceFilter !== 'all' && ' · '+JOB_STATUS[sourceFilter]}</span>
-      {(query || statusFilter !== 'active' || sourceFilter !== 'all') && <button type="button" className="text-action" onClick={resetFilters}>重置筛选</button>}
+      {(query || statusFilter !== 'active' || sourceFilter !== 'all' || officialSource || inboxFilter || matchLevel || recruitmentType) && <button type="button" className="text-action" onClick={resetFilters}>重置筛选</button>}
     </div>
     <div className="radar-layout">
       <nav className="radar-job-list" aria-label="收藏岗位">
@@ -234,13 +268,14 @@ export function JobRadarPage() {
         }}>
           <span className="radar-job-company">{job.company}<span className={'job-state '+job.status}>{job.stage === 'preparing' ? '准备中' : JOB_STATUS[job.status]}</span></span>
           <strong>{job.title}</strong><span className="radar-job-location"><Icon name="pin" />{job.location || '地点未知'}</span>
+          {job.source_id && <span className="muted">{[job.is_new && '新增', job.unread && '未读', job.match_level && MATCH_LABELS[job.match_level], (job.published_at || job.first_seen_at)?.slice(0, 10)].filter(Boolean).join(' · ')}</span>}
           <span className="radar-job-foot"><span>{job.factors.slice(0,3).map(f => f.label).join(' / ') || '查看岗位详情'}</span><span>v{job.version}<Icon name="chevron" /></span></span>
         </button>)}
       </nav>
-      {library && !filtered.length && <div className="radar-next-guide"><h3>从岗位到申请</h3><ol>
-        <li><strong>收藏目标岗位</strong></li>
-        <li><strong>查看证据缺口</strong></li>
-        <li><strong>准备申请表达</strong></li>
+      {library && !filtered.length && <div className="radar-next-guide"><h3>从岗位到申请，一步一步来。</h3><ol>
+        <li><strong>收藏目标岗位</strong><p>保留完整原文和来源，之后随时回看。</p></li>
+        <li><strong>先看证据缺口</strong><p>对照自己的经历，找到需要补充的材料。</p></li>
+        <li><strong>准备有依据的表达</strong><p>整理草稿，润色后逐项核验，再由你确认。</p></li>
       </ol><Link to="/vault" className="text-action">整理我的经历<Icon name="arrow" /></Link></div>}
       {selected && <article className="radar-detail">
         <button type="button" className="radar-mobile-back text-action" onClick={() => {setDetailOpen(false);requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.radar-job.selected')?.focus())}}><Icon name="back" />返回岗位列表</button>
@@ -254,8 +289,25 @@ export function JobRadarPage() {
           {selected.graduation_window && <div><dt>毕业窗口</dt><dd>{selected.graduation_window.class_year ? selected.graduation_window.class_year + ' 届 · ' : ''}
             {selected.graduation_window.start_date} 至 {selected.graduation_window.end_date}</dd></div>}
         </dl>}
-        <p className="radar-provenance">来源：{({manual:'手动收藏',local_edit:'本地编辑',radar:'本机雷达',peer_benchmark:'参考样例'} as Record<string,string>)[selected.source_kind] || '来源记录'} · 导入：{new Date(selected.imported_at).toLocaleString()}<br />来源观察时间：{selected.source_observed_at || '未记录；导入时间不代表官网核验时间'}</p>
+        <p className="radar-provenance">来源：{({manual:'手动收藏',local_edit:'本地编辑',radar:'本机雷达',peer_benchmark:'参考样例',official:'公司官网'} as Record<string,string>)[selected.source_kind] || '来源记录'} · 最近更新：{new Date(selected.last_changed_at || selected.imported_at).toLocaleString()}<br />来源观察时间：{selected.source_observed_at || '未记录；导入时间不代表官网核验时间'}</p>
         {selected.url && <p><a className="radar-source" href={selected.url} target="_blank" rel="noreferrer">查看原始招聘页面 ↗</a></p>}
+        {selected.source_id && selected.match_reasons && <section className="radar-import" aria-label="岗位匹配">
+          <h4>{MATCH_LABELS[selected.match_reasons.level]}{selected.match_reasons.score === null ? '' : ' · ' + selected.match_reasons.score + ' / 100'}</h4>
+          <p className="muted">根据已保存的本机简历和官网原文匹配。</p>
+          <ul>{[...selected.match_reasons.reasons, ...selected.match_reasons.missing].map(reason => <li key={reason}>{reason}</li>)}</ul>
+          <div className="btn-row">
+            <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(async () => {
+              await jobsRequest('/alerts/read', { job_id: selected.id, unread: !selected.unread })
+              await reload(selected.id)
+              window.dispatchEvent(new Event('applyguard:official-jobs-updated'))
+            })}>{selected.unread ? '标记岗位已读' : '重新提醒'}</button>
+            {library?.ai_matching && (selected.match_level === 'high' || selected.match_level === 'medium') && <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(async () => {
+              const response = await jobsRequest<{match: JobMatch}>('/' + selected.id + '/match', { semantic: true })
+              setSemantic({id: selected.id, hash: selected.content_hash, result: response.match})
+            })}>请求语义解释</button>}
+          </div>
+          {semantic?.id === selected.id && semantic.hash === selected.content_hash && <p>{semantic.result.ai_explanation ?? '本次使用本地规则解释。'}{semantic.result.ai_score !== undefined && ' · 模型评分 ' + semantic.result.ai_score}</p>}
+        </section>}
         <div className="btn-row">
           <button type="button" className="btn primary" disabled={busy || scenario !== 'live' || !canPrepareJob(selected)} onClick={() => void perform(async () => {
             const sameJob = activeJobId === selected.id || workflow?.target_job?.id === selected.id
@@ -266,7 +318,7 @@ export function JobRadarPage() {
             setActiveJobId(selected.id)
             navigate(`/jd?job=${selected.id}`)
           })}>用此岗位准备申请</button>
-          <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(analyze)}>检查证据缺口</button>
+          <button type="button" className="btn secondary" disabled={busy || selected.details_available === false} onClick={() => void perform(analyze)}>检查证据缺口</button>
           <button type="button" className="btn secondary" disabled={busy} onClick={() => {
             setEditingId(selected.id); setForm({ title: selected.title, company: selected.company,
               location: selected.location, url: selected.url, status: selected.status, description: selected.description })
@@ -297,19 +349,20 @@ export function JobRadarPage() {
             })
           }}>删除岗位</button>
         </div>
-        {!canPrepareJob(selected) && <p className="callout warn">已归档、已关闭或参考快照仅供查看，不能从这里准备申请。</p>}
+        {!canPrepareJob(selected) && <p className="callout warn">{selected.details_available === false ? '官网完整职责和要求尚未读取。请打开官方详情核对。' : '已归档、已关闭或参考快照仅供查看，不能从这里准备申请。'}</p>}
         <Tabs id="job-tab" label="岗位详情视图" panelId="job-detail-panel" value={detailTab} onChange={setDetailTab} items={[{id:'description',label:'岗位原文'},{id:'analysis',label:'证据预检'},{id:'versions',label:'版本记录'}]} />
         <div id="job-detail-panel" role="tabpanel" aria-labelledby={'job-tab-'+detailTab} tabIndex={0}>
         {detailTab === 'description' && <div><h4>岗位说明</h4><pre className="radar-jd">{selected.description}</pre>
         <details className="radar-import"><summary>技术与能力标签（{selected.factors.length}）</summary>
+          <p className="muted">按原文词组命中，含优先项或否定表达；标签不判断是否为硬性条件。</p>
           {selected.factors.map((f) => <div key={f.slug} className="radar-factor"><strong>{f.label} · {f.category}</strong>{f.evidence.map((ev, i) => <blockquote key={i}>{ev.text}</blockquote>)}</div>)}
-          {!selected.factors.length && <p>暂无命中标签。</p>}
+          {!selected.factors.length && <p>规则暂无命中，请以原文为准。</p>}
         </details>
         </div>}
-        {detailTab === 'versions' && <div className="radar-versions"><h4>来源版本记录</h4>{versions && versionsFor === selected.id ? versions.map(v => <details key={v.version}><summary>v{v.version} · {new Date(v.imported_at).toLocaleString()} · {JOB_STATUS[v.job.status]}</summary><pre className="radar-jd">{v.job.description}</pre></details>) : <div className="radar-inline-empty"><Icon name="history" /><button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(async () => {const data = await jobsRequest<{items:NonNullable<typeof versions>}>('/'+selected.id+'/versions');setVersions(data.items);setVersionsFor(selected.id)})}>读取版本记录</button></div>}</div>}
-        {detailTab === 'analysis' && !freshAnalysis && <div className="radar-inline-empty"><Icon name="shield" /><h4>证据预检</h4><button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(analyze)}>开始证据预检</button></div>}
+        {detailTab === 'versions' && <div className="radar-versions"><h4>来源版本记录</h4>{versions && versionsFor === selected.id ? versions.map(v => <details key={v.version}><summary>v{v.version} · {new Date(v.imported_at).toLocaleString()} · {JOB_STATUS[v.job.status]}</summary><pre className="radar-jd">{v.job.description}</pre></details>) : <div className="radar-inline-empty"><Icon name="history" /><p>对照每次导入和修改，确认当前使用的原文。</p><button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(async () => {const data = await jobsRequest<{items:NonNullable<typeof versions>}>('/'+selected.id+'/versions');setVersions(data.items);setVersionsFor(selected.id)})}>读取版本记录</button></div>}</div>}
+        {detailTab === 'analysis' && !freshAnalysis && <div className="radar-inline-empty"><Icon name="shield" /><h4>先看看，还缺哪些证据。</h4><p>按当前经历进行规则预检，不调用付费模型。预检不替代陈述核验。</p><button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(analyze)}>开始证据预检</button></div>}
         {detailTab === 'analysis' && freshAnalysis && analysis && <section className="radar-analysis" aria-label="证据缺口结果">
-          <div className="coverage-heading"><div><span>有已核验证据支持</span><strong>{analysis.supported}<small> / {analysis.total} 条要求</small></strong></div><Link to="/evidence" className="btn secondary">补充证据<Icon name="arrow" /></Link></div>
+          <div className="coverage-heading"><div><span>有已核验证据支持</span><strong>{analysis.supported}<small> / {analysis.total} 条要求</small></strong></div><Link to="/evidence" className="btn secondary">补充证据<Icon name="arrow" /></Link></div><p className="muted">{analysis.notice}</p>
           {!analysis.has_resume && <p className="callout warn">尚未提供有效经历，请先 <Link to="/">导入简历</Link> 或完善经历库。这里不会使用演示种子替代你的经历。</p>}
           {!analysis.total && <p className="callout warn">{analysis.excluded ? '任职要求与加分项中没有可匹配条目。职位描述不参与证据匹配。' : '规则未识别出要求，请人工检查完整 JD；这不表示没有要求。'}</p>}
           <div className="scope-switch" aria-label="预检结果筛选">{[['all','全部'],['missing','待补证'],['supported','已支持']].map(([id,label]) => <button type="button" key={id} aria-pressed={coverageFilter === id} onClick={() => setCoverageFilter(id)}>{label}</button>)}</div>
@@ -328,6 +381,7 @@ export function JobRadarPage() {
     </div>
     {library && <div className="radar-secondary">      <details className="radar-import">
         <summary>收藏岗位的高频需求（{library.stats.analyzed_jobs} 个岗位）</summary>
+        <p className="muted">{library.notice}</p>
         <div className="radar-tags">{library.stats.factors.map((f) => <span className="badge muted" key={f.slug}>{f.label} · {f.jobs} 个岗位</span>)}</div>
         {!library.stats.factors.length && <p>暂无可统计的标签。</p>}
       </details></div>}

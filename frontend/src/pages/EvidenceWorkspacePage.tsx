@@ -13,6 +13,8 @@ import type {
   ResumeMatchReport,
 } from '../api/types'
 import { EvidenceMaterialLibrary } from '../components/EvidenceMaterialLibrary'
+import { Button } from '../components/ui/button'
+import { Card, CardDescription, CardTitle } from '../components/ui/card'
 import { AgentConnector } from '../components/AgentConnector'
 import { materialName, orderedEvidenceSpans } from '../evidence/materials'
 import {
@@ -1548,6 +1550,9 @@ export function EvidenceWorkspacePage() {
   const renderEvidenceEditor = (expanded = false) => (
     <details className="relation-field-editor" open={expanded || undefined}>
       <summary>确认识别内容</summary>
+      <p className="material-helper">
+        先标明材料类型，再按需修正提取字段。这是「识别完成」，不等于已经证明经历里的每一项信息。
+      </p>
       <label className="resume-field">
         材料类型
         <select
@@ -1579,8 +1584,10 @@ export function EvidenceWorkspacePage() {
         void flushFieldDraft()
       }}>重试保存</button></p>}
       {draftSavedAt ? (
-        <p>最近保存：{new Date(draftSavedAt).toLocaleString('zh-CN')}</p>
-      ) : null}
+        <p className="muted">最近保存：{new Date(draftSavedAt).toLocaleString('zh-CN')}</p>
+      ) : (
+        <p className="muted">修改会自动保存为草稿；确认内容无误后点「确认识别完成」。</p>
+      )}
       <div className="btn-row">
         <button type="button" className="btn primary" disabled={!!busy || !detail || detail.evidence_id !== selectedEvidenceId} onClick={() => void confirmReview()}>
           确认识别完成
@@ -1604,28 +1611,31 @@ export function EvidenceWorkspacePage() {
   )
 
   return (
-    <section className="panel evidence-workspace workbench-page">
-      <header className="panel-head workbench-head">
-        <p className="workbench-kicker">证明材料</p>
-        <h2>让每条经历，都能指回来处</h2>
+    <section className="panel evidence-workspace">
+      <header className="panel-head">
+        <h2>证明材料</h2>
         <p>
-          导入材料、推荐对应、核对信息、确认关联。识别完成、关联完成、信息获支持，是三件不同的事。
+          导入原件，核对识别内容，再关联到对应经历。材料识别、经历关联和事实核验分别记录。
         </p>
-        <div className="workbench-meta">
+        <p>
           <Link to="/vault">去经历库编辑</Link>
-          <span>
-            实习 {vaultPayload.internships.length} · 项目 {vaultPayload.projects.length} · 获奖 {vaultPayload.awards.length}
-          </span>
-          <span>
-            来源{' '}
+          {' · '}
+          可对照{' '}
+          <strong>
+            实习 {vaultPayload.internships.length} · 项目 {vaultPayload.projects.length} · 获奖{' '}
+            {vaultPayload.awards.length}
+          </strong>
+          {' · '}
+          数据来源：
+          <strong>
             {vaultSourceHint ||
               (vaultPayload.source === 'seed'
                 ? '种子数据'
                 : vaultPayload.source === 'editing'
                   ? '经历库未保存编辑'
                   : '本机草稿')}
-          </span>
-        </div>
+          </strong>
+        </p>
         {vaultPayload.source === 'seed' ? (
           <p className="warn-text">
             当前仍是种子数据。请先到经历库填写并点「保存」，再回这里对照；或确认后端草稿可读。
@@ -1636,26 +1646,24 @@ export function EvidenceWorkspacePage() {
       {busy ? <p className="muted" role="status">{busy}</p> : null}
       {message ? <div className="callout" role="status">{message}</div> : null}
 
-      <div className="evidence-match-banner">
+      <Card className="evidence-match-banner">
         <div>
-          <h3>{files.length ? '材料与经历的准备进度' : '先保存经历，再导入证明材料'}</h3>
-          <p className="muted">
+          <CardTitle asChild><h3>{files.length ? '材料与经历的准备进度' : '先保存经历，再导入证明材料'}</h3></CardTitle>
+          <CardDescription asChild><p className="muted">
             已导入 {files.length} 份 · 关联完成 {coverage.linked}/{coverage.total} · 待处理 {coverage.total - coverage.linked}
             {coverage.pending ? ` · 待确认推荐 ${coverage.pending}` : ''}
-          </p>
+          </p></CardDescription>
         </div>
         <div className="btn-row">
-        <button type="button" className="btn secondary" onClick={() => showTab(activeTab === 'materials' ? 'relations' : 'materials')}>{activeTab === 'materials' ? '去核对与关联' : '管理材料'}</button>
-        <button
-          type="button"
-          className="btn primary"
+        <Button variant="secondary" onClick={() => showTab(activeTab === 'materials' ? 'relations' : 'materials')}>{activeTab === 'materials' ? '去核对与关联' : '管理材料'}</Button>
+        <Button
           disabled={!!importProgress || !!busy || !files.length || !coverage.total}
           onClick={() => {showTab('relations');void runMatchVault()}}
         >
           查找推荐对应
-        </button>
+        </Button>
         </div>
-      </div>
+      </Card>
       <div className="evidence-view-tabs" role="tablist" aria-label="证明材料工作区" onKeyDown={event => {
         if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return
         event.preventDefault()
@@ -1666,45 +1674,40 @@ export function EvidenceWorkspacePage() {
           aria-selected={activeTab === tab} aria-controls={`evidence-panel-${tab}`} tabIndex={activeTab === tab ? 0 : -1}
           onClick={() => showTab(tab)}>{tab === 'materials' ? `材料库（${files.length}）` : `经历关联（${coverage.linked}/${coverage.total}）`}</button>)}
       </div>
-      {!files.length && activeTab === 'materials' && <p className="evidence-first-step">先在经历库保存条目，再在这里导入材料。识别完成后到「经历关联」查看推荐；没有推荐时可从已有材料中选择。</p>}
+      {!files.length && activeTab === 'materials' && <p className="evidence-first-step">识别完成后，在「经历关联」查看推荐或手动选择材料。</p>}
       <div id="evidence-panel-relations" role="tabpanel" aria-labelledby="evidence-tab-relations" hidden={activeTab !== 'relations'} tabIndex={0}>
-      <div className="evidence-relations-tools">
-        <details className="relation-add">
-          <summary>＋ 添加一条经历</summary>
-          <div className="evidence-add-bar">
-            <label className="field-label">经历类型
-              <select
-                className="resume-input resume-select"
-                value={addKind}
-                onChange={(e) => setAddKind(e.target.value as 'internship' | 'project' | 'award')}
-              >
-                <option value="award">获奖/竞赛</option>
-                <option value="project">项目</option>
-                <option value="internship">实习</option>
-              </select>
-            </label>
-            <label className="field-label">{addKind === 'award' ? '奖项名称' : '标题'}
-              <input
-                className="resume-input"
-                placeholder={addKind === 'award' ? '奖项名称' : '标题'}
-                value={addLabel}
-                onChange={(e) => setAddLabel(e.target.value)}
-              />
-            </label>
-            <label className="field-label">{addKind === 'award' ? '颁发方（可选）' : '组织（可选）'}
-              <input
-                className="resume-input"
-                placeholder={addKind === 'award' ? '颁发方（可选）' : '组织（可选）'}
-                value={addOrg}
-                onChange={(e) => setAddOrg(e.target.value)}
-              />
-            </label>
-            <button type="button" className="btn secondary" onClick={addVaultItem}>
-              添加条目
-            </button>
-          </div>
-        </details>
+      <details className="relation-add"><summary>＋ 添加一条经历</summary>
+      <div className="evidence-add-bar">
+        <label className="field-label">经历类型
+        <select
+          className="resume-input resume-select"
+          value={addKind}
+          onChange={(e) => setAddKind(e.target.value as 'internship' | 'project' | 'award')}
+        >
+          <option value="award">获奖/竞赛</option>
+          <option value="project">项目</option>
+          <option value="internship">实习</option>
+        </select></label>
+        <label className="field-label">{addKind === "award" ? "奖项名称" : "标题"}
+        <input
+          className="resume-input"
+          placeholder={addKind === 'award' ? '奖项名称' : '标题'}
+          value={addLabel}
+          onChange={(e) => setAddLabel(e.target.value)}
+        /></label>
+        <label className="field-label">{addKind === "award" ? "颁发方（可选）" : "组织（可选）"}
+        <input
+          className="resume-input"
+          placeholder={addKind === 'award' ? '颁发方（可选）' : '组织（可选）'}
+          value={addOrg}
+          onChange={(e) => setAddOrg(e.target.value)}
+        /></label>
+        <button type="button" className="btn secondary" onClick={addVaultItem}>
+          添加条目
+        </button>
       </div>
+
+      </details>
       <input
         ref={supplementInputRef}
         type="file"
@@ -1773,8 +1776,8 @@ export function EvidenceWorkspacePage() {
         }}
         onDeleteFiles={(ids) => deleteMaterialFiles(ids)}
         imports={<div className="btn-row">
-          <button type="button" className="btn primary" disabled={!!busy} onClick={() => uploadInputRef.current?.click()}>＋ 添加文件</button>
-          <button type="button" className="btn secondary" disabled={!!busy} onClick={() => void pickDirectory()}>导入文件夹</button>
+          <Button disabled={!!busy} onClick={() => uploadInputRef.current?.click()}>＋ 添加文件</Button>
+          <Button variant="secondary" disabled={!!busy} onClick={() => void pickDirectory()}>导入文件夹</Button>
           <input ref={uploadInputRef} type="file" multiple hidden accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,.doc,.docx,.md,.markdown,.json" onChange={(event) => {
             showTab('materials')
             onMultiFiles(event.target.files); event.target.value = ''
@@ -1853,6 +1856,9 @@ export function EvidenceWorkspacePage() {
                   }}
                 />
               </div>
+              <p className="muted evidence-progress-hint">
+                正在处理，请稍候；已识别文件会跳过 OCR。列表会随每个文件完成而更新。
+              </p>
             </div>
           ) : null}
         </>}
@@ -1881,7 +1887,7 @@ export function EvidenceWorkspacePage() {
             {tab === 'text' && (waiting ? <p role="status">正在读取识别文字…</p> : currentDetail?.spans?.some((span) => span.raw_text.trim()) ?
               <div className="material-transcript">{currentDetail.spans.map((span) => <p key={span.span_id}>{span.raw_text}</p>)}</div> :
               <div className="material-empty"><strong>暂无识别文字</strong><p>仍可查看原件并人工核对。识别功能就绪后，可点击下方「重新识别」。</p></div>)}
-            {tab === 'fields' && (waiting ? <p role="status">正在读取识别内容…</p> : currentDetail ? renderEvidenceEditor(true) : <p>该文件尚未生成识别条目，请先重新识别。</p>)}
+            {tab === 'fields' && (waiting ? <p role="status">正在读取识别内容…</p> : currentDetail ? renderEvidenceEditor(true) : <p className="material-helper">该文件尚未生成识别条目，请先重新识别。</p>)}
             <div className="material-detail-actions">
               <span>版本 {file.version} · {file.span_count || 0} 个文字片段</span>
               <button type="button" className="btn secondary" disabled={!!busy} onClick={() => void reparseOne(file.file_id)}>重新识别</button>

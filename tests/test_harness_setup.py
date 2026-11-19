@@ -35,6 +35,29 @@ class HarnessSetupTests(unittest.TestCase):
             with patch.dict(os.environ, {'APPLYGUARD_HARNESS_COMMAND':str(executable)+'-missing'}):
                 self.assertIsNone(find_harness())
 
+    def test_relative_harness_override_resolves_from_project_root(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            binary = root / 'tools' / 'dsh.cmd'
+            binary.parent.mkdir()
+            binary.write_text('@echo off')
+            with patch('backend.services.harness_setup.ROOT', root), patch.dict(
+                os.environ, {'APPLYGUARD_HARNESS_COMMAND':'./tools/dsh.cmd'},
+            ):
+                self.assertEqual(find_harness(), str(binary.resolve()))
+
+    def test_install_interpreter_is_relative_without_resolving_venv_links(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            python = root / '.venv' / ('Scripts' if os.name == 'nt' else 'bin') / ('python.exe' if os.name == 'nt' else 'python')
+            with patch('backend.services.harness_setup.ROOT', root), patch('sys.executable', str(python)):
+                info = setup_info()
+                self.assertEqual(info['project_root'], str(root))
+                self.assertEqual(info['install_python'], '.' + os.sep + str(python.relative_to(root)))
+                self.assertEqual(info['python'], str(python))
+                with patch('os.path.relpath', side_effect=ValueError('different drives')):
+                    self.assertEqual(setup_info()['install_python'], str(python))
+
     def test_setup_is_read_only_and_contains_real_paths_not_model_key(self):
         before = len(agent_bridge.GRANTS)
         with patch.dict(os.environ, {'APPLYGUARD_AI_API_KEY':'private-model-key'}):

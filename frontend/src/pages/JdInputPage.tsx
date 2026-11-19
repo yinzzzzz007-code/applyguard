@@ -7,6 +7,8 @@ import { ZH_EXEC, ZH_MAPPER, ZH_PARSER, ZH_WORKFLOW, zhLookup, zhText } from '..
 import { jobsRequest, type JobLibrary, type Opportunity } from '../api/jobs'
 import { invalidateRestoredWorkflow } from '../resume/reviewSession'
 import { canPrepareJob, JOB_STATUS } from '../jobs'
+import { Button } from '../components/ui/button'
+import { Card, CardHeader, CardTitle } from '../components/ui/card'
 
 export function JdInputPage() {
   const [params] = useSearchParams()
@@ -136,7 +138,7 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
   const executionLabel = offlineRules
     ? '离线规则解析'
     : ruleParsed && jdFallbackReason
-      ? '服务端失败后规则回退'
+      ? '模型失败后规则回退'
       : zhLookup(ZH_EXEC, workflow?.execution_mode)
 
   const run = useCallback(
@@ -148,7 +150,7 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
       if (!sameJob && workflow?.resume_claims.length &&
           !window.confirm('分析新的岗位说明会替换当前申请的正文。继续分析？')) return
       if (parseMode === 'dynamic' &&
-          !window.confirm('将岗位原文及用于匹配的经历发送给后端服务。继续？')) return
+          !window.confirm('将岗位原文及用于匹配的经历发送给后端配置的模型服务。继续使用模型？')) return
       const thisRequest = ++requestId.current
       setStatus('loading')
       setErrorMsg('')
@@ -200,26 +202,25 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
   )
 
   return (
-    <section className="panel workbench-page">
-      <header className="panel-head workbench-head">
-        <p className="workbench-kicker">工作流 · 目标岗位</p>
+    <section className="panel">
+      <header className="panel-head">
         <h2>岗位说明</h2>
         <p>
-          粘贴招聘原文，或从岗位雷达选择已收藏岗位。分析后查看哪些经历适合这个岗位。
+          粘贴招聘原文，或从岗位雷达选择已收藏岗位。之后再检查每条表述的材料支持。
         </p>
       </header>
       <div className="jd-source-bar">
-        <button type="button" className="btn secondary" disabled={prerecorded || status === 'loading'} onClick={() => void openRadarPicker()}>
+        <Button variant="secondary" disabled={prerecorded || status === 'loading'} onClick={() => void openRadarPicker()}>
           从岗位雷达选择
-        </button>
+        </Button>
         <Link className="text-action" to="/jobs">管理岗位雷达</Link>
       </div>
       {pickerOpen && (
-        <div className="jd-radar-picker" role="dialog" aria-label="从岗位雷达选择岗位">
-          <div className="jd-radar-picker-head">
-            <strong>从岗位雷达选择</strong>
+        <Card className="jd-radar-picker" role="dialog" aria-label="从岗位雷达选择岗位">
+          <CardHeader className="jd-radar-picker-head">
+            <CardTitle asChild><h3>从岗位雷达选择</h3></CardTitle>
             <button type="button" className="text-action" onClick={() => setPickerOpen(false)}>收起</button>
-          </div>
+          </CardHeader>
           <input
             className="resume-input jd-radar-picker-search"
             aria-label="搜索收藏岗位"
@@ -246,19 +247,19 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
                 </button>
               ))}
               {!selectableJobs.length && (
-                <p>
+                <p className="muted">
                   {library?.items.length
-                    ? '没有可准备申请的匹配岗位。'
-                    : '岗位雷达还是空的。'}
+                    ? '没有可准备申请的匹配岗位。可换关键词，或到岗位雷达调整状态。'
+                    : '岗位雷达还是空的。先去收藏岗位，或在下方直接粘贴 JD。'}
                 </p>
               )}
             </div>
           )}
           <div className="btn-row">
-            <Link className="btn secondary" to="/jobs">打开岗位雷达</Link>
-            <button type="button" className="btn secondary" disabled={libraryBusy} onClick={() => void openRadarPicker()}>刷新列表</button>
+            <Button asChild variant="secondary"><Link to="/jobs">打开岗位雷达</Link></Button>
+            <Button variant="secondary" disabled={libraryBusy} onClick={() => void openRadarPicker()}>刷新列表</Button>
           </div>
-        </div>
+        </Card>
       )}
       {Object.keys(reviewDrafts).length > 0 && <p className="callout warn">审核页有暂存修改，请先 <Link to="/resume">返回保存修改</Link>。保存前不能重新分析或更换岗位。</p>}
       {errorMsg && status !== 'error' && status !== 'empty' && <p role="alert" className="danger-text">{errorMsg}</p>}
@@ -296,8 +297,9 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
 
       <label className="field-label" htmlFor="jd-parse-mode">岗位解析方式</label>
       <select id="jd-parse-mode" value={parseMode} disabled={prerecorded || status === 'loading'} onChange={e => setParseMode(e.target.value as WorkflowParseMode)}>
-        <option value="offline">本地规则</option><option value="dynamic">服务端解析</option>
+        <option value="offline">本地规则</option><option value="dynamic">AI 解析（需要配置模型）</option>
       </select>
+      <p className="muted">{prerecorded ? '当前加载固定的预录岗位与核验结果，不分析输入或调用模型。加载后显示样例原文。' : parseMode === 'offline' ? '岗位解析、经历匹配和材料核验均在本机进行。仅在你主动请求 AI 润色并确认后，才会发送相关内容。' : '岗位正文和参与匹配的经历可能发送给配置的模型服务。'}</p>
       <div className="btn-row">
         <button type="button" className="btn secondary" disabled={prerecorded || Boolean(jobId) || loadingTarget || status === 'loading'} onClick={() => changeInput(SAMPLE_JD)}>
           填入示例岗位
@@ -345,26 +347,48 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
             {requestedMode ? (
               <>
                 {' '}
-                · 请求：{requestedMode === 'DYNAMIC' ? '服务端解析' : '离线规则'}
+                · 请求：{requestedMode === 'DYNAMIC' ? '模型解析' : '离线规则'}
               </>
             ) : null}
           </p></details>
-          <p>
+          <p className="muted">
             解析岗位：{workflow.parsed_jd.title === 'UNKNOWN' ? '未知岗位' : workflow.parsed_jd.title}{' '}
             @ {workflow.parsed_jd.company === 'UNKNOWN' ? '未知公司' : workflow.parsed_jd.company} · 要求{' '}
             {workflow.parsed_jd.requirements.length} 条
           </p>
-          {ruleParsed && !offlineRules && jdFallbackReason && (
+          {ruleParsed && (
             <div className="callout warn">
-              <p>服务端解析未通过，已改用规则结果。原因：{zhText(jdFallbackReason)}</p>
+              {offlineRules ? (
+                <p className="muted">
+                  离线规则保留明确列出的任职要求和加分项。无法判定的条目请对照原文人工核对。
+                </p>
+              ) : (
+                <p className="muted">
+                  {jdFallbackReason
+                    ? `模型解析未通过，已改用规则结果。原因：${zhText(jdFallbackReason)}`
+                    : '模型路径未启用，已用规则结果继续。请检查后端模型密钥配置。'}
+                </p>
+              )}
             </div>
           )}
+          {requestedMode === 'DYNAMIC' &&
+            (workflow.component_modes?.jd_parser === 'MODEL' ||
+              workflow.component_modes?.jd_parser === 'MODEL_SPAN_REPAIRED') && (
+              <div className="callout">
+                本次岗位解析走了模型路径（{zhLookup(ZH_PARSER, workflow.component_modes.jd_parser)}）。
+              </div>
+            )}
           <div className="btn-row end">
             <button type="button" className="btn primary" onClick={() => navigate('/match')}>
               下一步：证据匹配
             </button>
           </div>
         </div>
+      )}
+      {status === 'idle' && (
+        <p className="muted tip">
+          岗位可离线解析；使用模型解析、SAG检索或原子事实核验需先在后端配置密钥。
+        </p>
       )}
     </section>
   )

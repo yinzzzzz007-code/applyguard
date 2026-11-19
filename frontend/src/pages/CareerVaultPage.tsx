@@ -734,18 +734,12 @@ export function CareerVaultPage() {
   }
 
   return (
-    <section className={`panel resume-panel workbench-page ${form && !form.dirty && form.savedAt ? 'is-saved' : 'is-unsaved'}`}>
-      <header className="panel-head workbench-head">
-        <p className="workbench-kicker">经历库</p>
+    <section className={`panel resume-panel ${form && !form.dirty && form.savedAt ? 'is-saved' : 'is-unsaved'}`}>
+      <header className="panel-head">
         <h2>整理自己的经历</h2>
         <p>
-          优先核对项目、实习与技能。保存后去证明材料补依据；个人资料和教育信息按填写使用，不代表已被证据核验。
+          优先核对项目、实习与技能，保存后到 <Link to="/evidence">证明材料</Link> 补充依据。个人资料和教育信息按填写使用，不代表已被证据核验。
         </p>
-        <div className="workbench-flow" aria-label="下一步">
-          <span>填写经历</span>
-          <span>保存草稿</span>
-          <Link to="/evidence">补充证明材料</Link>
-        </div>
       </header>
 
       {status === 'loading' && <LoadingState label="正在加载简历库…" />}
@@ -782,6 +776,7 @@ export function CareerVaultPage() {
             <div role="status" className={saveKind === 'ok' ? 'callout ok' : 'callout warn'}>{saveMsg}</div>
           ) : null}
 
+          <p className="resume-hint">星号表示建议优先填写，可先保存不完整草稿。网申补充信息为选填，不影响准备度。</p>
           <div className="resume-layout">
             <aside className="resume-side">
               <p className="resume-side-title">简历模块</p>
@@ -862,6 +857,7 @@ export function CareerVaultPage() {
                   />
                 </div>
                 <details className="vault-optional"><summary>网申补充信息（选填）</summary>
+                  <p className="resume-hint">仅在目标招聘表单确有需要时填写。演示请使用虚构信息；留空不影响整理经历和材料。</p>
                   <div className="resume-fields">
                     <FieldSelect label="性别" options={GENDER_OPTIONS} value={form.basic.gender} onChange={v => patchForm(p => ({...p,basic:{...p.basic,gender:v}}))} />
                     <BirthDateSelect value={form.basic.birthday} onChange={v => patchForm(p => ({...p,basic:{...p.basic,birthday:v}}))} />
@@ -939,6 +935,7 @@ export function CareerVaultPage() {
                   <i />
                   教育经历
                 </h3>
+                <p className="resume-hint">请按照从新到旧的顺序填写</p>
                 {form.education.map((edu, idx) => (
                   <div key={edu.id} className="resume-entry">
                     <div className="resume-fields">
@@ -1081,7 +1078,7 @@ export function CareerVaultPage() {
                 ))}
                 <button
                   type="button"
-                  className="btn secondary resume-add-btn"
+                  className="btn secondary"
                   onClick={() =>
                     patchForm((p) => ({
                       ...p,
@@ -1113,6 +1110,7 @@ export function CareerVaultPage() {
                   <i />
                   实习经历
                 </h3>
+                <p className="resume-hint">按时间从新到旧；建议用数据展现实习成果</p>
                 {form.internships.map((entry) => (
                   <ExperienceEditor
                     key={entry.id}
@@ -1136,7 +1134,7 @@ export function CareerVaultPage() {
                 ))}
                 <button
                   type="button"
-                  className="btn secondary resume-add-btn"
+                  className="btn secondary"
                   onClick={() =>
                     patchForm((p) => ({
                       ...p,
@@ -1167,6 +1165,7 @@ export function CareerVaultPage() {
                   <i />
                   项目经历
                 </h3>
+                <p className="resume-hint">可填写校园项目、竞赛、课程实践等</p>
                 {form.projects.map((entry) => (
                   <ExperienceEditor
                     key={entry.id}
@@ -1188,7 +1187,7 @@ export function CareerVaultPage() {
                 ))}
                 <button
                   type="button"
-                  className="btn secondary resume-add-btn"
+                  className="btn secondary"
                   onClick={() =>
                     patchForm((p) => ({
                       ...p,
@@ -1219,6 +1218,7 @@ export function CareerVaultPage() {
                   <i />
                   获奖 / 竞赛
                 </h3>
+                <p className="resume-hint">竞赛、比赛、奖学金、荣誉称号等，可增删条目</p>
                 {(form.awards ?? []).map((entry) => (
                   <AwardEditor
                     key={entry.id}
@@ -1239,7 +1239,7 @@ export function CareerVaultPage() {
                 ))}
                 <button
                   type="button"
-                  className="btn secondary resume-add-btn"
+                  className="btn secondary"
                   onClick={() =>
                     patchForm((p) => {
                       const awards = [
@@ -1282,7 +1282,7 @@ export function CareerVaultPage() {
                     label="研究兴趣"
                     wide
                     value={form.extras.researchFocus}
-                    placeholder="评测平台、分布式训练、推理服务…"
+                    placeholder="大模型评测、AI Infra、分布式训练…"
                     onChange={(v) =>
                       patchForm((p) => ({ ...p, extras: { ...p.extras, researchFocus: v } }))
                     }

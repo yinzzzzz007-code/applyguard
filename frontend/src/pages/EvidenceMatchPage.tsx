@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import type { EvidenceMatchItem, ParsedRequirement } from '../api/types'
 import { EmptyState } from '../components/States'
 import { useDemo } from '../context/DemoContext'
-import { ZH_CATEGORY, ZH_REQ_TYPE, ZH_STRENGTH, zhLookup, zhText } from '../i18n'
+import { ZH_CATEGORY, ZH_MATCHER, ZH_REQ_TYPE, ZH_STRENGTH, zhLookup, zhText } from '../i18n'
 import { indexesInScope, quoteKind, type QualificationKind } from '../jdMatchScope'
 
 type MatchTone = 'strong' | 'medium' | 'conflict' | 'uncovered'
@@ -231,11 +231,31 @@ export function EvidenceMatchPage() {
     <section className="panel">
       <header className="panel-head">
         <h2>证据匹配</h2>
-        <p>对照任职要求与加分项，查看相关经历与证据。</p>
+        <p>只对照任职要求与加分项；职位描述不参与匹配。点击彩色片段查看经历与证据明细。</p>
+        <p className="muted">相关度只表示经历与岗位要求的匹配程度，不代表事实可信度或录用概率；材料支持需另行核验。</p>
         {workflowSourceNotice && <p className="callout warn">{workflowSourceNotice}</p>}
         {workflow.requires_reverification && !workflowSourceNotice && (
-          <p className="callout warn">源头或正文已变动，请回岗位说明重新分析。</p>
+          <p className="callout warn">源头或正文已变动，当前匹配仅供参考；请回岗位说明重新分析后再继续后续步骤。</p>
         )}
+        {(() => {
+          const matcherMode = workflow.component_modes?.evidence_matcher
+          const label = matcherMode
+            ? zhLookup(ZH_MATCHER, matcherMode.split('+')[0], matcherMode)
+            : null
+          const ai = workflow.evidence_match.ai_match
+          if (!label && !ai) return null
+          return (
+            <p className="muted">
+              匹配方式：{label || '规则匹配'}
+              {ai?.mode === 'MODEL' && typeof ai.scored_rows === 'number'
+                ? ` · 模型评分 ${ai.scored_rows} 条`
+                : ''}
+              {ai?.mode === 'RULE_FALLBACK' && ai.failure
+                ? ` · 模型失败已回退（${zhText(ai.failure)}）`
+                : ''}
+            </p>
+          )
+        })()}
       </header>
 
       <div className="em-scope" role="group" aria-label="匹配范围">
@@ -268,14 +288,22 @@ export function EvidenceMatchPage() {
       <div className="em-stack">
         <section className="em-jd">
           <h3 className="em-section-title">输入的岗位说明</h3>
-          <p className="em-jd-meta">
+          <p className="muted em-jd-meta">
             {workflow.parsed_jd.title === 'UNKNOWN' ? '未知岗位' : workflow.parsed_jd.title} @{' '}
             {workflow.parsed_jd.company === 'UNKNOWN' ? '未知公司' : workflow.parsed_jd.company} ·{' '}
             {views.length} 条参与匹配
+            {workflow.parsed_jd.requirements.length > views.length
+              ? ` · 已排除职位描述等 ${workflow.parsed_jd.requirements.length - views.length} 条`
+              : ''}
           </p>
           <div className="em-jd-body" role="article">
             {renderHighlightedJd(jdText, highlights, setActiveReqId)}
           </div>
+          <p className="muted em-jd-hint">
+            {highlights.length
+              ? '彩色片段来自任职要求或加分项，可点击查看。职位描述不会着色。'
+              : '未能在任职要求或加分项中定位片段，可点下方条目查看详情。'}
+          </p>
         </section>
 
         {!views.length ? (
@@ -354,7 +382,7 @@ export function EvidenceMatchPage() {
             <p className="em-modal-req">{active.requirement.text}</p>
             <ProfileCheckList checks={workflow.profile_checks?.[active.requirement.requirement_id]} />
             {!active.requirement.normalized_terms?.length && <p>此条需要对照岗位原文人工核对。</p>}
-            <p>
+            <p className="muted">
               类型 {zhLookup(ZH_REQ_TYPE, active.requirement.type)} · 类别{' '}
               {zhLookup(ZH_CATEGORY, active.requirement.category)}
             </p>
@@ -372,6 +400,9 @@ export function EvidenceMatchPage() {
               </div>
             ) : null}
 
+            {active.requirement.category === 'EDUCATION' && workflow.profile_checks?.[active.requirement.requirement_id]?.length ? (
+              <p className="muted">对照依据为本人填写的教育信息。请按岗位要求另行核对学历证明。</p>
+            ) : null}
             {relatedMatches.length ? (
               <div className="stack">
                 {relatedMatches.map((m) => (
@@ -389,10 +420,10 @@ export function EvidenceMatchPage() {
                       <strong>匹配原因：</strong>
                       {zhText(m.rationale)}
                     </p>
-                    <p>
+                    <p className="muted">
                       陈述：{m.claim_ids.map((id) => id.replace(/^claim_/, '')).join('、') || '无'}
                     </p>
-                    <p>
+                    <p className="muted">
                       证据：{(m.evidence_ids ?? []).map((id) => id.replace(/^ev_/, '')).join('、') || '无'}
                     </p>
                     {m.conflicts?.length ? (
@@ -407,7 +438,7 @@ export function EvidenceMatchPage() {
                 ))}
               </div>
             ) : (
-              <p>没有关联到经历库条目。</p>
+              <p className="muted">没有关联到经历库条目。</p>
             )}
           </div>
         </div>

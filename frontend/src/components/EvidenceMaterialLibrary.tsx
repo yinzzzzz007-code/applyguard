@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { EvidenceSearchMatch, EvidenceSourceFile, ResumeMatchItem } from '../api/types'
 import { materialFolder, materialName, materialStatus, materialType } from '../evidence/materials'
+import { Button } from './ui/button'
+import { Card, CardDescription, CardHeader, CardTitle } from './ui/card'
 
 type DetailTab = 'original' | 'text' | 'fields'
 type Props = {
@@ -146,14 +148,17 @@ export function EvidenceMaterialLibrary(props: Props) {
   }
 
   return (
+    <Card asChild>
     <section className="material-library" id="evidence-files" aria-label="材料库">
+      <CardHeader asChild>
       <header className="material-library-head">
         <div>
-          <h3>材料库</h3>
-          <p>新增文件不会覆盖已有条目。查看原件和识别内容后，切换到“经历关联”。</p>
+          <CardTitle asChild><h3>材料库</h3></CardTitle>
+          <CardDescription asChild><p>查看原件和识别内容后，切换到「经历关联」。</p></CardDescription>
         </div>
-        <button type="button" className="btn secondary" onClick={props.onShowRelations}>核对经历关联</button>
+        <Button variant="secondary" onClick={props.onShowRelations}>核对经历关联</Button>
       </header>
+      </CardHeader>
 
       <div className="material-import-strip">
         <div>
@@ -192,13 +197,13 @@ export function EvidenceMaterialLibrary(props: Props) {
                 setPage(1)
               }}
             />
-            <button
+            <Button
               type="submit"
-              className="btn secondary"
+              variant="secondary"
               disabled={props.busy || searchBusy || !query.trim()}
             >
               {searchBusy ? '查找中…' : '全文查找'}
-            </button>
+            </Button>
           </form>
 
           <div className="material-filters">
@@ -480,5 +485,6 @@ export function EvidenceMaterialLibrary(props: Props) {
         {props.settings}
       </details>
     </section>
+    </Card>
   )
 }

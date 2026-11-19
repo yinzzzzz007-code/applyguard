@@ -7,14 +7,24 @@
 ## 启动与配对
 
 1. 启动 ApplyGuard 后端及前端，访问 `/evidence`。开发默认 `http://127.0.0.1:5173/evidence`；构建后也可直接访问后端的同一路径。保持页面和后端开启。
-2. 展开连接入口，查看环境状态。缺依赖时安装说明自动展开，授权按钮不可用。Python MCP 依赖安装在运行 ApplyGuard 的 Python 环境：复制页面生成的 `python.exe -m pip install -r requirements-agent.txt` 完整命令，到 PowerShell 执行，再点“重新检测环境”。不在 Harness 聊天内安装 Python 包。
-3. 已装桌面版时自动发现其自带 `dsh.cmd`，也会查找 PATH 中的 `dsh`。未安装请从 [官方页面](https://deepseek.com/harness) 获取。自定义路径通过 `APPLYGUARD_HARNESS_COMMAND` 配置并重启后端。快捷启动自动加载 `@deepseek-ai/dsh-mcp-client`；缺该插件时更新 Harness，参考 [官方 MCP 文档](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/mcp/mcp-client/README.md)。
+2. 展开连接入口并检查环境。缺依赖时安装说明自动展开。先在项目根目录打开终端，也可用「复制切换目录命令」进入。再执行「复制安装命令」，它使用当前后端的 Python 和相对的 `requirements-agent.txt`。执行完成后点「重新检测环境」。
+3. 已装桌面版时自动发现其自带 `dsh.cmd`，也会查找 PATH 中的 `dsh`。自定义安装可将 `APPLYGUARD_HARNESS_COMMAND` 设为 PATH 命令名、相对项目根目录的路径或本机绝对路径，然后重启后端。快捷启动会加载 `@deepseek-ai/dsh-mcp-client`。缺该插件时先更新 Harness。 [Harness 安装](https://deepseek.com/harness) · [官方 MCP 说明](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/mcp/mcp-client/README.md)
 4. 填查找任务和具体目录，选择材料外发规则。GitHub 范围为 `owner/repo@40位提交SHA`，不自动搜索整个账号。私有仓库须另行勾选并配置独立 `APPLYGUARD_GITHUB_TOKEN`；“查技术背景”不能导入为本人贡献。
-5. 点击授权，页面显示“等待 Agent 连接”。允许云端时，复制 PowerShell 启动命令并执行；终端依次隐藏询问临时连接令牌和模型 API Key。令牌从页面单独复制，两者不是同一个值。默认模型为 `gemini-3.1-flash-lite-preview`，地址取后端配置，命令不含密钥。
+5. 点击授权，页面显示「等待 Agent 连接」。允许云端时，在本机终端执行启动命令。终端将分别隐藏读取临时连接令牌和模型 API Key。默认模型为 `gemini-3.1-flash-lite-preview`，地址取后端配置。
 6. 启动器创建独立临时 `DSH_HOME` 和检索 patch，禁用其他通用工具，退出后清理临时目录。不会修改原 Harness 会话配置。安装检测和预检都不等于配对；只有 Harness 调用 `get_task` 后显示“已配对”，页面每 3 秒自动刷新候选。
 7. 核对回传原文、本人归属及数字，再导入材料。完成后撤销连接。离页／撤销后的旧刷新响应不能重新恢复配对；过期后需要新命令与新令牌。
 
 若选择“隔离本地模型，禁止外发”，快捷云端启动器会明确拒绝。请把下面 MCP 片段接入自己已隔离的检索 profile，并配置本地模型和网络隔离；这个选择不会自动完成操作系统隔离。已有 Harness 聊天不会自动获得新授权。
+
+### 迁移到新目录或机器
+
+在新项目目录运行 `python -m venv .venv` 重建环境，并用该解释器启动后端。页面会重新检测路径。项目内的 PowerShell 安装命令示例如下。
+
+```powershell
+& '.\.venv\Scripts\python.exe' -m pip install -r '.\requirements-agent.txt'
+```
+
+macOS 或 Linux 项目内环境的解释器为 `./.venv/bin/python`。共享环境与项目跨盘时，页面会针对目标机器生成解释器绝对路径，依赖清单仍从项目根目录读取。迁移后重新授权并生成 MCP 配置，授权目录按新机器上的材料位置填写。
 
 DeepSeek Harness 支持 MCP stdio；在**独立检索 profile** 中加入以下 patch（临时 ID/token 通过环境变量提供，不写进仓库）：
 
@@ -42,7 +52,7 @@ DeepSeek Harness 支持 MCP stdio；在**独立检索 profile** 中加入以下 
 
 | 用户操作／预期证据 | 实现位置 | 验证入口 |
 | --- | --- | --- |
-| 环境检测，显示真实安装路径和依赖状态 | `HarnessSetupGuide.tsx`、`harness_setup.py`；UI `setup` | `tests/test_harness_setup.py` |
+| 环境检测与相对安装命令，支持直接复制 | `HarnessSetupGuide.tsx`、`agentConnection.ts`、`harness_setup.py`；UI `setup` | `tests/test_harness_setup.py`、`frontend/scripts/agent-connection.test.mjs` |
 | 授权后等待；真正调用工具后已配对 | `AgentConnector.tsx`、`agentConnection.ts`、`agent_bridge.py` | `frontend/scripts/agent-connection.test.mjs`、`tests/test_agent_bridge.py` |
 | PowerShell 启动、预检外发规则、独立会话 | `scripts/connect_harness.py`、共享检索 patch | `tests/test_agent_mcp.py`、`scripts/harness_agent_probe.py` |
 | 本机同源代理，不放开外站访问 | `frontend/vite.config.ts`、`backend/app.py` | `scripts/agent_browser_smoke.cjs` |

@@ -58,18 +58,18 @@ export const ZH_WORKFLOW: Record<string, string> = {
 export const ZH_EXEC: Record<string, string> = {
   DETERMINISTIC_FALLBACK: '规则回退',
   DETERMINISTIC_FIXTURE: '固定演示',
-  DYNAMIC_MODEL: '服务端解析',
+  DYNAMIC_MODEL: '模型路径',
 }
 
 export const ZH_PARSER: Record<string, string> = {
-  MODEL: '服务端解析',
-  MODEL_SPAN_REPAIRED: '服务端解析（已校正原文）',
+  MODEL: '模型解析',
+  MODEL_SPAN_REPAIRED: '模型解析（已校正原文）',
   RULE_FALLBACK: '规则回退',
 }
 
 export const ZH_MATCHER: Record<string, string> = {
   DETERMINISTIC: '规则匹配',
-  AI_SEMANTIC: '语义匹配',
+  AI_SEMANTIC: '模型语义匹配',
   RULE_FALLBACK: '规则回退',
 }
 
@@ -116,7 +116,7 @@ export const ZH_CLAIM_STATUS: Record<string, string> = {
 
 const PHRASE: Array<[RegExp | string, string]> = [
   ['parse_mode=offline', '离线规则'],
-  ['parse_mode=dynamic', '服务端解析'],
+  ['parse_mode=dynamic', '模型解析'],
   ['parse_mode: offline', '离线规则'],
   ['Blocked content must be corrected before review.', '阻断内容须先修正，才能进入复核。'],
   ['APPLICATION_DRAFT_BLOCKED', '申请草稿已阻断'],
@@ -128,19 +128,19 @@ const PHRASE: Array<[RegExp | string, string]> = [
   ['ready_for_selection', '可写入'],
   ['unsupported_block', '不支持阻断'],
   ['timeout_fallback', '超时回退'],
-  ['ModelFailure: Model API key is not configured', '服务失败：未配置密钥'],
-  ['ModelFailure: Model service returned HTTP 400', '服务失败：HTTP 400（请求被拒）'],
-  ['ModelFailure: Model service returned HTTP 401', '服务失败：HTTP 401（密钥无效）'],
-  ['ModelFailure: Model service returned HTTP 402', '服务失败：HTTP 402（余额不足）'],
-  ['ModelFailure: Model service returned HTTP 429', '服务失败：HTTP 429（限流）'],
-  ['ModelFailure: Model request failed or timed out', '服务失败：网络失败或超时'],
-  ['ModelFailure: Model response was truncated or refused', '服务失败：输出被截断或拒绝'],
-  ['ModelFailure: Model returned invalid JSON', '服务失败：返回不是合法 JSON'],
-  ['ModelFailure: Model returned empty content', '服务失败：返回空内容'],
-  ['JDParseError: Requirement is not grounded in JD', '解析条目未通过岗位原文核对'],
+  ['ModelFailure: Model API key is not configured', '模型失败：未配置密钥'],
+  ['ModelFailure: Model service returned HTTP 400', '模型失败：HTTP 400（请求被拒，常见于模型名或参数）'],
+  ['ModelFailure: Model service returned HTTP 401', '模型失败：HTTP 401（密钥无效）'],
+  ['ModelFailure: Model service returned HTTP 402', '模型失败：HTTP 402（余额不足）'],
+  ['ModelFailure: Model service returned HTTP 429', '模型失败：HTTP 429（限流）'],
+  ['ModelFailure: Model request failed or timed out', '模型失败：网络失败或超时'],
+  ['ModelFailure: Model response was truncated or refused', '模型失败：输出被截断或拒绝'],
+  ['ModelFailure: Model returned invalid JSON', '模型失败：返回不是合法 JSON'],
+  ['ModelFailure: Model returned empty content', '模型失败：返回空内容'],
+  ['JDParseError: Requirement is not grounded in JD', '模型条目未通过岗位原文核对'],
   ['JDParseError: Title was not present in JD', '解析失败：岗位名称不在原文中'],
   ['JDParseError: Company was not present in JD', '解析失败：公司名不在原文中'],
-  ['JDParseError: Model output has no requirements', '解析失败：未给出要求条目'],
+  ['JDParseError: Model output has no requirements', '解析失败：模型未给出要求条目'],
   ['Skill overlap', '技能重合'],
   ['Responsibility overlap', '职责重合'],
   ['Linked evidence', '关联证据'],

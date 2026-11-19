@@ -42,10 +42,10 @@ flowchart TD
 
 | 用户看到的入口 | 路径 | 页面文件 | 对应业务与后端 |
 | --- | --- | --- | --- |
-| 首页／简历导入 | `/` | `pages/ResumeImportPage.tsx` | 默认展开 24 秒操作视频；导入按钮定位 `#resume-import`；PDF 抽取预览调用 `resume_parser.py`，`POST /api/v1/resume/parse` |
+| 首页／简历导入 | `/` | `pages/ResumeImportPage.tsx` | 首屏呈现 PDF 导入和默认展开的 24 秒操作视频，导入按钮定位 `#resume-import`。PDF 抽取预览调用 `resume_parser.py`，`POST /api/v1/resume/parse` |
 | 经历库 | `/vault` | `pages/CareerVaultPage.tsx` | 编辑个人、教育、实习、项目、奖项；`local_store.py` 保存草稿，`resume_draft_vault.py` 转为工作流经历结构 |
 | 证明材料 | `/evidence` | `pages/EvidenceWorkspacePage.tsx` | 文件导入、原件预览、字段核对和经历关联；`evidence_workspace.py`、`evidence_parsers.py` |
-| 岗位雷达 | `/jobs` | `pages/JobRadarPage.tsx` | 本机岗位收藏、JSON/JSONL 导入、版本与阶段；`job_radar.py`，可选连接外部本机 Radar |
+| 岗位雷达 | `/jobs` | `pages/JobRadarPage.tsx`、`components/OfficialJobRadar.tsx` | 岗位收藏、JD 版本与阶段、官网刷新、匹配和提醒。开发、配置与验证入口见 [官网岗位雷达交接](official-job-radar.md) |
 | 岗位说明 | `/jd` | `pages/JdInputPage.tsx` | JD 输入、规则或模型解析，启动工作流；`jd_parser.py`、`skill_router.py` |
 | 证据匹配 | `/match` | `pages/EvidenceMatchPage.tsx` | 岗位要求与经历／材料候选、缺口；`evidence_matcher.py`、`ai_evidence_matcher.py` |
 | 简历审查 | `/resume` | `pages/ResumeReviewPage.tsx` | 编辑正文、润色预览、等价审核、复核与导出；`grounded_workflow.py`、`wording_review.py`、`review_export.py` |
@@ -72,7 +72,7 @@ flowchart TD
 | `components/AgentConnector.tsx` | 来源授权、每 3 秒自动配对状态、证据候选、导入和撤销 |
 | `components/HarnessSetupGuide.tsx`、`agentConnection.ts` | 本机安装检测／步骤、真实路径命令、临时 MCP 配置与连接状态 |
 | `components/AppShell.tsx`、`States.tsx`、`i18n.ts` | 页面壳、状态标记、中文文案 |
-| `components/ProjectReel.tsx`、`KineticCanvas.tsx`、`motion/` | 首页默认展开的 24 秒 Canvas/WebGL 视频；静音播放、暂停、章节和减少动态效果；帮助页复用；不参与核验 |
+| `components/ProjectReel.tsx`、`WatercolorReelStage.tsx`、`motion/` | 首页默认展开 24 秒水彩导览，帮助页复用画面、章节、静音播放、进度和减少动态效果 |
 
 ## 3. 后端模块具体负责什么
 
@@ -225,8 +225,9 @@ npm run dev -- --host 127.0.0.1
 | 图片简历 OCR 及字段抽取 | `evidence_parsers.py` 的 OCR 引擎、`resume_parser.py`、`resume_sections.py` | 选择本地 OCR 可读取图片 PDF；教育字段仍可能漏提，历史截图结果见[本轮报告](testing-report-2026-11-13-ambiguity.md) |
 | 人工确认与导出分离 | `review_export.py`、`copyRules.ts` | `test_review_export.py`、前端 review／copy-rules／review-session 测试 |
 | 岗位与外部 Agent | `job_radar.py`、`agent_bridge.py` | `test_job_radar.py`、`test_agent_bridge.py`、`test_agent_mcp.py` |
-| 本机 Harness 接入 | `harness_setup.py`、`scripts/connect_harness.py`、`HarnessSetupGuide.tsx` | `test_harness_setup.py`、`agent-connection.test.mjs`、`scripts/agent_browser_smoke.cjs`、`scripts/harness_agent_probe.py` |
-| 首页视频、导入入口、移动布局 | `ResumeImportPage.tsx`、`ProjectReel.tsx`、`KineticCanvas.tsx`、`workspace.css` | `scripts/home_browser_smoke.cjs`（真实浏览器、带日期截图） |
+| 本机 Harness 接入与迁移 | `harness_setup.py`、`scripts/connect_harness.py`、`HarnessSetupGuide.tsx`。检测项目根目录并生成可复制安装命令 | `test_harness_setup.py`、`agent-connection.test.mjs`、`scripts/agent_browser_smoke.cjs`、`scripts/harness_agent_probe.py` |
+| 首页水彩导览、卡片与导入入口 | `ResumeImportPage.tsx`、`ProjectReel.tsx`、`WatercolorReelStage.tsx`、`workspace-polish.css`、`components/ui/` | `scripts/home_browser_smoke.cjs`（验证纸色、晕染卡片、按钮反馈、键盘焦点、四章节、进度和移动布局，输出截图） |
+| 工作台视觉规范 | `DESIGN.md`、`frontend/src/palette.css`、`frontend/src/workspace.css`、`frontend/src/workspace-polish.css`、`frontend/src/components/ui/` | `npm run build`、`npm run smoke`。首页浏览器回归检查配色、字号层级、键盘焦点和减少动态效果 |
 | `/help` 后端直达／刷新 | `backend/app.py` SPA 路径表 | `tests/test_api.py` 的 `test_help_deep_link_serves_spa` |
 
 `scripts/live_grounding_pilot.py` 使用五组虚构材料，包含支持句、错误句及仅检索润色预览。它的退出码不能代替效果检查，必须读 `grounding.error` 与各条核验状态；本次另记录默认原子模式的完整 HTTP 复测。详细结果和限制见本次测试报告。

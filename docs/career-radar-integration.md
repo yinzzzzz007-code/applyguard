@@ -1,5 +1,7 @@
 # 岗位雷达接入与交接
 
+百度、华为与 Seed 官网来源、定时更新和站内提醒见 [官网岗位雷达交接](official-job-radar.md)。本文记录手动导入和可选的本机 AI Career Radar 连接。
+
 本次把机会管理接到 ApplyGuard 现有九模块工作流之前，新增 `/jobs` 页面。实现由 ApplyGuard 独立编写，通过 HTTP API 与 [AI Career Radar](https://github.com/Haoyu-Gu/ai-career-radar) 互操作。核对的上游版本为 `0ca459b3f6975d93a08cc5eea7adfca7e2a89b5c`。
 
 ## 已实现的用户流程

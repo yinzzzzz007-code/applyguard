@@ -19,6 +19,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 from backend.services.local_store import local_dir
+from backend.services.job_sync_store import JOB_WITH_UNREAD, metadata, migrate
 
 STATUSES = {"open", "closed", "unknown", "reference"}
 STAGES = {"saved", "preparing", "archived"}
@@ -150,7 +151,7 @@ def _structured_metadata(raw: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def normalize(raw: Any, *, radar: bool = False) -> dict[str, Any]:
+def normalize(raw: Any, *, radar: bool = False, source_id: str = "") -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise ValueError("每个岗位必须是 JSON 对象")
     title = _text(raw.get("title"), "岗位名称", required=True)
@@ -183,15 +184,25 @@ def normalize(raw: Any, *, radar: bool = False) -> dict[str, Any]:
            "source_observed_at": _text(raw.get("last_seen_at") or raw.get("source_observed_at"), "来源观察时间", 100)}
     for key in ("location", "education", "experience", "recruitment_type"):
         job[key] = _text(raw.get(key), key) or ""
+    if source_id:
+        job.update(source_kind="official", source_namespace=source_id, source_observed_at="",
+                   requirements=_description(raw.get("requirements"), "任职要求"),
+                   published_at=_text(raw.get("published_at"), "发布时间", 100),
+                   closes_at=_text(raw.get("closes_at"), "截止时间", 100),
+                   source_updated_at=_text(raw.get("source_updated_at"), "官网更新标识", 100),
+                   responsibilities=_description(raw.get("responsibilities"), "岗位职责"),
+                   details_available=raw.get("details_available", True),
+                   source_url=_url(raw.get("source_url")))
     job.update(_structured_metadata(raw))
     if len(jd_text(job)) > 20000:
         raise ValueError("岗位合并文本超过工作流上限")
     identity = ([job["source_namespace"], company.casefold(), job["external_id"]] if job["external_id"]
                 else ["url", job["url"]] if job["url"] else
                 ["manual", company.casefold(), title.casefold(), job["location"].casefold()])
-    identity = ["reference" if status == "reference" else "opportunity", *identity]
+    identity = ["official" if source_id else "reference" if status == "reference" else "opportunity", *identity]
     job["identity_key"] = hashlib.sha256(json.dumps(identity, ensure_ascii=False).encode()).hexdigest()
-    job["content_hash"] = hashlib.sha256(json.dumps(job, ensure_ascii=False, sort_keys=True,
+    content = {key: value for key, value in job.items() if key != "source_updated_at"}
+    job["content_hash"] = hashlib.sha256(json.dumps(content, ensure_ascii=False, sort_keys=True,
         default=str).encode()).hexdigest()
     return job
 
@@ -203,6 +214,7 @@ def database():
     conn = sqlite3.connect(folder / "job-radar.sqlite3", timeout=15)
     conn.row_factory = sqlite3.Row
     try:
+        conn.execute("PRAGMA foreign_keys=ON")
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS opportunities (
               id TEXT PRIMARY KEY, identity_key TEXT UNIQUE NOT NULL, payload TEXT NOT NULL,
@@ -213,6 +225,7 @@ def database():
         """)
         with conn:
             conn.execute("BEGIN IMMEDIATE")
+            migrate(conn)
             yield conn
     finally:
         conn.close()
@@ -221,6 +234,7 @@ def database():
 def _view(row) -> dict[str, Any]:
     job = json.loads(row["payload"])
     job.update({key: row[key] for key in ("id", "version", "stage", "created_at", "imported_at")})
+    job.update(metadata(row))
     job["workflow_jd_text"] = jd_text(job)
     job["factors"] = extract_factors(job["description"])
     return job
@@ -230,7 +244,7 @@ def get_job(job_id: str) -> dict[str, Any]:
     if not isinstance(job_id, str) or not re.fullmatch(r"job_[a-f0-9]{16}", job_id):
         raise ValueError("无效岗位编号")
     with database() as conn:
-        row = conn.execute("SELECT * FROM opportunities WHERE id=?", (job_id,)).fetchone()
+        row = conn.execute(JOB_WITH_UNREAD + " WHERE o.id=?", (job_id,)).fetchone()
         if row is None:
             raise ValueError("Route not found")
         return _view(row)
@@ -244,27 +258,34 @@ def save_jobs(raws: Any, *, radar: bool = False) -> dict[str, Any]:
     results, counts = [], {"created": 0, "updated": 0, "unchanged": 0}
     with database() as conn:
         for job in jobs:
-            existing = conn.execute("SELECT * FROM opportunities WHERE identity_key=?", (job["identity_key"],)).fetchone()
-            timestamp = now()
-            encoded = json.dumps(job, ensure_ascii=False)
-            if existing:
-                job_id, version = existing["id"], existing["version"]
-                if json.loads(existing["payload"])["content_hash"] == job["content_hash"]:
-                    counts["unchanged"] += 1
-                else:
-                    version += 1
-                    conn.execute("UPDATE opportunities SET payload=?, version=?, imported_at=? WHERE id=?",
-                                 (encoded, version, timestamp, job_id))
-                    counts["updated"] += 1
-            else:
-                job_id, version = "job_" + uuid.uuid4().hex[:16], 1
-                conn.execute("INSERT INTO opportunities VALUES(?, ?, ?, ?, 'saved', ?, ?)",
-                             (job_id, job["identity_key"], encoded, version, timestamp, timestamp))
-                counts["created"] += 1
-            conn.execute("INSERT OR IGNORE INTO opportunity_versions VALUES(?, ?, ?, ?)",
-                         (job_id, version, encoded, timestamp))
-            results.append(_view(conn.execute("SELECT * FROM opportunities WHERE id=?", (job_id,)).fetchone()))
+            row, event = write_job(conn, job, now())
+            counts[event] += 1
+            results.append(_view(row))
     return {**counts, "items": results}
+
+
+def write_job(conn, job, timestamp, *, existing=None):
+    if existing is None:
+        existing = conn.execute("SELECT * FROM opportunities WHERE identity_key=?", (job["identity_key"],)).fetchone()
+    encoded = json.dumps(job, ensure_ascii=False)
+    active = int(job["status"] in {"open", "unknown"})
+    if existing:
+        job_id = existing["id"]
+        if json.loads(existing["payload"])["content_hash"] == job["content_hash"]:
+            return existing, "unchanged"
+        version, event = existing["version"] + 1, "updated"
+        conn.execute("""UPDATE opportunities SET payload=?,version=?,imported_at=?,last_changed_at=?,
+            source_type=?,external_id=?,is_active=? WHERE id=?""",
+            (encoded, version, timestamp, timestamp, job["source_kind"], job["external_id"], active, job_id))
+    else:
+        job_id, version, event = "job_" + uuid.uuid4().hex[:16], 1, "created"
+        conn.execute("""INSERT INTO opportunities
+            (id,identity_key,payload,version,stage,created_at,imported_at,first_seen_at,last_changed_at,
+             source_type,external_id,is_active) VALUES(?,?,?,?,'saved',?,?,?,?,?,?,?)""",
+            (job_id, job["identity_key"], encoded, version, timestamp, timestamp, timestamp, timestamp,
+             job["source_kind"], job["external_id"], active))
+    conn.execute("INSERT INTO opportunity_versions VALUES(?, ?, ?, ?)", (job_id, version, encoded, timestamp))
+    return conn.execute("SELECT * FROM opportunities WHERE id=?", (job_id,)).fetchone(), event
 
 
 def extract_factors(text: str) -> list[dict[str, Any]]:
@@ -285,17 +306,27 @@ def extract_factors(text: str) -> list[dict[str, Any]]:
 
 
 def list_jobs(path: str) -> dict[str, Any]:
+    from backend.services.job_matching import ai_enabled
     query = parse_qs(urlsplit(path).query)
     search = query.get("q", [""])[0].casefold()
     stage = query.get("stage", [""])[0]
     with database() as conn:
-        jobs = [_view(row) for row in conn.execute("SELECT * FROM opportunities ORDER BY imported_at DESC, id")]
+        jobs = [_view(row) for row in conn.execute(JOB_WITH_UNREAD + " ORDER BY imported_at DESC, id")]
+    for parameter, field in {"source": "source_id", "match_level": "match_level", "recruitment_type": "recruitment_type",
+                             "status": "status"}.items():
+        if parameter in query:
+            jobs = [job for job in jobs if job.get(field) in query[parameter]]
+    for parameter, field in {"new": "is_new", "unread": "unread"}.items():
+        if query.get(parameter) in (["true"], ["false"]):
+            jobs = [job for job in jobs if job[field] == (query[parameter] == ["true"])]
+    if query.get("city"):
+        jobs = [job for job in jobs if query["city"][0].casefold() in job["location"].casefold()]
     jobs = [job for job in jobs if (not stage or job["stage"] == stage) and (not search or search in
             " ".join(job[key] for key in ("title", "company", "location", "description")).casefold())]
     eligible = [job for job in jobs if job["stage"] != "archived" and job["status"] in {"open", "unknown"}]
     factors = [{"slug": slug, "label": label, "jobs": sum(any(f["slug"] == slug for f in job["factors"])
                 for job in eligible)} for slug, label, _, _ in FACTORS]
-    return {"items": jobs, "total": len(jobs), "stats": {
+    return {"items": jobs, "total": len(jobs), "ai_matching": ai_enabled(), "stats": {
         "open": sum(job["status"] == "open" for job in jobs),
         "unknown": sum(job["status"] == "unknown" for job in jobs),
         "reference": sum(job["status"] == "reference" for job in jobs),
@@ -335,8 +366,9 @@ def edit_job(job_id: str, raw: Any) -> dict[str, Any]:
         job["identity_key"] = row["identity_key"]
         encoded = json.dumps(job, ensure_ascii=False)
         version, timestamp = row["version"] + 1, now()
-        conn.execute("UPDATE opportunities SET payload=?, version=?, imported_at=? WHERE id=?",
-                     (encoded, version, timestamp, job_id))
+        conn.execute("""UPDATE opportunities SET payload=?,version=?,imported_at=?,last_changed_at=?,
+                     source_type='local_edit',is_active=?,observed_at=NULL WHERE id=?""",
+                     (encoded, version, timestamp, timestamp, int(job["status"] in {"open", "unknown"}), job_id))
         conn.execute("INSERT INTO opportunity_versions VALUES(?, ?, ?, ?)", (job_id, version, encoded, timestamp))
         row = conn.execute("SELECT * FROM opportunities WHERE id=?", (job_id,)).fetchone()
         return {"job": _view(row)}
@@ -355,6 +387,8 @@ def validate_target(request: dict[str, Any]) -> dict[str, Any] | None:
         raise ValueError("岗位文本已编辑，请解除岗位关联或重新载入原文")
     if job["stage"] == "archived" or job["status"] in {"closed", "reference"}:
         raise ValueError("已关闭、参考快照或已归档岗位不能进入申请流程")
+    if job.get("details_available") is False:
+        raise ValueError("尚未读到官网岗位详情，请先核对官方原文")
     if not isinstance(request.get("resume_draft"), dict):
         raise ValueError("请先导入简历或保存本机经历，再为收藏岗位准备申请；不能使用演示经历替代")
     return {key: job[key] for key in ("id", "title", "company", "url", "content_hash", "version",
@@ -370,6 +404,8 @@ def analyze_job(job_id: str, request: dict[str, Any]) -> dict[str, Any]:
     from backend.services.claim_validator import ClaimValidator
 
     job = get_job(job_id)
+    if job.get("details_available") is False:
+        raise ValueError("尚未读到官网岗位详情，请先核对官方原文")
     parsed, mode, _ = JDParser().parse(job["workflow_jd_text"])
     draft = request.get("resume_draft")
     if draft is not None and not isinstance(draft, dict):
@@ -491,6 +527,13 @@ def radar_import(request: dict[str, Any]) -> dict[str, Any]:
 
 def handle_get(path: str) -> dict[str, Any]:
     route = urlsplit(path).path
+    if route in {"/api/v1/jobs/sources", "/api/v1/jobs/refresh/status"}:
+        from backend.services import job_refresh
+        return job_refresh.list_sources() if route.endswith("/sources") else job_refresh.status()
+    if route == "/api/v1/jobs/alerts":
+        from backend.services import job_alerts
+        with database() as conn:
+            return job_alerts.list_alerts(conn, path)
     if route == "/api/v1/jobs":
         return list_jobs(path)
     if route == "/api/v1/jobs/radar":
@@ -509,18 +552,43 @@ def handle_get(path: str) -> dict[str, Any]:
 
 
 def handle_post(path: str, request: dict[str, Any]) -> dict[str, Any]:
+    if path == "/api/v1/jobs/refresh":
+        from backend.services import job_refresh
+        return job_refresh.start(request.get("source_ids"), force=request.get("force", False))
+    if path in {"/api/v1/jobs/alerts/read", "/api/v1/jobs/alerts/read-all"}:
+        from backend.services import job_alerts
+        with database() as conn:
+            result = job_alerts.mark(conn, request, now(), all_alerts=path.endswith("read-all"))
+            if not request.get("unread") or path.endswith("read-all"):
+                conn.execute("""UPDATE opportunities SET is_new=0 WHERE is_new=1 AND NOT EXISTS
+                    (SELECT 1 FROM job_alerts a WHERE a.job_id=opportunities.id AND a.kind='new' AND a.read_at IS NULL)""")
+            return result
     if path == "/api/v1/jobs":
         return save_jobs([request.get("job")])
     if path == "/api/v1/jobs/import":
         return save_jobs(request.get("jobs"))
     if path == "/api/v1/jobs/radar/import":
         return radar_import(request)
-    match = re.fullmatch(r"/api/v1/jobs/(job_[a-f0-9]{16})/(stage|analyze|edit)", path)
+    match = re.fullmatch(r"/api/v1/jobs/(job_[a-f0-9]{16})/(stage|analyze|edit|match)", path)
     if match:
+        if match[2] == "match":
+            from backend.services import job_matching
+            from backend.services.local_store import load_resume_draft
+            job = get_job(match[1])
+            result = job_matching.match_job(job, load_resume_draft())
+            return {"match": job_matching.explain_job(job, result) if request.get("semantic") is True else result}
         if match[2] == "edit":
             return edit_job(match[1], request.get("job"))
         return set_stage(match[1], request.get("stage")) if match[2] == "stage" else analyze_job(match[1], request)
     raise ValueError("Route not found")
+
+
+def handle_patch(path: str, request: dict[str, Any]) -> dict[str, Any]:
+    from backend.services import job_refresh
+    match = re.fullmatch(r"/api/v1/jobs/sources/([a-z_]+)", urlsplit(path).path)
+    if not match:
+        raise ValueError("Route not found")
+    return job_refresh.configure(match[1], request)
 
 
 def handle_delete(path: str) -> dict[str, Any]:

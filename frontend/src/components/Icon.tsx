@@ -1,7 +1,5 @@
-export type IconName = 'brand' | 'upload' | 'folder' | 'briefcase' | 'layers' | 'file' | 'shield' | 'window' | 'check' | 'compass' | 'library' | 'history' | 'lock' | 'chevron' | 'down' | 'menu' | 'arrow' | 'spark' | 'search' | 'plus' | 'close' | 'refresh' | 'pin' | 'back' | 'play' | 'pause' | 'volume' | 'mute' | 'sun' | 'moon'
+export type IconName = 'brand' | 'upload' | 'folder' | 'briefcase' | 'layers' | 'file' | 'shield' | 'window' | 'check' | 'compass' | 'library' | 'history' | 'lock' | 'chevron' | 'down' | 'menu' | 'arrow' | 'spark' | 'search' | 'plus' | 'close' | 'refresh' | 'pin' | 'back' | 'play' | 'pause' | 'volume' | 'mute'
 const paths: Record<IconName,React.ReactNode> = {
-  sun:<><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4"/></>,
-  moon:<path d="M21 14.5A8.5 8.5 0 1 1 9.5 3 7 7 0 0 0 21 14.5Z"/>,
   play:<path d="m8 4 12 8-12 8V4Z" />,
   pause:<path d="M8 4v16M16 4v16" />,
   volume:<><path d="m11 4-6 5H2v6h3l6 5V4Z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></>,

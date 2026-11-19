@@ -1,18 +1,18 @@
 .resume-generate-page .resume-sheet {
-  background: #fff;
-  color: #1a1a1a;
+  background: var(--canvas);
+  color: var(--ink);
   border: 1px solid var(--hairline);
   border-radius: 12px;
   padding: 28px 32px;
   margin: 18px 0 28px;
-  box-shadow: 0 8px 24px rgba(20, 28, 45, 0.04);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--ink) 4%, transparent);
 }
 
 .resume-sheet-head {
   text-align: left;
   margin-bottom: 14px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--hairline);
 }
 
 .resume-sheet-byline {
@@ -31,8 +31,8 @@
 .resume-sheet-contacts,
 .resume-sheet-intention {
   margin: 0;
-  font-size: 13px;
-  color: #444;
+  font-size: var(--text-label);
+  color: var(--slate);
 }
 
 .resume-sheet-intention {
@@ -45,18 +45,18 @@
 
 .resume-sheet-section h2 {
   margin: 0 0 8px;
-  font-size: 14px;
+  font-size: var(--text-control);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid var(--ink);
   padding-bottom: 4px;
 }
 
 .resume-cn-campus .resume-sheet-section h2 {
   text-transform: none;
   letter-spacing: 0.04em;
-  color: #1f4f8a;
-  border-bottom-color: #1f4f8a;
+  color: var(--primary);
+  border-bottom-color: var(--primary);
 }
 
 .resume-sheet-entry + .resume-sheet-entry {
@@ -72,24 +72,24 @@
 
 .resume-sheet-line span {
   white-space: nowrap;
-  font-size: 12px;
-  color: #555;
+  font-size: var(--text-meta);
+  color: var(--steel);
 }
 
 .resume-sheet-line.muted-line {
-  font-size: 13px;
+  font-size: var(--text-label);
 }
 
 .resume-sheet-meta,
 .resume-sheet-link {
   margin: 4px 0;
-  font-size: 12px;
-  color: #555;
+  font-size: var(--text-meta);
+  color: var(--steel);
 }
 
 .resume-sheet-stack {
   font-weight: 400;
-  color: #555;
+  color: var(--steel);
 }
 
 .resume-sheet-section ul {
@@ -100,7 +100,7 @@
 .resume-sheet-section li {
   margin: 3px 0;
   line-height: 1.55;
-  font-size: 13px;
+  font-size: var(--text-label);
 }
 
 .resume-en-classic {
@@ -138,11 +138,11 @@
 }
 
 .resume-edit-remove {
-  border: 1px solid #e2b4b4;
-  background: #fff5f5;
-  color: #9b1c1c;
+  border: 1px solid var(--danger-edge);
+  background: var(--canvas);
+  color: var(--brand-error);
   border-radius: 999px;
-  font-size: 11px;
+  font-size: var(--text-small);
   line-height: 1;
   padding: 5px 8px;
   cursor: pointer;
@@ -192,7 +192,7 @@
   .panel,
   .resume-generate-page {
     display: block !important;
-    background: #fff !important;
+    background: var(--canvas) !important;
     box-shadow: none !important;
     border: 0 !important;
     padding: 0 !important;

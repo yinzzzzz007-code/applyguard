@@ -276,24 +276,24 @@ export function ResumeReviewPage() {
         <summary>查看来源与选入理由</summary><div>
         <p className="rr-tip-title">{opts.claimId.replace(/^claim_/, '陈述·')}</p>
         <p>{opts.text}</p>
-        {opts.experienceTitle ? <p>经历：{opts.experienceTitle}</p> : null}
+        {opts.experienceTitle ? <p className="muted">经历：{opts.experienceTitle}</p> : null}
         {opts.reason ? (
           <p>
             <strong>理由：</strong>
             {zhText(opts.reason)}
           </p>
         ) : null}
-        <p>
+        <p className="muted">
           证据：{(opts.evidenceIds ?? []).map((id) => id.replace(/^ev_/, '')).join('、') || '无'}
         </p>
-        <p>
+        <p className="muted">
           岗位要求：{' '}
           {(opts.requirementIds ?? [])
             .map((id) => reqText[id] ?? id.replace(/^req_0*/, '要求 '))
             .join('；') || '无关联要求'}
         </p>
-        {opts.support != null && !workflow?.grounding ? (
-          <p>支持度 {(opts.support * 100).toFixed(0)}%</p>
+        {opts.support != null ? (
+          <p className="muted">{workflow?.grounding ? '事实支持情况请查看陈述核验' : `支持度 ${(opts.support * 100).toFixed(0)}%`}</p>
         ) : null}
       </div></details>
     )
@@ -303,6 +303,9 @@ export function ResumeReviewPage() {
     <section className="panel">
       <header className="panel-head">
         <h2>审核申请草稿</h2>
+        <p>
+          对照建议修改正文，检查材料支持，再选择导出草稿或继续准备网申。
+        </p>
       </header>
 
       {seedLike ? (
@@ -327,12 +330,17 @@ export function ResumeReviewPage() {
         <div className="callout warn">
           经历库里还没有可引用的实习 / 项目 / 获奖。请先到 <Link to="/vault">经历库</Link> 填写并保存。
         </div>
-      ) : null}
+      ) : (
+        <p className="muted">
+          可加入来源：本机经历库 {draftClaims.length} 条
+          {usingDraftVault ? ' · 本次工作流已按草稿匹配' : ' · 建议重新运行工作流以按草稿自动筛选'}
+        </p>
+      )}
 
       <div className="draft-summary-strip">
         <div><strong>{claims.length}</strong><span>条草稿</span></div>
         <div><strong>{characters}</strong><span>个字符</span></div>
-        <p>自动筛选参考：{selection.max_claims} 条 / {selection.max_characters} 字</p>
+        <p>自动筛选参考：{selection.max_claims} 条 / {selection.max_characters} 字<br /><span>手动加入的陈述仍须核验。</span></p>
       </div>
 
       <div className="review-content">
@@ -374,7 +382,7 @@ export function ResumeReviewPage() {
         {sourceQuery && <button type="button" aria-label="清除经历搜索" onClick={() => setSourceQuery('')}><Icon name="close" /></button>}</label>
       <div className="scope-switch source-kind" aria-label="经历类型">{['all','实习','项目','获奖'].map(kind => <button type="button" key={kind} aria-pressed={sourceKind === kind} onClick={() => setSourceKind(kind)}>{kind === 'all' ? '全部' : kind}</button>)}</div>
       {!available.length ? (
-        <p>没有可加入的经历库句子。</p>
+        <p className="muted">没有可加入的经历库句子。</p>
       ) : !visibleSources.length ? (
         <div className="source-empty"><p>没有找到匹配的经历，试试其他关键词或类型。</p><button type="button" className="text-action" onClick={() => {setSourceQuery('');setSourceKind('all')}}>重置筛选</button></div>
       ) : (

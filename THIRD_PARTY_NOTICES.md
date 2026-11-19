@@ -66,7 +66,7 @@ scripts/build-kinetic-adapter.py 和 scripts/kinetic-score.mjs。
 [前端许可](frontend/public/licenses/kinetic-reel-and-three-MIT.txt)。
 这部分不能归作 Gitvextor 独立原创。
 
-Anton、Archivo Black、Instrument Serif 字体本机托管，
+Anton、Archivo Black、Instrument Serif、Caveat 字体本机托管，
 各自 OFL 许可保存在 frontend/public/assets/fonts/ 中。
 配乐由模板合成器适配生成，无外部音频采样；用户主动开启声音后播放。
 # DocLens evaluation aggregation
@@ -83,3 +83,9 @@ upstream files from https://github.com/amazon-science/RefChecker at commit
 `1df1b25cee792ba2b171302e31ca4f768bd67703`. Copyright Amazon.com, Inc. or its
 affiliates. Apache License 2.0; the full license and upstream notice are retained
 in `third_party/refchecker/LICENSE` and `NOTICE`.
+
+## shadcn/ui
+
+The Card and Button primitives in `frontend/src/components/ui/` adapt the shadcn/ui
+registry components to ApplyGuard's CSS. The [MIT license](third_party_licenses/shadcn-ui/LICENSE.md)
+is retained with the project.
