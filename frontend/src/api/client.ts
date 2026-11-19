@@ -905,6 +905,19 @@ export class ApplyGuardApiClient implements ApiClient {
 
 let client: ApiClient = new ApplyGuardApiClient()
 
+export async function loadClassroomDemo(): Promise<ApiResult<{ saved: boolean }>> {
+  try {
+    const response = await apiFetch(`${apiBase()}/api/v1/demo/classroom`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+    })
+    const body = await readJson(response)
+    if (!response.ok) return { error: toApiError(body, response.status) }
+    return { data: body as { saved: boolean } }
+  } catch {
+    return { error: toApiError(null, 0) }
+  }
+}
+
 export function getApiClient(): ApiClient {
   return client
 }

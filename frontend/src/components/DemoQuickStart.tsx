@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import type { DemoScenario, EditableResumeForm } from '../api/types'
 import { useDemo } from '../context/DemoContext'
-import { getApiClient } from '../api/client'
+import { getApiClient, loadClassroomDemo } from '../api/client'
 import { normalizeResumeForm } from '../resume/formModel'
 import { Button } from './ui/button'
 import { Card, CardTitle } from './ui/card'
@@ -42,7 +42,7 @@ export function DemoQuickStart() {
       setLoading(false)
     }
   }
-  async function loadClassroomDemo() {
+  async function openClassroomDemo() {
     if (loading) return
     if (resumeForm?.dirty || Object.keys(reviewDrafts).length) {
       setError('请先保存当前编辑。')
@@ -51,12 +51,8 @@ export function DemoQuickStart() {
     setLoading(true)
     setError('')
     try {
-      const base = (import.meta.env.VITE_API_BASE as string | undefined) ?? ''
-      const response = await fetch(`${base}/api/v1/demo/classroom`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
-      })
-      const result = await response.json()
-      if (!response.ok || !result.saved) throw new Error(result.error?.message ?? '无法载入课堂示例。')
+      const result = await loadClassroomDemo()
+      if (!result.data?.saved) throw new Error(result.error?.message ?? '无法载入课堂示例。')
       setScenario('live')
       navigate('/match')
     } catch (reason) {
@@ -68,7 +64,7 @@ export function DemoQuickStart() {
   return <Card asChild><section className="demo-quick-start" aria-labelledby="demo-start-title">
     <CardTitle asChild><h3 id="demo-start-title">课堂演示</h3></CardTitle>
     <div className="btn-row">
-      <Button disabled={loading} onClick={() => void loadClassroomDemo()}>载入完整示例</Button>
+      <Button disabled={loading} onClick={() => void openClassroomDemo()}>载入完整示例</Button>
       <Button variant="secondary" disabled={loading} onClick={() => void loadTemplateResume()}>{loading ? '正在载入模板…' : '载入模板简历并看岗位'}</Button>
       <Button variant="secondary" disabled={loading} onClick={() => start('prerecorded_block')}>体验错改阻断</Button>
       <Button variant="secondary" disabled={loading} onClick={() => start('prerecorded_fallback')}>体验超时回退</Button>

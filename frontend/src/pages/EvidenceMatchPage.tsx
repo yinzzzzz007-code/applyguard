@@ -213,7 +213,7 @@ export function EvidenceMatchPage() {
         {workflowSourceNotice && <p className="callout warn">{workflowSourceNotice}</p>}
         <EmptyState
           title="尚未运行工作流"
-          detail="请先在岗位说明页分析岗位。成功分析后会写入本机后端草稿；刷新或重开页面时可自动恢复。若曾分析过仍看不到结果，请确认本地后端已启动后刷新。"
+          detail="请先在岗位说明页分析岗位。"
           actionLabel="去岗位说明"
           onAction={() => navigate('/jd')}
         />

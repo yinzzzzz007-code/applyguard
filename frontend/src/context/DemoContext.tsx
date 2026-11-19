@@ -10,9 +10,11 @@ import {
   type ReactNode,
   type SetStateAction,
 } from 'react'
+import { useLocation } from 'react-router-dom'
 import {
   getActiveScenario,
   getApiClient,
+  loadClassroomDemo,
   setActiveScenario as setScenarioInClient,
 } from '../api/client'
 import type {
@@ -28,6 +30,7 @@ import type { FlowStep } from '../flow'
 import { invalidateRestoredWorkflow, loadReviewSession, saveReviewSession } from '../resume/reviewSession'
 
 interface DemoState {
+  loadingWorkflow: boolean
   reviewDrafts: Record<string, string>
   setReviewDraft: (id: string, text: string | null) => void
   reviewStorageError: string
@@ -96,8 +99,14 @@ function sourceLabel(scenario: DemoScenario, workflow: WorkflowResponse | null):
   return '尚未运行工作流'
 }
 
+const WORKFLOW_PAGES = new Set(['/match', '/resume', '/claims', '/ats', '/confirm', '/history'])
+
 export function DemoProvider({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation()
+  const reviewPage = WORKFLOW_PAGES.has(pathname)
+  const demoAttempted = useRef(false)
   const [restored] = useState(() => loadReviewSession(sessionStorage))
+  const [loadingWorkflow, setLoadingWorkflow] = useState(getActiveScenario() === 'live' && !restored)
   const [reviewDrafts, setReviewDrafts] = useState<Record<string,string>>(restored?.drafts ?? {})
   const [reviewStorageError, setReviewStorageError] = useState('')
   const [restoredAt, setRestoredAt] = useState(restored?.savedAt ?? '')
@@ -122,7 +131,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const applyBackendDraft = useCallback(async (opts?: { replaceForm?: boolean }) => {
+    const started = revision.current
     const res = await getApiClient().getWorkflowDraft()
+    if (revision.current !== started) return false
     if (res.error || !res.data?.exists || !res.data.workflow) {
       if (res.error?.code === 'NETWORK_ERROR') {
         setWorkflowSourceNotice('无法连接后端，暂不能恢复本机工作流草稿。启动后端后刷新本页。')
@@ -158,9 +169,19 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (backendHydrated.current) return
     backendHydrated.current = true
-    if (scenario !== 'live' || workflow) return
-    void applyBackendDraft()
+    void applyBackendDraft().finally(() => setLoadingWorkflow(false))
   }, [applyBackendDraft, scenario, workflow])
+
+  useEffect(() => {
+    if (!reviewPage || loadingWorkflow || scenario !== 'live' || workflow || resumeForm?.dirty ||
+        Object.keys(reviewDrafts).length || demoAttempted.current) return
+    demoAttempted.current = true
+    const started = revision.current
+    setLoadingWorkflow(true)
+    void loadClassroomDemo().then(async result => {
+      if (result.data?.saved && started === revision.current) await applyBackendDraft()
+    }).finally(() => setLoadingWorkflow(false))
+  }, [reviewPage, loadingWorkflow, scenario, workflow, resumeForm?.dirty, reviewDrafts, applyBackendDraft])
 
   useEffect(() => {
     let active = true
@@ -238,7 +259,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const invalidateWorkflow = useCallback((reason = '岗位或经历材料有变动，请重新核验当前草稿。') => {
     revision.current += 1
     setWorkflowState(previous => previous ? invalidateRestoredWorkflow(previous, reason) : previous)
-    setWorkflowSourceNotice(reason)
+    if (activeApplication.current) setWorkflowSourceNotice(reason)
     setClaimDecisions({})
     setFieldDecisions({})
     setSimulatedConfirmed(false)
@@ -446,6 +467,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       scenario,
+      loadingWorkflow: reviewPage && loadingWorkflow,
       reviewDrafts, setReviewDraft, reviewStorageError, restoredAt,
       step,
       jdRawInput, activeJobId, invalidateWorkflow,
@@ -477,6 +499,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     }),
     [
       scenario,
+      reviewPage, loadingWorkflow,
       reviewDrafts, setReviewDraft, reviewStorageError, restoredAt,
       step,
       jdRawInput, activeJobId, invalidateWorkflow,
