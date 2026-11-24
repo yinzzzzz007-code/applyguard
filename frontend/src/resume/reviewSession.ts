@@ -7,6 +7,7 @@ export interface ReviewSessionSnapshot {
   jd: string
   form: EditableResumeForm | null
   workflow: WorkflowResponse
+  excludedClaimIds?: string[]
   drafts: Record<string, string>
 }
 
@@ -35,7 +36,8 @@ export function loadReviewSession(storage: Pick<Storage, 'getItem'>): ReviewSess
     const ids = new Set(w.resume_claims.map(c => c.claim_id))
     const drafts = Object.fromEntries(Object.entries(value.drafts ?? {}).filter(([id,text]) =>
       ids.has(id) && typeof text === 'string' && text.length <= 420))
-    return {...value, drafts, workflow: invalidateRestoredWorkflow(w)}
+    const excludedClaimIds = Array.isArray(value.excludedClaimIds) ? value.excludedClaimIds.filter(id => ids.has(id)) : []
+    return {...value, drafts, excludedClaimIds, workflow: invalidateRestoredWorkflow(w)}
   } catch { return null }
 }
 

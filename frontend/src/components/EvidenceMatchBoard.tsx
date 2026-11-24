@@ -1,3 +1,4 @@
+import {ActionButton} from './ui/action-button'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import type { EvidenceFieldCheck, EvidenceSourceFile, ResumeMatchItem } from '../api/types'
@@ -91,16 +92,16 @@ export function EvidenceMatchBoard(props: Props) {
         <nav className="relation-queue" aria-label="选择要核对的经历">
           <div className="relation-queue-title">经历清单 <span>{visible.length} 条</span></div>
           {visible.map((row) => (
-            <button type="button" key={matchKey(row)} className="relation-queue-item"
+            <ActionButton type="button" key={matchKey(row)} className="relation-queue-item"
               aria-current={selected && matchKey(selected) === matchKey(row) ? 'true' : undefined}
-              onClick={() => onSelect(row)} disabled={busy}>
+              onClick={() => onSelect(row)} disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy}>
               <span className="relation-queue-meta"><span>{row.kind}</span>
                 <span className={`chip status-${row.status}`}>{labels[row.status] || row.status}</span></span>
               <strong>{row.label}</strong>
               <span className="relation-file-caption">{row.evidence_id
                 ? `↳ ${row.material_kind_label || materialKindLabel(row.material_kind) || '材料'} · ${row.relative_path || '证据'}`
                 : '尚无对应材料'}</span>
-            </button>
+            </ActionButton>
           ))}
           {!visible.length && <div className="relation-empty">
             {rows.length ? '没有符合筛选条件的经历。' : '先保存经历，再导入证明材料。'}
@@ -169,15 +170,15 @@ export function EvidenceMatchBoard(props: Props) {
               {!selected.evidence_id && (
                 <div className="relation-actions relation-actions-in-proof">
                   <div className="btn-row">
-                    {selected.status === 'UNCHECKED' && <button type="button" className="btn primary" disabled={busy} onClick={props.onMatch}>查找对应关系</button>}
-                    <button type="button" className="btn primary" disabled={busy} onClick={() => props.onSupplement(selected)}>上传新材料</button>
+                    {selected.status === 'UNCHECKED' && <ActionButton type="button" className="btn primary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={props.onMatch}>查找对应关系</ActionButton>}
+                    <ActionButton type="button" className="btn primary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => props.onSupplement(selected)}>上传新材料</ActionButton>
                     {canPickExisting && (
-                      <button type="button" className="btn secondary" disabled={busy} onClick={() => setPickerOpen((v) => !v)}>
+                      <ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => setPickerOpen((v) => !v)}>
                         {pickerOpen ? '收起已有材料' : '从已有材料中选择'}
-                      </button>
+                      </ActionButton>
                     )}
                   </div>
-                  <button type="button" className="btn secondary" disabled={busy || !nextPending} onClick={() => nextPending && onSelect(nextPending)}>下一条待处理 →</button>
+                  <ActionButton type="button" className="btn secondary" disabledReason={busy?'正在处理，请稍候。':'目前没有下一条待处理经历。'} disabled={busy || !nextPending} onClick={() => nextPending && onSelect(nextPending)}>下一条待处理 →</ActionButton>
                 </div>
               )}
 
@@ -185,17 +186,17 @@ export function EvidenceMatchBoard(props: Props) {
                 <div className="relation-material-picker" role="listbox" aria-label="选择已有材料">
                   <p className="muted">不会重复上传。选中后进入核对，确认关联前仍可调整字段状态。</p>
                   {pickable.length ? pickable.map((file) => (
-                    <button
+                    <ActionButton
                       type="button"
                       key={file.file_id}
                       className="relation-material-option"
                       role="option"
-                      disabled={busy || !file.evidence_id}
+                      disabledReason={busy?'正在处理，请稍候。':'这份材料尚未成功识别为可关联的证据。'} disabled={busy || !file.evidence_id}
                       onClick={() => props.onPickExisting?.(selected, file)}
                     >
                       <strong>{materialName(file.relative_path)}</strong>
                       <span>{file.evidence_review_state === 'REVIEWED' ? '识别完成' : '待确认内容'} · {file.relative_path}</span>
-                    </button>
+                    </ActionButton>
                   )) : <p className="muted">没有其他可关联的已导入材料。</p>}
                 </div>
               )}
@@ -229,39 +230,39 @@ export function EvidenceMatchBoard(props: Props) {
               </div>
               <div className="relation-actions relation-actions-footer">
                 <div className="btn-row">
-                  {isCandidate && <button type="button" className="btn primary" disabled={busy} onClick={() => props.onConfirm(selected)}>确认关联</button>}
+                  {isCandidate && <ActionButton type="button" className="btn primary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => props.onConfirm(selected)}>确认关联</ActionButton>}
                   {(isCandidate || selected.status === 'CONFLICT') && (
-                    <button type="button" className="btn secondary" disabled={busy} onClick={() => props.onReject(selected)}>这份材料不符合</button>
+                    <ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => props.onReject(selected)}>这份材料不符合</ActionButton>
                   )}
                   {selected.status === 'LINKED' && (
-                    <button type="button" className="btn secondary" disabled={busy} onClick={() => props.onUnlink(selected)}>取消此关联</button>
+                    <ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => props.onUnlink(selected)}>取消此关联</ActionButton>
                   )}
                   {selected.status !== 'LINKED' && (
-                    <button type="button" className="btn secondary" disabled={busy} onClick={() => props.onSupplement(selected)}>换一份新材料</button>
+                    <ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => props.onSupplement(selected)}>换一份新材料</ActionButton>
                   )}
                   {canPickExisting && (
-                    <button type="button" className="btn secondary" disabled={busy} onClick={() => setPickerOpen((v) => !v)}>
+                    <ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => setPickerOpen((v) => !v)}>
                       {pickerOpen ? '收起已有材料' : '改选已有材料'}
-                    </button>
+                    </ActionButton>
                   )}
                 </div>
-                <button type="button" className="btn secondary" disabled={busy || !nextPending} onClick={() => nextPending && onSelect(nextPending)}>下一条待处理 →</button>
+                <ActionButton type="button" className="btn secondary" disabledReason={busy?'正在处理，请稍候。':'目前没有下一条待处理经历。'} disabled={busy || !nextPending} onClick={() => nextPending && onSelect(nextPending)}>下一条待处理 →</ActionButton>
               </div>
               {pickerOpen && canPickExisting && (
                 <div className="relation-material-picker" role="listbox" aria-label="选择已有材料">
                   <p className="muted">不会重复上传。选中后重新核对，再决定是否关联。</p>
                   {pickable.length ? pickable.map((file) => (
-                    <button
+                    <ActionButton
                       type="button"
                       key={file.file_id}
                       className="relation-material-option"
                       role="option"
-                      disabled={busy || !file.evidence_id}
+                      disabledReason={busy?'正在处理，请稍候。':'这份材料尚未成功识别为可关联的证据。'} disabled={busy || !file.evidence_id}
                       onClick={() => props.onPickExisting?.(selected, file)}
                     >
                       <strong>{materialName(file.relative_path)}</strong>
                       <span>{file.evidence_review_state === 'REVIEWED' ? '识别完成' : '待确认内容'} · {file.relative_path}</span>
-                    </button>
+                    </ActionButton>
                   )) : <p className="muted">没有其他可关联的已导入材料。</p>}
                 </div>
               )}
@@ -270,7 +271,7 @@ export function EvidenceMatchBoard(props: Props) {
 
           <details className="relation-more"><summary>编辑经历 / 更多操作</summary><div className="btn-row">
             <Link className="btn secondary" to="/vault">去经历库编辑</Link>
-            <button type="button" className="btn ghost-danger" disabled={busy} onClick={() => props.onDelete(selected)}>删除此经历</button>
+            <ActionButton type="button" className="btn ghost-danger" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => props.onDelete(selected)}>删除此经历</ActionButton>
           </div></details>
         </div> : <div className="relation-empty">选择一条经历，即可在这里核对对应材料。</div>}
       </div>

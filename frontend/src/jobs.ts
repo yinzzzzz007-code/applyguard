@@ -27,7 +27,7 @@ export function importMessage(result: { created: number; updated: number; unchan
 
 export type JobScope = 'active' | 'preparing' | 'archived' | 'all'
 export type JobSort = 'match' | 'newest' | 'company'
-export function filterJobs<T extends Pick<Opportunity,'title'|'company'|'location'|'description'|'status'|'stage'|'imported_at'|'match_score'|'match_level'|'match_reasons'>>(
+export function filterJobs<T extends Pick<Opportunity,'title'|'company'|'location'|'description'|'status'|'stage'|'imported_at'|'match_score'|'match_level'|'match_reasons'|'recommendation_score'|'recommendation_rank'>>(
   items:T[], query:string, scope:JobScope, status:string, sort:JobSort,
 ):T[] {
   const terms = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean)
@@ -40,6 +40,8 @@ export function filterJobs<T extends Pick<Opportunity,'title'|'company'|'locatio
       return a.company.localeCompare(b.company,'zh-CN') || a.title.localeCompare(b.title,'zh-CN')
     }
     if (sort === 'match') {
+      if(a.recommendation_rank!==undefined&&b.recommendation_rank!==undefined&&a.recommendation_rank!==b.recommendation_rank)return a.recommendation_rank-b.recommendation_rank
+      if(a.recommendation_score!==undefined&&b.recommendation_score!==undefined&&a.recommendation_score!==b.recommendation_score)return b.recommendation_score-a.recommendation_score
       const scoreA = a.match_score ?? a.match_reasons?.score ?? -1
       const scoreB = b.match_score ?? b.match_reasons?.score ?? -1
       if (scoreA !== scoreB) return scoreB - scoreA

@@ -126,7 +126,7 @@ class SkillRouter:
             if flag in {"0", "false", "off", "disabled", "no"}:
                 return None
             try:
-                return HttpModelClient()
+                return HttpModelClient(task="complex")
             except ValueError:
                 return None
 

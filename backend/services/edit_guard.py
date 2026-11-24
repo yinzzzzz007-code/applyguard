@@ -4,6 +4,7 @@
 import difflib
 import re
 from backend.services.structured_verifier import obj, structured, array
+from backend.services.sag_grounding import model_sources
 
 PRESERVE_PROMPT='''Compare the original draft and proposed edit against supplied original sources.
 List any meaningful ORIGINAL detail supported by these sources that the proposal deletes or changes
@@ -40,7 +41,7 @@ def preservation(model, originals, proposals, hits, original_checks=None):
     data={c['claim_id']:{'original':c['text'],'supported_original':c['text'],
         'original_text':original_text[c['claim_id']],'proposal':by_id[c['claim_id']]['text'],
         'arithmetic_hints':preservation_hints(original_text[c['claim_id']],by_id[c['claim_id']]['text']),
-        'sources':hits.get(c['claim_id'],[])} for c in originals}
+        'sources':model_sources(hits.get(c['claim_id'],[]))} for c in originals}
     schema=obj({cid:obj({'lost_supported_details':array({'type':'string'}),'reason':{'type':'string'}}) for cid in data})
     result=structured(model,PRESERVE_PROMPT,data,schema)
     for cid,row in result.items():

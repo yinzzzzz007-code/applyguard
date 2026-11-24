@@ -3,6 +3,7 @@ import { useDemo } from '../context/DemoContext'
 import { ZH_CLAIM, ZH_WORKFLOW, zhLookup } from '../i18n'
 import { classroomInitialVersion } from '../resume/classroomSample'
 import { loadTextVersions, restoreTextVersion, saveTextVersion } from '../resume/groundingHistory'
+import {historyVersionLabel} from '../resume/review'
 
 const CHOICE_LABELS: Record<string, string> = { original: '用原句', edit: '自己改', accept: '确认采用' }
 
@@ -22,7 +23,7 @@ export function GroundingHistory() {
     }}>保存当前版本</button>
     {!visibleVersions.length && <p className="muted">尚无历史版本，可先保存当前版本。</p>}
     {visibleVersions.map(version => <details className="item-block grounding-history-version" key={version.id}>
-      <summary>{version.label} · {version.claims.length} 条
+      <summary>{historyVersionLabel(version.label,Array.isArray(version.stateSnapshot?.proposals)?version.stateSnapshot.proposals.length:null)} · {version.claims.length} 条
         <small>{version.createdAt ? new Date(version.createdAt).toLocaleString() : '课堂示例'}</small>
       </summary>
       {version.stateSnapshot && <p className="muted">当时状态：{zhLookup(ZH_WORKFLOW, version.stateSnapshot.workflowStatus)}

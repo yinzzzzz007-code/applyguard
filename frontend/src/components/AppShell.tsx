@@ -1,3 +1,4 @@
+import {CloudGuide} from './CloudGuide'
 import { BackendStatus } from './BackendStatus'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
@@ -19,7 +20,7 @@ const SCENARIOS: {id:DemoScenario;label:string}[] = [
 ]
 
 export function AppShell({children}:{children:React.ReactNode}) {
-  const {loadingWorkflow,workflowLoadError,retryWorkflow,scenario,setScenario,setStep,dataSourceLabel,workflow,restoredAt,reviewStorageError,reviewDrafts,resumeForm} = useDemo()
+  const {loadingWorkflow,workflowLoadError,retryWorkflow,scenario,setScenario,setStep,dataSourceLabel,workflow,restoredAt,reviewStorageError,reviewDrafts,resumeForm,finishReviewStep} = useDemo()
   const location = useLocation()
   const navigate = useNavigate()
   const drawer = useRef<HTMLDetailsElement>(null)
@@ -46,13 +47,25 @@ export function AppShell({children}:{children:React.ReactNode}) {
     return <>
       {NAV_GROUPS.map(group => <nav className="workspace-nav grouped-nav" key={group.label} aria-label={group.label}>
         <p className="nav-group-label">{group.label}</p>
-        {group.items.map(item => <NavLink key={item.path} end={item.path === '/'} to={item.path} className={({isActive}) => `workspace-nav-item${isActive ? ' is-current' : ''}`}>
+        {group.items.map(item => <NavLink data-guide-route={item.path} key={item.path} end={item.path === '/'} to={item.path} onClick={event => {
+          if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || !workflow) return
+          const fromClaims = location.pathname === '/claims'
+          const fromResume = location.pathname === '/resume'
+          const later = ['/ats','/confirm','/history','/interview'].includes(item.path)
+          if (!(fromClaims && later || fromResume && (later || item.path === '/claims'))) return
+          if (!finishReviewStep(fromClaims || later)) {
+            event.preventDefault()
+            const target = document.querySelector<HTMLElement>('.claim-edit-fields textarea, [data-claim-id] textarea, #claims-next')
+            target?.scrollIntoView({block:'center'}); target?.focus()
+          }
+        }} className={({isActive}) => `workspace-nav-item${isActive ? ' is-current' : ''}`}>
           <Icon name={item.icon} /><span>{item.label}</span>{location.pathname === item.path && <span className="nav-current-dot" />}
         </NavLink>)}
       </nav>)}
     </>
   }
   return <div className="workspace-shell">
+    <CloudGuide />
     <a className="skip-link" href="#workspace-main">跳到主要内容</a>
     <aside className="workspace-sidebar">
       <NavLink to="/" className="workspace-brand" aria-label="ApplyGuard 申请护栏首页"><Icon name="brand" /><span>ApplyGuard<small>申请护栏</small></span></NavLink>
@@ -62,6 +75,7 @@ export function AppShell({children}:{children:React.ReactNode}) {
     <div className="workspace-body">
       <header className="workspace-topbar">
         <div className="workspace-breadcrumb"><span>申请工作台</span><Icon name="chevron" /><h1>{title}</h1></div>
+        <button type="button" className="text-action" onClick={()=>window.dispatchEvent(new Event('applyguard:guide-open'))}>云朵引导</button>
         <NavLink className="workspace-help-link" to="/help" aria-label="使用帮助"><Icon name="file" /><span>使用帮助</span></NavLink>
         <details className="workspace-scenario"><summary><BackendStatus key={scenario} live={scenario === 'live'} /><Icon name="down" /></summary>
           <div className="scenario-popover"><label htmlFor="demo-scenario">演示场景</label><select id="demo-scenario" value={scenario} onChange={event => {

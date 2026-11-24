@@ -75,16 +75,25 @@ class WordingTests(unittest.TestCase):
         self.assertFalse(checks[0]['grounded'])
         self.assertEqual(row['retrieved_sources'], [])
 
-    def test_repaired_text_is_atomically_checked_and_can_still_be_blocked(self):
-        model = Model(proposal='Alex led testing and increased throughput by 900%.', fullbad=True)
+    def test_repaired_text_with_unsubstantiated_disagreement_is_not_applied(self):
+        import json
         fixed = 'For Atlas, Alex wrote Python interface tests.'
+        class ProposalConflictModel(Model):
+            def complete_structured(self,prompt,data,schema):
+                result=super().complete_structured(prompt,data,schema)
+                if prompt.startswith('Check'):
+                    for cid,entry in json.loads(data).items():
+                        if entry['full_claim']==fixed:
+                            result[cid]['full_claim']['relation']='CONTRADICTED'
+                return result
+        model = ProposalConflictModel(proposal='Alex led testing and increased throughput by 900%.')
         model.wording_step = lambda action,before,text,issues: (
             {'text':fixed} if action=='repair' else {'decision':'equivalent' if text==fixed else 'changed','reason':''})
         claims, _, report = GroundingService(model=model,retriever=AllSources()).run(
             [copy.deepcopy(CLAIM)],[experience()],'cand_test','sag_atomic',polish=True)
         row=report['results'][CLAIM['claim_id']]
         self.assertEqual(row['proposed_text'], fixed)
-        self.assertEqual(row['proposal_check']['relation'], 'CONTRADICTED')
+        self.assertEqual(row['proposal_check']['relation'], 'INSUFFICIENT')
         self.assertEqual(claims[0]['text'], TEXT)
         self.assertFalse(row['wording_auto_applied'])
 

@@ -43,7 +43,7 @@ def generate_interview(request):
     resume = {key: _text(raw.get(key, ''), 4000) for key in ('name', 'skills', 'summary')}
     fields = {
         'education': ('school', 'degree', 'major'),
-        'projects': ('title', 'organization', 'role', 'description', 'techStack', 'start', 'end'),
+        'projects': ('title', 'organization', 'role', 'description', 'techStack', 'start', 'end', 'material_status'),
         'internships': ('title', 'organization', 'role', 'description', 'techStack', 'start', 'end'),
     }
     for kind, keys in fields.items():
@@ -76,15 +76,17 @@ def generate_interview(request):
         'three_minutes': {'type': 'string', 'minLength': 500, 'maxLength': 1600},
         'questions': obj({key: question_schema for key in plan}),
     })
+    from backend.services.interview_practice import interview_policy, open_session
     try:
         result = structured(HttpModelClient(task='complex',
             max_tokens=min(16384, max(10000, len(plan) * 600 + 2500)), require_complete=True),
-            PROMPT, {'target_job': jd, 'resume': resume, 'question_plan': plan}, schema)
+            interview_policy()+'\n'+PROMPT, {'target_job': jd, 'resume': resume, 'question_plan': plan}, schema)
         result['questions'] = [
             {**result['questions'][key], 'project_name': entry.get('project_name', ''),
              'project_index': entry.get('project_index')}
             for key, entry in plan.items()
         ]
+        result['practice'] = open_session(result['questions'],jd,resume)
         result['coverage_version'] = 2
         return result
     except (ModelFailure, GroundingUnavailable):

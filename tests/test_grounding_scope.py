@@ -57,12 +57,63 @@ class GroundingScopeTests(unittest.TestCase):
         self.assertNotIn('proposed_text', row)
         self.assertEqual(collect_sources(items, 'cand_scope'), ([], {}, {}))
 
+    def test_explicit_rechecks_request_new_model_splits_without_promoting_unlinked_claims(self):
+        items = fixture()
+        model = MagicMock(wraps=Model())
+        service = GroundingService(retriever=MagicMock(), model=model)
+        for attempt in range(2):
+            _, checks, report = service.run(claims(items), items, 'cand_scope', 'sag_atomic', fresh_atomic=True)
+            self.assertIsNone(report['error'])
+            self.assertEqual(model.complete_structured.call_count, attempt + 1)
+            self.assertNotIn('Private School', model.complete_structured.call_args.args[1])
+            for check in checks[1:]:
+                row = report['results'][check['claim_id']]
+                self.assertEqual(check['state'], 'NEEDS_REVIEW')
+                self.assertFalse(check['grounded'])
+                self.assertEqual(row['material_status'], 'no_related_material')
+                self.assertTrue(row['atoms'])
+                for atom in row['atoms']:
+                    self.assertEqual(atom['method'], 'model_split_without_sources')
+                    self.assertEqual(atom['relation'], 'INSUFFICIENT')
+                    self.assertEqual(atom['citations'], [])
+        service.retriever.retrieve_many.assert_not_called()
+        service.run(claims(items), items, 'cand_scope', 'sag_atomic', fresh_atomic=True, local_only=True)
+        self.assertEqual(model.complete_structured.call_count, 2)
+
+    def test_mixed_materials_refresh_both_supported_and_unlinked_experiences(self):
+        items = fixture()
+        attach_proof([items[0], items[2]])
+        model = Model()
+        model.complete_structured = MagicMock(wraps=model.complete_structured)
+        service = GroundingService(retriever=AllSources(), model=model)
+        for _ in range(2):
+            model.complete_structured.reset_mock()
+            _, _, report = service.run(claims(items), items, 'cand_scope', 'sag_atomic', fresh_atomic=True)
+            self.assertIsNone(report['error'])
+            sourced_id = items[2]['claims'][0]['claim_id']
+            self.assertTrue(report['results'][sourced_id]['retrieved_sources'])
+            self.assertTrue(any(call.args[0].startswith('Check') and sourced_id in call.args[1]
+                                for call in model.complete_structured.call_args_list))
+            for item in (items[1], items[3]):
+                cid = item['claims'][0]['claim_id']
+                self.assertEqual(report['results'][cid]['atoms'][0]['method'], 'model_split_without_sources')
+                self.assertEqual(report['results'][cid]['state'], 'NEEDS_REVIEW')
+
+    def test_explicit_recheck_reports_provider_failure_without_sources(self):
+        items = fixture()
+        model = MagicMock()
+        model.complete_structured.side_effect = ModelFailure('timeout', code='MODEL_TIMEOUT', retryable=False)
+        _, checks, report = GroundingService(model=model).run(claims(items), items, 'cand_scope', 'sag_atomic', fresh_atomic=True)
+        self.assertEqual(report['error_code'], 'MODEL_TIMEOUT')
+        self.assertEqual(report['failure_stage'], '无材料陈述的事实拆分')
+        self.assertTrue(all(not c['grounded'] for c in checks))
+
     def test_all_three_experience_kinds_require_originals(self):
         items = fixture()
         retriever = MagicMock()
         _, checks, report = GroundingService(retriever=retriever, model=MagicMock()).run(
             claims(items), items, 'cand_scope', 'sag_atomic')
-        self.assertEqual([v['state'] for v in checks], ['VERIFIED', 'BLOCKED', 'BLOCKED', 'BLOCKED'])
+        self.assertEqual([v['state'] for v in checks], ['VERIFIED', 'NEEDS_REVIEW', 'NEEDS_REVIEW', 'NEEDS_REVIEW'])
         retriever.retrieve_many.assert_not_called()
         self.assertTrue(all(report['results'][c['claim_id']]['verification_scope'] == 'experience'
                             for c in claims(items[1:])))
@@ -83,7 +134,7 @@ class GroundingScopeTests(unittest.TestCase):
         model = RecordingModel()
         _, checks, report = GroundingService(retriever=retriever, model=model).run(
             claims(items), items, 'cand_scope', 'sag_atomic')
-        self.assertEqual([v['state'] for v in checks], ['VERIFIED', 'BLOCKED', 'BLOCKED', 'BLOCKED'])
+        self.assertEqual([v['state'] for v in checks], ['VERIFIED', 'NEEDS_REVIEW', 'NEEDS_REVIEW', 'NEEDS_REVIEW'])
         for call in retriever.retrieve_many.call_args_list:
             self.assertNotIn('Private School', json.dumps(call.args))
             self.assertEqual(len(call.args[0]), 3)
@@ -95,13 +146,17 @@ class GroundingScopeTests(unittest.TestCase):
     def test_provider_failure_cannot_bypass_internship_checks(self):
         items = fixture()
         attach_proof(items)
-        model = MagicMock()
-        model.complete_structured.side_effect = ModelFailure('offline')
+        class TimedOutModel:
+            def complete_structured(self, prompt, data, schema):
+                raise ModelFailure('offline', code='MODEL_TIMEOUT', retryable=False)
+        model = TimedOutModel()
         _, checks, report = GroundingService(retriever=AllSources(), model=model).run(
             claims(items), items, 'cand_scope', 'sag_atomic')
         self.assertEqual([v['state'] for v in checks], ['VERIFIED', 'NEEDS_REVIEW', 'NEEDS_REVIEW', 'NEEDS_REVIEW'])
         self.assertFalse(checks[0]['grounded'])
-        self.assertTrue(report['error'])
+        self.assertEqual(report['error_code'], 'MODEL_TIMEOUT')
+        self.assertEqual(report['failure_stage'], '原子事实核验')
+        self.assertIn('超时', report['error'])
 
     def test_personal_id_cannot_be_reused_for_an_edited_experience_claim(self):
         items = fixture()[:1]

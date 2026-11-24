@@ -165,8 +165,8 @@ class StaticRepairTests(unittest.TestCase):
         conn.request('POST','/api/v1/workflow/reverify',json.dumps(body),{'Content-Type':'application/json'})
         response=conn.getresponse();result=json.loads(response.read());conn.close()
         self.assertEqual(response.status,200)
-        self.assertEqual(result['claim_verification'][0]['state'],'BLOCKED')
-        self.assertEqual(result['risk_result']['action'],'BLOCKED')
+        self.assertEqual(result['claim_verification'][0]['state'],'NEEDS_REVIEW')
+        self.assertEqual(result['risk_result']['action'],'REQUIRES_CONFIRMATION')
         self.assertEqual(len(result['step_trace']),9)
         self.assertEqual(result['step_trace'][7]['status'],'BLOCKED')
 

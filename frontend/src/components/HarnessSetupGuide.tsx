@@ -21,7 +21,7 @@ export function HarnessSetupGuide({setup, loading, error, onRefresh}:{
   return <div className="harness-setup">
     <div className="harness-heading"><div><span className="harness-eyebrow">本机 Agent · MCP 连接</span>
       <h3>连接 DeepSeek Harness</h3><p>准备环境 → 授权材料 → 在 Harness 发起检索。找到的原文会回到这里，等你核对。</p></div>
-      <Button variant="secondary" disabled={loading} onClick={()=>{setCopyStatus('');onRefresh()}}>{loading?'正在检测…':'重新检测环境'}</Button>
+      <Button variant="secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={loading} onClick={()=>{setCopyStatus('');onRefresh()}}>{loading?'正在检测…':'重新检测环境'}</Button>
     </div>
     <ol className="harness-steps">
       <li><span>01</span><div><strong>准备本机环境</strong><p>确认 Harness 与 Python 连接依赖</p></div></li>
@@ -44,8 +44,8 @@ export function HarnessSetupGuide({setup, loading, error, onRefresh}:{
           {setup && setup.install_python === setup.python && <p className="muted">当前后端 Python 位于另一磁盘，命令会使用检测到的本机解释器路径。</p>}
           {setup && <>
             <div className="btn-row harness-install-actions">
-              {directory && <Button variant="secondary" disabled={loading} onClick={()=>void copy(directory,'切换目录命令')}>复制切换目录命令</Button>}
-              <Button variant="secondary" disabled={loading} onClick={()=>void copy(install,'安装命令')}>复制安装命令</Button>
+              {directory && <Button variant="secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={loading} onClick={()=>void copy(directory,'切换目录命令')}>复制切换目录命令</Button>}
+              <Button variant="secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={loading} onClick={()=>void copy(install,'安装命令')}>复制安装命令</Button>
             </div>
             <pre aria-label="安装命令">{install}</pre>
             {copyStatus&&<p role="status" className="muted">{copyStatus}</p>}

@@ -11,7 +11,7 @@ def emit(conn, key, source_id, job_id, kind, reason, level, stamp):
     # A later version may notify again; reopening a previous version is an explicit user action.
 
 
-def list_alerts(conn, path):
+def list_alerts(conn, path, ranks=None):
     query = parse_qs(urlsplit(path).query)
     conditions, values = [], []
     if query.get("job_id"):
@@ -19,14 +19,30 @@ def list_alerts(conn, path):
         values.append(query["job_id"][0])
     if query.get("unread") == ["true"]:
         conditions.append("a.read_at IS NULL")
+    try:
+        offset = int(query.get("offset", ["0"])[0])
+        limit = int(query.get("limit", ["200"])[0])
+    except (ValueError, TypeError):
+        raise ValueError("提醒分页参数必须为整数") from None
+    if not 0 <= offset <= 100000 or not 1 <= limit <= 200:
+        raise ValueError("提醒分页须为 offset 0–100000、limit 1–200")
     where = " WHERE " + " AND ".join(conditions) if conditions else ""
+    ordering, params = "a.created_at DESC, a.event_key", []
+    if ranks is not None:
+        import json
+        ordering = "CASE WHEN a.job_id IS NULL THEN -1 ELSE COALESCE(r.value, 2147483647) END, " + ordering
+        rank_join = " LEFT JOIN json_each(?) AS r ON r.key=a.job_id "
+        params.append(json.dumps(ranks))
+    else:
+        rank_join = ""
     rows = conn.execute(
         """SELECT a.*, json_extract(o.payload,'$.title') AS title
         FROM job_alerts a LEFT JOIN opportunities o ON a.job_id=o.id"""
-        + where + " ORDER BY a.created_at DESC, a.event_key LIMIT 200", values)
+        + rank_join + where + " ORDER BY " + ordering + " LIMIT ? OFFSET ?", [*params, *values, limit, offset])
     items = [{**dict(row), "is_read": row["read_at"] is not None} for row in rows]
     unread = conn.execute("SELECT count(*) FROM job_alerts WHERE read_at IS NULL").fetchone()[0]
-    return {"items": items, "unread": unread}
+    total = conn.execute("SELECT count(*) FROM job_alerts a" + where, values).fetchone()[0]
+    return {"items": items, "unread": unread, "total": total, "offset": offset, "has_more": offset + len(items) < total}
 
 
 def mark(conn, request, stamp, *, all_alerts=False):

@@ -332,6 +332,10 @@ def list_jobs(path: str) -> dict[str, Any]:
     resume = _matching_resume()
     for job in jobs:
         _apply_current_match(job, resume)
+    from backend.services.job_recommendation import feedback,rank_jobs
+    with database() as conn: signals=feedback(conn)
+    ranking=rank_jobs(jobs,resume,signals)
+    jobs.sort(key=lambda job: job["recommendation_rank"])
     for parameter, field in {"source": "source_id", "match_level": "match_level", "recruitment_type": "recruitment_type",
                              "status": "status"}.items():
         if parameter in query:
@@ -346,7 +350,7 @@ def list_jobs(path: str) -> dict[str, Any]:
     eligible = [job for job in jobs if job["stage"] != "archived" and job["status"] in {"open", "unknown"}]
     factors = [{"slug": slug, "label": label, "jobs": sum(any(f["slug"] == slug for f in job["factors"])
                 for job in eligible)} for slug, label, _, _ in FACTORS]
-    return {"items": jobs, "total": len(jobs), "ai_matching": ai_enabled(), "stats": {
+    return {"items": jobs, "total": len(jobs), "ai_matching": ai_enabled(), "ranking":ranking, "stats": {
         "open": sum(job["status"] == "open" for job in jobs),
         "unknown": sum(job["status"] == "unknown" for job in jobs),
         "reference": sum(job["status"] == "reference" for job in jobs),
@@ -400,7 +404,12 @@ def validate_target(request: dict[str, Any]) -> dict[str, Any] | None:
         return None
     if not isinstance(target, dict):
         raise ValueError("target_job 必须是对象")
-    job = get_job(target.get("id", ""))
+    try:
+        job = get_job(target.get("id", ""))
+    except ValueError as exc:
+        if str(exc) == "Route not found":
+            raise ValueError("关联岗位已不存在，请回到岗位雷达重新选择岗位并分析。") from exc
+        raise
     if job["content_hash"] != target.get("content_hash"):
         raise ValueError("岗位版本已变化，请回到岗位雷达重新载入并运行工作流")
     if job["workflow_jd_text"] != request.get("jd_text"):
@@ -460,11 +469,12 @@ def analyze_job(job_id: str, request: dict[str, Any]) -> dict[str, Any]:
                  best["missing_evidence"] if best else ["本次经历中未找到可用证据。"])
         requirements.append({**req, "coverage": coverage,
             "evidence_ids": best["evidence_ids"] if supported else [],
-            "experience_ids": [m["experience_id"] for m in supported],
+            "experience_ids": [m["experience_id"] for m in candidates],
+            "related_projects": [m["lead"] for m in candidates if m.get("lead")],
             "notes": notes})
     notice = "离线预检查，不生成或修改经历；缺证不等于不合格，也不是录用概率。正式申请仍需完整校验。"
     if excluded:
-        notice += f" 证据匹配只统计任职要求与加分项，已排除职位描述等其余 {excluded} 条。"
+        notice += f" 已匹配职责、任职要求与加分项，另有背景信息 {excluded} 条。"
     return {"job_id": job_id, "content_hash": job["content_hash"], "analyzed_at": now(),
             "mode": mode, "has_resume": bool(experiences), "requirements": requirements,
             "supported": sum(r["coverage"] == "SUPPORTED" for r in requirements), "total": len(requirements),
@@ -552,8 +562,11 @@ def handle_get(path: str) -> dict[str, Any]:
         return job_refresh.list_sources() if route.endswith("/sources") else job_refresh.status()
     if route == "/api/v1/jobs/alerts":
         from backend.services import job_alerts
+        ranks = None
+        if parse_qs(urlsplit(path).query).get("order") == ["relevance"]:
+            ranks = {job["id"]: job["recommendation_rank"] for job in list_jobs("/api/v1/jobs")["items"]}
         with database() as conn:
-            return job_alerts.list_alerts(conn, path)
+            return job_alerts.list_alerts(conn, path, ranks)
     if route == "/api/v1/jobs":
         return list_jobs(path)
     if route == "/api/v1/jobs/radar":
@@ -573,6 +586,11 @@ def handle_get(path: str) -> dict[str, Any]:
 
 
 def handle_post(path: str, request: dict[str, Any]) -> dict[str, Any]:
+    interest = re.fullmatch(r"/api/v1/jobs/(job_[a-f0-9]{16})/feedback",path)
+    if interest:
+        from backend.services.job_recommendation import save_feedback
+        get_job(interest[1])
+        with database() as conn:return save_feedback(conn,interest[1],request.get('interest'))
     if path == "/api/v1/jobs/refresh":
         from backend.services import job_refresh
         return job_refresh.start(request.get("source_ids"), force=request.get("force", False))

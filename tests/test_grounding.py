@@ -104,7 +104,12 @@ class GroundingPolicyTests(unittest.TestCase):
         self.assertEqual(self.run_service(ScriptedModel(complete=False))[1][0]['state'],'NEEDS_REVIEW')
 
     def test_conflicting_fact_blocks(self):
-        self.assertEqual(self.run_service(ScriptedModel(relation='CONTRADICTED'))[1][0]['state'],'BLOCKED')
+        item=experience()
+        item['evidence_sources'][0]['description']='For Atlas, Alex assisted only. Jo led the testing.'
+        claim={**CLAIM,'text':'Alex led the testing for Atlas.'}
+        checks=GroundingService(retriever=AllSources(),model=ScriptedModel(relation='CONTRADICTED')).run(
+            [claim],[item],'cand_test','sag_atomic')[1]
+        self.assertEqual(checks[0]['state'],'BLOCKED')
 
     def test_provider_failure_cannot_reuse_verified(self):
         model=MagicMock();model.complete_json.side_effect=ModelFailure('timeout')
@@ -127,9 +132,9 @@ class GroundingPolicyTests(unittest.TestCase):
 
     def test_foreign_candidate_and_draft_cannot_supply_proof(self):
         original=experience();original['candidate_id']='cand_other'
-        self.assertEqual(self.run_service(items=[original])[1][0]['state'],'BLOCKED')
+        self.assertEqual(self.run_service(items=[original])[1][0]['state'],'NEEDS_REVIEW')
         original=experience();original['evidence_sources'][0]['evidence_id']='ev_draft_unknown'
-        self.assertEqual(self.run_service(items=[original])[1][0]['state'],'BLOCKED')
+        self.assertEqual(self.run_service(items=[original])[1][0]['state'],'NEEDS_REVIEW')
 
     def test_same_experience_correction_is_searchable_and_revoked_required_ref_blocks(self):
         original=experience()
@@ -224,7 +229,7 @@ class GroundingHTTPTests(unittest.TestCase):
         quote=result['grounding']['results']['claim_atlas']['atoms'][0]['citations'][0]
         self.assertEqual(quote['file_version'],1);self.assertTrue(quote['positions'])
         self.request['claims']=[{'claim_id':'claim_unknown','text':TEXT,'state':'VERIFIED','evidence_ids':[self.eid]}]
-        self.assertEqual(self.post('workflow/reverify')[1]['claim_verification'][0]['state'],'BLOCKED')
+        self.assertEqual(self.post('workflow/reverify')[1]['claim_verification'][0]['state'],'NEEDS_REVIEW')
     def test_polish_endpoint_and_sag_preview(self):
         self.request['grounding_mode']='sag'
         status,result=self.post('resume/polish')

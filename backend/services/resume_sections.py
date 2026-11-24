@@ -9,11 +9,12 @@ import re
 _HEADINGS = {
     'education': (r'教育(?:背景|经历)', r'education(?:al background)?'),
     'projects': (r'(?:重点|主要|精选)?(?:科研|研究)(?:(?:与|及)项目经历|经历|项目)|当前研究|在研项目|(?:工程|个人|重点|精选)?项目(?:经历|经验)?',
-                 r'(?:selected |current |ongoing )?research(?: experience| projects)?|(?:engineering |selected |personal )?projects?(?: experience)?'),
-    'internships': (r'实习(?:经历|经验)?|工作(?:经历|经验)?|职业经历', r'(?:(?:work|professional|internship) )?experience|internships?|employment'),
+                 r'(?:selected |current |ongoing )?research(?: experience| projects)?|(?:engineering |selected |personal )?projects?(?: experience|\s*(?:&|and)\s*competitions?)?'),
+    'internships': (r'实习(?:经历|经验)?|工作(?:经历|经验)?|职业经历', r'(?:(?:work|professional|intern|internship) )?experience|internships?|employment'),
     'awards': (r'(?:获奖|荣誉|奖项|竞赛|比赛|学科竞赛)(?:情况|经历|成果|获奖)?|荣誉奖项', r'(?:awards?|honou?rs?|competitions?)(?:\s*(?:&|and)\s*(?:awards?|honou?rs?))?'),
     'mixed': (r'其他经历与荣誉', r'other experience\s*(?:&|and)\s*honou?rs?'),
     'skills': (r'专业技能|技术技能|技能特长|技能', r'(?:technical |professional )?skills'),
+    'other': (r'交流经历', r'exchange experience'),
     'interests': (r'研究兴趣|科研兴趣|研究方向', r'research interests?'),
     'summary': (r'个人简介|自我评价|个人总结', r'profile|summary|about me'),
 }
@@ -30,6 +31,9 @@ _EN_RANGE = re.compile(r'\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may
 
 def heading_kind(line):
     line=line.strip().strip(':：').strip()
+    plain = re.sub(r'\s+', '', line).casefold()
+    if plain in {'projects&competitions', 'projectsandcompetitions'}:
+        return 'projects'
     for kind,(cn,en) in _HEADINGS.items():
         if re.fullmatch(rf'(?:{cn})(?:\s+(?:{en}))?|(?:{en})',line,re.I):return kind
     return None
@@ -43,6 +47,8 @@ def sections(text):
         if found:
             if kind:blocks.append((kind,lines))
             kind=found;lines=[]
+        elif not kind and re.match(r'^individual\s*project\s*[,，:：]',line,re.I):
+            kind='projects'; lines=[line]
         elif kind:lines.append(line)
     if kind:blocks.append((kind,lines))
     return blocks
@@ -73,8 +79,9 @@ def dates(text):
     return start,end
 
 def _school_in_line(line):
-    if re.match(r'\s*[•●▪*]', line) or len(line) > 180:
+    if len(line) > 180:
         return ''
+    line = re.sub(r'^\s*[•●▪*]\s*', '', line)
     for part in re.split(r'[|｜,，;；]', line):
         part = part.strip()
         chinese = _SCHOOL.search(part)
@@ -89,7 +96,13 @@ def _school_in_line(line):
 def education(lines):
     groups=[];current=[]
     for line in lines:
-        if _school_in_line(line) and current:groups.append(current);current=[]
+        school = _school_in_line(line)
+        if school and current:
+            previous = _school_in_line(current[0])
+            is_faculty = (previous and '大学' in previous and school.endswith('学院')
+                          and not re.search(r'博士|硕士|本科|专科', '\n'.join(current)))
+            if not is_faculty:
+                groups.append(current);current=[]
         current.append(line)
     if current:groups.append(current)
     rows=[]
@@ -107,6 +120,8 @@ def education(lines):
     return rows
 
 def _title_line(line):
+    if re.fullmatch(r"[A-Z][A-Za-z .'-]{1,50},\s*[A-Z]{2}", line):
+        return False
     if len(line)>180 or re.match(r'[•●▪]|研究[:：]|贡献[:：]|职责[:：]|负责[:：]|项目负责人[。.]',line):return False
     if len(line) <= 100 and re.search(r'[，,]\s*(?:核心开发成员|核心成员|项目负责人|独立开发)\s*$', line):return True
     if re.search(r'[。；;，]', line):
@@ -133,13 +148,18 @@ def project_entries(lines,kind):
         company_group = kind == 'internships' and current and company_header(current[0])
         role_header = (kind == 'internships' and current and len(current) <= 2
             and re.search(r'\b(?:intern|analyst|engineer|assistant|associate|researcher)\b', current[0], re.I))
+        role_follows_employer = (
+            kind == 'internships' and 1 <= len(current) <= 3
+            and all(len(v) < 85 and not re.match(r'[•●▪*]', v) for v in current)
+            and re.fullmatch(r"(?:[A-Za-z&/-]+\s+){0,7}(?:engineer|analyst|assistant|developer|researcher|intern|scientist)(?:\s+(?:[IVX]+|intern|fellow|[12]))?(?:\s*[|｜].{1,60})?", line, re.I)
+        )
         experience_detail = (kind == 'internships' and re.match(
             r'^(?:Built|Designed|Developed|Implemented|Supported|Prepared|Analysed|Analyzed|Collaborated|'
             r'Assisted|Presented|Cleaned|Led|Processed|Reduced|Improved|Conducted|Created)\b', line))
         experience_header = (kind == 'internships' and len(line) <= 120 and re.search(r'[|｜]', line)
             and not re.match(r'[•●▪*]', line)
             and re.search(r'实习生|志愿者|\b(?:intern|volunteer)\b', line, re.I))
-        keep_with_entry = ((company_group and not company_header(line)) or role_header or experience_detail
+        keep_with_entry = ((company_group and not company_header(line)) or role_header or role_follows_employer or experience_detail
                            or bool(_EN_RANGE.fullmatch(line.strip())))
         if (_title_line(line) or experience_header) and current and (experience_header or not keep_with_entry):groups.append(current);current=[]
         current.append(line)

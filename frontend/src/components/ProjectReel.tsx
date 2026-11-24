@@ -89,7 +89,7 @@ function ReelPlayer({home=false}:{home?:boolean}) {
     </div>
     <audio ref={audio} src="/assets/kinetic-score.wav" preload="none" loop onError={() => { setSound(false); setSoundError('配乐暂时无法播放，画面可继续浏览。') }} />
     <div className="reel-transport">
-      <Button variant="ghost" className="reel-play" onClick={togglePause} disabled={reduced} aria-label={reduced ? '系统已开启减少动态效果' : paused ? '播放新手引导' : '暂停新手引导'}><Icon name={paused || reduced ? 'play' : 'pause'} /><span>{reduced ? '静态浏览' : paused ? '播放' : '暂停'}</span></Button>
+      <Button variant="ghost" className="reel-play" onClick={togglePause} disabledReason={'系统已开启减少动态效果，当前使用静态浏览。'} disabled={reduced} aria-label={reduced ? '系统已开启减少动态效果' : paused ? '播放新手引导' : '暂停新手引导'}><Icon name={paused || reduced ? 'play' : 'pause'} /><span>{reduced ? '静态浏览' : paused ? '播放' : '暂停'}</span></Button>
       <label className="reel-seek"><span className="reel-sr-only">短片进度，单位秒</span><input type="range" min="0" max="23.99" step=".01" value={frame.time} onChange={event => { setPaused(true); remember('applyguard.reel.paused', true); seek(Number(event.target.value)) }} aria-valuetext={`${frame.time.toFixed(1)} 秒，共 24 秒`} /></label>
       <span className="reel-time" aria-hidden="true">{String(Math.floor(frame.time)).padStart(2, '0')} / 24</span>
       <Button variant="ghost" className="reel-restart" onClick={() => seek(0)} aria-label="回到开头"><Icon name="refresh" /></Button>

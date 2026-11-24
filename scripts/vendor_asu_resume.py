@@ -12,7 +12,12 @@ COMMIT='d27fd2a3864c48472a5c8ed942410098ba9cd35f'
 FILES=('LICENSE','skills/great-resume/SKILL.md',
        'skills/great-resume/references/claim-evidence-ledger.md',
        'skills/great-resume/references/business-analysis-evidence.md',
-       'assets/career-claim-ledger-template.json','scripts/validate_claim_ledger.py')
+       'assets/career-claim-ledger-template.json','scripts/validate_claim_ledger.py',
+       'skills/interview/SKILL.md',
+       'skills/interview/references/interview-contract-and-session.md',
+       'skills/interview/references/question-and-scoring-contract.md',
+       'skills/interview/references/review-and-retry.md',
+       'skills/interview/references/scenario-interviews.md')
 
 def fetch(url):
     with urlopen(Request(url,headers={'User-Agent':'ApplyGuard-source-review'}),timeout=30) as response:

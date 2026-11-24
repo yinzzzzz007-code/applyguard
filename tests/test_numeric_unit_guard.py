@@ -9,7 +9,7 @@ class AlwaysSupports:
         result={}
         for cid,r in data.items():
             verdict={'relation':'SUPPORTED','reason':'simulated erroneous approval','citations':[{'source_id':'s','quote':r['sources'][0]['text']}]}
-            result[cid]={'full_claim':verdict,'atoms':{a:verdict for a in r['atoms']},'missing_assertions':[]} if 'atoms' in r else verdict
+            result[cid]={'full_claim':verdict,'atoms':{a:{**verdict, 'claim_excerpt':r['full_claim']} for a in r['atoms']},'missing_assertions':[]} if 'atoms' in r else verdict
         return result
 
 class NumericUnitTests(unittest.TestCase):

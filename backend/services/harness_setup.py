@@ -9,6 +9,9 @@ import shutil
 import sys
 
 from backend.services.model_client import DEFAULT_TEXT_MODEL
+from backend.services.harness_process import SESSION_TIMEOUT_SECONDS
+
+MODEL_REQUEST_TIMEOUT_SECONDS = 90
 
 ROOT = Path(__file__).resolve().parents[2]
 DISABLED_PLUGINS = (
@@ -61,6 +64,9 @@ def setup_info() -> dict:
         'harness_command': find_harness(),
         'model': os.getenv('APPLYGUARD_AI_MODEL', DEFAULT_TEXT_MODEL),
         'base_url': os.getenv('APPLYGUARD_AI_BASE_URL', 'https://api.chatanywhere.tech/v1'),
+        'github_token_configured': bool(os.getenv('APPLYGUARD_GITHUB_APP_CLIENT_ID', '').strip()),
+        'request_timeout_seconds': MODEL_REQUEST_TIMEOUT_SECONDS,
+        'session_timeout_seconds': SESSION_TIMEOUT_SECONDS,
     }
 
 
@@ -88,7 +94,10 @@ def retrieval_patch(model: str, base_url: str) -> str:
         {'id': 'agent-default-model', 'config': {'provider': 'applyguard', 'model': model}},
         {'id': 'llm-pi-ai', 'config': {'providers': {'applyguard': {
             'apiKeyEnv': 'APPLYGUARD_HARNESS_MODEL_KEY', 'api': 'openai-completions',
-            'baseURL': base_url, 'models': [{'id': model, 'contextWindow': 128000,
+            'baseURL': base_url,
+            'timeoutMs': MODEL_REQUEST_TIMEOUT_SECONDS * 1000,
+            'streamIdleTimeoutMs': MODEL_REQUEST_TIMEOUT_SECONDS * 1000,
+            'retryPolicy': {'mode': 'normal', 'maxRetries': 1}, 'models': [{'id': model, 'contextWindow': 128000,
                                           'maxTokens': 3000, 'input': ['text']}],
         }}}},
         {'insert': [mcp_entry()]},

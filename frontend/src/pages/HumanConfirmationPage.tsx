@@ -1,3 +1,5 @@
+import {retainedFieldValue} from '../resume/claimReview'
+import {ActionButton} from '../components/ui/action-button'
 import { useMemo, useState } from 'react'
 import { GroundedExport } from '../components/GroundedExport'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -49,12 +51,12 @@ function CopyRow({
       <span className="copy-label">{label}</span>
       <span className={`${empty ? 'muted copy-value' : 'copy-value'}${blocked && !empty ? ' copy-value-blocked' : ''}`}>
         {empty ? '未填写' : value}
-        {blocked && !empty ? <span className="muted"> · 已阻断（可复制参考，不可当作已通过）</span> : null}
+        {blocked && !empty ? <span className="muted"> · 已阻断（不能当作已通过内容）</span> : null}
       </span>
-      <button
+      <ActionButton
         type="button"
         className="btn secondary copy-btn"
-        disabled={!canCopy}
+        disabledReason={empty?`${label}尚未填写，补充后可复制。`:!allowed?'此字段尚未获准复制，请先核对来源和确认项。':!canProceedFromClaims()?'请先完成陈述核验页的处理与确认。':'请先完成申请内容检查页的确认项。'} disabled={!canCopy}
         onClick={() => {
           if (previewCopy || blocked) {
             void copyToClipboard(value)
@@ -81,7 +83,7 @@ function CopyRow({
         }}
       >
         {copied ? '已复制' : '复制'}
-      </button>
+      </ActionButton>
       {error && (
         <span className="danger-text" role="alert">
           {error}
@@ -168,7 +170,7 @@ function buildCopyPack(
       (id) => workflow.claim_verification.find((item) => item.claim_id === id)?.state === 'BLOCKED',
     )
     const mark = blockedSources.length ? `【含已阻断陈述 ${blockedSources.length} 条】` : ''
-    lines.push(`${mark}${zhText(field.label)}：${field.value || '无'} · ${zhLookup(ZH_ACTION, action)}`)
+    lines.push(`${mark}${zhText(field.label)}：${retainedFieldValue(workflow,field,claimDecisions) || '无'} · ${zhLookup(ZH_ACTION, action)}`)
   }
   if (workflow.ats_form_mapping.unmapped_fields.length) {
     lines.push(
@@ -294,10 +296,10 @@ export function HumanConfirmationPage() {
       <div className="item-block copy-sheet">
         <div className="item-head">
           <h3>填写稿（可复制）</h3>
-          <button
+          <ActionButton
             type="button"
             className="btn primary"
-            disabled={!copyPack.trim()}
+            disabledReason={'当前没有可复制的申请内容。'} disabled={!copyPack.trim()}
             onClick={() => {
               if (previewCopy) {
                 void copyToClipboard(copyPack)
@@ -323,7 +325,7 @@ export function HumanConfirmationPage() {
             }}
           >
             {packCopied ? '已复制全部' : previewCopy ? '复制预览稿' : '一键复制全部'}
-          </button>
+          </ActionButton>
         </div>
         <p className="muted">
           单项也可复制。证件号若未填则不会进入全文稿。
@@ -440,7 +442,7 @@ export function HumanConfirmationPage() {
               )}
               <CopyRow
                 label={`${zhText(field.label)}（${zhLookup(ZH_ACTION, action)}）`}
-                value={field.value}
+                value={retainedFieldValue(workflow,field,claimDecisions)}
                 previewCopy={
                   previewCopy ||
                   action === 'BLOCKED' ||
@@ -582,10 +584,10 @@ export function HumanConfirmationPage() {
           </button>
         ) : (
           <>
-            <button
+            <ActionButton
               type="button"
               className="btn primary"
-              disabled={!canConfirm || simulatedConfirmed}
+              disabledReason={simulatedConfirmed?'本次模拟确认已经完成。':'请先完成当前页面列出的确认条件；阻断项不能直接确认。'} disabled={!canConfirm || simulatedConfirmed}
               onClick={() => {
                 void validateExport().then((valid) => {
                   if (valid) finishSimulation('SIMULATED_CONFIRMED')
@@ -594,7 +596,7 @@ export function HumanConfirmationPage() {
               }}
             >
               模拟确认（非投递）
-            </button>
+            </ActionButton>
             <Link className="btn secondary" to="/history">去简历生成</Link>
           </>
         )}

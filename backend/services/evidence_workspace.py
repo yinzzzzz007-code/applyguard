@@ -159,6 +159,8 @@ def init_db() -> None:
         )
         # Additive migration: field-level verification detail on links (legacy rows stay NULL → 待核对)
         cols = {row[1] for row in conn.execute("PRAGMA table_info(evidence_link)").fetchall()}
+        if "candidate_id" not in cols:
+            conn.execute("ALTER TABLE evidence_link ADD COLUMN candidate_id TEXT")
         if "field_checks_json" not in cols:
             conn.execute("ALTER TABLE evidence_link ADD COLUMN field_checks_json TEXT")
 
@@ -1168,6 +1170,22 @@ def create_link(body: dict[str, Any]) -> dict[str, Any]:
             frow = _file_row(conn, ev["primary_file_id"])
             if frow:
                 file_sha = frow["sha256"]
+        candidate_id=None
+        if link_state=='ACTIVE' and target_type in {'award','project','internship','experience','claim'} and ev['primary_file_id']:
+            from backend.services.evidence_scope import matches_item
+            from backend.services.local_store import load_resume_draft
+            form=load_resume_draft() or {}
+            for collection,kind in [('projects','project'),('awards','award'),('internships','internship')]:
+                for item in form.get(collection,[]):
+                    from backend.services.resume_draft_vault import _safe_id
+                    rowid=str(item.get('id',''))
+                    matches=(target_type in {kind,'experience'} and target_id==rowid) or (target_type=='claim' and target_id==_safe_id('claim_',rowid,'item'))
+                    if not matches:continue
+                    candidate_id=form.get('candidateId')
+                    body_text='\n'.join(r[0] for r in conn.execute('SELECT raw_text FROM source_span WHERE file_id=? ORDER BY rowid',(ev['primary_file_id'],)))
+                    title=item.get('title') or item.get('name') or item.get('organization') or ''
+                    if not matches_item(title,frow['relative_path'],body_text,organization=item.get('organization',''),description=item.get('description',''),kind=kind):
+                        raise ValueError('暂无相关材料：此文件无法对应所选经历。请选择本项目的原件。')
         # Replace prior decision for the same target + evidence
         conn.execute(
             """
@@ -1183,10 +1201,10 @@ def create_link(body: dict[str, Any]) -> dict[str, Any]:
             """
             INSERT INTO evidence_link(
               link_id, target_type, target_id, evidence_id, file_sha256, linked_at, link_state,
-              field_checks_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+              field_checks_json,candidate_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (link_id, target_type, target_id, evidence_id, file_sha, linked_at, link_state, checks_json),
+            (link_id, target_type, target_id, evidence_id, file_sha, linked_at, link_state, checks_json,candidate_id),
         )
     return {
         "link_id": link_id,
@@ -1767,7 +1785,13 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
     for item in items:
         key = (item["target_type"], item["target_id"])
         existing = links_by_target.get(key) or []
-        active = [l for l in existing if l["link_state"] == "ACTIVE"]
+        from backend.services.evidence_scope import matches_item
+        raw=item.get('raw') or {}
+        title=raw.get('name') or raw.get('title') or raw.get('organization') or ''
+        eligible=[ev for ev in evidence_cards if not title or matches_item(title,ev.get('relative_path') or '',
+                  ev.get('corpus') or '',organization=raw.get('organization',''),description=raw.get('description',''),kind=key[0])]
+        relevant_ids={ev['evidence_id'] for ev in eligible}
+        active = [l for l in existing if l["link_state"] == "ACTIVE" and l["evidence_id"] in relevant_ids]
         stale = [l for l in existing if l["link_state"] == "STALE"]
         rejected_ids = {l["evidence_id"] for l in existing if l["link_state"] == "REJECTED"}
 
@@ -1902,7 +1926,7 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
             continue
 
         ranked: list[tuple[int, dict[str, Any], list[str], list[str]]] = []
-        for ev in evidence_cards:
+        for ev in eligible:
             if ev["evidence_id"] in rejected_ids:
                 continue
             score, notes, conflicts = _score_item_against_evidence(

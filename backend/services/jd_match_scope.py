@@ -1,4 +1,4 @@
-"""Keep evidence matching on 任职要求 and 加分项, not 职位描述."""
+"""Locate source spans for duties, qualifications and preferences."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ _HEADER = re.compile(
     r"required(?:\s+(?:qualifications|skills))?|requirements|qualifications|"
     r"职位描述|岗位描述|工作职责|岗位职责|工作内容|job\s+description|responsibilities|职责|"
     r"面向对象|招聘对象)"
-    r"\s*(?:[】\])）)])?\s*[:：]?(?=\s|$)",
+    r"\s*(?:[】\])）)])?\s*(?:[:：]\s*|(?=\s|$))",
     re.IGNORECASE,
 )
 _BONUS = {"加分项或注意事项", "加分项", "优先条件", "nice to have", "nice-to-have", "bonus"}
@@ -27,28 +27,25 @@ _OTHER = {"面向对象", "招聘对象"}
 
 
 def qualification_spans(source: str) -> list[tuple[int, int]] | None:
-    """Return 任职要求/加分项 ranges.
-
-    ``None`` means the JD has no section headers, so matching keeps every
-    parsed requirement. An empty list means a 职位描述 (or similar) section
-    exists and nothing is in scope.
+    """Return spans for duties and qualifications, or None for an unsectioned JD.
     """
     if not isinstance(source, str) or not source:
         return None
     headers = _headers(source)
     kinds = {kind for _, kind in headers}
     if "requirement" not in kinds and "bonus" not in kinds:
-        return [] if "description" in kinds else None
+        if "description" not in kinds:
+            return None
     spans: list[tuple[int, int]] = []
     for index, (start, kind) in enumerate(headers):
         end = headers[index + 1][0] if index + 1 < len(headers) else len(source)
-        if kind in {"requirement", "bonus"}:
+        if kind in {"requirement", "bonus", "description"}:
             spans.append((start, end))
     return spans
 
 
 def select_requirements_for_matching(parsed_jd: dict[str, Any]) -> list[dict[str, Any]]:
-    """Requirements whose quote sits in 任职要求 or 加分项."""
+    """Return items with an original quote in one of the matching sections."""
     requirements = [item for item in parsed_jd.get("requirements") or [] if isinstance(item, dict)]
     source = parsed_jd.get("source_text")
     if not isinstance(source, str):

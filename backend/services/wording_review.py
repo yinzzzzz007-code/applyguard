@@ -7,7 +7,7 @@ from typing import Literal
 
 from backend.services.asu_resume import proposal_violations
 from backend.services.fact_lock import wording_invariants
-from backend.services.model_client import ModelFailure, uses_deepseek_api
+from backend.services.model_client import ModelFailure, uses_json_object_structured
 
 JUDGE = """Decide if BOTH sentences assert exactly the same facts in both directions.
 Check actor, ownership, technology, metric, approximation, denominator, causality, negation,
@@ -32,7 +32,7 @@ def sdk_step(client, action, original, proposal, issues):
     class Repair(BaseModel):
         text: str
 
-    if uses_deepseek_api(client.base_url):
+    if uses_json_object_structured(client.base_url, client.model):
         judge = action == "judge"
         output = Verdict if judge else Repair
         return client.complete_structured(JUDGE if judge else REPAIR,
@@ -104,6 +104,8 @@ def may_apply_wording(review, original_check, final_check, hard_violations, seco
         return False
     # Contradictory source material always stays with the user. Equivalence never
     # discharges a material conflict, even if another atom was only insufficient.
+    if original_check.get("relation") == "SUPPORTED" and final_check.get("relation") != "SUPPORTED":
+        return False
     for check in (original_check, final_check):
         if check.get("relation") not in {"SUPPORTED", "INSUFFICIENT"} or any(
             atom.get("relation") == "CONTRADICTED" for atom in check.get("atoms", [])):

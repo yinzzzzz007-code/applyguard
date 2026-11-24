@@ -1,0 +1,6 @@
+Backend Software Engineering Intern
+
+Build Python APIs and document search features. Write automated unit tests, review test results,
+and use Git for version control. Experience with local prototypes is welcome.
+
+This is a fictional job description for a reproducible software demonstration.

@@ -76,6 +76,7 @@ def load_grounding_experiences(vault_path: Path, request: dict) -> list[dict]:
         for claim in item['claims']:
             accepted = []
             applicable = [link for link in links if link['link_state'] == 'ACTIVE' and
+                (not link.get('candidate_id') or link['candidate_id']==candidate) and
                 (link['target_type'],link['target_id']) in {target,('experience',target[1]),('claim',claim['claim_id'])}]
             for link in applicable:
                 # Neutral text triggers integrity/version/link checks, without treating
@@ -93,16 +94,34 @@ def load_grounding_experiences(vault_path: Path, request: dict) -> list[dict]:
                 # Include the complete parsed original, including correction context.
                 text = '\n'.join(row['raw_text'] for row in rows)
                 if not text.strip():continue
+                from backend.services.evidence_scope import matches_item, source_identity
+                filename = file['relative_path']
+                origin, original_body = source_identity(filename, text)
+                if not matches_item(item['title'],filename,text,kind=target[0],organization=item.get('organization',''),
+                                    description=str(next((r.get('description','') for k in ('projects','internships','awards') for r in draft.get(k,[]) if r.get('id')==target[1]),''))):
+                    item.setdefault('_excluded_links', {})[link['evidence_id']] = {
+                        'evidence_id':link['evidence_id'], 'filename':filename, 'version':file['version'],
+                        'sha256':file['sha256'], 'project':item['title'], 'origin':origin,
+                        'reason':'材料原文和来源未标明本经历，已从核验范围排除。'}
+                    continue
                 positions, offset = [], 0
                 for row in rows:
                     positions.append({'start':offset,'end':offset + len(row['raw_text']),
                         'span_id':row['span_id'],'page':row['page'],
                         'line_start':row['line_start'],'line_end':row['line_end']})
                     offset += len(row['raw_text']) + 1
+                body_offset = len(text) - len(original_body)
+                if body_offset:
+                    positions = [{**p,'start':max(0,p['start']-body_offset),'end':p['end']-body_offset}
+                                 for p in positions if p['end']>body_offset]
+                text = original_body
                 alias = vault_evidence_id(link['evidence_id'])
+                prior_scope=combined.get(alias,{}).get('_claim_scope')
+                scope=([] if prior_scope==[] or link['target_type']!='claim' else sorted(set((prior_scope or [])+[claim['claim_id']])))
                 combined[alias] = {'evidence_id':alias,'description':text,'verification_status':'VERIFIED',
                     'confidence':.9,'type':'DOCUMENT','source_type':'DOCUMENT','uri':None,
                     'source_reference':'local-evidence://' + link['evidence_id'],
+                    '_filename':filename, '_origin':origin, '_claim_scope':scope,
                     '_positions':positions,'_file_id':file['file_id'],
                     '_file_version':file['version'],'_file_sha256':file['sha256'],
                     '_version':fingerprint([file['sha256'],file['version'],record.get('reviewed_at'),
@@ -131,9 +150,9 @@ def collect_sources(items: list[dict], candidate: str):
                 continue
             sid = 'src_' + fingerprint([candidate,experience['experience_id'],eid])[:32]
             row = {'source_id':sid,'evidence_id':eid,'candidate_id':candidate,
-                'experience_id':experience['experience_id'],'title':experience['title'],'text':text,
+                'experience_id':experience['experience_id'],'title':source.get('_filename') or source.get('title') or source.get('source_reference') or eid,'origin':source.get('_origin',{}),'text':text,
                 'sha256':hashlib.sha256(text.encode()).hexdigest(),'version':source.get('_version','vault'),
-                'positions':source.get('_positions',[]),'file_id':source.get('_file_id'),
+                'claim_scope':source.get('_claim_scope',[]),'positions':source.get('_positions',[]),'file_id':source.get('_file_id'),
                 'file_version':source.get('_file_version'),'file_sha256':source.get('_file_sha256')}
             by_evidence[eid] = row
             if not any(s['source_id'] == sid for s in sources):sources.append(row)
@@ -145,7 +164,7 @@ def collect_sources(items: list[dict], candidate: str):
             required = claim.get('evidence_ids', [])
             # Required references must remain valid. Also search other reviewed originals
             # of this same experience: a later correction may not be cited by the old draft.
-            allowed[cid] = ([row['source_id'] for row in by_evidence.values()]
+            allowed[cid] = ([row['source_id'] for row in by_evidence.values() if not row.get('claim_scope') or cid in row['claim_scope']]
                 if required and all(eid in by_evidence for eid in required) else [])
     if len(sources) > 60 or sum(len(s['text']) for s in sources) > 120_000:
         raise GroundingUnavailable('本次原件过多，请按经历分批核验；未截断证据上下文。')
@@ -189,15 +208,17 @@ class GroundingService:
             result[cid] = hits
         return result
 
-    def run(self, claims, items, candidate, mode, *, jd='', polish=False, local_only=False):
+    def run(self, claims, items, candidate, mode, *, jd='', polish=False, local_only=False, fresh_atomic=False):
         sources, contexts, allowed = collect_sources(items,candidate)
         personal = {c['claim_id']:c for item in items if item.get('candidate_id') == candidate
                     for c in item.get('claims', []) if claim_is_form_confirmed(c['claim_id'], [item])}
         snapshot = evidence_snapshot(sources)
         active = [c for c in claims if c['claim_id'] in contexts and allowed.get(c['claim_id'])]
+        source_free = {}
         error = None
         error_code = None
         hits, atomic = {}, {}
+        excluded = {c['claim_id']:list(i.get('_excluded_links',{}).values()) for i in items for c in i.get('claims',[])}
         original_text = {c['claim_id']:c['text'] for c in claims}
         originals = copy.deepcopy(claims)
         proposals, proposal_checks, preservation_checks = {}, {}, {}
@@ -211,23 +232,31 @@ class GroundingService:
         applied_wording = set()
         empty_check = {'relation':'INSUFFICIENT', 'complete':False, 'atoms':[]}
         reused_checks = set()
+        stage = '材料检索'
+        polishable = [c for c in claims if c['claim_id'] not in personal]
+        for claim in polishable:
+            contexts.setdefault(claim['claim_id'], {'candidate_id':candidate,'experience_id':'',
+                'project':'用户手写内容','organization':''})
         try:
             if local_only and active:
                 error = '当前为全离线模式。材料已关联。若需模型核验，请回到岗位说明选择 AI 模式、确认后重新分析。'
             hits = self.retrieve(active,sources,allowed,candidate) if active and not local_only else {}
             original_hits = copy.deepcopy(hits)
-            polishable = [c for c in claims if c['claim_id'] in contexts] if mode == 'sag_atomic' else active
             if polish and polishable and not local_only:
+                stage = '原文原子核验'
                 if mode == 'sag_atomic' and active:
                     original_checks = AtomicVerifier(self.model).verify(active,contexts,hits)
                 for claim in polishable:
                     original_checks.setdefault(claim['claim_id'], {**empty_check,
                         'claim_text_sha256':hashlib.sha256(claim['text'].encode()).hexdigest()})
+                stage = '润色生成'
                 polisher = AtomicVerifier(self.model)
                 polished = polisher.polish(polishable,contexts,hits,jd,original_checks=original_checks)
                 polish_source = polisher.polish_source
                 polish_violations = polisher.polish_violations
                 changed = {c['claim_id']:c for c in polished}
+                proposals = copy.deepcopy(changed)
+                stage = '改写核验'
                 if mode == 'sag_atomic':
                     from backend.services.asu_resume import proposal_violations
                     from backend.services.fact_lock import locked_edit_findings
@@ -237,9 +266,15 @@ class GroundingService:
                         text, wording[cid] = review_edit(getattr(self.model, 'wording_step', None),
                                                          original_text[cid], proposal['text'])
                         if text != proposal['text']:
-                            proposal['text'] = text
-                            polish_violations[cid] = (proposal_violations(original_text[cid], text, hits.get(cid, []))
-                                + locked_edit_findings(original_text[cid], text, original_checks[cid]))
+                            from backend.services.asu_resume import polish_quality
+                            repair_quality = polish_quality(original_text[cid], text)
+                            if repair_quality:
+                                wording[cid]['equivalent'] = False
+                                wording[cid]['repair_quality_issues'] = repair_quality
+                            else:
+                                proposal['text'] = text
+                                polish_violations[cid] = (proposal_violations(original_text[cid], text, hits.get(cid, []))
+                                    + locked_edit_findings(original_text[cid], text, original_checks[cid]))
                 proposals = copy.deepcopy(changed)
                 claims = [changed.get(c['claim_id'],c) for c in claims]
                 active = [changed[c['claim_id']] for c in active]
@@ -252,7 +287,15 @@ class GroundingService:
                 reused_checks.update(c['claim_id'] for c in unchanged)
                 atomic = {c['claim_id']:copy.deepcopy(original_checks[c['claim_id']]) for c in unchanged}
                 pending = [c for c in active if c['claim_id'] not in atomic]
-                if pending:atomic.update(AtomicVerifier(self.model).verify(pending,contexts,hits))
+                if pending:
+                    stage = '改写核验' if polish else '原子事实核验'
+                    atomic.update(AtomicVerifier(self.model).verify(pending,contexts,hits))
+            if fresh_atomic and mode == 'sag_atomic' and not polish and not local_only:
+                pending_sources = [c for c in polishable if not allowed.get(c['claim_id'])]
+                if pending_sources:
+                    from backend.services.structured_verifier import split_without_sources
+                    stage = '无材料陈述的事实拆分'
+                    source_free = split_without_sources(self.model, pending_sources)
             if polish and proposals:
                 from backend.services.edit_guard import preservation
                 proposal_checks = copy.deepcopy(atomic)
@@ -318,11 +361,41 @@ class GroundingService:
             if isinstance(exc, ModelFailure) and exc.http_status == 503:
                 error_code = _MODEL_UNAVAILABLE
                 error = _MODEL_UNAVAILABLE_MESSAGE
+            elif isinstance(exc, ModelFailure):
+                error_code = exc.code or {401:'MODEL_AUTH', 403:'MODEL_AUTH', 429:'MODEL_RATE_LIMIT'}.get(exc.http_status, 'MODEL_RESPONSE')
+                error = {
+                    'MODEL_KEY_MISSING': '后端缺少模型密钥。配置密钥并重启服务后，再次启动核验。',
+                    'MODEL_AUTH': '模型服务拒绝了当前密钥。请检查后端密钥和模型访问权限后重试。',
+                    'MODEL_RATE_LIMIT': '模型服务暂时限流，请稍后再次启动核验。',
+                    'MODEL_BUDGET_LIMIT': '本次演示的模型预算已用尽。请先检查用量与预算，再启动核验。',
+                    'MODEL_BUDGET_UNAVAILABLE': '暂时无法确认模型用量，本次调用已暂停。请稍后重试。',
+                    'MODEL_TIMEOUT': '等待模型回复超时。正文已保留，请再次启动核验。',
+                    'MODEL_CONNECTION': '后端未能连接模型服务。请检查网络后再次启动核验。',
+                }.get(error_code, '模型未返回可用的核验结果。正文已保留，请再次启动核验。')
             elif isinstance(exc, GroundingUnavailable):
+                error_code = 'SAG_RETRIEVAL' if stage == '材料检索' else 'VERIFICATION_INCOMPLETE'
                 error = str(exc)
             else:
                 error = 'SAG或模型核验未完成；当前文本不可按已核验内容导出。请检查配置后重试。'
-            if polish:claims = originals;atomic = {}
+            if polish:
+                claims = originals;atomic = {}
+                if stage in {'材料检索', '原文原子核验'} and not proposals and polishable and not local_only:
+                    try:
+                        for claim in polishable:
+                            original_checks.setdefault(claim['claim_id'], {**empty_check,
+                                'claim_text_sha256':hashlib.sha256(claim['text'].encode()).hexdigest()})
+                        polisher = AtomicVerifier(self.model)
+                        fallback = polisher.polish(polishable,contexts,hits,jd,original_checks=original_checks)
+                        polish_source = polisher.polish_source
+                        polish_violations = polisher.polish_violations
+                        proposals = {c['claim_id']:c for c in fallback}
+                    except (GroundingUnavailable,ModelFailure,OSError,ValueError,TypeError,KeyError):
+                        proposals = {}
+                cause = error
+                if proposals:
+                    error = f'{stage}未完成（{cause}）；建议仅供人工对照，尚未核验。'
+                else:
+                    error = f'{stage}未完成（{cause}）；本次没有生成润色建议，原文已保留。'
         results, verifications = {}, []
         for claim in claims:
             cid = claim['claim_id']
@@ -336,7 +409,14 @@ class GroundingService:
                                else '请在个人资料表单修改后重新载入，不能借用个人资料编号填写经历陈述。')
                 row = {**row, 'complete': False, 'atoms': [], 'relation': 'INSUFFICIENT'}
             elif cid not in contexts or not allowed.get(cid):
-                state, explanation = 'BLOCKED','当前陈述没有候选人所属经历的有效原件；草稿、JD及人工点击不能补足证据。'
+                from backend.services.draft_anchors import draft_phrases
+                row={**row, 'claim_text_sha256':hashlib.sha256(claim['text'].encode()).hexdigest(), 'atoms':[
+                    {'atom_id':k,'text':p['quote'],'claim_excerpt':p['quote'],'claim_spans':[p], 'relation':'INSUFFICIENT',
+                     'reason':'暂无相关材料，保留此处原文供补证。','citations':[], 'method':'draft_fragment'}
+                    for k,p in draft_phrases(claim['text']).items()]}
+                if cid in source_free:
+                    row = source_free[cid]
+                state, explanation = 'NEEDS_REVIEW', error or '暂无相关材料。请补充能识别本经历的原件，或继续使用个人稿。'
             elif error:
                 state, explanation = 'NEEDS_REVIEW',error
             elif mode == 'sag':
@@ -356,6 +436,8 @@ class GroundingService:
                 'unsupported_fragments':unsupported,'explanation':explanation})
             results[cid] = {**row,'state':state,'verification_scope':'personal' if is_personal else 'experience',
                 'scope_notice':explanation if is_personal else '', 'retrieved_sources':hits.get(cid,[]),
+                'excluded_links':excluded.get(cid,[]),
+                'material_status':'profile' if is_personal else 'no_related_material' if not allowed.get(cid) else 'service_error' if error else 'checked',
                 'original_text':original_text[cid],'final_text':claim['text'],
                 'reused_current_run_original_check':cid in reused_checks}
             if cid in proposals:
@@ -373,15 +455,18 @@ class GroundingService:
                     preservation=preservation_checks.get(cid),change_audit=change_audit(original_text[cid],proposed),
                     proposal_applied=not error and proposed==claim['text'],
                     proposal_rejected=proposed!=claim['text'],
-                    proposal_notice=('；'.join(polish_violations[cid]) if polish_violations.get(cid)
-                        else '逐项复核未确认支持，已保留原文；请人工核对。' if refchecker_reviews.get(cid, {}).get('relation') in {'Neutral', 'Contradiction', 'Abstain'}
-                        else '建议未确认事实等价，已保留原文；原文状态单独核验。') if proposed!=claim['text'] else '')
+                    proposal_notice=('原文与材料存在冲突，请先核对来源；此条暂不润色。' if cid in (polish_source or {}).get('conflict_claim_ids',[])
+                        else '模型建议改变了年份，已保留原文，请先核对材料。' if cid in (polish_source or {}).get('year_drift_claim_ids',[])
+                        else ('；'.join(polish_violations[cid]) if polish_violations.get(cid)
+                            else '逐项复核未确认支持，已保留原文；请人工核对。' if refchecker_reviews.get(cid, {}).get('relation') in {'Neutral', 'Contradiction', 'Abstain'}
+                            else '建议未确认事实等价，已保留原文；原文状态单独核验。') if proposed!=claim['text'] else ''))
         from backend.services.structured_verifier import SPLIT_PROMPT, CHECK_PROMPT
         from backend.services.atomic_verifier import POLISH_PROMPT
         from backend.services.edit_guard import PRESERVE_PROMPT
         return claims, verifications, {'mode':mode,'engine':'zleap-sag 0.15.0','snapshot':snapshot,
-            'prompt_version':fingerprint([ATOM_PROMPT,JUDGE_PROMPT,JUDGE,REPAIR,SPLIT_PROMPT,CHECK_PROMPT,PRESERVE_PROMPT,POLISH_PROMPT,polish_source]),
+            'prompt_version':fingerprint(['numeric-coverage-grouped-ascii-v2','model-source-payload-v1',ATOM_PROMPT,JUDGE_PROMPT,JUDGE,REPAIR,SPLIT_PROMPT,CHECK_PROMPT,PRESERVE_PROMPT,POLISH_PROMPT,polish_source]),
             'polish_source':polish_source,'results':results,'error':error,'error_code':error_code,
+            'failure_stage':stage if error else None,
             'export_requires_atomic':True, 'model_routing':{
                 'requested_model':getattr(self._model,'model',None),
                 'response_models':sorted(getattr(self._model,'response_models',[])),
@@ -392,9 +477,12 @@ def apply_grounding(vault_path, request, response, *, polish=False):
     mode = grounding_mode(request)
     if mode == 'off':return response
     items = load_grounding_experiences(vault_path,request)
+    from time import monotonic
+    started = monotonic()
+    fresh = request.get('fresh_atomic') is True and mode == 'sag_atomic' and not polish and request.get('local_only') is not True
     out = copy.deepcopy(response)
     claims, verified, report = GroundingService().run(out['resume_claims'],items,request['candidate_id'],mode,
-        jd=request.get('jd_text',''),polish=polish,local_only=request.get('local_only') is True and not polish)
+        jd=request.get('jd_text',''),polish=polish,local_only=request.get('local_only') is True and not polish, fresh_atomic=fresh)
     # Check for source replacement/revocation while network calls were in progress.
     current, _, _ = collect_sources(load_grounding_experiences(vault_path,request),request['candidate_id'])
     if evidence_snapshot(current) != report['snapshot']:
@@ -412,6 +500,9 @@ def apply_grounding(vault_path, request, response, *, polish=False):
             row.update(state='NEEDS_REVIEW', relation='INSUFFICIENT', wording_auto_applied=False,
                        wording_auto_restored=False)
 
+    from backend.services.verification_audit import save_run
+    report.update(fresh_atomic=fresh, elapsed_ms=round((monotonic() - started) * 1000))
+    save_run(report, request['candidate_id'], polish=polish)
     from backend.services.reverification import simulator_mapping
     from backend.services.risk_engine import RiskEngine
     from backend.services.schema_validation import validate_contract
@@ -463,7 +554,9 @@ def export_grounded(vault_path, request):
     verified = result['claim_verification']
     if result['grounding'].get('error_code') == _MODEL_UNAVAILABLE:
         raise GroundingUnavailable(_MODEL_UNAVAILABLE_MESSAGE)
-    if (not verified or result['grounding'].get('error') or result['risk_result']['action'] == 'BLOCKED'
+    if result['grounding'].get('error'):
+        raise GroundingUnavailable(result['grounding']['error'])
+    if (not verified or result['risk_result']['action'] == 'BLOCKED'
             or any(row['state'] != 'VERIFIED' for row in verified)):
         raise ValueError('仅已核验稿要求全部事实通过原子核验。请复核材料，或选择用户确认稿导出。')
     # The server returns its reconstructed final text, not a client-provided export body.

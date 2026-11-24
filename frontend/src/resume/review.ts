@@ -1,4 +1,4 @@
-import type { GroundingClaimResult, WorkflowResponse } from '../api/types'
+import type { EditableResumeForm, GroundingClaimResult, ResumeClaim, WorkflowResponse } from '../api/types'
 
 export type ReviewChoice = { text: string; action: 'original' | 'edit' | 'accept'; at: string }
 export type ReviewSession = { startedAt: number; actions: number; interruptions: number; choices: Record<string, ReviewChoice> }
@@ -16,6 +16,7 @@ export function reviewPriority(workflow: WorkflowResponse, id: string): number {
   const choice = workflow.review_session?.choices[id]
   if (choice && choice.text === claim?.text) return 0
   const result = workflow.grounding?.results[id]
+  if (claim && result && result.final_text===claim.text && (result.original_check?.relation==='CONTRADICTED' || result.relation==='CONTRADICTED')) return 5
   if (result?.proposed_text && result.proposed_text !== claim?.text) return needsAttention(result) ? 4 : 1
   if (result?.proposal_rejected && !result.wording_auto_restored) return 4
   if (needsAttention(result)) return 3
@@ -71,4 +72,64 @@ export function changedSpan(original: string, proposed: string): [string,string,
   while (start < original.length && start < proposed.length && original[start] === proposed[start]) start++
   while (end < original.length-start && end < proposed.length-start && original[original.length-1-end] === proposed[proposed.length-1-end]) end++
   return [proposed.slice(0,start), proposed.slice(start,proposed.length-end), end ? proposed.slice(-end) : '']
+}
+
+export type DiffPiece = { text: string; changed: boolean }
+export function diffSpans(original:string, proposal:string): { original:DiffPiece[]; proposal:DiffPiece[] } {
+  const a=Array.from(original), b=Array.from(proposal)
+  const rows=Array.from({length:a.length+1},()=>new Uint16Array(b.length+1))
+  for(let i=a.length-1;i>=0;i--) for(let j=b.length-1;j>=0;j--)
+    rows[i][j]=a[i]===b[j]?rows[i+1][j+1]+1:Math.max(rows[i+1][j],rows[i][j+1])
+  const old:DiffPiece[]=[], next:DiffPiece[]=[]
+  function add(out:DiffPiece[], text:string, changed:boolean) {
+    const last=out.at(-1)
+    if(last?.changed===changed)last.text+=text
+    else out.push({text,changed})
+  }
+  let i=0,j=0
+  while(i<a.length||j<b.length) {
+    if(i<a.length&&j<b.length&&a[i]===b[j]) {add(old,a[i],false);add(next,b[j],false);i++;j++}
+    else if(j<b.length&&(i===a.length||rows[i][j+1]>rows[i+1][j])) {add(next,b[j],true);j++}
+    else {add(old,a[i],true);i++}
+  }
+  return {original:old,proposal:next}
+}
+
+export function proposalNeedsReview(result:GroundingClaimResult, error?:string|null):boolean {
+  return Boolean(error || result.proposal_check?.relation !== 'SUPPORTED' || !result.proposal_check?.complete ||
+    result.proposal_rejected || result.change_audit?.sensitive_change || result.preservation?.lost_supported_details?.length ||
+    result.risk_escalation?.error || result.risk_escalation?.agrees_with_primary === false)
+}
+
+export function polishResultSummary(result:Partial<WorkflowResponse>):{count:number;error:string|null} {
+  return {count:Object.values(result.grounding?.results??{}).filter(row=>Boolean(row.proposed_text) && (typeof row.original_text !== 'string' || row.proposed_text !== row.original_text)).length,
+    error:result.grounding?.error??null}
+}
+export function historyVersionLabel(label:string,proposalCount:number|null):string {
+  return label==='建议已生成：等待预览与采用' && proposalCount===0
+    ? '本次未生成建议（旧版记录标题有误）' : label
+}
+
+export function proposalStatus(result:GroundingClaimResult, error?:string|null):string {
+  if(error)return '核查未完成，请重试；原文已保留。'
+  if(result.verification_scope==='personal')return '个人资料按表单填写，不作为经历事实核验。'
+  const check=result.proposal_check
+  if(!check)return '建议尚无独立事实核查结果，请对照材料。'
+  if(check.relation==='CONTRADICTED')return '建议与材料存在冲突，请查看核查详情。'
+  if(check.relation==='INSUFFICIENT'||!check.complete)return '建议的证据不足或核查不完整，请查看核查详情。'
+  if(result.proposal_rejected)return '建议的事实有材料支持，但其他改写检查未确认，请查看原因。'
+  return '建议的事实已对照材料核查，仍请人工检查表达和范围。'
+}
+
+export function isEducationProfile(claim:ResumeClaim|undefined,form:EditableResumeForm|null):boolean {
+  if(!claim||!form)return false
+  return form.education.some(row=>{
+    const body=row.id.trim().replace(/[^a-zA-Z0-9_]+/g,'_').replace(/^_+|_+$/g,'').toLowerCase()
+    const id=(body.startsWith('claim_')?body:`claim_${body||'item'}`).slice(0,96)
+    if(id!==claim.claim_id)return false
+    const head=[row.school,row.degree,row.major].filter(Boolean).join(' · ')||'教育经历'
+    const ym=(value:string)=>{const m=value.match(/^(\d{4})[-/.年](\d{1,2})/);return m?`${m[1]}-${m[2].padStart(2,'0')}`:value}
+    const span=[ym(row.start),ym(row.end)].filter(Boolean).join(' — ')
+    return [head,head+'（在读）'].some(value=>(value+(span?` · ${span}`:'')).slice(0,420)===claim.text)
+  })
 }

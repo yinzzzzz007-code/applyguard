@@ -5,6 +5,8 @@ from calendar import monthrange
 from datetime import date
 from typing import Any
 
+from backend.services.experience_relevance import discovery, semantic_leads
+from backend.services.job_capabilities import concepts, framework_group
 from backend.services.jd_match_scope import select_requirements_for_matching
 from backend.services.resume_draft_vault import is_form_confirmed_evidence
 
@@ -217,11 +219,7 @@ def _clamp(value: float) -> float:
 
 
 class EvidenceMatcher:
-    """A deterministic, explainable proposal baseline; it does not parse JD text.
-
-    When the JD marks 任职要求 / 加分项 separately from 职位描述, only the first
-    two sections are scored. Unsectioned text is left unchanged.
-    """
+    """Discover related projects and grade their evidence separately."""
 
     def match(self, parsed_jd: dict[str, Any], experiences: list[dict[str, Any]]) -> dict[str, Any]:
         candidate_ids = {experience["candidate_id"] for experience in experiences}
@@ -229,11 +227,13 @@ class EvidenceMatcher:
             raise ValueError("Evidence Matcher requires experiences from exactly one candidate")
         candidate_id = next(iter(candidate_ids))
         matches: list[dict[str, Any]] = []
+        requirements = select_requirements_for_matching(parsed_jd)
+        nearby = semantic_leads(requirements, experiences)
         uncovered: list[dict[str, Any]] = []
 
-        for requirement in select_requirements_for_matching(parsed_jd):
+        for requirement in requirements:
             requirement_terms = self._requirement_terms(requirement)
-            if not requirement_terms:
+            if not requirement_terms and not requirement.get("section"):
                 uncovered.append(
                     {
                         "requirement_id": requirement["requirement_id"],
@@ -246,7 +246,7 @@ class EvidenceMatcher:
             requirement_matches = [
                 result
                 for experience in experiences
-                if (result := self._score_requirement(requirement, requirement_terms, experience)) is not None
+                if (result := self._score_requirement(requirement, requirement_terms, experience, nearby.get((requirement["requirement_id"], experience["experience_id"])))) is not None
             ]
             requirement_matches.sort(key=lambda item: (-item["relevance_score"], item["experience_id"]))
             matches.extend(requirement_matches)
@@ -297,7 +297,27 @@ class EvidenceMatcher:
         requirement: dict[str, Any],
         requirement_terms: set[str],
         experience: dict[str, Any],
+        nearby: dict | None = None,
     ) -> dict[str, Any] | None:
+        row = self._literal_row(requirement, requirement_terms, experience)
+        if not requirement.get("section"):
+            return row
+        lead = discovery(requirement, experience) or nearby
+        if not lead:
+            return None if (requirement.get("category") != "EDUCATION" and concepts(requirement.get("text", ""))) else row
+        if row is None:
+            claims = experience.get("claims") or []
+            if not claims:
+                return None
+            row = self.score_linked_claims(requirement, requirement_terms, experience, claims, require_keyword_hit=False)
+            row["ready_for_selection"] = False
+        row["lead"] = lead
+        row["relevance_score"] = lead["score"]
+        if lead["kind"] != "direct" or not lead.get("material_id"):
+            row["ready_for_selection"] = False
+        return row
+
+    def _literal_row(self, requirement, requirement_terms, experience):
         claims = [
             claim for claim in experience.get("claims", [])
             if any(_mentions(term, claim["text"]) for term in requirement_terms)

@@ -25,15 +25,25 @@ import type {
   LocalFieldDecision,
   WorkflowResponse,
 } from '../api/types'
+import {keepExclusions,retainRemaining} from '../resume/claimReview'
 import { zhLookup } from '../i18n'
 import type { FlowStep } from '../flow'
+import { changeClaim, isEducationProfile } from '../resume/review'
 import { invalidateRestoredWorkflow, loadReviewSession, saveReviewSession } from '../resume/reviewSession'
+
+interface RecheckAttempt {
+  application: string
+  candidate: string
+  running: boolean
+  error: string
+}
 
 interface DemoState {
   loadingWorkflow: boolean
   workflowLoadError: string
   retryWorkflow: () => void
   reviewDrafts: Record<string, string>
+  saveClaimEdit: (id: string, text: string) => void
   setReviewDraft: (id: string, text: string | null) => void
   reviewStorageError: string
   restoredAt: string
@@ -55,7 +65,8 @@ interface DemoState {
   setStep: (s: FlowStep) => void
   setJdRawInput: (v: string) => void
   setWorkflow: (w: WorkflowResponse | null) => void
-  reverifyClaims: () => Promise<string | null>
+  recheckAttempt: RecheckAttempt | null
+  reverifyClaims: () => Promise<void>
   validateExport: () => Promise<boolean>
   patchWorkflow: (patch: Partial<WorkflowResponse> | ((w: WorkflowResponse) => WorkflowResponse)) => void
   setResumeForm: Dispatch<SetStateAction<EditableResumeForm | null>>
@@ -65,6 +76,8 @@ interface DemoState {
   setSimulatedConfirmed: (v: boolean) => void
   resetFlow: () => void
   verificationOf: (claimId: string) => ClaimState | undefined
+  reviewAdvanceReason: string | undefined
+  finishReviewStep: (retain: boolean) => boolean
   canProceedFromClaims: () => boolean
   atsFieldAcksComplete: () => boolean
   canSubmitAts: () => boolean
@@ -120,11 +133,14 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const [activeJobId, setActiveJobId] = useState(() => (readSession('applyguard.job') ?? restored?.workflow.target_job?.id) || null)
   const [workflow, setWorkflowState] = useState<WorkflowResponse | null>(restored?.workflow ?? null)
   const [resumeForm, setResumeForm] = useState<EditableResumeForm | null>(readUnsavedResume() ?? restored?.form ?? null)
-  const [claimDecisions, setClaimDecisions] = useState<Record<string, LocalClaimDecision>>({})
+  const [claimDecisions, setClaimDecisions] = useState<Record<string, LocalClaimDecision>>(() =>
+    Object.fromEntries((restored?.excludedClaimIds ?? []).map(claim_id => [claim_id,{claim_id,decision:'reject',freshness:'rejected'}])))
   const [fieldDecisions, setFieldDecisions] = useState<Record<string, LocalFieldDecision>>({})
   const [confirmationNote, setConfirmationNote] = useState('')
   const [simulatedConfirmed, setSimulatedConfirmed] = useState(false)
   const revision = useRef(0)
+  const recheckLock = useRef(false)
+  const [recheckAttempt, setRecheckAttempt] = useState<RecheckAttempt | null>(null)
   const activeApplication = useRef(restored?.workflow.application_id)
   const skipSourceInvalidate = useRef(Boolean(restored?.workflow))
   const backendHydrated = useRef(Boolean(restored?.workflow) || getActiveScenario() !== 'live')
@@ -203,7 +219,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     let active = true
     const report = (message: string) => queueMicrotask(() => {if (active) setReviewStorageError(message)})
     try {
-      saveReviewSession(workflow && scenario === 'live' ? {workflow, jd: jdRawInput, form: resumeForm, drafts: reviewDrafts} : null, sessionStorage)
+      saveReviewSession(workflow && scenario === 'live' ? {workflow, jd: jdRawInput, form: resumeForm, drafts: reviewDrafts,
+        excludedClaimIds: Object.values(claimDecisions).filter(d=>d.decision==='reject').map(d=>d.claim_id)} : null, sessionStorage)
       sessionStorage.setItem('applyguard.jd', jdRawInput)
       sessionStorage.setItem('applyguard.job', activeJobId ?? '')
       if (resumeForm?.dirty) sessionStorage.setItem('applyguard.resume-edit.v1', JSON.stringify(resumeForm))
@@ -211,7 +228,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       report('')
     } catch { report('浏览器暂存失败，请保留此页面并导出已保存正文，刷新可能丢失进度。') }
     return () => {active = false}
-  }, [workflow, jdRawInput, resumeForm, reviewDrafts, scenario, activeJobId])
+  }, [workflow, jdRawInput, resumeForm, reviewDrafts, claimDecisions, scenario, activeJobId])
 
   useEffect(() => {
     if (scenario !== 'live' || !workflow || workflow._prerecorded) return
@@ -246,6 +263,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   }, [reviewDrafts, reviewStorageError, resumeForm?.dirty])
 
   const setWorkflow = useCallback((w: WorkflowResponse | null) => {
+    const sameApplication = !!w && activeApplication.current === w.application_id
     revision.current += 1
     if (activeApplication.current !== w?.application_id || !w) setReviewDrafts({})
     activeApplication.current = w?.application_id
@@ -254,7 +272,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     let startedAt=Date.now()
     try {const imported=Number(sessionStorage.getItem('applyguard.review.importStartedAt'));if (imported > 0 && imported <= startedAt) startedAt=imported} catch { /* optional local timing */ }
     setWorkflowState(w ? {...w,review_session:w.review_session ?? {startedAt,actions:0,interruptions:0,choices:{}}} : null)
-    setClaimDecisions({})
+    setClaimDecisions(previous => sameApplication ? keepExclusions(previous) : {})
     setFieldDecisions({})
     setSimulatedConfirmed(false)
     setConfirmationNote('')
@@ -268,7 +286,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         const next = typeof patch === 'function' ? patch(prev) : { ...prev, ...patch }
         return { ...next, requires_reverification: true }
       })
-      setClaimDecisions({})
+      setClaimDecisions(keepExclusions)
       setFieldDecisions({})
       setSimulatedConfirmed(false)
     },
@@ -280,7 +298,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     revision.current += 1
     setWorkflowState(previous => previous ? invalidateRestoredWorkflow(previous, reason) : previous)
     setWorkflowSourceNotice(reason)
-    setClaimDecisions({})
+    setClaimDecisions(keepExclusions)
     setFieldDecisions({})
     setSimulatedConfirmed(false)
     setConfirmationNote('')
@@ -354,6 +372,22 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     [],
   )
 
+  const saveClaimEdit = useCallback((id: string, text: string) => {
+    if (!workflow) return
+    const next = changeClaim(workflow, id, text, 'edit')
+    setReviewDraft(id, null)
+    if (workflow.resume_claims.find(claim => claim.claim_id === id)?.text === text.trim()) return
+    setWorkflowState(next)
+    setClaimDecisions(previous => {
+      const remaining = {...previous}
+      delete remaining[id]
+      return remaining
+    })
+    setFieldDecisions({})
+    setSimulatedConfirmed(false)
+    setConfirmationNote('')
+  }, [workflow, setReviewDraft])
+
   const setFieldDecision = useCallback(
     (fieldId: string, patch: Partial<LocalFieldDecision>) => {
       revision.current += 1
@@ -374,12 +408,36 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     [workflow],
   )
 
+  const invalidEdit = Object.entries(reviewDrafts).find(([id,text]) =>
+    !workflow?.resume_claims.some(c => c.claim_id === id) || !text.trim() || text.trim().length > 420)
+  const reviewAdvanceReason = invalidEdit ? '请在编辑框填写 1–420 个字符，或取消该条编辑。'
+    : !workflow?.resume_claims.some(c => claimDecisions[c.claim_id]?.decision !== 'reject')
+      ? '请添加或恢复至少一条陈述。' : undefined
+  const finishReviewStep = useCallback((retain: boolean) => {
+    if (!workflow || reviewAdvanceReason) return false
+    let next = workflow
+    for (const [id,text] of Object.entries(reviewDrafts)) {
+      if (next.resume_claims.find(c => c.claim_id === id)?.text !== text.trim()) next = changeClaim(next,id,text,'edit')
+    }
+    if (next !== workflow) {
+      revision.current += 1
+      setWorkflowState(next)
+      setFieldDecisions({})
+      setSimulatedConfirmed(false)
+      setConfirmationNote('')
+    }
+    if (Object.keys(reviewDrafts).length) setReviewDrafts({})
+    if (retain) setClaimDecisions(previous => retainRemaining(next.resume_claims,previous))
+    return true
+  }, [workflow,reviewAdvanceReason,reviewDrafts])
+
   const canProceedFromClaims = useCallback(() => {
     if (Object.keys(reviewDrafts).length || !workflow?.claim_verification.length || workflow.requires_reverification) return false
     for (const v of workflow.claim_verification) {
       const d = claimDecisions[v.claim_id]
       const claim = workflow.resume_claims.find((item) => item.claim_id === v.claim_id)
-      const personal = workflow.grounding?.results[v.claim_id]?.verification_scope === 'personal'
+      const personal = isEducationProfile(claim,resumeForm)
+      if (personal) continue
       if (d?.decision === 'edit' || d?.freshness === 'edited_pending_reverify') return false
       if (d?.decision === 'reject' || d?.freshness === 'rejected') continue
 
@@ -408,7 +466,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       const d = claimDecisions[v.claim_id]
       if (d?.decision === 'reject' || d?.freshness === 'rejected') return false
       if (d?.freshness === 'edited_pending_reverify') return false
-      return v.state === 'VERIFIED'
+      return isEducationProfile(workflow.resume_claims.find(c=>c.claim_id===v.claim_id),resumeForm) || v.state === 'VERIFIED'
         || ((v.state === 'NEEDS_REVIEW' || v.state === 'BLOCKED') && d?.decision === 'confirm')
     })
     const onlyBlockedHandled =
@@ -419,7 +477,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         return d?.decision === 'reject' || d?.decision === 'confirm' || d?.freshness === 'rejected'
       })
     return hasPassable || onlyBlockedHandled
-  }, [workflow, claimDecisions, reviewDrafts])
+  }, [workflow, claimDecisions, reviewDrafts, resumeForm])
   const atsFieldAcksComplete = useCallback(() => {
     if (!workflow) return false
     const controls = workflow.field_controls ?? []
@@ -446,19 +504,29 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   }, [workflow, atsFieldAcksComplete, canProceedFromClaims])
 
   const reverifyClaims = useCallback(async () => {
-    if (Object.keys(reviewDrafts).length) return '审核页仍有暂存修改，请返回保存或取消后再核验。'
-    if (!workflow) return '请先运行工作流。'
+    if (!workflow || recheckLock.current) return
+    const scope = {application: workflow.application_id, candidate: workflow.candidate_id}
+    const finish = (error = '') => setRecheckAttempt({...scope, running: false, error})
+    if (Object.keys(reviewDrafts).length) return finish('请先保存或取消正在编辑的陈述，再启动核验。')
     if (!workflow._prerecorded && (workflow.parsed_jd.source_text.trim() !== jdRawInput.trim() ||
-        (workflow.target_job?.id ?? null) !== activeJobId)) return '岗位或关联已改变，请先在岗位说明重新分析。'
+        (workflow.target_job?.id ?? null) !== activeJobId)) return finish('岗位已改变，请先在岗位说明页重新分析。')
     const version = revision.current
-    const claims = workflow.resume_claims
-      .filter((claim) => claimDecisions[claim.claim_id]?.decision !== 'reject')
-      .map((claim) => ({claim_id: claim.claim_id, text: claimDecisions[claim.claim_id]?.editedText ?? claim.text}))
-    const res = await getApiClient().reverifyWorkflow(workflow, claims, workflow._prerecorded ? null : resumeForm)
-    if (version !== revision.current) return '输入已改变，请重新核验最新内容。'
-    if (res.error || !res.data) return res.error?.message ?? '重新核验失败'
-    setWorkflow({...workflow, ...res.data})
-    return null
+    const claims = workflow.resume_claims.filter(c => claimDecisions[c.claim_id]?.decision !== 'reject')
+      .map(c => ({claim_id: c.claim_id, text: claimDecisions[c.claim_id]?.editedText ?? c.text}))
+    recheckLock.current = true
+    setRecheckAttempt({...scope, running: true, error: ''})
+    try {
+      const res = await getApiClient().reverifyWorkflow({...workflow, local_only: false}, claims,
+        workflow._prerecorded ? null : resumeForm, 'sag_atomic')
+      if (version !== revision.current) return finish('等待期间正文、岗位或材料已改变，请重新核验当前版本。')
+      if (res.error || !res.data) return finish(res.error?.message ?? '没有收到本次核验结果，请重试。')
+      setWorkflow({...workflow, ...res.data, local_only: false})
+      finish()
+    } catch {
+      finish('核验请求未完成，请检查本地服务后重试。')
+    } finally {
+      recheckLock.current = false
+    }
   }, [workflow, claimDecisions, resumeForm, setWorkflow, reviewDrafts, jdRawInput, activeJobId])
 
   const validateExport = useCallback(async () => {
@@ -489,7 +557,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       scenario,
       loadingWorkflow: reviewPage && loadingWorkflow,
       workflowLoadError, retryWorkflow,
-      reviewDrafts, setReviewDraft, reviewStorageError, restoredAt,
+      reviewDrafts, setReviewDraft, saveClaimEdit, reviewStorageError, restoredAt,
       step,
       jdRawInput, activeJobId, invalidateWorkflow,
       workflow,
@@ -505,7 +573,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       setJdRawInput, setActiveJobId,
       setWorkflow,
       patchWorkflow,
-      reverifyClaims,
+      recheckAttempt, reverifyClaims,
       validateExport,
       setResumeForm,
       setClaimDecision,
@@ -514,14 +582,14 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       setSimulatedConfirmed,
       resetFlow,
       verificationOf,
-      canProceedFromClaims,
+      finishReviewStep, reviewAdvanceReason, canProceedFromClaims,
       atsFieldAcksComplete,
       canSubmitAts,
     }),
     [
       scenario,
       reviewPage, loadingWorkflow, workflowLoadError, retryWorkflow,
-      reviewDrafts, setReviewDraft, reviewStorageError, restoredAt,
+      reviewDrafts, setReviewDraft, saveClaimEdit, reviewStorageError, restoredAt,
       step,
       jdRawInput, activeJobId, invalidateWorkflow,
       workflow,
@@ -535,13 +603,13 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       setScenario,
       setWorkflow,
       patchWorkflow,
-      reverifyClaims,
+      recheckAttempt, reverifyClaims,
       validateExport,
       setClaimDecision,
       setFieldDecision,
       resetFlow,
       verificationOf,
-      canProceedFromClaims,
+      finishReviewStep, reviewAdvanceReason, canProceedFromClaims,
       atsFieldAcksComplete,
       canSubmitAts,
     ],

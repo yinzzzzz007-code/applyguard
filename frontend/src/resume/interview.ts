@@ -9,7 +9,12 @@ export interface InterviewResume {
   internships: InterviewResume['projects']
 }
 
+export interface PracticeTurn {
+  session:string; revision:number; question:string; basis:string; rubric:Record<string,string>;scale:string
+  scores?:Record<string,number>;feedback?:string;can_next?:boolean
+}
 export interface InterviewGuide {
+  practice?:PracticeTurn
   coverage_version?: number
   one_minute: string
   three_minutes: string

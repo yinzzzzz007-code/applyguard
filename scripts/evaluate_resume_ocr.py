@@ -17,6 +17,7 @@ from backend.services.resume_parser import extract_resume_from_text, parse_resum
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('pdf', type=Path, nargs='+', help='PDFs, or local .txt/.json OCR output when --replay-ocr is set')
+    parser.add_argument('--parse-mode',choices=['offline','offline_ocr'],default='offline',help='Default matches normal resume import, including automatic OCR fallback')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--expected-education', help='Comma-separated manually counted education rows, in PDF order')
     parser.add_argument('--expected-internships', help='Comma-separated manually counted work rows, in input order')
@@ -52,7 +53,7 @@ def main() -> int:
                 result = {'form': extract_resume_from_text(text)}
             else:
                 payload = base64.b64encode(path.read_bytes()).decode('ascii')
-                result = parse_resume_pdf(payload, 'local.pdf', parse_mode='offline_ocr')
+                result = parse_resume_pdf(payload, 'local.pdf', parse_mode=args.parse_mode)
             rows.append({'sample': index, 'status': 'replayed' if args.replay_ocr else 'imported', 'seconds': round(time.monotonic() - start, 2),
                          'section_counts': {k: len(result['form'][k]) for k in ('education', 'internships', 'projects', 'awards')}})
             for field, values in expectations.items():

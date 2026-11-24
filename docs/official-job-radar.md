@@ -2,6 +2,8 @@
 
 从岗位雷达 `/jobs` 打开「官网动态」。可以刷新启用的全部来源，或者只刷新一家公司。结果保存在 `data/local/job-radar.sqlite3`，支持 `APPLYGUARD_LOCAL_DIR`。旧岗位、收藏阶段、人工 JD 编辑、AI Career Radar 文件导入和原申请流程沿用已有数据模型。
 
+刷新摘要区分新增、更新、未变化、下线和跳过；如果来源只提供部分目录，页面直接显示来源提示。新增和更新均为零不等于刷新失败，可结合未变化数量和最近完成时间检查。
+
 「官网动态」使用当前水彩工作台的 shadcn/ui Card 和 Button。配色在 `frontend/src/palette.css`，卡片晕染、柔和阴影和反馈动画在 `frontend/src/workspace-polish.css`。手机打开岗位详情后，可用「返回岗位列表」回到刷新、筛选和提醒。
 
 ## 来源覆盖
@@ -72,3 +74,15 @@ node scripts/official_jobs_browser_smoke.cjs
 浏览器脚本使用 Playwright 和本机 Edge，支持设置 `PLAYWRIGHT_MODULE` 与 `APPLYGUARD_TEST_PYTHON`。脚本启动临时本机端口，使用虚构简历和岗位 fixture，并在 `output/test-reports/` 留下截图。真实官网测试应使用独立的 `APPLYGUARD_LOCAL_DIR`。
 
 2026-11-18 的本机实测共入库 129 条。百度公开首屏 10 条，分页接口返回 `no-auth`，因此覆盖标记为部分。华为目录 109 条，其中 68 条已有可用详情，余下条目可打开官网并在后续刷新时补齐。Seed 官网热招 10 条均取得详情。复刷百度和 Seed 各有 10 条未变化，无重复新增。LaunchAgent 已验证配置生成，运行环境为 Windows。
+
+## 更新：语义与兴趣排序、可展开统计
+
+默认“为你推荐（语义与兴趣）”使用本地多语言 MiniLM 对专业、技能、项目及岗位描述计算相似度，结合已填城市偏好、感兴趣／少推荐反馈，并适度打散同公司与重复岗位。保留全部岗位及搜索筛选；没有训练个人深度推荐模型，推荐分不是录用概率。输入不含手机号、邮箱等基本联系方式。技术条件匹配与语义推荐是两种不同结果，均给出理由。
+
+`POST /api/v1/jobs/{job_id}/feedback` 的 interest 为 -1、0 或 1；前端可撤销。`job_recommendation.py` 记录本机 SQLite 反馈与异步排序状态；未装模型、失败、载入中分别提示，不伪造 ready。
+
+安装：`python scripts/setup_job_semantics.py --directory E:/ApplyGuard/semantic --install-runtime`；将输出的两个环境配置设到本机 `.env` 后重启。所选路径可迁移；迁移后重新运行安装器生成当前路径。公开权重不依赖模型 API Key。
+
+“新增岗位”“未读提醒”“在招高匹配”“来源异常”均可点击打开弹窗。未读提醒可逐条查看完整原因和岗位，不会因打开而自动标记已读；下方来源和提醒列表仍保留。提醒 API 支持 limit／offset／has_more，分批载入超过 200 条的提醒。
+
+完整个人简历、站内提醒与界面复查见 [本轮报告](testing-report-2026-11-23-final-personal-flow.md)。

@@ -1,5 +1,7 @@
+import {ActionButton} from '../components/ui/action-button'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { completePendingLink } from '../resume/supplementRecheck'
 import { fileToBase64, getApiClient } from '../api/client'
 import type {
   AwardEvidenceFields,
@@ -15,6 +17,7 @@ import type {
 import { EvidenceMaterialLibrary } from '../components/EvidenceMaterialLibrary'
 import { Button } from '../components/ui/button'
 import { Card, CardDescription, CardTitle } from '../components/ui/card'
+import {GithubImport} from '../components/GithubImport'
 import { AgentConnector } from '../components/AgentConnector'
 import { materialName, orderedEvidenceSpans } from '../evidence/materials'
 import {
@@ -263,7 +266,8 @@ function PreviewPane({
 
 export function EvidenceWorkspacePage() {
   const api = getApiClient()
-  const { resumeForm, setResumeForm } = useDemo()
+  const { resumeForm, setResumeForm, workflow } = useDemo()
+  const navigate = useNavigate()
   const [params,setParams] = useSearchParams()
   const linkTargetType = params.get('target_type') || 'award'
   const linkTargetId = params.get('target_id') || ''
@@ -1021,6 +1025,16 @@ export function EvidenceWorkspacePage() {
     }
   }
 
+  const returnForRecheck = (target: {target_type:string;target_id:string}) => {
+    if (!['project','internship','award'].includes(target.target_type)) return false
+    try {
+      const pending=completePendingLink(sessionStorage,{target_type:target.target_type as 'project'|'internship'|'award',target_id:target.target_id},workflow?.candidate_id,workflow?.application_id)
+      if (!pending) return false
+      navigate(`/claims#${encodeURIComponent(pending.claim_id)}`)
+      return true
+    } catch {setMessage('材料已关联，但无法自动返回核验；请手动打开陈述核验。');return false}
+  }
+
   const linkToTarget = async () => {
     const target = vaultRows.find(row => row.target_type === linkTargetType && row.target_id === linkTargetId)
     if (!selectedEvidenceId || !target) {
@@ -1046,6 +1060,12 @@ export function EvidenceWorkspacePage() {
     setBusy('')
     if (res.error || !res.data) {
       setMessage(res.error?.message || '关联失败（需先确认识别完成）')
+      return
+    }
+    if (returnForRecheck(target)) return
+    const returnClaim = params.get('return_claim')
+    if (returnClaim && workflow?.resume_claims.some(c => c.claim_id === returnClaim)) {
+      navigate('/claims#'+encodeURIComponent(returnClaim))
       return
     }
     await runMatchVault()
@@ -1190,6 +1210,7 @@ export function EvidenceWorkspacePage() {
       setMessage(linked.error?.message || '关联失败')
       return
     }
+    if (returnForRecheck(row)) return
     await runMatchVault()
     setMessage(`已关联：「${row.label}」 ↔ 「${row.relative_path || '所选材料'}」。关联完成 ≠ 全部字段获支持。`)
   }
@@ -1589,9 +1610,9 @@ export function EvidenceWorkspacePage() {
         <p className="muted">修改会自动保存为草稿；确认内容无误后点「确认识别完成」。</p>
       )}
       <div className="btn-row">
-        <button type="button" className="btn primary" disabled={!!busy || !detail || detail.evidence_id !== selectedEvidenceId} onClick={() => void confirmReview()}>
+        <ActionButton type="button" className="btn primary" disabledReason={busy?'正在处理材料，请稍候。':'请先选中并加载这份证据的详情。'} disabled={!!busy || !detail || detail.evidence_id !== selectedEvidenceId} onClick={() => void confirmReview()}>
           确认识别完成
-        </button>
+        </ActionButton>
       </div>
     </details>
   )
@@ -1657,7 +1678,7 @@ export function EvidenceWorkspacePage() {
         <div className="btn-row">
         <Button variant="secondary" onClick={() => showTab(activeTab === 'materials' ? 'relations' : 'materials')}>{activeTab === 'materials' ? '去核对与关联' : '管理材料'}</Button>
         <Button
-          disabled={!!importProgress || !!busy || !files.length || !coverage.total}
+          disabledReason={importProgress||busy?'材料正在导入或识别，请稍候。':!files.length?'请先导入至少一份材料。':'请先在经历库保存可匹配的经历。'} disabled={!!importProgress || !!busy || !files.length || !coverage.total}
           onClick={() => {showTab('relations');void runMatchVault()}}
         >
           查找推荐对应
@@ -1736,10 +1757,10 @@ export function EvidenceWorkspacePage() {
             {supplementResult.warnings.map((warning, index) => <li key={index}>{warning}</li>)}
           </ul>}
           {!!supplementResult.files.length && <div className="btn-row">
-            {supplementResult.files.map(file => <button type="button" className="btn secondary" key={file.file_id}
-              disabled={!!busy} onClick={() => openSupplementMaterial(row, file)}>
+            {supplementResult.files.map(file => <ActionButton type="button" className="btn secondary" key={file.file_id}
+              disabledReason={'正在处理当前操作，完成后可继续。'} disabled={!!busy} onClick={() => openSupplementMaterial(row, file)}>
               打开材料 · {materialName(file.relative_path)}
-            </button>)}
+            </ActionButton>)}
           </div>}
         </div>}
         renderEvidence={(row) => row.evidence_id ? (
@@ -1776,8 +1797,8 @@ export function EvidenceWorkspacePage() {
         }}
         onDeleteFiles={(ids) => deleteMaterialFiles(ids)}
         imports={<div className="btn-row">
-          <Button disabled={!!busy} onClick={() => uploadInputRef.current?.click()}>＋ 添加文件</Button>
-          <Button variant="secondary" disabled={!!busy} onClick={() => void pickDirectory()}>导入文件夹</Button>
+          <Button disabledReason={'正在处理当前操作，完成后可继续。'} disabled={!!busy} onClick={() => uploadInputRef.current?.click()}>＋ 添加文件</Button>
+          <Button variant="secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={!!busy} onClick={() => void pickDirectory()}>导入文件夹</Button>
           <input ref={uploadInputRef} type="file" multiple hidden accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,.doc,.docx,.md,.markdown,.json" onChange={(event) => {
             showTab('materials')
             onMultiFiles(event.target.files); event.target.value = ''
@@ -1813,15 +1834,15 @@ export function EvidenceWorkspacePage() {
                 />
                 内容完全相同时复用已有识别（默认开启）
               </label>
-              <button
+              <ActionButton
                 type="button"
                 className="btn primary"
-                disabled={!!busy || !!importProgress}
+                disabledReason={'材料正在导入或处理，请稍候。'} disabled={!!busy || !!importProgress}
                 onClick={() => void importPending()}
               >
                 {importProgress ? '导入中…' : '开始导入与识别'}
-              </button>
-              <button type="button" className="btn secondary" disabled={!!busy || !!importProgress} onClick={() => setPending([])}>取消这批导入</button>
+              </ActionButton>
+              <ActionButton type="button" className="btn secondary" disabledReason={'材料正在导入或处理，请稍候。'} disabled={!!busy || !!importProgress} onClick={() => setPending([])}>取消这批导入</ActionButton>
             </div>
           ) : null}
 
@@ -1876,7 +1897,7 @@ export function EvidenceWorkspacePage() {
             </select>
           </label>
           <p>文件首次导入时会自动准备工作区，无需手动创建。</p>
-          <button type="button" className="btn ghost-danger" disabled={!workspaceId || !!busy} onClick={() => void deleteWs()}>删除此工作区…</button>
+          <ActionButton type="button" className="btn ghost-danger" disabledReason={busy?'正在处理材料，请稍候。':'请先建立或选择材料工作区。'} disabled={!workspaceId || !!busy} onClick={() => void deleteWs()}>删除此工作区…</ActionButton>
         </div>}
         renderDetail={(file, tab) => {
           const currentDetail = detail?.evidence_id === selectedEvidenceId && detail?.primary_file_id === file.file_id ? detail : null
@@ -1890,26 +1911,27 @@ export function EvidenceWorkspacePage() {
             {tab === 'fields' && (waiting ? <p role="status">正在读取识别内容…</p> : currentDetail ? renderEvidenceEditor(true) : <p className="material-helper">该文件尚未生成识别条目，请先重新识别。</p>)}
             <div className="material-detail-actions">
               <span>版本 {file.version} · {file.span_count || 0} 个文字片段</span>
-              <button type="button" className="btn secondary" disabled={!!busy} onClick={() => void reparseOne(file.file_id)}>重新识别</button>
+              <ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={!!busy} onClick={() => void reparseOne(file.file_id)}>重新识别</ActionButton>
             </div>
             {file.parse_error && <details className="material-diagnostics"><summary>识别问题详情</summary><p>{file.parse_error}</p></details>}
             {currentDetail && <details className="material-check-tool"><summary>辅助检查：材料能否支持某句话？</summary>
               <p>只检查当前文件「{materialName(file.relative_path)}」，不会自动建立关联。</p>
               <label className="resume-field">需要核对的陈述<textarea className="resume-input" rows={3} placeholder="输入一句需要这份材料支持的描述" value={claimProbe} onChange={(event) => { setClaimProbe(event.target.value); setClaimResult('') }} /></label>
-              <button type="button" className="btn secondary" disabled={!!busy || !claimProbe.trim()} onClick={() => void runClaimCheck()}>检查这句话</button>
+              <ActionButton type="button" className="btn secondary" disabledReason={busy?'正在检查材料，请稍候。':'请先填写要核对的陈述。'} disabled={!!busy || !claimProbe.trim()} onClick={() => void runClaimCheck()}>检查这句话</ActionButton>
               {claimResult && <p role="status">{claimResult}</p>}
             </details>}
             {linkTargetId && currentDetail && <div className="material-check-tool">
               <strong>关联到此次选择的经历</strong>
               <p>{vaultRows.find((row) => row.target_type === linkTargetType && row.target_id === linkTargetId)?.label || '该经历已不存在'}</p>
               {currentDetail.review_state !== 'REVIEWED' && <p>请先在「确认识别内容」中点击「确认识别完成」。</p>}
-              <button type="button" className="btn secondary"
-                disabled={!!busy || currentDetail.review_state !== 'REVIEWED' || !vaultRows.some(row => matchKey(row) === linkTargetType + ':' + linkTargetId)}
-                onClick={() => void linkToTarget()}>确认关联到此经历</button>
+              <ActionButton type="button" className="btn secondary"
+                disabledReason={busy?'正在处理材料，请稍候。':currentDetail.review_state!=='REVIEWED'?'请先核对并确认材料识别结果。':'请先选择要关联的经历。'} disabled={!!busy || currentDetail.review_state !== 'REVIEWED' || !vaultRows.some(row => matchKey(row) === linkTargetType + ':' + linkTargetId)}
+                onClick={() => void linkToTarget()}>确认关联到此经历</ActionButton>
             </div>}
           </>
         }}
       />
+      <GithubImport ensureWorkspace={ensureWorkspace} onImported={refreshLists}/>
       <div className="evidence-advanced"><AgentConnector ensureWorkspace={ensureWorkspace} onImported={refreshLists} /></div>
       </div>
       <div className="evidence-next-step"><p>{coverage.total ? `已关联 ${coverage.linked}/${coverage.total} 条经历。未关联的内容仍需在审核时补充材料。` : '先在经历库保存自己的项目、实习或获奖经历。'}</p>

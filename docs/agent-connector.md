@@ -9,7 +9,7 @@
 1. 启动 ApplyGuard 后端及前端，访问 `/evidence`。开发默认 `http://127.0.0.1:5173/evidence`；构建后也可直接访问后端的同一路径。保持页面和后端开启。
 2. 展开连接入口并检查环境。缺依赖时安装说明自动展开。先在项目根目录打开终端，也可用「复制切换目录命令」进入。再执行「复制安装命令」，它使用当前后端的 Python 和相对的 `requirements-agent.txt`。执行完成后点「重新检测环境」。
 3. 已装桌面版时自动发现其自带 `dsh.cmd`，也会查找 PATH 中的 `dsh`。自定义安装可将 `APPLYGUARD_HARNESS_COMMAND` 设为 PATH 命令名、相对项目根目录的路径或本机绝对路径，然后重启后端。快捷启动会加载 `@deepseek-ai/dsh-mcp-client`。缺该插件时先更新 Harness。 [Harness 安装](https://deepseek.com/harness) · [官方 MCP 说明](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/mcp/mcp-client/README.md)
-4. 填查找任务和具体目录，选择材料外发规则。GitHub 范围为 `owner/repo@40位提交SHA`，不自动搜索整个账号。私有仓库须另行勾选并配置独立 `APPLYGUARD_GITHUB_TOKEN`；“查技术背景”不能导入为本人贡献。
+4. 填查找任务，点“选择文件夹”打开本机选择窗口；可连续点“继续添加文件夹”，最多 5 个，重复选择不增加，各项可移除。系统窗口未出现或不想继续时，点击“取消选择”；取消保留原列表。界面通过异步任务轮询选择结果，网络请求超时会显示错误，系统窗口最多等待 150 秒。无法打开窗口时展开“手动输入路径（备用）”。选择目录本身不读取或授权材料，仍须选择外发规则并点击授权连接。GitHub 范围为 `owner/repo@40位提交SHA`，不自动搜索整个账号。私有仓库须另行勾选，通过 GitHub 官方设备授权页确认，并选择本次可读仓库；“查技术背景”不能导入为本人贡献。
 5. 点击授权，页面显示「等待 Agent 连接」。允许云端时，在本机终端执行启动命令。终端将分别隐藏读取临时连接令牌和模型 API Key。默认模型为 `gemini-3.1-flash-lite-preview`，地址取后端配置。
 6. 启动器创建独立临时 `DSH_HOME` 和检索 patch，禁用其他通用工具，退出后清理临时目录。不会修改原 Harness 会话配置。安装检测和预检都不等于配对；只有 Harness 调用 `get_task` 后显示“已配对”，页面每 3 秒自动刷新候选。
 7. 核对回传原文、本人归属及数字，再导入材料。完成后撤销连接。离页／撤销后的旧刷新响应不能重新恢复配对；过期后需要新命令与新令牌。
@@ -52,6 +52,7 @@ DeepSeek Harness 支持 MCP stdio；在**独立检索 profile** 中加入以下 
 
 | 用户操作／预期证据 | 实现位置 | 验证入口 |
 | --- | --- | --- |
+| 连续选择本机文件夹、去重和移除 | `AgentConnector.tsx`、`agentConnection.ts`、`folder_picker.py`；同源 UI `pick_folder → folder_status / cancel_folder` | `python -m unittest tests.test_folder_picker`；前端构建 |
 | 环境检测与相对安装命令，支持直接复制 | `HarnessSetupGuide.tsx`、`agentConnection.ts`、`harness_setup.py`；UI `setup` | `tests/test_harness_setup.py`、`frontend/scripts/agent-connection.test.mjs` |
 | 授权后等待；真正调用工具后已配对 | `AgentConnector.tsx`、`agentConnection.ts`、`agent_bridge.py` | `frontend/scripts/agent-connection.test.mjs`、`tests/test_agent_bridge.py` |
 | PowerShell 启动、预检外发规则、独立会话 | `scripts/connect_harness.py`、共享检索 patch | `tests/test_agent_mcp.py`、`scripts/harness_agent_probe.py` |
@@ -74,3 +75,31 @@ DeepSeek Harness 支持 MCP stdio；在**独立检索 profile** 中加入以下 
 关键词检索是连接器的首版基线，不把它称为 SAG 检索效果。可由 Harness 多次查询补充线索；导入后才进入已有 SAG 工作流。每次最多扫描500个本地文件/目录条目、60个GitHub文件，返回20片段；单文件1MB，PDF40页，不做图片OCR。隐藏目录、依赖目录、符号链接/目录联接越界、常见密钥形态内容均跳过；密钥检测不是完整DLP。PDF/DOCX是本地文本提取，尚未覆盖各种扫描件和排版。
 
 当前授权仅内存保存，服务重启全部失效；候选卡片不跨重启保存，确认导入后的材料按原工作区保存。账号/URL范围选择器、OS沙箱、真实私有仓库联调、持久化连接管理和独立人工标注属于后续项目。
+
+
+## 2026-11-23 实际连接状态
+
+本机目录选择已改为原生窗口，可连续追加、去重和移除。早期两次测试只完成 get_task 配对，检索回传失败。后续同日补测已完成 get_task → search_materials → submit_evidence；新 Key 最后一次实际用时 43.465 秒，4 个候选、回传 1 个。早期失败记录保留，不代表持续可用性。详见 [本轮报告](testing-report-2026-11-23-folders-harness.md)。`scripts/harness_agent_probe.py --timeout 240` 会记录各 MCP 阶段并在 Windows 下清理测试进程树。
+
+## 可选 GitHub 点按引导
+
+点击“从 GitHub 查找材料 · 点按引导”，按红点依次完成仓库与完整提交 SHA、私有仓库选择、外发规则、生成授权、启动检索。可随时跳过引导，不要求绑定整个账号。默认不勾选私有仓库，也不选择云端或本地模型授权。
+
+管理员为 GitHub App 开启 Device Flow，设置 Contents 只读，安装时选择指定仓库，并在启动环境填写 `APPLYGUARD_GITHUB_APP_CLIENT_ID`。演示者点击“在 GitHub 授权私有仓库”，在 GitHub 官方页输入设备码并确认，返回点“我已确认，检查授权”，然后选择仓库与固定版本。断开、过期或重启后须重新授权。公开搜索、读取私库与 Harness 配对分别操作。
+
+单独验证模型：`python scripts/diagnose_harness_model.py --timeout 45`。它区分基本鉴权、普通响应、流式工具调用和工具结果后的续轮。正式启动器与探针共用有总时限的进程执行器，界面提示真实进度。最新实测见 [恢复与引导记录](testing-report-2026-11-23-harness-recovery.md)。
+
+## 更新：公开发现与云朵补全
+
+无需先填写提交 SHA。输入 GitHub 用户名、公开邮箱或关键词，查找并勾选公开仓库；系统固定选定仓库的当前 SHA，显示“正在固定版本”后才允许授权。公开邮箱只能查 GitHub 可搜索资料，空结果不证明账号不存在；须人工选择候选账号，不据邮箱推断所有权。仍保留精确 `owner/repo@SHA` 输入。
+
+查询公开元数据不等于授权读取材料。私有仓库仍需另行勾选并配置有限范围凭据；不自动扫描或关联全部私有仓库。GitHub 匿名 API 限流会明确提示；公共 HEAD 查询的备用 git 命令禁用凭据和交互。
+
+授权按钮显示全部未满足条件。“查看原因与补全引导”调用共享云朵，先定位离按钮最近的未完成模块；完成后按原队列提示下一项，不代选外发规则、不创建授权。其他安装步骤和目录选择仍可展开查看。
+
+
+## 最后复测与等待上限
+
+当前独立 Harness 会话上限 240 秒，单次模型请求／流式空闲上限 90 秒；使用 `harness_setup.retrieval_patch` 生成唯一配置，启动器与探针共享。请求成功不等于事实核验通过，回传片段仍须人工确认和关联。新 Key 实测记录：`output/test-reports/20261123_195112_harness-live/report.json`。
+
+模型异常时，页面明确区分本地服务已连接与云模型不可用。不会用静态示例、旧结果或未完成核验替代本次真实结果。整体状态及费用以 [最终个人流程报告](testing-report-2026-11-23-final-personal-flow.md) 为准。

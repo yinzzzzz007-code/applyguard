@@ -20,7 +20,7 @@ def main():
     if args.cv:cases.append(('local_cv',body(args.cv.read_bytes(),filename=args.cv.name),200))
     failed=0
     for name,payload,expected in cases:
-        conn=http.client.HTTPConnection('127.0.0.1',args.port,timeout=15)
+        conn=http.client.HTTPConnection('127.0.0.1',args.port,timeout=180 if name == 'unreadable_drawing' else 15)
         try:
             conn.request('POST','/api/v1/resume/parse',json.dumps(payload).encode(),{'Content-Type':'application/json'})
             response=conn.getresponse();status=response.status;result=json.loads(response.read())

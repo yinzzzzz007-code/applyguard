@@ -89,3 +89,11 @@ in `third_party/refchecker/LICENSE` and `NOTICE`.
 The Card and Button primitives in `frontend/src/components/ui/` adapt the shadcn/ui
 registry components to ApplyGuard's CSS. The [MIT license](third_party_licenses/shadcn-ui/LICENSE.md)
 is retained with the project.
+
+## 本地岗位语义推荐
+
+模型使用 [Xenova/paraphrase-multilingual-MiniLM-L12-v2](https://huggingface.co/Xenova/paraphrase-multilingual-MiniLM-L12-v2) 的量化 ONNX 版本，基础模型来自 sentence-transformers，Apache-2.0。下载器记录上游 revision 和文件 SHA-256；权重不纳入 Git。运行时使用 ONNX Runtime（MIT）及 Tokenizers（Apache-2.0），按选定磁盘安装。
+
+候选排序、兴趣反馈、公司／重复岗位打散的产品逻辑参考 [Twitter Home Mixer](https://github.com/twitter/the-algorithm/blob/main/home-mixer/README.md) 和 [X algorithm](https://github.com/xai-org/x-algorithm)。本项目独立实现适用于岗位内容的相似度与排序逻辑，未复制其生产模型、权重或训练系统。推荐分不是录用概率。
+
+天蓝色小云朵为项目自绘 SVG，沿用用户指定的 `#87CEEB`，没有嵌入参考图片。

@@ -18,8 +18,8 @@ class NoRedirect(HTTPRedirectHandler):
 def gh(path, private=False):
     headers = {'Accept':'application/vnd.github+json','User-Agent':'ApplyGuard-agent-prototype'}
     if private:
-        token = os.getenv('APPLYGUARD_GITHUB_TOKEN', '')
-        if not token: raise ValueError('私有仓库尚未配置独立 GitHub 授权')
+        token = private
+        if not isinstance(token,str): raise ValueError('私有仓库需要本次 GitHub App 授权')
         headers['Authorization'] = 'Bearer '+token
     with build_opener(NoRedirect).open(Request('https://api.github.com/'+path, headers=headers), timeout=20) as r:
         raw = r.read(2_000_001)
@@ -42,17 +42,25 @@ def create(body):
     task = str(body.get('task','')).strip()
     if not 4<=len(task)<=2000: raise ValueError('请输入 4–2000 字的任务')
     roots = []
-    for value in body.get('roots',[])[:5]:
+    if not isinstance(body.get('roots', []), list) or len(body.get('roots', [])) > 5:
+        raise ValueError('最多选择 5 个文件夹')
+    for value in body.get('roots', []):
         p=Path(value).resolve(strict=True)
         if not p.is_dir() or p == Path(p.anchor): raise ValueError('请选择具体文件夹，不允许整盘授权')
         roots.append(str(p))
     repos=[]
-    for spec in body.get('repos',[])[:5]:
+    if not isinstance(body.get('repos',[]),list) or len(body.get('repos',[]))>5:
+        raise ValueError('最多指定 5 个仓库')
+    for spec in body.get('repos',[]):
         # Exact repository and immutable revision; account-wide expansion is not implicit.
+        if not isinstance(spec,str):raise ValueError('仓库与版本须为文字')
         repo,sep,sha=spec.partition('@')
         if not sep or not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+',repo) or not re.fullmatch(r'[0-9a-fA-F]{40}',sha):
             raise ValueError('GitHub 范围请填写 owner/repo@完整40位提交SHA')
         repos.append({'repo':repo,'sha':sha.lower(),'private':body.get('private') is True})
+    from backend.services.github_app_session import repo_token
+    for item in repos:
+        if item['private']: repo_token(body.get('github_handle'),item['repo'],item['sha'])
     if (mode=='local' and not roots) or (mode=='github' and not repos) or (mode=='auto' and not (roots or repos)):
         raise ValueError('至少指定一个允许访问的来源')
     if (mode=='local' and repos) or (mode=='github' and roots): raise ValueError('来源与所选模式不符')
@@ -63,7 +71,8 @@ def create(body):
         token=secrets.token_urlsafe(32); ui=secrets.token_urlsafe(32)
         g={'id':secrets.token_hex(12),'token':token,'ui_token':ui,'expires':time.time()+1800,
            'task':task,'mode':mode,'purpose':body['purpose'],'disclosure':body['disclosure'],
-           'roots':roots,'repos':repos,'connected':False,'cards':{},'revoked':False}
+           'roots':roots,'repos':repos,'github_handle':body.get('github_handle') if body.get('private') else None,'connected':False,'cards':{},'revoked':False,
+           'stage':'waiting','updated_at':time.time(),'run_state':None}
         GRANTS[g['id']]=g
     return {'id':g['id'],'token':token,'ui_token':ui,'expires':g['expires']}
 
@@ -102,6 +111,7 @@ def local_files(g):
             if visited>500:return
             dirs[:]=sorted(d for d in dirs if not d.startswith('.') and d not in SKIP and not Path(directory,d).is_symlink() and not Path(directory,d).is_junction())
             for name in sorted(files):
+                grant(g['id'],g['token'])
                 visited+=1
                 if visited>500: return
                 p=Path(directory,name)
@@ -115,8 +125,12 @@ def local_files(g):
                 except (ValueError,OSError): continue
 
 def github_files(g):
+    from backend.services.github_app_session import repo_token
+    def credential(spec):
+        if g.get('revoked') or g['expires']<time.time():raise ValueError('材料检索授权已失效。')
+        return repo_token(g.get('github_handle'),spec['repo'],spec['sha']) if spec['private'] else False
     for spec in g['repos']:
-        tree=gh(f"repos/{spec['repo']}/git/trees/{spec['sha']}?recursive=1",spec['private'])
+        tree=gh(f"repos/{spec['repo']}/git/trees/{spec['sha']}?recursive=1",credential(spec))
         if tree.get('truncated'): raise ValueError('仓库目录过大，请缩小范围后重试')
         count=0
         for row in tree.get('tree',[]):
@@ -125,7 +139,8 @@ def github_files(g):
             except ValueError: continue
             count+=1
             if count>60: return
-            blob=gh(f"repos/{spec['repo']}/git/blobs/{row['sha']}",spec['private'])
+            blob=gh(f"repos/{spec['repo']}/git/blobs/{row['sha']}",credential(spec))
+            credential(spec)
             raw=base64.b64decode(blob['content'])
             if len(raw)>MAX_BYTES: continue
             yield {'kind':'github','repo':spec['repo'],'path':row['path'],'commit_sha':spec['sha'],
@@ -164,15 +179,44 @@ def search(g, query):
         return {'cards':[g['cards'][c['id']] for c in hits],'errors':errors,'bounded':True,
                 'limits':{'local_entries':500,'github_files':60,'results':20}}
 
+def activity(g, stage):
+    with LOCK:
+        grant(g['id'], g['token'])
+        g.update(stage=stage, updated_at=time.time())
+
+
+def connection_progress(g):
+    return {'stage':g['stage'],'updated_at':g['updated_at'],'run_state':g['run_state'],
+            'candidates':len(g['cards']),
+            'submitted':sum(c['state'] in {'NEEDS_REVIEW','IMPORTED'} for c in g['cards'].values())}
+
+
 def agent_call(body, token):
     g=grant(body.get('id'),token)
     action=body.get('action');args=body.get('arguments') or {}
     if action=='prepare':
         return {k:g[k] for k in ('id','disclosure','expires')}
+    if action=='run':
+        state=args.get('state')
+        if state not in {'started','finished','failed','timed_out'}:
+            raise ValueError('未知检索会话状态')
+        with LOCK:
+            grant(g['id'],token)
+            g.update(run_state=state,updated_at=time.time())
+        return {'recorded':True}
     if action=='task':
         g['connected']=True
+        if g['stage']=='waiting':activity(g,'task_received')
         return {k:g[k] for k in ('id','task','mode','purpose','disclosure','expires')}
-    if action=='search':return search(g,args.get('query'))
+    if action=='search':
+        activity(g,'searching')
+        try:
+            response=search(g,args.get('query'))
+        except Exception:
+            if not g['revoked'] and g['expires']>=time.time():activity(g,'search_failed')
+            raise
+        activity(g,'searched')
+        return response
     if action=='submit':
         c=g['cards'].get(args.get('card_id'))
         if not c or args.get('quote')!=c['quote'] or args.get('version')!=c['source']['version']:
@@ -180,10 +224,31 @@ def agent_call(body, token):
         if c['state']=='IMPORTED': raise ValueError('已导入证据不可由Agent改写')
         c.update(interpretation=str(args.get('interpretation',''))[:2000],experience=str(args.get('experience',''))[:200],
                  missing=[str(x)[:200] for x in args.get('missing',[])[:12]],state='NEEDS_REVIEW')
+        activity(g,'submitted')
         return c
     raise ValueError('不允许的Agent操作')
 
 def ui_call(body):
+    if body.get('action')=='connections_summary':
+        from backend.services.github_app_session import authorized
+        now=time.time()
+        with LOCK:
+            active=[g for g in GRANTS.values() if not g['revoked'] and g['expires']>now]
+        return {'github':authorized(),'harness':'paired' if any(g['connected'] for g in active) else 'authorized' if active else 'none'}
+    if body.get('action')=='github_import_readme':
+        from backend.services.github_material import import_readme
+        return import_readme(body,gh)
+    if str(body.get('action','')).startswith('github_app_'):
+        from backend.services.github_app_session import handle
+        return handle(body,gh)
+    if body.get('action') in {'github_discover', 'github_pin'}:
+        from backend.services.github_discovery import discover, pin
+        return discover(body, gh) if body['action']=='github_discover' else pin(body, gh)
+    if body.get('action') in {'pick_folder','folder_status','cancel_folder'}:
+        from backend.services.folder_picker import start_folder_picker, folder_picker_status, cancel_folder_picker
+        if body['action']=='pick_folder':return start_folder_picker()
+        if body['action']=='folder_status':return folder_picker_status(str(body.get('picker_id','')))
+        return cancel_folder_picker(str(body.get('picker_id','')))
     if body.get('action')=='setup':
         from backend.services.harness_setup import setup_info, render_patch, mcp_entry
         return {**setup_info(), 'mcp_patch':render_patch([{'insert':[mcp_entry()]}])}
@@ -198,7 +263,11 @@ def ui_call(body):
             if g:g['revoked']=True
             return {'revoked':True}
     g=grant(body.get('id'),body.get('ui_token'),ui=True)
-    if body.get('action')=='status':return {'connected':g['connected'],'cards':list(g['cards'].values()),'expires':g['expires']}
+    if body.get('action')=='status':
+        with LOCK:
+            grant(g['id'],body.get('ui_token'),ui=True)
+            return {'connected':g['connected'],'cards':list(g['cards'].values()),
+                    'expires':g['expires'],'progress':connection_progress(g)}
     if body.get('action')=='accept':
         c=g['cards'].get(body.get('card_id'))
         if not c or c['state']!='NEEDS_REVIEW': raise ValueError('请先等待Agent回传候选解释')

@@ -48,3 +48,31 @@ test('health checks reject HTML, wrong services and unavailable backends', async
   payload = null
   assert.equal((await client.getHealth()).error.code, 'NETWORK_ERROR')
 })
+
+test('explicit verification requires a fresh backend receipt for the submitted text', async t => {
+  globalThis.window = {location: {origin: 'http://localhost'}}
+  t.after(() => { delete globalThis.window })
+  const claims = [{claim_id: 'one', text: 'Designed a test.'}]
+  const workflow = {parsed_jd: {source_text:'Test engineer'}, grounding: {run_id:'previous'}, local_only:false}
+  const valid = {resume_claims: claims, claim_verification: [{claim_id:'one'}], grounding: {mode:'sag_atomic',
+    operation:'verify', fresh_atomic:true, run_id:'new', results:{one:{original_text:claims[0].text}}}}
+  let payload = valid
+  let status = 200
+  t.mock.method(globalThis, 'fetch', async (_url, options) => {
+    assert.equal(JSON.parse(options.body).fresh_atomic, true)
+    if (payload instanceof Error) throw payload
+    return new Response(typeof payload === 'string' ? payload : JSON.stringify(payload), {status})
+  })
+  const client = new ApplyGuardApiClient()
+  const submit = () => client.reverifyWorkflow(workflow, claims, null, 'sag_atomic')
+  assert.equal((await submit()).data.grounding.run_id, 'new')
+  for (payload of ['', '<html>Wrong service</html>', {}, {...valid,grounding:{...valid.grounding,run_id:'previous'}},
+    {...valid,grounding:{...valid.grounding,operation:'polish'}}, {...valid,grounding:{...valid.grounding,results:{}}}]) {
+    assert.equal((await submit()).error.code, 'INVALID_VERIFICATION')
+  }
+  payload = new TypeError('Failed to fetch')
+  assert.equal((await submit()).error.code, 'NETWORK_ERROR')
+  status = 503
+  payload = '<html>Unavailable</html>'
+  assert.match((await submit()).error.message, /503/)
+})

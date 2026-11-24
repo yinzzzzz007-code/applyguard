@@ -1,3 +1,4 @@
+import {ActionButton} from './ui/action-button'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { EvidenceSearchMatch, EvidenceSourceFile, ResumeMatchItem } from '../api/types'
 import { materialFolder, materialName, materialStatus, materialType } from '../evidence/materials'
@@ -200,7 +201,7 @@ export function EvidenceMaterialLibrary(props: Props) {
             <Button
               type="submit"
               variant="secondary"
-              disabled={props.busy || searchBusy || !query.trim()}
+              guideRequirements={!query.trim()?[{id:'search',label:'在这里填写要查找的文字。',selector:'input[aria-label="搜索材料"]'}]:[]} disabledReason={props.busy||searchBusy?'正在处理材料，请稍候。':'请先输入要查找的文字。'} disabled={props.busy || searchBusy || !query.trim()}
             >
               {searchBusy ? '查找中…' : '全文查找'}
             </Button>
@@ -263,24 +264,24 @@ export function EvidenceMaterialLibrary(props: Props) {
                 <span className="material-bulk-count" aria-live="polite">
                   已选 {checkedCount} 份
                 </span>
-                <button
+                <ActionButton
                   type="button"
                   className="btn ghost-danger"
-                  disabled={props.busy}
+                  disabledReason={'正在处理材料，请稍候。'} disabled={props.busy}
                   onClick={() =>
                     void confirmDelete(selectedIds, `删除选中的 ${checkedCount} 份材料？`)
                   }
                 >
                   删除所选
-                </button>
-                <button
+                </ActionButton>
+                <ActionButton
                   type="button"
                   className="btn secondary"
-                  disabled={props.busy}
+                  disabledReason={'正在处理材料，请稍候。'} disabled={props.busy}
                   onClick={() => setChecked(new Set())}
                 >
                   取消选择
-                </button>
+                </ActionButton>
               </div>
             ) : (
               <span className="material-bulk-hint">勾选后可批量删除 · Esc 取消选择</span>
@@ -313,11 +314,11 @@ export function EvidenceMaterialLibrary(props: Props) {
                       onClick={(event) => event.stopPropagation()}
                     />
                   </label>
-                  <button
+                  <ActionButton
                     type="button"
                     className="material-file-row"
                     aria-current={selected?.file_id === file.file_id ? 'true' : undefined}
-                    disabled={props.busy}
+                    disabledReason={'正在处理材料，请稍候。'} disabled={props.busy}
                     onClick={() => choose(file)}
                   >
                     <span className="material-type-icon" aria-hidden="true">
@@ -343,7 +344,7 @@ export function EvidenceMaterialLibrary(props: Props) {
                       )}
                     </span>
                     <span className={`material-status material-status-${state.key}`}>{state.label}</span>
-                  </button>
+                  </ActionButton>
                 </li>
               )
             })}
@@ -361,25 +362,25 @@ export function EvidenceMaterialLibrary(props: Props) {
           )}
 
           <nav className="material-pagination" aria-label="材料分页">
-            <button
+            <ActionButton
               type="button"
               className="btn secondary"
-              disabled={currentPage <= 1}
+              disabledReason={'已经是第一页。'} disabled={currentPage <= 1}
               onClick={() => setPage(currentPage - 1)}
             >
               上一页
-            </button>
+            </ActionButton>
             <span>
               {currentPage} / {totalPages}
             </span>
-            <button
+            <ActionButton
               type="button"
               className="btn secondary"
-              disabled={currentPage >= totalPages}
+              disabledReason={'已经是最后一页。'} disabled={currentPage >= totalPages}
               onClick={() => setPage(currentPage + 1)}
             >
               下一页
-            </button>
+            </ActionButton>
           </nav>
         </div>
 
@@ -422,10 +423,10 @@ export function EvidenceMaterialLibrary(props: Props) {
                 {props.renderDetail(selected, tab)}
               </div>
               <div className="material-detail-actions material-detail-danger">
-                <button
+                <ActionButton
                   type="button"
                   className="btn ghost-danger"
-                  disabled={props.busy}
+                  disabledReason={'正在处理材料，请稍候。'} disabled={props.busy}
                   onClick={() =>
                     void confirmDelete(
                       [selected.file_id],
@@ -434,15 +435,15 @@ export function EvidenceMaterialLibrary(props: Props) {
                   }
                 >
                   删除此材料
-                </button>
+                </ActionButton>
               </div>
               <div className="material-relations">
                 <strong>与经历的关系</strong>
                 {related.length ? (
                   related.map((row) => (
-                    <button
+                    <ActionButton
                       type="button"
-                      disabled={props.busy}
+                      disabledReason={'正在处理材料，请稍候。'} disabled={props.busy}
                       key={`${row.target_type}:${row.target_id}`}
                       onClick={() => props.onFocusRow(row)}
                     >
@@ -455,7 +456,7 @@ export function EvidenceMaterialLibrary(props: Props) {
                       </span>
                       <b>{row.label}</b>
                       <span aria-hidden="true">↗</span>
-                    </button>
+                    </ActionButton>
                   ))
                 ) : (
                   <p>当前没有对应的经历候选。可返回上方重新对照经历库。</p>

@@ -1,0 +1,14 @@
+.cloud-guide{position:fixed;z-index:75;width:min(288px,calc(100vw - 32px));pointer-events:none;transition:left .65s cubic-bezier(.2,.7,.2,1),top .65s cubic-bezier(.2,.7,.2,1)}
+.cloud-guide-mascot{width:64px;height:54px;margin-left:16px;filter:drop-shadow(0 4px 6px #2145631a)}
+.cloud-guide-message{pointer-events:auto;background:#fff;border:1px solid #d9e6ed;border-radius:18px;padding:16px 40px 16px 16px;box-shadow:0 8px 28px #1e405019;color:#24384b;font-size:14px;line-height:1.6}
+.cloud-guide-message p{margin:8px 0}.cloud-guide-message small{display:block;margin-top:8px;color:#5c6b76}.cloud-guide-message a{color:#235baf;text-decoration:underline}
+.cloud-guide-close{position:absolute;right:12px;top:62px;border:0;background:transparent;color:#526273;font-size:24px;cursor:pointer;width:32px;height:32px;border-radius:8px}
+.cloud-guide-close:hover{background:#edf6fa}.cloud-guide-target{outline:3px solid #286ab6!important;outline-offset:5px;scroll-margin:160px}
+.claim-fact-reason{border-inline-start:2px solid #a9c6e6;padding-inline-start:12px;margin-block:14px}.claim-fact-reason p{margin-block:4px}.claim-edit-fields{padding:12px;border-radius:12px;scroll-margin:100px}.claim-edit-fields label{display:block;font-weight:650;margin-bottom:8px}.claim-edit-fields .btn-row{margin-top:8px;width:fit-content;max-width:100%;border-radius:14px}.claim-review-span{color:inherit;background:#eaf4ff;border:1px solid #3877b9;border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.disabled-action-help{border:0;background:none;color:#446581;text-decoration:underline;cursor:pointer;font:inherit;font-size:12px;text-align:left;padding:4px 0}
+@media(prefers-reduced-motion:reduce){.cloud-guide{transition:none}}
+
+button.cloud-guide-mascot{display:block;border:0;padding:0;background:transparent;pointer-events:auto;cursor:pointer;border-radius:50%;transition:transform .18s ease}
+button.cloud-guide-mascot:hover{transform:translateY(-2px)}
+button.cloud-guide-mascot:focus-visible{outline:3px solid #235baf;outline-offset:4px}
+@media(prefers-reduced-motion:reduce){button.cloud-guide-mascot{transition:none}}

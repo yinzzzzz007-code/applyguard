@@ -21,6 +21,10 @@ class HarnessSetupTests(unittest.TestCase):
         self.assertEqual(by_id['agent-default-model']['config']['model'], 'gemini-3.1-flash-lite-preview')
         for name in ['tool-bash','tool-pwsh','tool-fs','tool-web','tool-subagent','session-telemetry-otel']:
             self.assertTrue(by_id[name]['disabled'])
+        provider = by_id['llm-pi-ai']['config']['providers']['applyguard']
+        self.assertEqual(provider['timeoutMs'], 90000)
+        self.assertEqual(provider['streamIdleTimeoutMs'], 90000)
+        self.assertEqual(provider['retryPolicy'], {'mode':'normal','maxRetries':1})
         config = entries[-1]['insert'][0]['config']
         self.assertEqual(config['command'], sys.executable)
         self.assertTrue(Path(config['args'][0]).is_file())

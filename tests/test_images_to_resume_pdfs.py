@@ -21,7 +21,7 @@ class ImagePDFCLITests(unittest.TestCase):
             out = root/'result'
             command = [sys.executable,str(ROOT/'scripts/images_to_resume_pdfs.py'),*(str(path) for path in images),
                        '--output',str(out),'--merge','1','2']
-            first = subprocess.run(command,capture_output=True,text=True)
+            first = subprocess.run(command,capture_output=True)
             self.assertEqual(first.returncode,0,first.stderr)
             combined = out/'merged-1-2.pdf'
             pages = PdfReader(combined).pages
@@ -38,7 +38,7 @@ class ImagePDFCLITests(unittest.TestCase):
                 first_page.close()
             finally:
                 document.close()
-            second = subprocess.run(command,capture_output=True,text=True)
+            second = subprocess.run(command,capture_output=True)
             self.assertNotEqual(second.returncode,0)
             self.assertEqual(len(PdfReader(combined).pages),2)
 

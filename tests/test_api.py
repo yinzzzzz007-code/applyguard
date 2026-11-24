@@ -9,6 +9,7 @@ from backend.app import build_mock_workflow, create_server
 
 
 class WorkflowUnitTests(unittest.TestCase):
+    @patch.dict(os.environ, {"APPLYGUARD_GROUNDING_MODE": "off"})
     def test_mock_workflow_requires_human_confirmation(self) -> None:
         result = build_mock_workflow(
             {
@@ -58,6 +59,11 @@ class ApiTests(unittest.TestCase):
         status, data = self.request("GET", "/health")
         self.assertEqual(status, 200)
         self.assertEqual(data["status"], "ok")
+        self.assertIs(data["cloud_model_configured"], False)
+        with patch.dict(os.environ, {"APPLYGUARD_AI_API_KEY": "fixture-only"}):
+            _, ready = self.request("GET", "/health")
+        self.assertIs(ready["cloud_model_configured"], True)
+        self.assertNotIn("fixture-only", json.dumps(ready))
 
     def test_mock_endpoint(self) -> None:
         status, data = self.request(

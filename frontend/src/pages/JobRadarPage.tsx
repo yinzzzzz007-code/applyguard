@@ -1,3 +1,4 @@
+import {ActionButton} from '../components/ui/action-button'
 import { ProfileCheckList } from '../components/ProfileCheckList'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -101,6 +102,11 @@ export function JobRadarPage() {
     }).catch((e) => { if (!cancelled) setError(String(e.message)) })
     return () => { cancelled = true }
   }, [])
+  useEffect(()=>{
+    if(library?.ranking?.state!=='loading')return
+    const timer=window.setTimeout(()=>void jobsRequest<JobLibrary>().then(setLibrary).catch(e=>setError(e.message)),2000)
+    return ()=>window.clearTimeout(timer)
+  },[library])
   useEffect(() => {
     revision.current += 1
     const invalidate = () => { revision.current += 1; setAnalysis(null) }
@@ -170,6 +176,7 @@ export function JobRadarPage() {
     {error && <ErrorState message={error} />}
     {message && <p className="radar-feedback" role="status"><Icon name="check" />{message}<button type="button" aria-label="关闭操作提示" onClick={() => setMessage('')}><Icon name="close" /></button></p>}
     {busy && <p className="radar-busy" role="status">正在处理，请稍候…</p>}
+    {library?.ranking&&<p role="status">{library.ranking.notice} <Link to="/vault">修改经历与偏好</Link></p>}
     <OfficialJobRadar jobs={allJobs} onReload={reload} onSelect={selectAlertJob} />
 
     <div className="radar-tools-row">
@@ -191,10 +198,10 @@ export function JobRadarPage() {
         </select></label>
         <label className="radar-wide">JD 原文<textarea required minLength={20} maxLength={18000} rows={6} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
         <div className="btn-row radar-wide">
-          <button className="btn primary" disabled={busy}>{editingId ? '保存新版本' : '保存岗位'}</button>
-          {editingId && <button type="button" className="btn secondary" disabled={busy} onClick={() => { setEditingId(null); setForm(initialForm) }}>取消编辑</button>}
-          <button type="button" className="btn secondary" disabled={busy} onClick={() => fileInput.current?.click()}>导入 JSON / JSONL</button>
-          <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(loadExampleJobs)}>载入岗位示例</button>
+          <ActionButton className="btn primary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy}>{editingId ? '保存新版本' : '保存岗位'}</ActionButton>
+          {editingId && <ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => { setEditingId(null); setForm(initialForm) }}>取消编辑</ActionButton>}
+          <ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => fileInput.current?.click()}>导入 JSON / JSONL</ActionButton>
+          <ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => void perform(loadExampleJobs)}>载入岗位示例</ActionButton>
           <a className="btn secondary" href="/data/job-opportunities.example.json" download>下载岗位模板</a>
           <input ref={fileInput} type="file" accept=".json,.jsonl,application/json" hidden aria-label="选择岗位数据文件" onChange={(e) => {
             const file = e.target.files?.[0]; e.target.value = ''
@@ -213,7 +220,7 @@ export function JobRadarPage() {
       <p>先独立启动 AI Career Radar（默认本机 8787 端口），再读取岗位。此处只读它已保存的数据，刷新官网数据请在雷达中操作。</p>
       <div className="btn-row">
         <input aria-label="搜索雷达岗位" placeholder="公司、岗位或技术关键词" value={radarQuery} onChange={(e) => setRadarQuery(e.target.value)} />
-        <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(() => browseRadar())}>读取雷达岗位</button>
+        <ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => void perform(() => browseRadar())}>读取雷达岗位</ActionButton>
       </div>
       {radar && <>
         <p className="muted">{radar.notice}</p>
@@ -224,12 +231,12 @@ export function JobRadarPage() {
           </label>
         </li>)}</ul>
         <div className="btn-row">
-          <button type="button" className="btn primary" disabled={busy || !radarIds.length || radarIds.length > 20} onClick={() => void perform(async () => {
+          <ActionButton type="button" className="btn primary" disabledReason={busy?'正在导入，请稍候。':!radarIds.length?'请先选择要导入的岗位。':'一次最多导入 20 个岗位。'} disabled={busy || !radarIds.length || radarIds.length > 20} onClick={() => void perform(async () => {
             const result = await jobsRequest<ImportResult>('/radar/import', { ids: radarIds })
             await reload(result.items[0]?.id); setRadarIds([]); setMessage(importMessage(result))
-          })}>导入选中岗位（{radarIds.length}/20）</button>
-          <button type="button" className="btn secondary" disabled={busy || radar.offset === 0} onClick={() => void perform(() => browseRadar(Math.max(0, radar.offset - 50)))}>上一页</button>
-          <button type="button" className="btn secondary" disabled={busy || radar.offset + 50 >= radar.total} onClick={() => void perform(() => browseRadar(radar.offset + 50))}>下一页</button>
+          })}>导入选中岗位（{radarIds.length}/20）</ActionButton>
+          <ActionButton type="button" className="btn secondary" disabledReason={busy?'正在读取，请稍候。':'已经是第一页。'} disabled={busy || radar.offset === 0} onClick={() => void perform(() => browseRadar(Math.max(0, radar.offset - 50)))}>上一页</ActionButton>
+          <ActionButton type="button" className="btn secondary" disabledReason={busy?'正在读取，请稍候。':'已经是最后一页。'} disabled={busy || radar.offset + 50 >= radar.total} onClick={() => void perform(() => browseRadar(radar.offset + 50))}>下一页</ActionButton>
           <span>第 {Math.floor(radar.offset / 50) + 1} 页 · 共 {radar.total} 条</span>
         </div>
       </>}
@@ -251,8 +258,8 @@ export function JobRadarPage() {
         onKeyDown={e => {if(e.key === 'Escape') setQuery('')}} />
         {query && <button type="button" aria-label="清除岗位搜索" onClick={() => setQuery('')}><Icon name="close" /></button>}
       </label>
-      <label className="radar-sort"><span>排序</span><select aria-label="岗位排序" value={sort} onChange={e => setSort(e.target.value as JobSort)}><option value="match">经历匹配优先</option><option value="newest">最近导入</option><option value="company">公司名称</option></select></label>
-      <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(() => reload())}><Icon name="refresh" />重读本地列表</button>
+      <label className="radar-sort"><span>排序</span><select aria-label="岗位排序" value={sort} onChange={e => setSort(e.target.value as JobSort)}><option value="match">为你推荐（语义与兴趣）</option><option value="newest">最近导入</option><option value="company">公司名称</option></select></label>
+      <ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => void perform(() => reload())}><Icon name="refresh" />重读本地列表</ActionButton>
     </div>
     <div className="official-radar-filters">
       <label>官网来源<select aria-label="官网来源" value={officialSource} onChange={e => { setOfficialSource(e.target.value); setDetailOpen(false) }}>
@@ -281,15 +288,16 @@ export function JobRadarPage() {
         {library && !filtered.length && <div className="radar-empty"><Icon name="compass" /><h3>{library.items.length ? '没有匹配的岗位' : '把想投的岗位，放在这里。'}</h3>
           <p>{library.items.length ? '试试减少关键词，或重置筛选条件。' : '粘贴招聘原文即可收藏，再对照经历与证据。'}</p>
           <button type="button" className="btn secondary" onClick={library.items.length ? resetFilters : openForm}>{library.items.length ? '重置筛选' : '添加第一个岗位'}</button>
-          {!library.items.length && <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(loadExampleJobs)}>载入岗位示例</button>}
+          {!library.items.length && <ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => void perform(loadExampleJobs)}>载入岗位示例</ActionButton>}
         </div>}
-        {filtered.map((job) => <button type="button" key={job.id} disabled={busy} aria-current={selected?.id === job.id ? 'true' : undefined} className={'radar-job '+(selected?.id === job.id ? 'selected' : '')} onClick={() => {
+        {filtered.map((job) => <ActionButton type="button" key={job.id} disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} aria-current={selected?.id === job.id ? 'true' : undefined} className={'radar-job '+(selected?.id === job.id ? 'selected' : '')} onClick={() => {
           revision.current += 1; setSelectedId(job.id); setAnalysis(null); setVersions(null);setDetailTab('description');setDetailOpen(true)
           requestAnimationFrame(() => detailHeading.current?.focus({preventScroll:true}))
         }}>
           <span className="radar-job-company">{job.company}<span className={'job-state '+job.status}>{job.stage === 'preparing' ? '准备中' : JOB_STATUS[job.status]}</span></span>
           <strong>{job.title}</strong><span className="radar-job-location"><Icon name="pin" />{job.location || '地点未知'}</span>
           <span className="radar-job-meta">
+            {job.recommendation_score!==undefined&&<span className="job-match-label">推荐相关度 {job.recommendation_score.toFixed(0)}</span>}
             {job.match_level && <span className={'job-match-label ' + job.match_level}>
               {MATCH_LABELS[job.match_level]}{job.match_score != null && ` · ${job.match_score} 分`}
             </span>}
@@ -297,7 +305,7 @@ export function JobRadarPage() {
             {job.published_at && <time dateTime={job.published_at}>{job.published_at.slice(0, 10)}</time>}
           </span>
           <span className="radar-job-foot"><span>{job.factors.slice(0,3).map(f => f.label).join(' / ') || '查看岗位详情'}</span><span>v{job.version}<Icon name="chevron" /></span></span>
-        </button>)}
+        </ActionButton>)}
       </nav>
       {library && !filtered.length && <div className="radar-next-guide"><h3>从岗位到申请，一步一步来。</h3><ol>
         <li><strong>收藏目标岗位</strong><p>保留完整原文和来源，之后随时回看。</p></li>
@@ -337,20 +345,20 @@ export function JobRadarPage() {
           </div>
           <div className="btn-row">
             {match.missing.includes('缺少已保存的简历或经历') && <Link to="/" className="btn secondary">导入简历或载入模板</Link>}
-            {selected.source_id && <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(async () => {
+            {selected.source_id && <ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => void perform(async () => {
               await jobsRequest('/alerts/read', { job_id: selected.id, unread: !selected.unread })
               await reload(selected.id)
               window.dispatchEvent(new Event('applyguard:official-jobs-updated'))
-            })}>{selected.unread ? '标记岗位已读' : '重新提醒'}</button>}
-            {library?.ai_matching && (selected.match_level === 'high' || selected.match_level === 'medium') && <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(async () => {
+            })}>{selected.unread ? '标记岗位已读' : '重新提醒'}</ActionButton>}
+            {library?.ai_matching && (selected.match_level === 'high' || selected.match_level === 'medium') && <ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => void perform(async () => {
               const response = await jobsRequest<{match: JobMatch}>('/' + selected.id + '/match', { semantic: true })
               setSemantic({id: selected.id, hash: selected.content_hash, result: response.match})
-            })}>请求语义解释</button>}
+            })}>请求语义解释</ActionButton>}
           </div>
           {semantic?.id === selected.id && semantic.hash === selected.content_hash && <p>{semantic.result.ai_explanation ?? '本次使用本地规则解释。'}{semantic.result.ai_score !== undefined && ' · 模型评分 ' + semantic.result.ai_score}</p>}
         </section>}
         <div className="btn-row">
-          <button type="button" className="btn primary" disabled={busy || scenario !== 'live' || !canPrepareJob(selected)} onClick={() => void perform(async () => {
+          <ActionButton type="button" className="btn primary" disabledReason={busy?'正在准备，请稍候。':scenario!=='live'?'预录示例不能创建真实申请，请切换到本地后端。':selected.details_available===false?'官网完整要求尚未读取，请先核对官方详情。':'岗位已关闭、归档或仅为参考快照，可先恢复合适的岗位。'} disabled={busy || scenario !== 'live' || !canPrepareJob(selected)} onClick={() => void perform(async () => {
             const sameJob = activeJobId === selected.id || workflow?.target_job?.id === selected.id
             if (!sameJob && (workflow?.resume_claims.length || Object.keys(reviewDrafts).length) &&
                 !window.confirm('更换岗位会结束当前申请，并清除本次申请的正文和暂存编辑。继续更换？')) return
@@ -358,21 +366,21 @@ export function JobRadarPage() {
             if (activeJobId !== selected.id && workflow?.target_job?.id !== selected.id) setWorkflow(null)
             setActiveJobId(selected.id)
             navigate(`/jd?job=${selected.id}`)
-          })}>用此岗位准备申请</button>
-          <button type="button" className="btn secondary" disabled={busy || selected.details_available === false} onClick={() => void perform(analyze)}>检查证据缺口</button>
-          <button type="button" className="btn secondary" disabled={busy} onClick={() => {
+          })}>用此岗位准备申请</ActionButton>
+          <ActionButton type="button" className="btn secondary" disabledReason={busy?'正在检查，请稍候。':'官网完整职责和要求尚未读取，请先核对官方详情。'} disabled={busy || selected.details_available === false} onClick={() => void perform(analyze)}>检查证据缺口</ActionButton>
+          <ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => {
             setEditingId(selected.id); setForm({ title: selected.title, company: selected.company,
               location: selected.location, url: selected.url, status: selected.status, description: selected.description })
             openForm()
-          }}>编辑 JD</button>
-          <button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(async () => {
+          }}>编辑 JD</ActionButton>
+          <ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => void perform(async () => {
             const restoring = selected.stage === 'archived'
             await jobsRequest(`/${selected.id}/stage`, { stage: restoring ? 'saved' : 'archived' })
             await reload(selected.id)
             setStatusFilter(current => current === 'all' ? current : restoring ? 'active' : 'archived')
             setMessage(restoring ? `已恢复收藏「${selected.title}」。` : `已归档「${selected.title}」，可在「已归档」中恢复。`)
-          })}>{selected.stage === 'archived' ? '恢复收藏' : '归档'}</button>
-          <button type="button" className="btn ghost-danger" disabled={busy} onClick={() => {
+          })}>{selected.stage === 'archived' ? '恢复收藏' : '归档'}</ActionButton>
+          <ActionButton type="button" className="btn ghost-danger" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => {
             const linked = activeJobId === selected.id || workflow?.target_job?.id === selected.id
             const impact = linked ? '\n当前申请正文会保留。要继续使用岗位原文，请到「岗位说明」解除关联。' : ''
             if (!window.confirm(`永久删除「${selected.title}」及其岗位版本记录？${impact}`)) return
@@ -388,11 +396,15 @@ export function JobRadarPage() {
               setDetailTab('description')
               setMessage(`已删除「${selected.title}」。`)
             })
-          }}>删除岗位</button>
+          }}>删除岗位</ActionButton>
         </div>
         {!canPrepareJob(selected) && <p className="callout warn">{selected.details_available === false ? '官网完整职责和要求尚未读取。请打开官方详情核对。' : '已归档、已关闭或参考快照仅供查看，不能从这里准备申请。'}</p>}
         <Tabs id="job-tab" label="岗位详情视图" panelId="job-detail-panel" value={detailTab} onChange={setDetailTab} items={[{id:'description',label:'岗位原文'},{id:'analysis',label:'证据预检'},{id:'versions',label:'版本记录'}]} />
         <div id="job-detail-panel" role="tabpanel" aria-labelledby={'job-tab-'+detailTab} tabIndex={0}>
+        <section className="radar-recommendation" aria-label="岗位推荐依据"><h4>为什么推荐</h4><ul>{selected.recommendation_reasons?.map(reason=><li key={reason}>{reason}</li>)}</ul><p>兴趣反馈只影响本机推荐，不会投递，也不会更改你的简历。</p><div className="btn-row">
+          <ActionButton type="button" className="btn secondary" aria-pressed={selected.interest===1} disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={()=>void perform(async()=>{await jobsRequest('/'+selected.id+'/feedback',{interest:selected.interest===1?0:1});await reload(selected.id)})}>{selected.interest===1?'取消感兴趣':'感兴趣'}</ActionButton>
+          <ActionButton type="button" className="btn secondary" aria-pressed={selected.interest===-1} disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={()=>void perform(async()=>{await jobsRequest('/'+selected.id+'/feedback',{interest:selected.interest===-1?0:-1});await reload(selected.id)})}>{selected.interest===-1?'恢复正常推荐':'减少此类推荐'}</ActionButton>
+        </div></section>
         {detailTab === 'description' && <div><h4>岗位说明</h4><pre className="radar-jd">{selected.description}</pre>
         <details className="radar-factor-panel" key={selected.id}>
           <summary>技术与能力标签（{selected.factors.length}）</summary>
@@ -406,18 +418,19 @@ export function JobRadarPage() {
           </div>
         </details>
         </div>}
-        {detailTab === 'versions' && <div className="radar-versions"><h4>来源版本记录</h4>{versions && versionsFor === selected.id ? versions.map(v => <details key={v.version}><summary>v{v.version} · {new Date(v.imported_at).toLocaleString()} · {JOB_STATUS[v.job.status]}</summary><pre className="radar-jd">{v.job.description}</pre></details>) : <div className="radar-inline-empty"><Icon name="history" /><p>对照每次导入和修改，确认当前使用的原文。</p><button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(async () => {const data = await jobsRequest<{items:NonNullable<typeof versions>}>('/'+selected.id+'/versions');setVersions(data.items);setVersionsFor(selected.id)})}>读取版本记录</button></div>}</div>}
-        {detailTab === 'analysis' && !freshAnalysis && <div className="radar-inline-empty"><Icon name="shield" /><h4>先看看，还缺哪些证据。</h4><p>按当前经历进行规则预检，不调用付费模型。预检不替代陈述核验。</p><button type="button" className="btn secondary" disabled={busy} onClick={() => void perform(analyze)}>开始证据预检</button></div>}
+        {detailTab === 'versions' && <div className="radar-versions"><h4>来源版本记录</h4>{versions && versionsFor === selected.id ? versions.map(v => <details key={v.version}><summary>v{v.version} · {new Date(v.imported_at).toLocaleString()} · {JOB_STATUS[v.job.status]}</summary><pre className="radar-jd">{v.job.description}</pre></details>) : <div className="radar-inline-empty"><Icon name="history" /><p>对照每次导入和修改，确认当前使用的原文。</p><ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => void perform(async () => {const data = await jobsRequest<{items:NonNullable<typeof versions>}>('/'+selected.id+'/versions');setVersions(data.items);setVersionsFor(selected.id)})}>读取版本记录</ActionButton></div>}</div>}
+        {detailTab === 'analysis' && !freshAnalysis && <div className="radar-inline-empty"><Icon name="shield" /><h4>先看看，还缺哪些证据。</h4><p>按当前经历进行规则预检，不调用付费模型。预检不替代陈述核验。</p><ActionButton type="button" className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={busy} onClick={() => void perform(analyze)}>开始证据预检</ActionButton></div>}
         {detailTab === 'analysis' && freshAnalysis && analysis && <section className="radar-analysis" aria-label="证据缺口结果">
           <div className="coverage-heading"><div><span>有已核验证据支持</span><strong>{analysis.supported}<small> / {analysis.total} 条要求</small></strong></div><Link to="/evidence" className="btn secondary">补充证据<Icon name="arrow" /></Link></div><p className="muted">{analysis.notice}</p>
           {!analysis.has_resume && <p className="callout warn">尚未提供有效经历，请先 <Link to="/">导入简历</Link> 或完善经历库。这里不会使用演示种子替代你的经历。</p>}
-          {!analysis.total && <p className="callout warn">{analysis.excluded ? '任职要求与加分项中没有可匹配条目。职位描述不参与证据匹配。' : '规则未识别出要求，请人工检查完整 JD；这不表示没有要求。'}</p>}
+          {!analysis.total && <p className="callout warn">{analysis.excluded ? '当前没有可匹配的职责或任职条件。' : '规则未识别出要求，请人工检查完整 JD；这不表示没有要求。'}</p>}
           <div className="scope-switch" aria-label="预检结果筛选">{[['all','全部'],['missing','待补证'],['supported','已支持']].map(([id,label]) => <button type="button" key={id} aria-pressed={coverageFilter === id} onClick={() => setCoverageFilter(id)}>{label}</button>)}</div>
           {!visibleRequirements.length && <p className="radar-inline-empty">此分类下没有要求。可切换到“全部”查看预检结果。</p>}
           {visibleRequirements.map((req) => <div className="item-block" key={req.requirement_id}>
             <span className={`badge ${req.coverage === 'SUPPORTED' ? 'ok' : 'warn'}`}>{req.coverage === 'SUPPORTED' ? '有已核验证据支持' : ({ NEEDS_EVIDENCE: '有相关经历，仍需补证', NO_MATCH: '未找到支持证据', PROFILE_REPORTED: '个人资料对照', REVIEW_REQUIRED: '需人工核对' })[req.coverage]}</span>
             <span className="muted"> · {zhLookup(ZH_REQ_TYPE, req.type)}</span><p>{req.text}</p>
             <ProfileCheckList checks={analysis.profile_checks?.[req.requirement_id]} />
+            {!!req.related_projects?.length && <details><summary>相关经历 · {req.related_projects.length} 项</summary>{req.related_projects.map((p,i) => <p key={i}><strong>{p.title}</strong> · {p.kind === "framework" ? "框架待确认" : p.terms.join("、")}<br/>{p.quote}</p>)}</details>}
             {req.evidence_ids.length > 0 && <p className="muted">证据：{req.evidence_ids.join('、')}</p>}
             {req.notes.map((note, i) => <p className="muted" key={i}>{zhText(note)}</p>)}
           </div>)}

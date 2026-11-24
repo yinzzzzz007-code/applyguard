@@ -13,7 +13,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await page.getByRole('heading',{name:'24 秒操作介绍',exact:true}).waitFor();
   const importCard=page.getByRole('region',{name:'上传 PDF',exact:true});
   const reelCard=page.getByRole('region',{name:'24 秒操作介绍',exact:true});
-  const importLink=page.getByRole('link',{name:'导入我的简历',exact:false});
+  const importLink=page.getByRole('button',{name:'选择简历',exact:true});
   assert.equal(await importCard.evaluate(el=>el.offsetTop),await reelCard.evaluate(el=>el.offsetTop));
   for(const card of [importCard,reelCard]) {
    const style=await card.evaluate(el=>{
@@ -31,12 +31,12 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   assert.equal(await importLink.evaluate(el=>getComputedStyle(el).fontSize),'16px');
   await importLink.hover();
   await page.waitForFunction(()=>{
-   const button=document.querySelector('.home-actions a[href="#resume-import"]');
+   const button=document.querySelector('.home-actions button');
    return new DOMMatrix(getComputedStyle(button).transform).f===-2;
   });
   await page.mouse.down();
   await page.waitForFunction(()=>{
-   const style=getComputedStyle(document.querySelector('.home-actions a[href="#resume-import"]'));
+   const style=getComputedStyle(document.querySelector('.home-actions button'));
    const matrix=new DOMMatrix(style.transform);
    return matrix.a===.98 && style.boxShadow.includes('inset');
   });
@@ -72,8 +72,10 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await page.locator('.homepage-reel').scrollIntoViewIfNeeded();
   await stage.locator('[data-reel-scene="open"]').waitFor();
   await page.locator('.home-intro').screenshot({path:path.join(out,'homepage-hero.png')});
+  const chooserPromise=page.waitForEvent('filechooser');
   await importLink.click();
-  await page.waitForURL(url=>url.hash==='#resume-import');
+  const chooser=await chooserPromise;
+  await chooser.setFiles([]);
   assert.ok(await page.getByLabel('选择 PDF 简历').isEnabled());checks.push('import-cta-retains-existing-form');
   await page.getByRole('link',{name:'查看完整操作说明',exact:false}).click();
   await page.getByRole('heading',{name:'准备一份有依据的申请',exact:true}).waitFor();

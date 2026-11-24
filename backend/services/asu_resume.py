@@ -21,6 +21,22 @@ def proposal_violations(original,proposed,sources=()):
     language=['润色改变了原稿语言；没有翻译授权，保留原文。'] if before!='undetermined' and after!='undetermined' and before!=after else []
     return language+causal_escalation(original,proposed,sources)
 
+
+def polish_quality(original, proposed):
+    """Conservative presentation gate; semantic correctness still needs review."""
+    from difflib import SequenceMatcher
+    if not isinstance(proposed,str) or not 0 < len(proposed.strip()) <= 420:
+        return ['改写为空或过长']
+    compact=lambda text: ''.join(c.casefold() for c in text if c.isalpha())
+    old,new=compact(original),compact(proposed)
+    edits=sum(max(b-a,d-c) for op,a,b,c,d in SequenceMatcher(None,old,new,autojunk=False).get_opcodes() if op!='equal')
+    minimum=min(12,max(5,(len(old)+14)//15))
+    issues=[] if edits>=minimum else ['改写变化过小']
+    years=lambda text: set(re.findall(r'(?<!\d)(?:19|20)\d{2}(?!\d)',text))
+    if years(original)!=years(proposed):issues.append('年份发生变化，需单独核对材料')
+    return issues
+
+
 def proposal_policy(claims,hits,jd):
     """Use original bytes as writing guidance; ApplyGuard owns approval decisions."""
     try:
@@ -33,14 +49,11 @@ def proposal_policy(claims,hits,jd):
             texts[name]=raw.decode('utf8')
     except (OSError,ValueError,KeyError,TypeError):
         raise GroundingUnavailable('ASu原版规范缺失或校验失败，未生成润色建议。') from None
-    selected=[SKILL,LEDGER]
-    context=json.dumps({'claims':claims,'sources':hits,'target_job':jd},ensure_ascii=False)
-    if re.search(r'商业分析|商分|运营|经营|策略|成本|增长|供需|履约|测算|看板|\bSQL\b|NL2SQL|WFM|business analys|forecast|dashboard',context,re.I):
-        selected.append(BUSINESS)
+    selected=[SKILL,LEDGER,BUSINESS]
     instructions='\n\n'.join('UPSTREAM RESOURCE '+name+'\n'+texts[name] for name in selected)
     # The upstream SKILL explicitly allows delivering only one requested item.
     boundary='''ApplyGuard integration task: use the original ASu resources below for the
-requested experience-bullet rewrite only. The target job, current drafts and evidence are
+requested experience-bullet rewrite only. Apply the business-analysis reference only when relevant; do not infer business claims. The target job, current drafts and evidence are
 already supplied. Do not ask follow-up questions in this response, produce HR messages,
 create files, call tools, or switch skills. Return only the server-specified JSON.
 Preserve each item's draft_language; a Chinese job description or these Chinese resources

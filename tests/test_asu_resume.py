@@ -25,9 +25,9 @@ class ASuReuseTests(unittest.TestCase):
             ('I wrote Python tests','I developed Python tests',False),('我负责项目中的SQL分析','我完成了项目中的SQL分析',False),
             ('SQL分析','SQL analysis',False)]:
             with self.subTest(original=original):self.assertEqual(bool(a.proposal_violations(original,proposed)),blocked)
-    def test_six_original_files_match_upstream_blob_and_sha256(self):
+    def test_pinned_resume_and_interview_files_match_upstream_blob_and_sha256(self):
         manifest=json.loads((a.DIRECTORY/'UPSTREAM.json').read_text(encoding='utf8'))
-        self.assertEqual(len(manifest['files']),6)
+        self.assertEqual(len(manifest['files']),11)
         self.assertEqual(manifest['commit'],a.COMMIT)
         for name,info in manifest['files'].items():
             with self.subTest(file=name):
@@ -68,19 +68,20 @@ class ASuReuseTests(unittest.TestCase):
                     self.assertEqual(request['target_job'], jd)
                     self.assertIn(TEXT, request['items'][0]['sources'][0]['text'])
 
-    def test_business_reference_is_loaded_only_when_relevant(self):
-        text,info=a.proposal_policy([CLAIM],{},'Backend testing')
-        self.assertNotIn(a.BUSINESS,info['resources'])
-        text,info=a.proposal_policy([CLAIM],{},'SQL 经营分析和成本测算')
-        self.assertIn((a.DIRECTORY/a.BUSINESS).read_bytes().decode('utf8'),text)
-        self.assertIn(a.BUSINESS,info['resources'])
+    def test_all_resume_guidance_is_available_without_inventing_business_claims(self):
+        for jd in ('Backend testing', 'SQL 经营分析和成本测算'):
+            text,info=a.proposal_policy([CLAIM],{},jd)
+            for resource in (a.SKILL,a.LEDGER,a.BUSINESS):
+                self.assertIn((a.DIRECTORY/resource).read_bytes().decode('utf8'),text)
+                self.assertIn(resource,info['resources'])
+            self.assertIn('only when relevant',text)
     def test_unsupported_asu_proposal_does_not_override_guard_or_original(self):
         model=Model(proposal='Alex increased throughput by 900%.')
         final,checks,report=GroundingService(retriever=AllSources(),model=model).run(
             [copy.deepcopy(CLAIM)],[experience()],'cand_test','sag_atomic',polish=True)
         self.assertEqual(final[0]['text'],TEXT)
         self.assertTrue(report['results'][CLAIM['claim_id']]['proposal_rejected'])
-        self.assertEqual(report['results'][CLAIM['claim_id']]['proposal_check']['relation'],'CONTRADICTED')
+        self.assertEqual(report['results'][CLAIM['claim_id']]['proposal_check']['relation'],'INSUFFICIENT')
     def test_absent_assets_preserve_original_and_review(self):
         with tempfile.TemporaryDirectory() as folder,patch.object(a,'DIRECTORY',Path(folder)):
             final,checks,report=GroundingService(retriever=AllSources(),model=Model()).run(
@@ -101,3 +102,12 @@ class ASuReuseTests(unittest.TestCase):
         self.assertEqual(checks[0]['state'],'VERIFIED');self.assertIsNone(report['polish_source'])
 
 if __name__=='__main__':unittest.main()
+
+class ObservationEscalationTests(unittest.TestCase):
+    def test_inquiry_to_verified_conclusion_requires_review(self):
+        from backend.services.asu_resume import proposal_violations
+        original='检查不同 Persona 的策略选择是否稳定，并分析人格设置对行为的影响。'
+        proposal='通过对比实验验证了 Persona 的策略选择具有稳定性。'
+        self.assertTrue(proposal_violations(original,proposal))
+        self.assertFalse(proposal_violations(original,'检查 Persona 的策略选择是否稳定。'))
+        self.assertFalse(proposal_violations(original,proposal,[{'text':proposal}]))

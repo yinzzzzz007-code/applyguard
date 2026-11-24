@@ -1,4 +1,5 @@
-import type { ComponentProps } from 'react'
+import {ActionButton} from './action-button'
+import type {ActionButtonProps} from './action-button'
 import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
 
@@ -9,7 +10,7 @@ const buttonVariants = cva('btn', {
   defaultVariants: { variant: 'default' },
 })
 
-type ButtonProps = ComponentProps<'button'> &
+type ButtonProps = ActionButtonProps &
   VariantProps<typeof buttonVariants> & { asChild?: boolean }
 
 export function Button({ asChild = false, variant = 'default', className, type, ...props }: ButtonProps) {
@@ -17,5 +18,5 @@ export function Button({ asChild = false, variant = 'default', className, type, 
   if (asChild) {
     return <Slot data-slot="button" data-variant={variant} className={classes} {...props} />
   }
-  return <button data-slot="button" data-variant={variant} className={classes} type={type ?? 'button'} {...props} />
+  return <ActionButton data-slot="button" data-variant={variant} className={classes} type={type ?? 'button'} {...props} />
 }

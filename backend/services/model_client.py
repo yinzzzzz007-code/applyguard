@@ -16,10 +16,11 @@ class ModelClient(Protocol):
 
 
 class ModelFailure(RuntimeError):
-    def __init__(self, message: str, *, retryable: bool = True, http_status: int | None = None) -> None:
+    def __init__(self, message: str, *, retryable: bool = True, http_status: int | None = None, code: str | None = None) -> None:
         super().__init__(message)
         self.retryable = retryable
         self.http_status = http_status
+        self.code = code
 
 
 _OK_FINISH = {None, "stop", "eos", "end_turn"}
@@ -65,6 +66,11 @@ def uses_deepseek_api(base_url: str) -> bool:
     return urlsplit(base_url).hostname == 'api.deepseek.com'
 
 
+def uses_json_object_structured(base_url: str, model: str) -> bool:
+    host = (urlsplit(base_url).hostname or '').casefold()
+    return uses_deepseek_api(base_url) or (host == 'api.chatanywhere.tech' and model.casefold().startswith('gemini-'))
+
+
 def json_schema_instruction(schema: dict) -> str:
     return 'Return exactly one JSON object matching this JSON Schema:\n' + json.dumps(schema, ensure_ascii=False)
 
@@ -99,7 +105,7 @@ class HttpModelClient:
             raise ValueError("APPLYGUARD_AI_MAX_TOKENS must be an integer") from exc
         if isinstance(configured_tokens, bool) or not 1 <= self.max_tokens <= 16384:
             raise ValueError("APPLYGUARD_AI_MAX_TOKENS must be between 1 and 16384")
-        configured_timeout = timeout if timeout is not None else os.getenv("APPLYGUARD_AI_TIMEOUT", "60")
+        configured_timeout = timeout if timeout is not None else os.getenv("APPLYGUARD_AI_TIMEOUT", "90" if task == "complex" else "60")
         try:
             self.timeout = float(configured_timeout)
         except (TypeError, ValueError) as exc:
@@ -119,7 +125,7 @@ class HttpModelClient:
         return self._complete(system_prompt, user_prompt)
 
     def complete_structured(self, system_prompt: str, user_prompt: str, schema: dict) -> dict[str, Any]:
-        if uses_deepseek_api(self.base_url):
+        if uses_json_object_structured(self.base_url, self.model):
             system_prompt += '\n' + json_schema_instruction(schema)
         result = self._complete(system_prompt, user_prompt, schema=schema)
         from jsonschema import validate, ValidationError
@@ -131,7 +137,7 @@ class HttpModelClient:
 
     def _complete(self, system_prompt: str, user_prompt: str, *, schema: dict | None = None) -> dict[str, Any]:
         if not self.api_key:
-            raise ModelFailure("Model API key is not configured", retryable=False)
+            raise ModelFailure("Model API key is not configured", retryable=False, code="MODEL_KEY_MISSING")
         if not self.base_url.startswith("https://"):
             raise ModelFailure("Model API URL must use HTTPS", retryable=False)
         payload: dict[str, Any] = {
@@ -146,7 +152,7 @@ class HttpModelClient:
         }
         if self.disable_thinking:
             payload["thinking"] = {"type": "disabled"}
-        if schema is not None and not uses_deepseek_api(self.base_url):
+        if schema is not None and not uses_json_object_structured(self.base_url, self.model):
             payload['response_format'] = {'type':'json_schema','json_schema':{
                 'name':'applyguard_checked_output','strict':True,'schema':schema}}
         body = json.dumps(payload).encode()
@@ -163,7 +169,8 @@ class HttpModelClient:
             raise ModelFailure(f"Model service returned HTTP {exc.code}",
                                retryable=exc.code == 429 or exc.code >= 500, http_status=exc.code) from None
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
-            raise ModelFailure("Model request failed or timed out") from exc
+            code = "MODEL_TIMEOUT" if isinstance(getattr(exc, "reason", exc), TimeoutError) else "MODEL_CONNECTION"
+            raise ModelFailure("Model request failed or timed out", code=code) from exc
         if len(raw) > 262144:
             raise ModelFailure("Model response exceeded size limit")
         try:

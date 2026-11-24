@@ -1,3 +1,5 @@
+import {retainedFieldValue} from '../resume/claimReview'
+import {completeGuideStep} from '../guide'
 import { Link, useNavigate } from 'react-router-dom'
 import { ClaimBadge, EmptyState, LevelBadge, RiskBadge } from '../components/States'
 import { useDemo } from '../context/DemoContext'
@@ -17,7 +19,7 @@ export function AtsSimulatorPage() {
   const {
     workflow,
     resumeForm,
-    fieldDecisions,
+    fieldDecisions, claimDecisions,
     setFieldDecision,
     atsFieldAcksComplete,
   } = useDemo()
@@ -70,7 +72,7 @@ export function AtsSimulatorPage() {
 
   const statusDetail = blockedWorkflow
     ? needsEvidence
-      ? '存在缺少依据或已阻断的经历。请先回陈述核验处理，再决定是否继续。'
+      ? '可以继续预览个人稿，也可以返回核对材料。材料缺口和冲突会保留记录。'
       : '整单已阻断。可以只读查看确认页，但不会解除阻断，也不能当作可提交。'
     : needsEvidence
       ? '部分陈述仍待复核。建议先核对经历与材料。'
@@ -78,7 +80,10 @@ export function AtsSimulatorPage() {
         ? '演示表单中仍有须本人填写或确认的项。勾选“我理解”只表示已知悉，不算已填写。'
         : '拟填内容与风险检查未发现阻断项。进入确认页后仍可复制填写稿，最终提交由本人完成。'
 
-  const primaryToClaims = blockedWorkflow || needsEvidence
+  const keptCount = workflow.resume_claims.filter(c => claimDecisions[c.claim_id]?.decision !== 'reject').length
+  const preview = blockedWorkflow || needsEvidence || !acksComplete
+  const advance = () => {completeGuideStep('ats'); navigate(preview ? '/confirm?view=1' : '/confirm')}
+  const nextLabel = preview ? '下一步：预览最终稿' : '下一步：最终确认'
 
   return (
     <section className="panel">
@@ -104,29 +109,14 @@ export function AtsSimulatorPage() {
           {zhLookup(ZH_MAPPER, workflow.component_modes?.ats_form_mapper, '固定映射')}
         </p>
         <div className="btn-row">
-          {primaryToClaims ? (
-            <button type="button" className="btn primary" onClick={() => navigate('/claims')}>
-              去核对经历
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="btn primary"
-              disabled={!acksComplete}
-              onClick={() => navigate('/confirm')}
-            >
-              进入确认页
-            </button>
-          )}
-          <button type="button" className="btn secondary" onClick={() => navigate('/confirm?view=1')}>
-            查看确认页
-          </button>
+          <button type="button" className="btn primary" onClick={advance}>{nextLabel}</button>
+          <Link className="btn secondary" to="/claims">查看陈述核验</Link>
         </div>
         {blockedWorkflow && (
           <p className="muted">查看确认页为只读预览，无需勾选“我理解”，也不会解除阻断。</p>
         )}
-        {!primaryToClaims && !acksComplete && (
-          <p className="muted">完成下方「需要本人填写」确认后，即可进入确认页。</p>
+        {!blockedWorkflow && !needsEvidence && !acksComplete && (
+          <p className="muted">可以先看最终稿；需要复制受限字段时，再完成对应确认。</p>
         )}
       </article>
 
@@ -143,7 +133,8 @@ export function AtsSimulatorPage() {
           </div>
         )}
 
-        {summaryRows.map((row) => (
+        <p className="muted">当前正文保留 {keptCount} 条，已排除 {workflow.resume_claims.length-keptCount} 条。</p>
+        {summaryRows.filter(row => claimDecisions[row.claimId]?.decision !== 'reject').map((row) => (
           <article
             key={row.claimId}
             className={
@@ -180,7 +171,7 @@ export function AtsSimulatorPage() {
             <div className="item-block">
               <p>
                 <strong>拟填值：</strong>
-                {summaryField.value || '无'}
+                {retainedFieldValue(workflow,summaryField,claimDecisions) || '无'}
               </p>
               <p>
                 <strong>来源陈述编号：</strong>
@@ -197,7 +188,7 @@ export function AtsSimulatorPage() {
                   <p className="danger-text">已阻断：不可自动填充，也不可用确认绕过为可提交内容。</p>
                   <label className="check-line">
                     <input
-                      type="checkbox"
+                      data-guide="ats-ack" type="checkbox"
                       checked={!!fieldDecisions[summaryField.field_id]?.acknowledgedBlocked}
                       onChange={(e) =>
                         setFieldDecision(summaryField.field_id, {
@@ -217,7 +208,7 @@ export function AtsSimulatorPage() {
                 <div className="action-pad">
                   <label className="check-line">
                     <input
-                      type="checkbox"
+                      data-guide="ats-ack" type="checkbox"
                       checked={!!fieldDecisions[summaryField.field_id]?.confirmed}
                       onChange={(e) =>
                         setFieldDecision(summaryField.field_id, { confirmed: e.target.checked })
@@ -246,7 +237,7 @@ export function AtsSimulatorPage() {
                     </div>
                     <p>
                       <strong>拟填值：</strong>
-                      {field.value || '无'}
+                      {retainedFieldValue(workflow,field,claimDecisions) || '无'}
                     </p>
                     <p className="muted">
                       来源：
@@ -257,7 +248,7 @@ export function AtsSimulatorPage() {
                     {action === 'BLOCKED' ? (
                       <label className="check-line">
                         <input
-                          type="checkbox"
+                          data-guide="ats-ack" type="checkbox"
                           checked={!!decision?.acknowledgedBlocked}
                           onChange={(e) =>
                             setFieldDecision(field.field_id, {
@@ -273,7 +264,7 @@ export function AtsSimulatorPage() {
                     (level === 'L2' || level === 'L3' || action === 'REQUIRES_CONFIRMATION') ? (
                       <label className="check-line">
                         <input
-                          type="checkbox"
+                          data-guide="ats-ack" type="checkbox"
                           checked={!!decision?.confirmed}
                           onChange={(e) =>
                             setFieldDecision(field.field_id, { confirmed: e.target.checked })
@@ -314,7 +305,7 @@ export function AtsSimulatorPage() {
                 {control.action !== 'BLOCKED' && (
                   <label className="check-line">
                     <input
-                      type="checkbox"
+                      data-guide="ats-ack" type="checkbox"
                       checked={!!decision?.confirmed}
                       onChange={(e) =>
                         setFieldDecision(control.field_id, { confirmed: e.target.checked })
@@ -447,23 +438,7 @@ export function AtsSimulatorPage() {
         <button type="button" className="btn secondary" onClick={() => navigate('/claims')}>
           回退陈述核验
         </button>
-        {primaryToClaims ? (
-          <button type="button" className="btn primary" onClick={() => navigate('/claims')}>
-            去核对经历
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="btn primary"
-            disabled={!acksComplete}
-            onClick={() => navigate('/confirm')}
-          >
-            进入确认页
-          </button>
-        )}
-        <button type="button" className="btn secondary" onClick={() => navigate('/confirm?view=1')}>
-          查看确认页
-        </button>
+        <button type="button" className="btn primary" onClick={advance}>{nextLabel}</button>
       </div>
     </section>
   )

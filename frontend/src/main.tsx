@@ -7,6 +7,10 @@ import './workspace.css'
 import './demo-experience.css'
 import './resume-generate.css'
 import './workspace-polish.css'
+import './vault-flow.css'
+import './github-guide.css'
+import './radar-dialog.css'
+import './cloud-guide.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

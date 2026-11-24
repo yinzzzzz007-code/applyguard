@@ -38,7 +38,7 @@ from backend.services.sag_grounding import GroundingUnavailable
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 FRONTEND_DIR = ROOT / "frontend"
-CAREER_VAULT_PATH = DATA_DIR / "career-vault.seed.json"
+CAREER_VAULT_PATH = Path(os.environ.get("APPLYGUARD_VAULT_PATH") or DATA_DIR / "career-vault.seed.json")
 
 
 def _load_dotenv(path: Path) -> None:
@@ -343,6 +343,9 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             self._send_html(FRONTEND_DIR / "legacy-demo.html")
             return
 
+        if path_only == '/data/career-vault.seed.json' and os.environ.get('APPLYGUARD_VAULT_PATH'):
+            self._send_json(HTTPStatus.OK,json.loads(CAREER_VAULT_PATH.read_text('utf-8')))
+            return
         # Vite build assets + public/ files (e.g. /data/career-vault.seed.json)
         if path_only.startswith("/assets/") or path_only.startswith("/data/") or path_only.startswith("/prerecorded/") or path_only in {
             "/favicon.svg",
@@ -364,6 +367,7 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
                     "status": "ok",
                     "service": "applyguard-foundation",
                     "version": "1.0.0",
+                    "cloud_model_configured": bool(os.getenv("APPLYGUARD_AI_API_KEY", "").strip()),
                     "time": _utc_now(),
                 },
             )
@@ -524,17 +528,18 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             except (ValueError, OSError) as exc:
                 self._send_json(HTTPStatus.UNPROCESSABLE_ENTITY, {'error':{'message':str(exc)}})
             except Exception:
-                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {'error':{'message':'Agent请求失败；请检查来源授权并重试'}})
+                logging.exception('Agent request failed, trace_id=%s', trace_id)
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {'error':{'message':'Agent操作失败，请重试；详细原因已记录到本机日志。'}})
             return
         if self.path == "/api/v1/resume/parse":
             max_bytes = 8_000_000
-        elif self.path in {"/api/v1/resume/draft", "/api/v1/interview/generate"}:
+        elif self.path in {"/api/v1/resume/draft", "/api/v1/interview/generate", "/api/v1/interview/practice"}:
             max_bytes = 400_000
         elif self.path == "/api/v1/workflow/draft":
             max_bytes = 800_000
         elif self.path == "/api/v1/demo/classroom":
             max_bytes = 2048
-        elif self.path in {"/api/v1/workflow/mock", "/api/v1/workflow/reverify", "/api/v1/resume/polish", "/api/v1/resume/export"}:
+        elif self.path in {"/api/v1/workflow/mock", "/api/v1/workflow/reverify", "/api/v1/resume/polish", "/api/v1/resume/polish/start", "/api/v1/resume/polish/status", "/api/v1/resume/export"}:
             max_bytes = 262144
         elif self.path.startswith("/api/v1/evidence"):
             max_bytes = 12_000_000  # single-file import batches; keep under proxy limits
@@ -557,6 +562,9 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
                 raise ValueError("request body must be a JSON object")
             if self.path == "/api/v1/resume/parse":
                 response = parse_resume_pdf(request.get("pdf_base64", ""), request.get("filename", "resume.pdf"), parse_mode=request.get("parse_mode", "offline"))
+            elif self.path == "/api/v1/interview/practice":
+                from backend.services.interview_practice import practice
+                response = practice(request)
             elif self.path == "/api/v1/interview/generate":
                 from backend.services.interview_guide import generate_interview
                 response = generate_interview(request)
@@ -574,6 +582,9 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
             elif self.path == "/api/v1/workflow/reverify":
                 from backend.services.reverification import reverify_workflow
                 response = reverify_workflow(CAREER_VAULT_PATH, request)
+            elif self.path in {"/api/v1/resume/polish/start", "/api/v1/resume/polish/status"}:
+                from backend.services.polish_jobs import status
+                response = status(CAREER_VAULT_PATH, request, start=self.path.endswith("/start"))
             elif self.path == "/api/v1/resume/polish":
                 from backend.services.grounded_workflow import polish_workflow
                 response = polish_workflow(CAREER_VAULT_PATH, request)

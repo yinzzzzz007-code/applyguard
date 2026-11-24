@@ -11,7 +11,7 @@ export const RESUME_TEMPLATES: Array<{ id: ResumeTemplateId; label: string; hint
 export function splitBullets(text: string): string[] {
   return text
     .split(/\r?\n|；|;|•|·/)
-    .map((line) => line.replace(/^[-*\d.、\s]+/, '').trim())
+    .map((line) => line.trim().replace(/^(?:[-*]\s+|\d+[、)]\s*|\d+\.\s+)/, '').trim())
     .filter(Boolean)
 }
 
@@ -34,80 +34,92 @@ export function contactLine(form: EditableResumeForm): string[] {
   ].filter((item) => item.trim())
 }
 
-export function buildPlainResume(form: EditableResumeForm, template: ResumeTemplateId): string {
-  const lines: string[] = []
+export type ResumeBlock = {kind:'name'|'heading'|'text'|'bullet'; text:string}
+export function resumeBlocks(form: EditableResumeForm, template: ResumeTemplateId): ResumeBlock[] {
+  const blocks: ResumeBlock[] = []
+  const add = (kind:ResumeBlock['kind'], text:string) => { if (text.trim()) blocks.push({kind,text}) }
+  const paragraph = (text:string) => add('text',text)
+  const heading = (text:string) => add('heading',text)
+  const bullet = (text:string) => add('bullet',text)
   const name = form.basic.name || '未命名'
-  lines.push(name)
-  lines.push(contactLine(form).join(' · '))
+  add('name',name)
+  paragraph(contactLine(form).join(' · '))
   if (template === 'cn-campus' && (form.intention.expectRole || form.intention.availability)) {
-    lines.push(
+    paragraph(
       `求职意向：${[form.intention.expectRole, form.intention.expectCity, form.intention.availability]
         .filter(Boolean)
         .join(' · ')}`,
     )
   }
   if (form.extras.researchFocus.trim()) {
-    lines.push('', '研究兴趣', form.extras.researchFocus.trim())
+    heading(template.startsWith('en') ? 'Research Interests' : '研究兴趣')
+    paragraph(form.extras.researchFocus.trim())
   }
   if (form.education.some((row) => row.school.trim())) {
-    lines.push('', template.startsWith('en') ? 'EDUCATION' : '教育经历')
+    heading(template.startsWith('en') ? 'EDUCATION' : '教育经历')
     for (const edu of form.education) {
       if (!edu.school.trim()) continue
-      lines.push(
+      paragraph(
         `${edu.school}${edu.location ? ` · ${edu.location}` : ''}  ${formatDateRange(edu.start, edu.end)}`,
       )
-      lines.push(
+      paragraph(
         [edu.degree, edu.major, edu.gpa ? `GPA ${edu.gpa}` : '', edu.rank].filter(Boolean).join(' · '),
       )
-      if (edu.coursework.trim()) lines.push(`相关课程：${edu.coursework}`)
+      if (edu.coursework.trim()) paragraph(`相关课程：${edu.coursework}`)
     }
   }
   if (form.internships.some((row) => row.organization.trim() || row.description.trim())) {
-    lines.push('', template.startsWith('en') ? 'EXPERIENCE' : '实习经历')
+    heading(template.startsWith('en') ? 'EXPERIENCE' : '实习经历')
     for (const row of form.internships) {
       if (!row.organization.trim() && !row.description.trim()) continue
-      lines.push(
+      paragraph(
         `${row.organization}${row.location ? ` · ${row.location}` : ''}  ${formatDateRange(row.start, row.end)}`,
       )
-      lines.push([row.role || row.title, row.techStack].filter(Boolean).join(' · '))
-      if (row.link.trim()) lines.push(row.link)
-      for (const bullet of splitBullets(row.description)) lines.push(`- ${bullet}`)
+      paragraph([row.role || row.title, row.techStack].filter(Boolean).join(' · '))
+      if (row.link.trim()) paragraph(row.link)
+      for (const line of splitBullets(row.description)) bullet(line)
     }
   }
   if (form.projects.some((row) => row.title.trim() || row.description.trim())) {
-    lines.push('', template.startsWith('en') ? 'PROJECTS' : '项目经历')
+    heading(template.startsWith('en') ? 'PROJECTS' : '项目经历')
     for (const row of form.projects) {
       if (!row.title.trim() && !row.description.trim()) continue
-      lines.push(
+      paragraph(
         `${row.title || row.organization}${row.techStack ? ` | ${row.techStack}` : ''}  ${formatDateRange(row.start, row.end)}`,
       )
-      if (row.role.trim()) lines.push(row.role)
-      if (row.link.trim()) lines.push(row.link)
-      for (const bullet of splitBullets(row.description)) lines.push(`- ${bullet}`)
+      paragraph([row.role,row.location].filter(Boolean).join(' · '))
+      if (row.link.trim()) paragraph(row.link)
+      for (const line of splitBullets(row.description)) bullet(line)
     }
   }
   if (form.extras.publications.trim()) {
-    lines.push('', template.startsWith('en') ? 'PUBLICATIONS' : '论文 / 科研成果')
-    for (const line of splitBullets(form.extras.publications)) lines.push(`- ${line}`)
+    heading(template.startsWith('en') ? 'PUBLICATIONS' : '论文 / 科研成果')
+    for (const line of splitBullets(form.extras.publications)) bullet(line)
   }
   if ((form.awards ?? []).some((row) => row.name.trim())) {
-    lines.push('', template.startsWith('en') ? 'HONORS' : '获奖 / 竞赛')
+    heading(template.startsWith('en') ? 'HONORS' : '获奖 / 竞赛')
     for (const award of form.awards ?? []) {
       if (!award.name.trim()) continue
-      lines.push(
-        `- ${[award.name, award.issuer, award.date].filter(Boolean).join(' · ')}${
+      bullet(
+        `${[award.name, award.issuer, award.date].filter(Boolean).join(' · ')}${
           award.description ? `：${award.description}` : ''
         }`,
       )
     }
   }
   if (form.extras.skills.trim() || form.extras.languages.trim()) {
-    lines.push('', template.startsWith('en') ? 'SKILLS' : '专业技能')
-    if (form.extras.skills.trim()) lines.push(form.extras.skills.trim())
-    if (form.extras.languages.trim()) lines.push(`语言：${form.extras.languages.trim()}`)
+    heading(template.startsWith('en') ? 'SKILLS' : '专业技能')
+    if (form.extras.skills.trim()) paragraph(form.extras.skills.trim())
+    if (form.extras.languages.trim()) paragraph(`语言：${form.extras.languages.trim()}`)
   }
   if (form.extras.summary.trim()) {
-    lines.push('', template.startsWith('en') ? 'SUMMARY' : '自我评价', form.extras.summary.trim())
+    heading(template.startsWith('en') ? 'SUMMARY' : '自我评价')
+    paragraph(form.extras.summary.trim())
   }
-  return lines.filter((line, index, all) => !(line === '' && all[index - 1] === '')).join('\n').trim()
+  return blocks
+}
+
+export function buildPlainResume(form: EditableResumeForm, template: ResumeTemplateId): string {
+  return resumeBlocks(form, template).map(({kind,text}) =>
+    kind === 'heading' ? '\n'+text : kind === 'bullet' ? '- '+text : text).join('\n').trim()
 }

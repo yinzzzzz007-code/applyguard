@@ -21,6 +21,10 @@ MAX_TEXT_CHARS = 20000
 MAX_PDF_PAGES = 20
 MAX_BASE64_CHARS = 4 * ((MAX_PDF_BYTES + 2) // 3)
 
+
+class ImageOnlyPdfPage(ValueError):
+    pass
+
 _EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 _PHONE = re.compile(
     r"(?<![0-9A-Za-z_])(?:\+86[ \t-]*)?"
@@ -400,7 +404,9 @@ def pdf_bytes_to_text(data: bytes, *, local_ocr: bool = False) -> str:
             # extracted text may hide career evidence, and must not disappear silently.
             contents = page.get_contents() if not text.strip() else None
             if not text.strip() and contents is not None and contents.get_data().strip():
-                raise ValueError('该页存在内容但未能提取文字')
+                raise ImageOnlyPdfPage(f'第{index+1}页未能完整读取文字，可能是扫描件或图片；请使用本地 OCR。')
+        except ImageOnlyPdfPage:
+            raise
         except Exception as exc:
             raise ValueError(f'第{index+1}页未能完整读取文字，请检查损坏、扫描或图片内容；未返回部分结果。') from exc
         length += len(text) + (1 if pages else 0)
@@ -479,13 +485,21 @@ def parse_resume_pdf(pdf_base64: str, filename: str, *, parse_mode: str = "offli
         raise ValueError("PDF 编码无效") from exc
     if not data.startswith(b"%PDF"):
         raise ValueError("文件不是 PDF")
-    text = pdf_bytes_to_text(data, local_ocr=True) if parse_mode == 'offline_ocr' else pdf_bytes_to_text(data)
+    used_local_ocr = parse_mode == 'offline_ocr'
+    try:
+        text = pdf_bytes_to_text(data, local_ocr=True) if used_local_ocr else pdf_bytes_to_text(data)
+    except ImageOnlyPdfPage:
+        if parse_mode != 'offline':
+            raise
+        text = pdf_bytes_to_text(data, local_ocr=True)
+        used_local_ocr = True
     rules = extract_resume_from_text(text)
     extractor = "规则抽取"
     notice = "本次使用本地规则抽取，没有向模型服务发送简历；请在经历库核对。"
-    if parse_mode == 'offline_ocr':
+    if used_local_ocr:
         extractor = '本地 OCR + 规则抽取'
         notice = '本次在本机识别图片并按规则抽取，未向模型服务发送简历；OCR 和字段可能遗漏，请逐项核对。'
+    model_field_issues = []
     client = HttpModelClient() if parse_mode == "dynamic" else None
     if client is not None and not client.api_key:
         notice = "未配置模型密钥，已使用本地规则抽取。"
@@ -504,8 +518,29 @@ def parse_resume_pdf(pdf_base64: str, filename: str, *, parse_mode: str = "offli
             harvested = {normalized(value) for value in leaves(rules)}
             if not leaves(sanitized):
                 raise ModelFailure('Model returned no usable fields',retryable=False)
-            if any(normalized(value) not in source and normalized(value) not in harvested for value in leaves(sanitized)):
-                raise ModelFailure("Model fields contain text not grounded in the PDF", retryable=False)
+            def supported(value):
+                token=normalized(value)
+                return not value or token in source or token in harvested
+            def clean(row,group,index=None):
+                for field,value in row.items():
+                    if not isinstance(value,str) or not value.strip():continue
+                    parts=re.split(r'[、,，;；\n]',value) if group=='extras' and field=='skills' else [value]
+                    if all(supported(part.strip()) for part in parts if part.strip()):continue
+                    model_field_issues.append({'group':group,'field':field,'index':index})
+                    row[field]=''
+            for group in ('basic','intention','extras'):
+                if group=='extras':sanitized[group]['awards']=''
+                clean(sanitized[group],group)
+            for group in ('education','internships','projects','awards'):
+                for index,row in enumerate(sanitized[group]):clean(row,group,index)
+                sanitized[group]=[row for row in sanitized[group] if any(row.values())]
+            work_context=re.search(r'实习(?:经历|经验|生)?|工作(?:经历|经验)|(?:professional|work|internship)\s+experience|\bintern(?:ship)?\b',text,re.I)
+            if sanitized['internships'] and not work_context:
+                model_field_issues.append({'group':'internships','field':'section','index':None})
+                sanitized['internships']=[]
+            sanitized['extras']['awards']='；'.join(row['name'] for row in sanitized['awards'] if row['name'])
+            if not leaves(sanitized):
+                raise ModelFailure('Model returned no source-backed fields',retryable=False)
             # Model extraction fills missing groups/fields; it cannot erase the
             # complete deterministic result with an empty or shorter response.
             for group in ('basic','intention','extras'):
@@ -515,14 +550,17 @@ def parse_resume_pdf(pdf_base64: str, filename: str, *, parse_mode: str = "offli
                 if not rules[group]:rules[group]=sanitized[group]
             extractor = "模型抽取"
             notice = "已用模型从 PDF 正文抽字段。请在经历库核对，未出现的信息不要补造。"
+            if model_field_issues:notice += f" {len(model_field_issues)} 个未找到原文依据的模型字段已舍弃，保留规则识别和原文。"
         except ModelFailure:
             extractor = "规则抽取（模型不可用）"
             notice = "模型调用失败或结果无效，已保留本地规则抽取结果。请在经历库核对。"
     return {
         "filename": filename,
         "extractor": extractor,
+        "model_field_issues": model_field_issues,
         "notice": notice,
         "char_count": len(text),
         "preview": text[:400],
+        "source_text": text,
         "form": rules,
     }

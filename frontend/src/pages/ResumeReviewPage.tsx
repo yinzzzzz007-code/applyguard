@@ -1,93 +1,19 @@
-import { useMemo, useState } from 'react'
+import {completeGuideStep,editingRequirements} from '../guide'
+import {ActionButton} from '../components/ui/action-button'
+import { useEffect, useMemo, useState } from 'react'
+import {claimsFromResumeForm,remainingDraftClaims,initializeDraftSelection,addDraftClaim} from '../resume/draftSelection'
 import { Link, useNavigate } from 'react-router-dom'
-import type {
-  ClaimVerification,
-  EditableResumeForm,
-  RemovedClaim,
-  ResumeClaim,
-} from '../api/types'
 import { EmptyState } from '../components/States'
 import { ReviewDraft } from '../components/ReviewDraft'
 import { saveTextVersion } from '../resume/groundingHistory'
+import {QuickReviewActions} from '../components/QuickReviewActions'
 import { useDemo } from '../context/DemoContext'
-import { zhText } from '../i18n'
 import { Icon } from '../components/Icon'
-
-type DraftClaim = {
-  claim_id: string
-  text: string
-  evidence_ids: string[]
-  experienceTitle: string
-  kind: string
-}
-
-function shortReason(reason: string): string {
-  const value = reason.split(':')[0]?.trim() || reason
-  return value === 'LOW_RELEVANCE' ? '相关度较低' : zhText(value)
-}
-
-function safeClaimId(raw: string): string {
-  const body = raw.replace(/[^a-zA-Z0-9_]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase()
-  const id = body.startsWith('claim_') ? body : `claim_${body || 'item'}`
-  return id.slice(0, 96)
-}
-
-/** Build selectable resume sentences from the user's saved 经历库 form. */
-function claimsFromResumeForm(form: EditableResumeForm | null): DraftClaim[] {
-  if (!form) return []
-  const out: DraftClaim[] = []
-
-  const push = (
-    id: string,
-    kind: string,
-    organization: string,
-    title: string,
-    role: string,
-    description: string,
-  ) => {
-    const org = organization.trim()
-    const label = (title || role).trim()
-    const lines = description
-      .split(/\r?\n/)
-      .map((l) => l.trim().replace(/^[-*•·、]\s*/, ''))
-      .filter(Boolean)
-    const text = (description.trim().length <= 420 && description.trim() ? description.trim() : lines.find((l) => l.length >= 8) || lines[0] || [org, label].filter(Boolean).join(' · ')).trim()
-    if (!text) return
-    out.push({
-      claim_id: safeClaimId(id.replace(/^exp_/, '')),
-      text: text.slice(0, 420),
-      evidence_ids: [],
-      experienceTitle: [label, org].filter(Boolean).join(' · ') || kind,
-      kind,
-    })
-  }
-
-  form.internships.forEach((e) =>
-    push(e.id, '实习', e.organization, e.title, e.role, e.description),
-  )
-  form.projects.forEach((e) =>
-    push(e.id, '项目', e.organization, e.title, e.role, e.description),
-  )
-  ;(form.awards ?? []).forEach((a) => {
-    const name = a.name.trim()
-    if (!name) return
-    const text = (a.description || '').trim() || `${name}${a.issuer ? `（${a.issuer}）` : ''}`
-    out.push({
-      claim_id: safeClaimId(a.id),
-      text: text.slice(0, 420),
-      evidence_ids: [],
-      experienceTitle: [name, a.issuer].filter(Boolean).join(' · ') || '获奖 / 竞赛',
-      kind: '获奖',
-    })
-  })
-  return out
-}
 
 export function ResumeReviewPage() {
   const navigate = useNavigate()
-  const { workflow, patchWorkflow, resumeForm, reviewDrafts } = useDemo()
+  const { workflow, patchWorkflow, resumeForm, reviewDrafts, finishReviewStep, reviewAdvanceReason } = useDemo()
   const [draftText, setDraftText] = useState('')
-  const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [historyError,setHistoryError] = useState('')
   const [sourceQuery,setSourceQuery] = useState('')
   const [sourceKind,setSourceKind] = useState('all')
@@ -95,9 +21,15 @@ export function ResumeReviewPage() {
   const draftClaims = useMemo(() => claimsFromResumeForm(resumeForm), [resumeForm])
   const draftById = useMemo(() => new Map(draftClaims.map((c) => [c.claim_id, c])), [draftClaims])
 
+  useEffect(()=>{
+    if(!workflow||!resumeForm||Object.keys(reviewDrafts).length)return
+    if(initializeDraftSelection(workflow,resumeForm)!==workflow)
+      patchWorkflow(previous=>initializeDraftSelection(previous,resumeForm))
+  },[workflow,resumeForm,reviewDrafts,patchWorkflow])
+
   if (!workflow) {
     return (
-      <section className="panel">
+      <section data-guide="review-editing" className="panel">
         <header className="panel-head">
           <h2>简历审查</h2>
         </header>
@@ -111,32 +43,11 @@ export function ResumeReviewPage() {
     )
   }
 
-  const { resume_claims: claims, resume_selection: selection, evidence_match: match } = workflow
-  const reqText = Object.fromEntries(
-    workflow.parsed_jd.requirements.map((r) => [r.requirement_id, r.text]),
-  )
+  const { resume_claims: claims, resume_selection: selection } = workflow
   const usingDraftVault = workflow.component_modes?.career_vault === 'LOCAL_RESUME_DRAFT'
-  const selectedIds = new Set(claims.map((c) => c.claim_id))
-
-  // Prefer 经历库草稿 as the pool; fall back to workflow removed_claims when no draft.
-  const available: Array<DraftClaim & { reason: string }> = draftClaims.length
-    ? draftClaims
-        .filter((c) => !selectedIds.has(c.claim_id))
-        .map((c) => {
-          const removed = selection.removed_claims?.find((r) => r.claim_id === c.claim_id)
-          return {
-            ...c,
-            reason: removed?.reason || '来自经历库草稿，可手动加入（加入后仍需核验）',
-          }
-        })
-    : (selection.removed_claims ?? []).map((r) => ({
-        claim_id: r.claim_id,
-        text: r.text || r.claim_id,
-        evidence_ids: [] as string[],
-        experienceTitle: '工作流未选入',
-        kind: '陈述',
-        reason: r.reason,
-      }))
+  const available = draftClaims.length?remainingDraftClaims(workflow,resumeForm):selection.removed_claims
+    .filter(row=>!claims.some(claim=>claim.claim_id===row.claim_id))
+    .map(row=>({claim_id:row.claim_id,text:row.text||row.claim_id,evidence_ids:[] as string[],experienceTitle:'工作流候选经历',kind:'陈述'}))
 
   const seedLike =
     !usingDraftVault &&
@@ -148,90 +59,20 @@ export function ResumeReviewPage() {
     (item.text+' '+item.experienceTitle).toLocaleLowerCase().includes(sourceQuery.trim().toLocaleLowerCase()))
   const characters = claims.reduce((sum,claim) => sum+Array.from(claim.text).length,0)
 
-  function requirementIdsFor(claimId: string): string[] {
-    return [
-      ...new Set(
-        match.matches
-          .filter((m) => m.claim_ids.includes(claimId))
-          .map((m) => m.requirement_id),
-      ),
-    ]
+  function addClaim(input:{claim_id:string;text:string;evidence_ids:string[]}) {
+    if(!workflow)return
+    try {
+      const next=addDraftClaim(workflow,input)
+      if(next===workflow)return
+      saveTextVersion(workflow,'补选经历前')
+      patchWorkflow(next);setHistoryError('')
+    } catch(error){setHistoryError(error instanceof Error?error.message:'补选未完成，正文保留。')}
   }
-
-  function supportFor(claimId: string): number {
-    const scores = match.matches
-      .filter((m) => m.claim_ids.includes(claimId))
-      .map((m) => m.relevance_score)
-    return scores.length ? Math.max(...scores) : 0
-  }
-
-  function addClaim(input: {
-    claim_id: string
-    text: string
-    evidence_ids: string[]
-    requirement_ids?: string[]
-    support?: number
-  }) {
-    if (workflow) {
-      if (workflow.resume_claims.length >= 20) {setHistoryError('每份草稿最多 20 条，请先移出不需要的条目。');return}
-      try {saveTextVersion(workflow,'增加陈述前')} catch {setHistoryError('历史保存失败，尚未修改草稿。');return}
-    }
-    patchWorkflow((prev) => {
-      if (prev.resume_claims.some((c) => c.claim_id === input.claim_id)) return prev
-      const added: ResumeClaim = {
-        claim_id: input.claim_id,
-        application_id: prev.application_id,
-        text: input.text,
-        evidence_ids: input.evidence_ids,
-        requirement_ids: input.requirement_ids ?? requirementIdsFor(input.claim_id),
-        evidence_support_score: input.support ?? supportFor(input.claim_id),
-        selection_reason: '手动加入：用户在简历审查页从经历库选入（非自动挑选）。',
-        status: 'DRAFT',
-      }
-      const verification: ClaimVerification = {
-        claim_id: input.claim_id,
-        state: 'BLOCKED',
-        unsupported_fragments: [],
-        explanation: '手动内容尚未经过后端核验；请点击重新核验，缺少证据的内容会保持阻断。',
-        support_score: added.evidence_support_score,
-        grounded: false,
-      }
-      return {
-        ...prev,
-        resume_claims: [...prev.resume_claims, added],
-        resume_selection: {
-          ...prev.resume_selection,
-          removed_claims: prev.resume_selection.removed_claims.filter(
-            (r) => r.claim_id !== input.claim_id,
-          ),
-        },
-        claim_verification: prev.claim_verification.some((v) => v.claim_id === input.claim_id)
-          ? prev.claim_verification
-          : [...prev.claim_verification, verification],
-      }
-    })
-  }
-
-  function removeClaim(claim: ResumeClaim) {
-    if (workflow) {
-      try {saveTextVersion(workflow,'移出陈述前')} catch {setHistoryError('历史保存失败，尚未修改草稿。');return}
-    }
-    patchWorkflow((prev) => ({
-      ...prev,
-      resume_claims: prev.resume_claims.filter((c) => c.claim_id !== claim.claim_id),
-      resume_selection: {
-        ...prev.resume_selection,
-        removed_claims: [
-          ...prev.resume_selection.removed_claims.filter((r) => r.claim_id !== claim.claim_id),
-          {
-            claim_id: claim.claim_id,
-            reason: '手动移出：用户从简历草稿中拿掉。',
-            text: claim.text,
-          } as RemovedClaim,
-        ],
-      },
-      claim_verification: prev.claim_verification.filter((v) => v.claim_id !== claim.claim_id),
-    }))
+  function clearSeedDraft() {
+    if(!workflow)return
+    try {saveTextVersion(workflow,'清空前自动备份')} catch {setHistoryError('历史保存失败，尚未清空草稿。');return}
+    patchWorkflow(previous=>({...previous,resume_claims:[],claim_verification:[],
+      resume_selection:{...previous.resume_selection,draft_initialized:true,removed_claims:[]}}))
   }
 
   function addCustom() {
@@ -241,68 +82,15 @@ export function ResumeReviewPage() {
       claim_id: `claim_manual_${Date.now().toString(36)}`,
       text,
       evidence_ids: [],
-      requirement_ids: [],
-      support: 0,
     })
     setDraftText('')
   }
 
-  function clearSeedDraft() {
-    if (workflow) {
-      try {saveTextVersion(workflow,'清空前自动备份')} catch {setHistoryError('历史保存失败，尚未清空草稿。');return}
-    }
-    patchWorkflow((prev) => ({
-      ...prev,
-      resume_claims: [],
-      resume_selection: {
-        ...prev.resume_selection,
-        removed_claims: [],
-      },
-      claim_verification: [],
-    }))
-  }
-
-  function cardDetail(opts: {
-    claimId: string
-    text: string
-    reason?: string
-    evidenceIds?: string[]
-    requirementIds?: string[]
-    support?: number
-    experienceTitle?: string
-  }) {
-    return (
-      <details className="rr-tip">
-        <summary>查看来源与选入理由</summary><div>
-        <p className="rr-tip-title">{opts.claimId.replace(/^claim_/, '陈述·')}</p>
-        <p>{opts.text}</p>
-        {opts.experienceTitle ? <p className="muted">经历：{opts.experienceTitle}</p> : null}
-        {opts.reason ? (
-          <p>
-            <strong>理由：</strong>
-            {zhText(opts.reason)}
-          </p>
-        ) : null}
-        <p className="muted">
-          证据：{(opts.evidenceIds ?? []).map((id) => id.replace(/^ev_/, '')).join('、') || '无'}
-        </p>
-        <p className="muted">
-          岗位要求：{' '}
-          {(opts.requirementIds ?? [])
-            .map((id) => reqText[id] ?? id.replace(/^req_0*/, '要求 '))
-            .join('；') || '无关联要求'}
-        </p>
-        {opts.support != null ? (
-          <p className="muted">{workflow?.grounding ? '事实支持情况请查看陈述核验' : `支持度 ${(opts.support * 100).toFixed(0)}%`}</p>
-        ) : null}
-      </div></details>
-    )
-  }
-
   return (
-    <section className="panel">
+    <section data-guide="review-editing" className="panel">
       <header className="panel-head">
         <h2>审核申请草稿</h2>
+        <QuickReviewActions/>
       </header>
 
       {seedLike ? (
@@ -329,116 +117,53 @@ export function ResumeReviewPage() {
         </div>
       ) : (
         <p className="muted">
-          可加入来源：本机经历库 {draftClaims.length} 条
-          {usingDraftVault ? ' · 本次工作流已按草稿匹配' : ' · 建议重新运行工作流以按草稿自动筛选'}
+          {selection.draft_notice || `正文来自经历库；还有 ${available.length} 条可补选。`}
+          {resumeForm?.dirty && <span> 经历库修改尚未最终保存，此处先作为申请草稿使用。</span>}
         </p>
       )}
 
       <div className="draft-summary-strip">
         <div><strong>{claims.length}</strong><span>条草稿</span></div>
         <div><strong>{characters}</strong><span>个字符</span></div>
-        <p>自动筛选参考：{selection.max_claims} 条 / {selection.max_characters} 字<br /><span>手动加入的陈述仍须核验。</span></p>
+        <p>按岗位相关度查看经历，可补选到正文或手动移除。<br /><span>进入正文不代表事实已经核验。</span></p>
       </div>
 
       <div className="review-content">
       {historyError && <p className="danger-text" role="alert">{historyError}</p>}
       <ReviewDraft key={workflow.application_id} />
-      {!claims.length && <div className="callout">
-        <strong>没有自动选入的陈述</strong>
-        <p>当前经历与岗位要求没有足够的可用依据。你可以手动选择经历，或补充材料后再核验。</p>
-        <div className="btn-row"><a className="btn primary" href="#review-source-pool" onClick={() => {
-          const details = document.getElementById('review-add-content')
-          if (details instanceof HTMLDetailsElement) details.open = true
-        }}>从经历库选入</a><Link className="btn secondary" to="/evidence">补充证明材料</Link></div>
-      </div>}
-      <details className="review-add-content" id="review-add-content"><summary>添加内容或管理条目</summary>
-      <details><summary>管理草稿条目</summary>{claims.map(c => <div className="btn-row" key={c.claim_id}><span>{c.text}</span><button className="btn secondary" onClick={() => removeClaim(c)}>移出</button></div>)}</details>
-
-      <div className="rr-add">
-        <label className="field-label" htmlFor="rr-manual">
-          手动添加句子
-        </label>
-        <textarea
-          id="rr-manual"
-          maxLength={420}
-          className="jd-input"
-          rows={3}
-          value={draftText}
-          onChange={(e) => setDraftText(e.target.value)}
-          placeholder="写一条要放进简历草稿的经历描述…"
-        />
-        <div className="btn-row">
-          <button type="button" className="btn primary" disabled={!draftText.trim() || claims.length >= 20} onClick={addCustom}>
-            加入草稿
-          </button>
+      <section className="review-source-picker" id="review-source-pool" data-guide="draft-pool" aria-label="补充经历">
+        <div className="source-pool-heading"><h3>从经历库补选</h3><span>{available.length} 条尚未加入正文</span></div>
+        <p className="muted">已在正文中的经历不重复显示；选择后直接加入，正文里的经历可随时移除。</p>
+        <div className="review-source-controls">
+          <label className="work-search source-search"><Icon name="search" /><input aria-label="搜索可补选的经历" value={sourceQuery} onChange={e=>setSourceQuery(e.target.value)} placeholder="搜索项目名、技术或经历内容" />
+            {sourceQuery&&<button type="button" aria-label="清除经历搜索" onClick={()=>setSourceQuery('')}><Icon name="close" /></button>}</label>
+          <label>经历类型<select aria-label="筛选经历类型" value={sourceKind} onChange={e=>setSourceKind(e.target.value)}>{['all','实习','项目','获奖'].map(kind=><option key={kind} value={kind}>{kind==='all'?'全部类型':kind}</option>)}</select></label>
+          <label>选择经历<select aria-label="选择要补选的经历" value="" onChange={e=>{const entry=available.find(row=>row.claim_id===e.target.value);if(entry)addClaim(entry)}}>
+            <option value="">选择后加入正文…</option>{visibleSources.map(row=><option key={row.claim_id} value={row.claim_id}>{row.kind} · {row.experienceTitle}</option>)}
+          </select></label>
         </div>
-      </div>
-
-      <div className="source-pool-heading" id="review-source-pool"><h3 className="em-section-title">从经历库选入</h3><span>{visibleSources.length} / {available.length} 条</span></div>
-      <label className="work-search source-search"><Icon name="search" /><input aria-label="搜索可加入的经历" value={sourceQuery} onChange={e => setSourceQuery(e.target.value)} placeholder="搜索项目名称、技术或经历内容" />
-        {sourceQuery && <button type="button" aria-label="清除经历搜索" onClick={() => setSourceQuery('')}><Icon name="close" /></button>}</label>
-      <div className="scope-switch source-kind" aria-label="经历类型">{['all','实习','项目','获奖'].map(kind => <button type="button" key={kind} aria-pressed={sourceKind === kind} onClick={() => setSourceKind(kind)}>{kind === 'all' ? '全部' : kind}</button>)}</div>
-      {!available.length ? (
-        <p className="muted">没有可加入的经历库句子。</p>
-      ) : !visibleSources.length ? (
-        <div className="source-empty"><p>没有找到匹配的经历，试试其他关键词或类型。</p><button type="button" className="text-action" onClick={() => {setSourceQuery('');setSourceKind('all')}}>重置筛选</button></div>
-      ) : (
-        <div className="rr-grid">
-          {visibleSources.map((r) => {
-            const reqIds = requirementIdsFor(r.claim_id)
-            return (
-              <article
-                key={`${r.claim_id}-${r.reason}`}
-                className={`rr-card rr-card-out${hoveredId === r.claim_id ? ' on' : ''}`}
-                onMouseEnter={() => setHoveredId(r.claim_id)}
-                onMouseLeave={() => setHoveredId(null)}
-              >
-                <div className="rr-card-top">
-                  <span className="em-chip medium compact">{shortReason(r.reason)}</span>
-                  <span className="chip">{r.kind}</span>
-                </div>
-                <p className="rr-card-text">{r.text}</p>
-                <p className="muted rr-card-org">{r.experienceTitle}</p>
-                <div className="rr-card-actions">
-                  <button
-                    type="button"
-                    className="btn primary"
-                    onClick={() =>
-                      addClaim({
-                        claim_id: r.claim_id,
-                        text: r.text,
-                        evidence_ids: r.evidence_ids,
-                      })
-                    }
-                  >
-                    加入草稿
-                  </button>
-                </div>
-                {cardDetail({
-                  claimId: r.claim_id,
-                  text: r.text,
-                  reason: r.reason,
-                  evidenceIds: r.evidence_ids,
-                  requirementIds: reqIds,
-                  support: supportFor(r.claim_id),
-                  experienceTitle: r.experienceTitle,
-                })}
-              </article>
-            )
-          })}
-        </div>
-      )}
-
+        {!available.length?<p>可用经历都已在正文中；也可以去<Link to="/vault">经历库</Link>继续新增。</p>:
+          !visibleSources.length?<p>没有找到匹配项，请换个关键词或类型。</p>:
+          <details><summary>浏览可补选经历（{visibleSources.length}）</summary><div className="review-source-results">{visibleSources.map(row=><article key={row.claim_id}>
+            <div><strong>{row.experienceTitle}</strong><span className="muted">{row.kind}</span><p>{row.text}</p></div>
+            <button className="btn secondary" type="button" onClick={()=>addClaim(row)}>加入正文</button>
+          </article>)}</div></details>}
+      </section>
+      <details className="review-add-content"><summary>自行填写补充内容</summary>
+        <label className="field-label" htmlFor="rr-manual">补充句子</label>
+        <textarea id="rr-manual" maxLength={420} className="jd-input" rows={3} value={draftText} onChange={e=>setDraftText(e.target.value)} placeholder="也可以自行填写尚未整理进经历库的内容…" />
+        <ActionButton type="button" className="btn secondary" disabledReason={claims.length>=20?'每份草稿最多 20 条，请先移出不需要的经历。':'请先填写补充内容。'} disabled={!draftText.trim()||claims.length>=20} onClick={addCustom}>加入正文</ActionButton>
       </details></div>
       <div className="btn-row end review-footer">
-        <span role="status">{Object.keys(reviewDrafts).length ? '有未保存修改，请先保存或取消。' : claims.length ? `已整理 ${claims.length} 条正文，可预览并导出。` : '请先选择或写入一条草稿陈述。'}</span>
-        <button type="button" className="btn primary" disabled={!claims.length || !!Object.keys(reviewDrafts).length} onClick={() => {
+        <span role="status">{Object.keys(reviewDrafts).length ? '进入下一步时会保存当前编辑。' : claims.length ? `已整理 ${claims.length} 条正文，可预览并导出。` : '请先选择或写入一条草稿陈述。'}</span>
+        <ActionButton type="button" className="btn primary" disabledReason={!claims.length?'请先加入至少一条草稿。':'请先保存或取消正在编辑的句子。'} guideRequirements={[...editingRequirements(reviewDrafts),...(!claims.length?[{id:'claims',label:'请先选择或写入一条草稿。',selector:'[data-guide="draft-pool"]'}]:[])]} disabled={!claims.length || !!Object.keys(reviewDrafts).length} onClick={() => {
           const panel = document.getElementById('review-export') as HTMLDetailsElement | null
           if (panel) {panel.open = true; panel.scrollIntoView({behavior:'smooth',block:'start'});panel.querySelector('summary')?.focus()}
-        }}>检查并导出</button>
-        <button type="button" className="btn secondary" disabled={!claims.length || !!Object.keys(reviewDrafts).length} onClick={() => navigate('/claims')}>
+        }}>检查并导出</ActionButton>
+        <ActionButton type="button" className="btn secondary" disabledReason={reviewAdvanceReason} guideRequirements={editingRequirements(reviewDrafts)}
+          disabled={!!reviewAdvanceReason} onClick={() => {if (finishReviewStep(false)) {completeGuideStep('resume');navigate('/claims')}}}>
           继续核验并准备网申
-        </button>
+        </ActionButton>
       </div>
     </section>
   )

@@ -180,7 +180,19 @@ export interface ResumeParseResult {
   notice: string
   char_count: number
   preview: string
+  source_text?: string
   form: ExtractedResumeForm
+}
+
+export interface ResumeImportSuggestion {
+  id: string
+  section?: 'education' | 'internships' | 'projects' | 'awards'
+  row?: ResumeEducation | ResumeExperienceEntry | ResumeAward
+  candidateIds?: string[]
+  group?: 'basic' | 'intention' | 'extras'
+  field?: string
+  before?: string
+  after?: string
 }
 
 export interface EditableResumeForm {
@@ -193,10 +205,14 @@ export interface EditableResumeForm {
   awards: ResumeAward[]
   extras: ResumeExtras
   savedAt?: string
+  importContext?: { transferId: string; filename: string; extractor: string; text: string; suggestions: ResumeImportSuggestion[] }
   dirty: boolean
 }
 
 export interface ParsedRequirement {
+  section?: "description" | "requirement" | "bonus"
+  priority?: "core" | "general" | "preferred"
+  alternatives?: string[]
   requirement_id: string
   type: string
   category: string
@@ -214,7 +230,20 @@ export interface ParsedJd {
   requirements: ParsedRequirement[]
 }
 
+export interface ExperienceLead {
+  title: string
+  kind: "direct" | "related" | "framework"
+  terms: string[]
+  quote: string
+  score: number
+  material_id?: string
+  pending_context?: string[]
+  material_quote?: string
+  material_reference?: string
+}
+
 export interface EvidenceMatchItem {
+  lead?: ExperienceLead
   requirement_id: string
   experience_id: string
   claim_ids: string[]
@@ -270,6 +299,10 @@ export interface RemovedClaim {
 }
 
 export interface ResumeSelection {
+  draft_initialized?: boolean
+  auto_match_threshold?: number
+  draft_auto_ids?: string[]
+  draft_notice?: string
   mode: string
   removed_claims: RemovedClaim[]
   max_claims: number
@@ -298,6 +331,10 @@ export interface GroundingSource {
   retrieval_channels?: string[]
 }
 export interface GroundingClaimResult {
+  material_status?: string
+  excluded_links?: Array<{evidence_id:string;filename:string;reason:string}>
+
+  full_claim_check?: Pick<GroundingClaimResult['atoms'][number],'relation'|'reason'|'citations'> | null
   wording_auto_applied?: boolean
   wording_auto_restored?: boolean
   proposal_applied?: boolean
@@ -308,6 +345,8 @@ export interface GroundingClaimResult {
   final_text: string
   proposed_text?: string
   proposal_rejected?: boolean
+  proposal_check?: {relation: 'SUPPORTED' | 'CONTRADICTED' | 'INSUFFICIENT'; complete: boolean; atoms: GroundingClaimResult['atoms']} | null
+  original_check?: {relation: 'SUPPORTED' | 'CONTRADICTED' | 'INSUFFICIENT'; complete: boolean} | null
   proposal_notice?: string
   risk_escalation?: { model: string; relation: 'SUPPORTED' | 'CONTRADICTED' | 'INSUFFICIENT';
     agrees_with_primary?: boolean; error?: string } | null
@@ -319,6 +358,10 @@ export interface GroundingClaimResult {
   retrieved_sources: GroundingSource[]
   atoms: Array<{
     atom_id: string
+    method?: string
+    claim_spans?: Array<{start:number;end:number;quote:string}>
+    anchor_reason?:string
+    claim_excerpt?: string
     text: string
     relation: 'SUPPORTED' | 'CONTRADICTED' | 'INSUFFICIENT'
     reason: string
@@ -328,12 +371,21 @@ export interface GroundingClaimResult {
   }>
 }
 export interface GroundingReport {
+  run_id?: string
+  at?: string
+  fresh_atomic?: boolean
+  operation?: 'verify' | 'polish'
+  elapsed_ms?: number
+  model_routing?: {response_models?: string[]}
   mode: GroundingMode
   engine: string
   snapshot: string
   prompt_version: string
   error: string | null
+  error_code?: string | null
+  failure_stage?: string | null
   export_requires_atomic: boolean
+  polish_source?: {name?: string} | null
   results: Record<string, GroundingClaimResult>
 }
 

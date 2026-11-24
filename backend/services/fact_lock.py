@@ -11,7 +11,7 @@ from decimal import Decimal
 
 from backend.services.edit_invariants import equivalent_point_detail, lost_qualifiers, qualifier_inventory
 
-QUANTITY = (r"-?\d+(?:\.\d+)?(?:\s*(?:[%％]|个百分点|percentage\s+points?|pp\b|"
+QUANTITY = (r"-?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?:\s*(?:[%％]|个百分点|percentage\s+points?|pp\b|"
             r"milliseconds?\b|ms\b|seconds?\b|secs?\b|s\b|毫秒|秒|个?星期|个?周|天|人|个|次|年|万元|万|GB\b|MB\b))?")
 # Calendar weeks and calendar days have a fixed conversion. Months and workdays do not.
 CN_DIGITS = "零一二三四五六七八九"
@@ -84,7 +84,7 @@ def source_bound_ledger(original: str, check: dict | None, sources: list[dict]) 
 
 def _numeric_key(value: str) -> str:
     value = re.sub(r"\s+", "", value).casefold()
-    value = value.replace("％", "%")
+    value = value.replace("％", "%").replace(",", "")
     value = re.sub(r"percentagepoints?|个百分点", "pp", value)
     calendar = re.fullmatch(r"(-?\d+(?:\.\d+)?|" + CN_DAY_NUMBER + r")(天|个?星期|个?周)", value)
     if calendar:

@@ -7,6 +7,7 @@ import { interviewResume, type InterviewGuide, type InterviewResume } from '../r
 import { classroomInterview } from '../resume/classroomInterview'
 import { CLASSROOM_APPLICATION_ID } from '../resume/classroomSample'
 import { normalizeResumeForm } from '../resume/formModel'
+import {InterviewPractice} from '../components/InterviewPractice'
 import { LoadingState } from '../components/States'
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
@@ -32,8 +33,12 @@ export function InterviewPage() {
   const { resumeForm, workflow, jdRawInput } = useDemo()
   const [saved] = useState(readPreparation)
   const handedForm = (location.state as { form?: EditableResumeForm } | null)?.form
+  const selection=(location.state as {selectedClaims?:{id:string;text:string;state:string}[]}|null)?.selectedClaims
   const [resume, setResume] = useState<InterviewResume | null>(() =>
+    selection?.length?{name:'',summary:'',skills:'',education:[],internships:[],projects:selection.map((c,i)=>({
+      title:'正文第 '+(i+1)+' 条 · '+c.id,description:c.text,organization:'',role:'',techStack:'',start:'',end:'',material_status:c.state}))}:
     handedForm ? interviewResume(normalizeResumeForm(handedForm)) :
+      saved?.resume.projects.some(project=>'material_status' in project) ? saved.resume :
       resumeForm ? interviewResume(normalizeResumeForm(resumeForm)) : saved?.resume ?? null)
   const [jd, setJd] = useState(() => {
     const sameResume = saved && JSON.stringify(saved.resume) === JSON.stringify(resume)
@@ -49,7 +54,8 @@ export function InterviewPage() {
   const request = useRef<AbortController | null>(null)
   const signature = JSON.stringify([jd.trim(), resume])
   const generated = result?.signature === signature && result.guide.coverage_version === 2 ? result.guide : null
-  const sample = !generated && workflow?.application_id === CLASSROOM_APPLICATION_ID
+  const usingSelectedText = !!resume?.projects.some(project=>'material_status' in project)
+  const sample = !usingSelectedText && !generated && workflow?.application_id === CLASSROOM_APPLICATION_ID
     && jd.trim() === workflow.parsed_jd.source_text.trim()
   const guide = generated ?? (sample ? classroomInterview : null)
 
@@ -81,7 +87,7 @@ export function InterviewPage() {
     setBusy(true)
     setError('')
     const response = await generateInterview(jd.trim(), resume,
-      AbortSignal.any([controller.signal, AbortSignal.timeout(180000)]))
+      AbortSignal.any([controller.signal, AbortSignal.timeout(600000)]))
     if (controller.signal.aborted) return
     if (response.data) setResult({ signature, guide: response.data })
     else setError(response.error?.message ?? '面经生成未完成，请重试。')
@@ -129,16 +135,19 @@ export function InterviewPage() {
           <p className="interview-text">{item.description}</p>
         </div>)}
       </details>}
-      <label className="interview-consent">
+      <label data-guide="interview-consent" className="interview-consent">
         <input type="checkbox" checked={consent === signature} disabled={busy}
           onChange={event => setConsent(event.target.checked ? signature : '')} />
         将本次 JD、自我介绍资料及项目经历发送给已配置的模型生成面经，可能产生费用。
       </label>
       <Button
-        disabled={busy || !resume || jd.trim().length < 20 || consent !== signature ||
+        disabledReason={busy?'正在生成面经，请稍候。':!resume||!resume.projects.length&&!resume.internships.length?'请先在经历库保存项目或实习。':jd.trim().length<20?'请填写至少 20 字的岗位说明。':'请先勾选模型使用确认。'} guideRequirements={[...(!resume||!resume.projects.length&&!resume.internships.length?[{id:'resume',label:'请先在经历库保存项目或实习。',href:'/vault'}]:[]),...(jd.trim().length<20?[{id:'jd',label:'请填写至少 20 字的目标岗位说明。',selector:'.interview-page textarea'}]:[]),...(consent!==signature?[{id:'consent',label:'请阅读模型使用说明，再自行决定是否勾选确认。',selector:'[data-guide="interview-consent"]'}]:[])]} disabled={busy || !resume || jd.trim().length < 20 || consent !== signature ||
           (!resume.projects.length && !resume.internships.length)} onClick={() => void generate()}>
         {busy ? '正在生成面经…' : generated ? '重新生成面经' : '生成自我介绍与模拟问答'}
       </Button>
+      {!busy&&(!resume||!resume.projects.length&&!resume.internships.length)&&<p role="status">请先在经历库保存至少一项项目或实习。</p>}
+      {!busy&&consent!==signature&&<p className="muted">生成前请勾选上方模型使用确认。</p>}
+      {jd.trim().length === 0&&<p className="muted">请先填写至少 20 字的岗位说明。</p>}
       {jd.trim().length > 0 && jd.trim().length < 20 && <p className="muted">请补充至少 20 字的岗位说明。</p>}
       {resume && !resume.projects.length && !resume.internships.length &&
         <p className="muted">请先在经历库补充至少一段项目或实习经历。</p>}
@@ -158,6 +167,7 @@ export function InterviewPage() {
         </div>
         <p className="interview-text">{guide[duration]}</p>
       </section>
+      {guide.practice&&<InterviewPractice key={guide.practice.session} initial={guide.practice}/>}
       <section className="interview-questions">
         <h3>模拟问题与参考回答</h3>
         {guide.questions.map((item, index) => <details className="item-block" key={index}>

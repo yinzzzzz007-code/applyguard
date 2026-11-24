@@ -44,6 +44,19 @@ Python · PyTorch · RAG · Linux
 '''
 
 class ResumeSectionsTests(unittest.TestCase):
+    def test_faculty_lines_stay_with_their_university(self):
+        text = ('教育背景\n示例科技大学\n电子工程学院\n信息技术\n硕士\n2025.09-至今\n'
+                '示例科技大学\n电子工程学院\n电子工程\n本科\n2021.09 - 2025.06\n技能\nPython')
+        rows = extract_resume_from_text(text)['education']
+        self.assertEqual([row['school'] for row in rows], ['示例科技大学', '示例科技大学'])
+        self.assertEqual([row['degree'] for row in rows], ['硕士', '本科'])
+
+    def test_education_preserves_schools_with_bullet_markers(self):
+        text = ("EDUCATION\n• Example Institute of Technology\nMaster of Science\n"
+                "• Fictional University\nBachelor of Engineering\nSKILLS\nPython")
+        schools = [row['school'] for row in extract_resume_from_text(text)['education']]
+        self.assertEqual(schools, ['Example Institute of Technology', 'Fictional University'])
+
     def test_schools_after_degree_and_english_school_headings(self):
         cn = '教育经历\n信息技术硕士|示例大学\n2024.03 - 2026.10\n体育教育本科|另一个大学\n2018.09 - 2022.09\n技能\nPython'
         rows = extract_resume_from_text(cn)['education']

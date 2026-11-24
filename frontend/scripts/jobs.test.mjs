@@ -73,3 +73,10 @@ test('experience sorting keeps scored roles ahead of unscored roles and breaks t
   assert.deepEqual(filterJobs(rows, '', 'all', 'all', 'match').map(job => job.title),
     ['新高分', '旧高分', '零分', '待匹配'])
 })
+
+test('personalized ranking takes priority while other sort modes remain available',()=>{
+ const base={company:'A',location:'广州',description:'Python',status:'open',stage:'saved',imported_at:'2026-11-23',match_level:'low',match_score:20}
+ const a={...base,id:'a',title:'材料',recommendation_rank:2,recommendation_score:20}
+ const b={...base,id:'b',title:'LLM',recommendation_rank:0,recommendation_score:70}
+ assert.equal(filterJobs([a,b],'','all','all','match')[0].id,'b')
+})

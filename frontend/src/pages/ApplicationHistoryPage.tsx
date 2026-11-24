@@ -7,12 +7,13 @@ import { useDemo } from '../context/DemoContext'
 import { loadApplicationHistory, removeApplicationHistory } from '../history'
 import {
   RESUME_TEMPLATES,
-  buildPlainResume,
+  buildPlainResume, resumeBlocks,
   contactLine,
   formatDateRange,
   splitBullets,
   type ResumeTemplateId,
 } from '../resume/generate'
+import {buildLatex,downloadFile} from '../resume/latex'
 import { CLASSROOM_APPLICATION_ID } from '../resume/classroomSample'
 import { normalizeResumeForm } from '../resume/formModel'
 
@@ -456,13 +457,7 @@ export function ApplicationHistoryPage() {
   }
 
   function downloadText() {
-    const blob = new Blob([plain], { type: 'text/plain;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = `${form?.basic.name || 'resume'}.txt`
-    anchor.click()
-    URL.revokeObjectURL(url)
+    downloadFile(plain,`${form?.basic.name || 'resume'}.txt`,'text/plain;charset=utf-8')
   }
 
   function printResume() {
@@ -578,6 +573,10 @@ export function ApplicationHistoryPage() {
               </button>
               <button type="button" className="btn secondary" onClick={downloadText}>
                 下载 TXT
+              </button>
+              <button type="button" className="btn secondary" title="UTF-8 源文件，可用 XeLaTeX 编译" onClick={() =>
+                downloadFile(buildLatex(resumeBlocks(form,template)),`${form.basic.name || 'resume'}.tex`,'application/x-tex;charset=utf-8')}>
+                下载 LaTeX（.tex）
               </button>
               <button type="button" className="btn secondary" onClick={printResume}>
                 打印 / 另存 PDF

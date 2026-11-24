@@ -1,12 +1,16 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import {completeGuideStep} from '../guide'
+import {ActionButton} from '../components/ui/action-button'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getApiClient } from '../api/client'
+import { CareerVaultOverview, editorSection } from '../components/CareerVaultOverview'
+import type { RowSection } from '../resume/importReview'
+import { readResumeTransfer, stageResumeImport, finishResumeTransfer, applyImportSuggestion } from '../resume/importTransfer'
 import type {
   CareerVaultSeed,
   EditableResumeForm,
   EvidenceLink,
   ResumeAward,
-  ResumeEducation,
   ResumeExperienceEntry,
 } from '../api/types'
 import { EmptyState, ErrorState, LoadingState } from '../components/States'
@@ -16,7 +20,6 @@ import {
   emptyResumeForm,
   newExperienceId,
   normalizeResumeForm,
-  resumeCompleteness,
   syncAwardText,
 } from '../resume/formModel'
 import {
@@ -569,13 +572,22 @@ export function CareerVaultPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'empty' | 'error'>('loading')
   const [vault, setVault] = useState<CareerVaultSeed | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
-  const [activeSection, setActiveSection] = useState<ResumeSection>('basic')
-  const resumeMain = useRef<HTMLDivElement>(null)
+  const [editing, setEditing] = useState<{ section: ResumeSection; id?: string; previous: EditableResumeForm } | null>(null)
   const [saveMsg, setSaveMsg] = useState('')
   const [saveKind, setSaveKind] = useState<'ok' | 'warn' | ''>('')
   const [saving,setSaving] = useState(false)
   const [beforeClear, setBeforeClear] = useState<EditableResumeForm | null>(null)
   const editRevision = useRef(0)
+  useEffect(() => {
+    if (!editing) return
+    document.querySelector('.vault-editor')?.scrollIntoView({ block: 'start' })
+  }, [editing?.section, editing?.id])
+
+  useEffect(() => {
+    if (!resumeForm?.importContext || !resumeForm.dirty) return
+    try { finishResumeTransfer(resumeForm) }
+    catch { setSaveKind('warn'); setSaveMsg('浏览器暂存失败，请保留此页并保存经历库，刷新可能丢失修改。') }
+  }, [resumeForm])
 
   const hasFormRef = useRef(false)
   hasFormRef.current = !!resumeForm
@@ -588,15 +600,17 @@ export function CareerVaultPage() {
       getApiClient().getCareerVault(),
       getApiClient().getResumeDraft(),
     ])
+    const transfer = readResumeTransfer()
+    const withImport = (base: EditableResumeForm) => transfer ? stageResumeImport(base, transfer) : base
     // 已保存草稿优先，读取失败时保留本标签页的表单。
     if (draft.data) {
       setVault(res.data ?? null)
       setResumeForm((prev) => {
         if (prev?.dirty && prev.candidateId === draft.data!.candidateId) {
-          return normalizeResumeForm(prev)
+          return withImport(normalizeResumeForm(prev))
         }
         const fromDisk = normalizeResumeForm(draft.data!)
-        return { ...fromDisk, dirty: false }
+        return withImport({ ...fromDisk, dirty: false })
       })
       const notice = sessionStorage.getItem('applyguard.importNotice')
       if (notice) {
@@ -604,6 +618,12 @@ export function CareerVaultPage() {
         setSaveKind('ok')
         setSaveMsg(notice)
       }
+      setStatus('success')
+      return
+    }
+    if (!draft.data && hasFormRef.current) {
+      setVault(res.data ?? null)
+      setResumeForm(prev => prev ? withImport(normalizeResumeForm(prev)) : prev)
       setStatus('success')
       return
     }
@@ -629,9 +649,9 @@ export function CareerVaultPage() {
         prev.candidateId === res.data!.candidate_id &&
         prev.dirty
       ) {
-        return normalizeResumeForm(prev)
+        return withImport(normalizeResumeForm(prev))
       }
-      return emptyResumeForm(res.data!.candidate_id)
+      return withImport({ ...emptyResumeForm(res.data!.candidate_id), education: [], dirty: false })
     })
     const notice = sessionStorage.getItem('applyguard.importNotice')
     if (notice) {
@@ -647,35 +667,6 @@ export function CareerVaultPage() {
   }, [load, scenario])
 
   const form = resumeForm
-  const hasSections = status === 'success' && Boolean(form)
-  useEffect(() => {
-    const main = resumeMain.current
-    if (!hasSections || !main) return
-    const sections = SECTIONS.map(({ id }) => ({ id, element: main.querySelector(`#resume-${id}`)! }))
-    let frame = 0
-    function update() {
-      frame = 0
-      const readingLine = Math.min(110, window.innerHeight * 0.15)
-      const current = sections.findLast(({ element }) => element.getBoundingClientRect().top <= readingLine)
-      const root = document.scrollingElement
-      const atBottom = root && root.scrollTop > 0 && root.scrollHeight - root.clientHeight - root.scrollTop <= 2
-      setActiveSection(atBottom ? SECTIONS[SECTIONS.length - 1].id : current?.id ?? SECTIONS[0].id)
-    }
-    const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(update)
-    }
-    const observer = new ResizeObserver(schedule)
-    sections.forEach(({ element }) => observer.observe(element))
-    window.addEventListener('scroll', schedule, { passive: true })
-    window.addEventListener('resize', schedule)
-    schedule()
-    return () => {
-      cancelAnimationFrame(frame)
-      observer.disconnect()
-      window.removeEventListener('scroll', schedule)
-      window.removeEventListener('resize', schedule)
-    }
-  }, [hasSections])
   const phone = form?.basic.phone.trim() ?? ''
   const email = form?.basic.email.trim() ?? ''
   const phoneError = phone && !/^(?:1[3-9]\d{9}|\+861[3-9]\d{9}|\+(?!86)[1-9]\d{6,14})$/.test(phone.replace(/[\s()-]/g, ''))
@@ -691,15 +682,45 @@ export function CareerVaultPage() {
     setSaveMsg('')
   }
 
-  const completeness = useMemo(() => (form ? resumeCompleteness(form) : 0), [form])
-
-  const scrollTo = (id: ResumeSection) => {
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    document.getElementById(`resume-${id}`)?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+  const scrollTo = (section: ResumeSection) => {
+    setEditing(old => ({ section, previous: old?.previous ?? structuredClone(form!) }))
   }
+  const openEditor = (section: ResumeSection, id?: string) => {
+    if (!form) return
+    setSaveMsg('')
+    setEditing({ section, id, previous: structuredClone(form) })
+  }
+  const cancelEdit = () => {
+    if (!editing || saving) return
+    setResumeForm(editing.previous)
+    editRevision.current += 1
+    setEditing(null)
+    setSaveMsg('')
+  }
+  const addEntry = (section: RowSection) => {
+    if (!form) return
+    const id = newExperienceId(section)
+    const row = section === 'education'
+      ? { id, school: '', degree: '', major: '', fullTime: '', start: '', end: '', rank: '', gpa: '', location: '', coursework: '' }
+      : section === 'awards' ? { id, name: '', issuer: '', date: '', description: '' }
+      : { id, organization: '', title: '', role: '', start: '', end: '', description: '', location: '', techStack: '', link: '' }
+    setEditing({ section: editorSection[section], id, previous: structuredClone(form) })
+    patchForm(previous => ({ ...previous, [section]: [...previous[section], row] }))
+  }
+  const removeEntry = (section: RowSection, id: string) => {
+    if (!form || saving || !window.confirm('从草稿中移除这条经历？点击“保存经历库”后生效，证明材料原件仍保留。')) return
+    patchForm(previous => {
+      const next = { ...previous, [section]: previous[section].filter(row => row.id !== id) }
+      if (section === 'awards') next.extras = { ...next.extras, awards: syncAwardText(next.awards) }
+      if (next.importContext) next.importContext = { ...next.importContext, suggestions: next.importContext.suggestions.filter(item => !item.candidateIds?.includes(id)) }
+      return next
+    })
+    setEditing(null)
+  }
+  const finishEdit = () => { if (!saving) setEditing(null) }
 
-  const saveLocal = async (): Promise<boolean> => {
-    if (!form || saving) return false
+  const saveLocal = async (target = form): Promise<boolean> => {
+    if (!target || saving) return false
     if (phoneError || emailError) {
       setSaveKind('warn')
       setSaveMsg('请先修正基本信息中的手机号或邮箱。')
@@ -710,11 +731,11 @@ export function CareerVaultPage() {
     const revision = editRevision.current
     setSaving(true)
     const saved = {
-      ...form,
+      ...target,
       dirty: false,
     }
     try {
-        const res = await getApiClient().saveResumeDraft(saved, form.savedAt ?? null)
+        const res = await getApiClient().saveResumeDraft(saved, target.savedAt ?? null)
         if (res.error || !res.data?.saved) {
           setSaveKind('warn')
           setSaveMsg(`未保存到后端：${res.error?.message ?? '未收到保存确认'}`)
@@ -730,7 +751,9 @@ export function CareerVaultPage() {
         }
         setResumeForm({ ...saved, savedAt })
         setSaveKind('ok')
-        setSaveMsg('保存成功')
+        setSaveMsg('已保存到经历库')
+        completeGuideStep('vault')
+        setEditing(null)
         return true
     } catch {setSaveKind('warn');setSaveMsg('保存未完成，请检查连接后重试。当前输入仍保留。');return false}
     finally {setSaving(false)}
@@ -738,12 +761,12 @@ export function CareerVaultPage() {
 
   const clearForm = () => {
     if (!form || saving || !window.confirm(
-      '清空当前经历库表单？点「保存经历」后才会覆盖已保存的资料，原件仍可在材料库查看。')) return
+      '清空当前经历库表单？点「保存经历库」后才会覆盖已保存的资料，原件仍可在材料库查看。')) return
     const blank = emptyResumeForm(form.candidateId)
     setBeforeClear(form)
     patchForm(() => ({ ...blank, basic: { ...blank.basic, idType: '' }, savedAt: form.savedAt }))
     setSaveKind('warn')
-    setSaveMsg('表单已清空，尚未保存。可以撤销清空，或点「保存经历」应用。')
+    setSaveMsg('表单已清空，尚未保存。可以撤销清空，或点「保存经历库」应用。')
   }
 
   const undoClear = () => {
@@ -767,9 +790,9 @@ export function CareerVaultPage() {
   return (
     <section className={`panel resume-panel ${form && !form.dirty && form.savedAt ? 'is-saved' : 'is-unsaved'}`}>
       <header className="panel-head">
-        <h2>整理自己的经历</h2>
+        <h2>我的经历库</h2>
         <p>
-          保存经历后，可添加<Link to="/evidence">证明材料</Link>。
+          导入后的经历已分类整理，可继续编辑或新增，也可以补充<Link to="/evidence">证明材料</Link>。
         </p>
       </header>
 
@@ -788,47 +811,32 @@ export function CareerVaultPage() {
 
       {status === 'success' && form && (
         <>
-          <div className={form.dirty || !form.savedAt ? 'resume-toolbar is-unsaved' : 'resume-toolbar is-saved'}>
-            <div>
-              <strong>核心资料准备度 {completeness}%</strong>
-              <div className="resume-progress">
-                <span style={{ width: `${completeness}%` }} />
-              </div>
-            </div>
-            <div className="btn-row">
-              <span className="resume-tip">
-                {form.dirty || !form.savedAt ? '未保存' : `已保存${form.savedAt ? ` · ${new Date(form.savedAt).toLocaleString()}` : ''}`}
-              </span>
-              <button type="button" className={beforeClear ? 'btn secondary' : 'btn ghost-danger'} disabled={saving}
-                onClick={beforeClear ? undoClear : clearForm}>{beforeClear ? '撤销清空' : '清空表单'}</button>
-            </div>
+          <div className="vault-topbar">
+            <p className="muted">{form.dirty ? '有未保存的修改' : form.savedAt ? '已保存' : '还没有保存的经历，可以导入或新增'}</p>
+            {!editing && <div className="btn-row"><Link className="btn secondary" to="/">导入另一份简历</Link>
+              {<ActionButton data-guide="vault-save" className="btn primary" disabledReason={saving?'正在保存经历库，请稍候。':'当前没有未保存的修改。'} disabled={saving || !form.dirty} onClick={() => void saveLocal()}>保存经历库</ActionButton>}
+              <Link className="btn secondary" to="/evidence">补充证明材料</Link></div>}
           </div>
           {saveMsg ? (
             <div role="status" className={saveKind === 'ok' ? 'callout ok' : 'callout warn'}>{saveMsg}</div>
           ) : null}
 
-          <p className="resume-hint">带星号的字段建议填写，可留空保存。</p>
-          <div className="resume-layout">
-            <aside className="resume-side">
-              <p className="resume-side-title">简历模块</p>
-              <nav aria-label="简历模块">
-                {SECTIONS.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    aria-current={activeSection === s.id ? 'location' : undefined}
-                    aria-controls={`resume-${s.id}`}
-                    className={activeSection === s.id ? 'resume-side-item active' : 'resume-side-item'}
-                    onClick={() => scrollTo(s.id)}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </nav>
-            </aside>
+          {form.importContext && <div className="vault-import-context">
+            <p role="status">{form.dirty ? '识别结果已带入草稿，请核对后点击“保存经历库”。' : '本次导入内容已保存。'}识别建议默认保留已有内容。</p>
+            <details><summary>查看本次识别原文 · {form.importContext.filename}</summary>
+              <pre className="vault-source-text">{form.importContext.text}</pre>
+            </details>
+          </div>}
+          {!editing && <CareerVaultOverview form={form} saving={saving} onEdit={openEditor} onAdd={addEntry} onDelete={removeEntry} onSuggestion={(id, action, targetId) => patchForm(previous => applyImportSuggestion(previous, id, action, targetId))} />}
+          {editing && <div className="vault-editor" aria-label="编辑经历">
+            <header className="vault-editor-head"><h3>{SECTIONS.find(item => item.id === editing.section)?.label}</h3><div className="btn-row">
+              <ActionButton className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={saving} onClick={cancelEdit}>取消</ActionButton>
+              <ActionButton className="btn primary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={saving} onClick={finishEdit}>完成编辑</ActionButton>
+            </div></header>
+            <p className="resume-hint">缺失项可以留空。完成编辑后返回总览，再统一保存经历库。</p>
+            <div className="resume-main">
 
-            <div className="resume-main" ref={resumeMain}>
-              <section id="resume-basic" className="resume-section">
+              {editing.section === 'basic' && <section id="resume-basic" className="resume-section">
                 <h3>
                   <i />
                   基本信息
@@ -901,9 +909,9 @@ export function CareerVaultPage() {
                     <RegionSelect label="户口所在地" value={form.basic.hukou} onChange={v => patchForm(p => ({...p,basic:{...p.basic,hukou:v}}))} />
                   </div>
                 </details>
-              </section>
+              </section>}
 
-              <section id="resume-intention" className="resume-section">
+              {editing.section === 'intention' && <section id="resume-intention" className="resume-section">
                 <h3>
                   <i />
                   求职意向
@@ -961,15 +969,15 @@ export function CareerVaultPage() {
                     }
                   />
                 </div>
-              </section>
+              </section>}
 
-              <section id="resume-education" className="resume-section">
+              {editing.section === 'education' && <section id="resume-education" className="resume-section">
                 <h3>
                   <i />
                   教育经历
                 </h3>
-                {form.education.map((edu, idx) => (
-                  <div key={edu.id} className="resume-entry">
+                {form.education.filter(row => row.id === editing.id).map((edu) => (
+                  <div key={edu.id} className="resume-entry"><ActionButton className="btn ghost-danger" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={saving} onClick={() => void removeEntry('education', edu.id)}>删除</ActionButton>
                     <div className="resume-fields">
                       <FieldInput
                         label="学校"
@@ -977,8 +985,8 @@ export function CareerVaultPage() {
                         value={edu.school}
                         onChange={(v) =>
                           patchForm((p) => {
-                            const education = p.education.map((row, i) =>
-                              i === idx ? { ...row, school: v } : row,
+                            const education = p.education.map((row) =>
+                              row.id === edu.id ? { ...row, school: v } : row,
                             )
                             return { ...p, education }
                           })
@@ -991,8 +999,8 @@ export function CareerVaultPage() {
                         value={edu.degree}
                         onChange={(v) =>
                           patchForm((p) => {
-                            const education = p.education.map((row, i) =>
-                              i === idx ? { ...row, degree: v } : row,
+                            const education = p.education.map((row) =>
+                              row.id === edu.id ? { ...row, degree: v } : row,
                             )
                             return { ...p, education }
                           })
@@ -1004,8 +1012,8 @@ export function CareerVaultPage() {
                         value={edu.major}
                         onChange={(v) =>
                           patchForm((p) => {
-                            const education = p.education.map((row, i) =>
-                              i === idx ? { ...row, major: v } : row,
+                            const education = p.education.map((row) =>
+                              row.id === edu.id ? { ...row, major: v } : row,
                             )
                             return { ...p, education }
                           })
@@ -1018,8 +1026,8 @@ export function CareerVaultPage() {
                         value={edu.fullTime}
                         onChange={(v) =>
                           patchForm((p) => {
-                            const education = p.education.map((row, i) =>
-                              i === idx ? { ...row, fullTime: v } : row,
+                            const education = p.education.map((row) =>
+                              row.id === edu.id ? { ...row, fullTime: v } : row,
                             )
                             return { ...p, education }
                           })
@@ -1032,8 +1040,8 @@ export function CareerVaultPage() {
                         value={edu.start}
                         onChange={(v) =>
                           patchForm((p) => {
-                            const education = p.education.map((row, i) =>
-                              i === idx ? { ...row, start: v } : row,
+                            const education = p.education.map((row) =>
+                              row.id === edu.id ? { ...row, start: v } : row,
                             )
                             return { ...p, education }
                           })
@@ -1046,8 +1054,8 @@ export function CareerVaultPage() {
                         value={edu.end}
                         onChange={(v) =>
                           patchForm((p) => {
-                            const education = p.education.map((row, i) =>
-                              i === idx ? { ...row, end: v } : row,
+                            const education = p.education.map((row) =>
+                              row.id === edu.id ? { ...row, end: v } : row,
                             )
                             return { ...p, education }
                           })
@@ -1058,8 +1066,8 @@ export function CareerVaultPage() {
                         value={edu.rank}
                         onChange={(v) =>
                           patchForm((p) => {
-                            const education = p.education.map((row, i) =>
-                              i === idx ? { ...row, rank: v } : row,
+                            const education = p.education.map((row) =>
+                              row.id === edu.id ? { ...row, rank: v } : row,
                             )
                             return { ...p, education }
                           })
@@ -1071,8 +1079,8 @@ export function CareerVaultPage() {
                         placeholder="如 3.8/4.0"
                         onChange={(v) =>
                           patchForm((p) => {
-                            const education = p.education.map((row, i) =>
-                              i === idx ? { ...row, gpa: v } : row,
+                            const education = p.education.map((row) =>
+                              row.id === edu.id ? { ...row, gpa: v } : row,
                             )
                             return { ...p, education }
                           })
@@ -1084,8 +1092,8 @@ export function CareerVaultPage() {
                         placeholder="城市 / 国家"
                         onChange={(v) =>
                           patchForm((p) => {
-                            const education = p.education.map((row, i) =>
-                              i === idx ? { ...row, location: v } : row,
+                            const education = p.education.map((row) =>
+                              row.id === edu.id ? { ...row, location: v } : row,
                             )
                             return { ...p, education }
                           })
@@ -1098,8 +1106,8 @@ export function CareerVaultPage() {
                         placeholder="数据结构、操作系统、机器学习…"
                         onChange={(v) =>
                           patchForm((p) => {
-                            const education = p.education.map((row, i) =>
-                              i === idx ? { ...row, coursework: v } : row,
+                            const education = p.education.map((row) =>
+                              row.id === edu.id ? { ...row, coursework: v } : row,
                             )
                             return { ...p, education }
                           })
@@ -1108,41 +1116,15 @@ export function CareerVaultPage() {
                     </div>
                   </div>
                 ))}
-                <button
-                  type="button"
-                  className="btn secondary"
-                  onClick={() =>
-                    patchForm((p) => ({
-                      ...p,
-                      education: [
-                        ...p.education,
-                        {
-                          id: newExperienceId('edu'),
-                          school: '',
-                          degree: '',
-                          major: '',
-                          fullTime: '',
-                          start: '',
-                          end: '',
-                          rank: '',
-                          gpa: '',
-                          location: '',
-                          coursework: '',
-                        } satisfies ResumeEducation,
-                      ],
-                    }))
-                  }
-                >
-                  + 添加教育经历
-                </button>
-              </section>
 
-              <section id="resume-internship" className="resume-section">
+              </section>}
+
+              {editing.section === 'internship' && <section id="resume-internship" className="resume-section">
                 <h3>
                   <i />
                   实习经历
                 </h3>
-                {form.internships.map((entry) => (
+                {form.internships.filter(row => row.id === editing.id).map((entry) => (
                   <ExperienceEditor
                     key={entry.id}
                     entry={entry}
@@ -1155,48 +1137,18 @@ export function CareerVaultPage() {
                         ),
                       }))
                     }
-                    onRemove={() =>
-                      patchForm((p) => ({
-                        ...p,
-                        internships: p.internships.filter((row) => row.id !== entry.id),
-                      }))
-                    }
+                    onRemove={() => void removeEntry('internships', entry.id)}
                   />
                 ))}
-                <button
-                  type="button"
-                  className="btn secondary"
-                  onClick={() =>
-                    patchForm((p) => ({
-                      ...p,
-                      internships: [
-                        ...p.internships,
-                        {
-                          id: newExperienceId('intern'),
-                          organization: '',
-                          title: '',
-                          role: '',
-                          start: '',
-                          end: '',
-                          description: '',
-                          location: '',
-                          techStack: '',
-                          link: '',
-                        },
-                      ],
-                    }))
-                  }
-                >
-                  + 添加实习经历
-                </button>
-              </section>
 
-              <section id="resume-project" className="resume-section">
+              </section>}
+
+              {editing.section === 'project' && <section id="resume-project" className="resume-section">
                 <h3>
                   <i />
                   项目经历
                 </h3>
-                {form.projects.map((entry) => (
+                {form.projects.filter(row => row.id === editing.id).map((entry) => (
                   <ExperienceEditor
                     key={entry.id}
                     entry={entry}
@@ -1207,48 +1159,18 @@ export function CareerVaultPage() {
                         projects: p.projects.map((row) => (row.id === entry.id ? next : row)),
                       }))
                     }
-                    onRemove={() =>
-                      patchForm((p) => ({
-                        ...p,
-                        projects: p.projects.filter((row) => row.id !== entry.id),
-                      }))
-                    }
+                    onRemove={() => void removeEntry('projects', entry.id)}
                   />
                 ))}
-                <button
-                  type="button"
-                  className="btn secondary"
-                  onClick={() =>
-                    patchForm((p) => ({
-                      ...p,
-                      projects: [
-                        ...p.projects,
-                        {
-                          id: newExperienceId('proj'),
-                          organization: '',
-                          title: '',
-                          role: '',
-                          start: '',
-                          end: '',
-                          description: '',
-                          location: '',
-                          techStack: '',
-                          link: '',
-                        },
-                      ],
-                    }))
-                  }
-                >
-                  + 添加项目经历
-                </button>
-              </section>
 
-              <section id="resume-awards" className="resume-section">
+              </section>}
+
+              {editing.section === 'awards' && <section id="resume-awards" className="resume-section">
                 <h3>
                   <i />
                   获奖 / 竞赛
                 </h3>
-                {(form.awards ?? []).map((entry) => (
+                {(form.awards ?? []).filter(row => row.id === editing.id).map((entry) => (
                   <AwardEditor
                     key={entry.id}
                     entry={entry}
@@ -1258,32 +1180,13 @@ export function CareerVaultPage() {
                         return { ...p, awards, extras: { ...p.extras, awards: syncAwardText(awards) } }
                       })
                     }
-                    onRemove={() =>
-                      patchForm((p) => {
-                        const awards = (p.awards ?? []).filter((row) => row.id !== entry.id)
-                        return { ...p, awards, extras: { ...p.extras, awards: syncAwardText(awards) } }
-                      })
-                    }
+                    onRemove={() => void removeEntry('awards', entry.id)}
                   />
                 ))}
-                <button
-                  type="button"
-                  className="btn secondary"
-                  onClick={() =>
-                    patchForm((p) => {
-                      const awards = [
-                        ...(p.awards ?? []),
-                        { id: newExperienceId('award'), name: '', issuer: '', date: '', description: '' },
-                      ]
-                      return { ...p, awards, extras: { ...p.extras, awards: syncAwardText(awards) } }
-                    })
-                  }
-                >
-                  + 添加获奖
-                </button>
-              </section>
 
-              <section id="resume-skills" className="resume-section">
+              </section>}
+
+              {editing.section === 'skills' && <section id="resume-skills" className="resume-section">
                 <h3>
                   <i />
                   技能 / 其他
@@ -1336,34 +1239,20 @@ export function CareerVaultPage() {
                     }
                   />
                 </div>
-              </section>
+              </section>}
 
             </div>
-          </div>
 
-          <div className="btn-row end">
-            <button type="button" className="btn secondary" onClick={() => navigate('/')}>
-              可选：简历识别
-            </button>
-            <button type="button" className="btn secondary" onClick={loadDemoResume} disabled={!vault || saving}>
-              载入演示简历
-            </button>
-            <button type="button" className="btn secondary" disabled={saving} onClick={() => void saveLocal()}>
-              {saving ? '正在保存…' : '保存经历'}
-            </button>
-            <button
-              type="button"
-              className="btn primary"
-              disabled={saving}
-              onClick={async () => {
-                // Persist before leaving so returning from later steps doesn't look「被清空」
-                if ((form.dirty || !form.savedAt) && !await saveLocal()) return
-                navigate('/evidence?view=materials')
-              }}
-            >
-              保存并补充证明材料
-            </button>
-          </div>
+            <div className="btn-row end">
+              <ActionButton className="btn secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={saving} onClick={cancelEdit}>取消</ActionButton>
+              <ActionButton className="btn primary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={saving} onClick={finishEdit}>完成编辑</ActionButton>
+            </div>
+          </div>}
+          {!editing && <details className="vault-data-tools"><summary>其他操作</summary><div className="btn-row">
+            <ActionButton className="btn secondary" disabledReason={saving?'正在保存，请稍候。':'经历库尚未读取，请等待加载完成或重试。'} disabled={!vault || saving} onClick={loadDemoResume}>载入演示简历</ActionButton>
+            <ActionButton className="btn ghost-danger" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={saving} onClick={beforeClear ? undoClear : clearForm}>{beforeClear ? '撤销清空' : '清空表单'}</ActionButton>
+          </div></details>}
+
         </>
       )}
     </section>

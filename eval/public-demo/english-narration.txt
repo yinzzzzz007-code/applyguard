@@ -1,0 +1,31 @@
+This is ApplyGuard, an evidence-based resume assistant.
+
+I import a PDF resume. The system extracts the text and organizes the experience.
+
+The extracted information goes into an editable draft. It is not saved automatically.
+
+I review the details, correct any errors, and save my experience library.
+
+The blue guide explains what is missing and moves to the next step after I complete it.
+
+I add supporting documents and link them to the relevant experience.
+
+With my permission, a local agent can find relevant source material. I review each returned quote before importing it.
+
+I can also select a public GitHub repository. The source is pinned to a specific commit.
+
+I enter a target job description and compare its requirements with my experience and evidence.
+
+AI improves the wording for the target role. I compare the suggestion with the original and its evidence.
+
+Here, the number conflicts with the source. I correct it manually, and the previous check becomes outdated.
+
+The system checks the updated statement against source quotes. Confirmation alone does not make a fact verified.
+
+Verified export requires current evidence checks. A user-confirmed draft keeps unresolved issues in its review record.
+
+The interview guide creates introductions and project-specific practice questions.
+
+The job radar refreshes supported official sources and lets me inspect each notification.
+
+Jobs are ranked by resume relevance, preferences, and feedback. The score is not a hiring probability.

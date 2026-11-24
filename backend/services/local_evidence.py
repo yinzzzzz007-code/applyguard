@@ -38,6 +38,11 @@ def attach_local_evidence(experiences: list[dict[str, Any]], draft: dict[str, An
                 if link['link_state'] != 'ACTIVE' or not check['supported']:
                     continue
                 record = check['evidence']
+                from backend.services.evidence_scope import matches_item
+                text='\n'.join(span['raw_text'] for span in record['spans'])
+                raw=next((r for k in ('projects','internships','awards') for r in draft.get(k,[]) if r.get('id')==target[1]),{})
+                if not matches_item(item['title'],(record.get('file') or {}).get('relative_path',''),text,
+                                    organization=item.get('organization',''),description=raw.get('description',''),kind=target[0]):continue
                 alias = vault_evidence_id(local_id)
                 if any(source['evidence_id'] == alias for source in sources):
                     continue
@@ -55,7 +60,7 @@ def attach_local_evidence(experiences: list[dict[str, Any]], draft: dict[str, An
                 from backend.services.jd_parser import _TERMS, _TERM_ALIASES
                 local_aliases = {'HTTP API': ('接口服务',), 'automated testing': ('自动化测试', '单元测试'),
                                  'Git': ('版本协作', '版本控制'), 'data pipelines': ('数据管道',)}
-                item['skills'] = [term for term in _TERMS if any(
+                item['skills'] = list(dict.fromkeys([*item.get('skills', []), *(term for term in _TERMS if any(
                     re.search(r'(?<![a-z0-9])' + re.escape(alias) + r'(?![a-z0-9])', claim['text'], re.I)
-                    for alias in (*_TERM_ALIASES.get(term, (term,)), *local_aliases.get(term, ())))]
+                    for alias in (*_TERM_ALIASES.get(term, (term,)), *local_aliases.get(term, ()))))]))
     return items

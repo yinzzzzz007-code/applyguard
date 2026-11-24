@@ -1,53 +1,28 @@
-import { lazy, Suspense, useRef, useState } from 'react'
+import {completeGuideStep} from '../guide'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getApiClient, type ResumeParseMode } from '../api/client'
-import type { EditableResumeForm, ResumeParseResult } from '../api/types'
+import type { ResumeParseResult } from '../api/types'
+import {agentUi} from '../api/agent'
 import { DemoQuickStart } from '../components/DemoQuickStart'
 import { ErrorState, LoadingState } from '../components/States'
 import { Icon } from '../components/Icon'
 import { Button } from '../components/ui/button'
 import { Card, CardHeader, CardTitle } from '../components/ui/card'
-import { useDemo } from '../context/DemoContext'
-import { normalizeResumeForm, overwriteFromExtracted, resumeSections, selectImportRows, syncAwardText } from '../resume/formModel'
+import { queueResumeImport } from '../resume/importTransfer'
 
 const ProjectReel = lazy(() => import('../components/ProjectReel').then(module => ({default:module.ProjectReel})))
 
-const sectionLabels = { education: '教育经历', internships: '实习经历', projects: '项目经历', awards: '获奖 / 竞赛' }
-const fieldLabels: Record<string, string> = {
-  name: '姓名 / 名称', gender: '性别', birthday: '出生日期', ethnicity: '民族', politics: '政治面貌',
-  phone: '手机', email: '邮箱', idType: '证件类型', idNo: '证件号码', city: '现居住地', hukou: '户籍',
-  school: '学校', degree: '学历', major: '专业', fullTime: '全日制', rank: '成绩 / 排名',
-  title: '名称', organization: '所属组织', role: '角色', start: '开始时间', end: '结束时间',
-  description: '描述', issuer: '颁发单位', date: '获奖时间', projectType: '招聘项目',
-  expectRole: '期望职位', expectCity: '期望城市', availability: '到岗时间', skills: '技能', awards: '获奖', summary: '自我介绍',
-}
-
-function ImportFields({ row, previous }: { row: object; previous?: object }) {
-  const old = previous as Record<string, string> | undefined
-  return <dl className="import-preview-fields">{Object.entries(row).filter(([key]) => fieldLabels[key]).map(([key, value]) =>
-    <div key={key}><dt>{fieldLabels[key]}</dt><dd>{value || '未填写'}
-      {old?.[key] && old[key] !== value && <small>原值：{old[key]}</small>}</dd></div>)}</dl>
-}
-
-function toggleId(set: ReadonlySet<string>, id: string): Set<string> {
-  const next = new Set(set)
-  if (next.has(id)) next.delete(id)
-  else next.add(id)
-  return next
-}
-
 export function ResumeImportPage() {
   const navigate = useNavigate()
-  const { resumeForm, setResumeForm } = useDemo()
+  const [connections,setConnections]=useState<{github:boolean;harness:string}|null>(null)
+  useEffect(()=>{let active=true;void agentUi({action:'connections_summary'}).then(v=>{if(active)setConnections(v)}).catch(()=>{});return ()=>{active=false}},[])
   const [file, setFile] = useState<File | null>(null)
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const [parsed, setParsed] = useState<ResumeParseResult | null>(null)
-  const [preview, setPreview] = useState<{ next: EditableResumeForm; previous: EditableResumeForm | null; expected: string | null } | null>(null)
-  const [excluded, setExcluded] = useState<Set<string>>(new Set())
-  const [removed, setRemoved] = useState<Set<string>>(new Set())
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState('')
+  const fileInput = useRef<HTMLInputElement>(null)
+  const [importError, setImportError] = useState('')
   const applying = useRef(false)
   const [dragOver, setDragOver] = useState(false)
   const [parseMode, setParseMode] = useState<ResumeParseMode>('offline')
@@ -57,10 +32,7 @@ export function ResumeImportPage() {
     setStatus('loading')
     setErrorMsg('')
     setParsed(null)
-    setPreview(null)
-    setSaveError('')
-    setExcluded(new Set())
-    setRemoved(new Set())
+    setImportError('')
     const res = await getApiClient().parseResumePdf(target, parseMode)
     if (res.error) {
       setErrorMsg(res.error.message)
@@ -73,56 +45,19 @@ export function ResumeImportPage() {
       return
     }
     setParsed(res.data)
-    await preparePreview(res.data)
     setStatus('success')
   }
 
-  async function preparePreview(result: ResumeParseResult) {
-    setSaveError('')
-    const api = getApiClient()
-    const [vault, saved] = await Promise.all([api.getCareerVault(), api.getResumeDraft()])
-    const candidate = saved.data?.candidateId ?? resumeForm?.candidateId ?? vault.data?.candidate_id
-    if (saved.error || !candidate) {
-      setSaveError(saved.error?.message ?? '无法读取经历库，当前识别结果尚未写入。')
-      return
-    }
-    const base = resumeForm?.dirty && resumeForm.candidateId === candidate ? resumeForm : saved.data
-    const previous = base ? normalizeResumeForm(base) : null
-    const next = overwriteFromExtracted(candidate, result.form, previous)
-    setExcluded(new Set())
-    setRemoved(new Set())
-    setPreview({ next, previous, expected: saved.data?.savedAt ?? null })
-  }
-
-  async function applyToVault() {
-    if (!preview || applying.current) return
-    const { next, previous, expected } = preview
-    const awards = selectImportRows(next.awards, previous?.awards ?? [], excluded, removed)
-    const draft = {
-      ...next,
-      education: selectImportRows(next.education, previous?.education ?? [], excluded, removed),
-      internships: selectImportRows(next.internships, previous?.internships ?? [], excluded, removed),
-      projects: selectImportRows(next.projects, previous?.projects ?? [], excluded, removed),
-      awards,
-      extras: { ...next.extras, awards: syncAwardText(awards) || next.extras.awards },
-      dirty: false,
-    }
-    if (previous && !window.confirm('写入本次核对的资料？基本信息、求职意向和技能将按预览更新。勾选移除的经历及其材料关联将退出当前简历。')) return
+  function applyToVault() {
+    if (!parsed || status !== 'success' || applying.current) return
     applying.current = true
-    setSaving(true)
-    setSaveError('')
     try {
-      const saved = await getApiClient().saveResumeDraft(draft, expected)
-      if (!saved.data?.saved) {
-        setSaveError(saved.error?.message ?? '后端未确认保存，请重试。')
-        return
-      }
-      setResumeForm({ ...draft, savedAt: saved.data.saved_at })
-      try { sessionStorage.setItem('applyguard.importNotice', '识别结果已保存到经历库，请核对并补全缺失项。') } catch { /* optional notice */ }
+      queueResumeImport(parsed)
+      completeGuideStep('import')
       navigate('/vault')
-    } finally {
+    } catch {
       applying.current = false
-      setSaving(false)
+      setImportError('暂时无法保留识别结果，请保留此页并重试。')
     }
   }
 
@@ -134,11 +69,12 @@ export function ResumeImportPage() {
         <header className="panel-head home-intro-copy">
           <div>
             <h2>简历导入</h2>
-            <p>上传 PDF，核对识别结果后保存到经历库。</p>
+            <p>识别简历后，一键带入经历库，再编辑保存。</p>
+              <p className="muted">{connections?`GitHub 私库${connections.github?'已授权':'未连接'} · DeepSeek Harness ${{paired:'已配对',authorized:'已授权，等待配对',none:'未连接'}[connections.harness]??'未连接'}`:'正在检查本机连接…'} · <Link to="/evidence">选择材料来源</Link></p>
           </div>
           <div className="home-actions">
             <Button asChild variant="secondary"><Link to="/vault">继续编辑经历库</Link></Button>
-            <Button asChild><a href="#resume-import">导入我的简历 <Icon name="arrow" /></a></Button>
+            <Button data-guide="import" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={status === 'loading'} onClick={() => parsed && status === 'success' ? applyToVault() : fileInput.current?.click()}>{status === 'loading' ? '正在识别…' : parsed && status === 'success' ? '导入到经历库' : '选择简历'} <Icon name="arrow" /></Button>
           </div>
         </header>
       <Card asChild><section id="resume-import" className="import-card" aria-labelledby="resume-import-title">
@@ -146,13 +82,13 @@ export function ResumeImportPage() {
         <CardTitle asChild><h3 id="resume-import-title">上传 PDF</h3></CardTitle>
       </CardHeader>
       <label className="field-label" htmlFor="resume-parse-mode">识别方式</label>
-      <select id="resume-parse-mode" value={parseMode} disabled={status === 'loading' || saving}
-        onChange={(event) => { setParseMode(event.target.value as ResumeParseMode); setParsed(null); setStatus('idle') }}>
-        <option value="offline">本地规则（默认，不调用模型）</option>
+      <select id="resume-parse-mode" value={parseMode} disabled={status === 'loading'}
+        onChange={(event) => { setParseMode(event.target.value as ResumeParseMode); setParsed(null); setImportError(''); setStatus('idle') }}>
+        <option value="offline">本地自动识别（默认，不调用模型）</option>
         <option value="offline_ocr">本地 OCR（图片或扫描件）</option>
         <option value="dynamic">模型抽取（发送简历正文，可能产生费用）</option>
       </select>
-      <p className="mode-note">{parseMode === 'offline' ? '本地处理，无需调用模型。支持可复制文字的 PDF。' : parseMode === 'offline_ocr' ? '在本机逐页识别，最多 5 页，需先安装本地 OCR；可能耗时较长，结果须逐项核对。' : '正文和文件名将发送给后端配置的模型服务，可能产生费用；请先脱敏。'}</p>
+      <p className="mode-note">{parseMode === 'offline' ? '优先提取文字；遇到扫描页时自动使用本地 OCR（最多 5 页，需安装 OCR）。识别结果请逐项核对。' : parseMode === 'offline_ocr' ? '在本机逐页识别，最多 5 页，需先安装本地 OCR；可能耗时较长，结果须逐项核对。' : '正文和文件名将发送给后端配置的模型服务，可能产生费用；请先脱敏。'}</p>
       <label
         className={dragOver ? 'resume-dropzone is-over' : 'resume-dropzone'}
         aria-busy={status === 'loading'}
@@ -172,16 +108,18 @@ export function ResumeImportPage() {
         }}
       >
         <input
+          ref={fileInput}
           type="file"
           accept="application/pdf,.pdf"
           className="import-file-input"
           aria-label="选择 PDF 简历"
           aria-describedby="upload-requirements"
-          disabled={status === 'loading' || saving}
+          disabled={status === 'loading'}
           onChange={(event) => {
             const next = event.target.files?.[0]
             if (next) {
               setFile(next)
+              event.target.value = ''
               void runParse(next)
             }
           }}
@@ -190,7 +128,7 @@ export function ResumeImportPage() {
         <span className="upload-copy">
           <strong>{file ? file.name : '把简历拖到这里'}</strong>
           <span className="upload-choice">或 <span>选择文件</span></span>
-          <span className="muted" id="upload-requirements">单个 PDF，最大 5 MB。扫描件请选择本地 OCR。</span>
+          <span className="muted" id="upload-requirements">单个 PDF，最大 5 MB；扫描件自动使用本地 OCR（最多 5 页）。</span>
         </span>
       </label>
       <div className="privacy-line"><Icon name="lock" /><span>只用于整理本次申请，不会提交到招聘网站。</span></div>
@@ -220,57 +158,19 @@ export function ResumeImportPage() {
             <li>项目条数：{parsed.form.projects.length}</li>
             <li>获奖 / 竞赛条数：{(parsed.form.awards ?? []).length}</li>
           </ul>
-          {preview && <>
-            <details className="sample-data-note"><summary>核对基本信息、求职意向和技能</summary>
-              <ImportFields row={preview.next.basic} previous={preview.previous?.basic} />
-              <ImportFields row={preview.next.intention} previous={preview.previous?.intention} />
-              <ImportFields row={preview.next.extras} previous={preview.previous?.extras} />
-            </details>
-            <p className="muted">旧条目默认保留，可勾选移除。</p>
-            {resumeSections.map(section => <details key={section} className="sample-data-note">
-              <summary>{sectionLabels[section]}（本次识别 {preview.next[section].length} 条）</summary>
-              {preview.next[section].map((row, index) => {
-                const old = preview.previous?.[section].find(item => item.id === row.id)
-                return <details className="import-preview-row" key={row.id}>
-                  <summary>{'school' in row ? row.school : 'name' in row ? row.name : row.title || row.organization}
-                    {' · '}{old ? '已匹配原条目' : '新增'}</summary>
-                  <label><input type="checkbox" checked={!excluded.has(row.id)} disabled={saving}
-                    onChange={() => setExcluded(value => toggleId(value, row.id))} />
-                    {old ? '按本次识别更新' : '加入第 ' + (index + 1) + ' 条'}</label>
-                  <ImportFields row={row} previous={old} />
-                </details>
-              })}
-              {preview.previous?.[section].filter(row => !preview.next[section].some(item => item.id === row.id)).map(row =>
-                <details className="import-preview-row" key={row.id}><summary>原有条目 · {'school' in row ? row.school : 'name' in row ? row.name : row.title || row.organization}</summary>
-                  <label><input type="checkbox" checked={removed.has(row.id)} disabled={saving}
-                    onChange={() => setRemoved(value => toggleId(value, row.id))} />移除此条及其在当前简历中的材料关联</label>
-                  <ImportFields row={row} /></details>)}
-            </details>)}
-          </>}
-          {saveError && <div className="callout danger" role="alert">
-            本次识别结果尚未写入。{saveError}
-            <button className="text-action" type="button" onClick={() => void preparePreview(parsed)}>重新读取已有资料</button>
-          </div>}
-          {parsed.preview ? (
+          <p>点击上方“导入到经历库”，即可在经历库中编辑、补充和保存。</p>
+          {importError && <p role="alert" className="callout warn">{importError}</p>}
+          <button type="button" className="text-action" onClick={() => fileInput.current?.click()}>重新选择简历</button>
+          {parsed.source_text || parsed.preview ? (
             <>
-              <p className="field-label">正文摘录</p>
-              <pre className="copy-pack jd-input">{parsed.preview}</pre>
+              <p className="field-label">识别原文</p>
+              <pre className="copy-pack jd-input">{parsed.source_text ?? parsed.preview}</pre>
             </>
           ) : null}
         </div>
       )}
 
-      <div className="btn-row import-actions">
-        <Button variant="secondary" onClick={() => navigate('/vault')}>
-          先手动填写
-        </Button>
-        <Button
-          disabled={!preview || status !== "success" || saving}
-          onClick={() => void applyToVault()}
-        >
-          {saving ? "正在保存…" : "写入并核对"} <Icon name="arrow" />
-        </Button>
-      </div>
+      <p className="muted"><Link to="/vault">也可以先手动填写经历</Link></p>
       </section></Card>
         <Suspense fallback={<Card className="home-reel-loading" role="status">正在加载 24 秒操作介绍…</Card>}>
           <ProjectReel variant="home" />

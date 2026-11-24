@@ -1,3 +1,6 @@
+import {initializeDraftSelection} from '../resume/draftSelection'
+import {completeGuideStep} from '../guide'
+import {ActionButton} from '../components/ui/action-button'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getApiClient, SAMPLE_JD, type WorkflowParseMode } from '../api/client'
@@ -27,8 +30,11 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
   const [targetError, setTargetError] = useState('')
   const [loadingTarget, setLoadingTarget] = useState(Boolean(jobId))
   const { jdRawInput, setJdRawInput, setWorkflow, scenario, workflow, resumeForm, setResumeForm, reviewDrafts, setActiveJobId, invalidateWorkflow } = useDemo()
-  const [loadingResume, setLoadingResume] = useState(scenario === 'live' && !resumeForm)
-  const [resumeError, setResumeError] = useState('')
+  const [resumeRequestPending, setLoadingResume] = useState(scenario === 'live' && !resumeForm)
+  const [resumeRequestError, setResumeError] = useState('')
+  const needsResume = scenario === 'live' && !resumeForm
+  const loadingResume = needsResume && resumeRequestPending
+  const resumeError = needsResume ? resumeRequestError : ''
   const [status, setStatus] = useState<'idle' | 'loading' | 'empty' | 'error' | 'success'>(
     workflow ? 'success' : 'idle',
   )
@@ -45,6 +51,8 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
   const requestId = useRef(0)
   useEffect(() => {
     if (resumeForm || scenario !== 'live') return
+    setLoadingResume(true)
+    setResumeError('')
     let cancelled = false
     void getApiClient().getResumeDraft().then((result) => {
       if (cancelled) return
@@ -189,14 +197,18 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
         setStatus('empty')
         return
       }
-      const next = sameJob && workflow.resume_claims.length
+      const next = sameJob && workflow && workflow.candidate_id === res.data.candidate_id
         ? invalidateRestoredWorkflow({ ...res.data, resume_claims: workflow.resume_claims,
-          claim_verification: workflow.claim_verification, review_session: workflow.review_session },
+          claim_verification: workflow.claim_verification, resume_selection: {...workflow.resume_selection, auto_match_threshold: undefined}, review_session: workflow.review_session },
           '已保留已写正文，请根据本次岗位版本重新核验。')
-        : res.data
-      setWorkflow(next)
+        : !res.data._prerecorded && res.data.component_modes?.career_vault === "LOCAL_RESUME_DRAFT"
+          ? invalidateRestoredWorkflow({...res.data, resume_claims: [], claim_verification: [],
+              resume_selection: {...res.data.resume_selection, draft_initialized: false}}, "岗位匹配已完成，草稿材料待核验。")
+          : res.data
+      setWorkflow(initializeDraftSelection(next,resumeForm))
       setActiveJobId(target?.id ?? null)
       setStatus('success')
+      completeGuideStep('jd')
     },
     [jdRawInput, resumeForm, scenario, setWorkflow, target, reviewDrafts, workflow, setActiveJobId],
   )
@@ -210,7 +222,7 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
         </p>
       </header>
       <div className="jd-source-bar">
-        <Button variant="secondary" disabled={prerecorded || status === 'loading'} onClick={() => void openRadarPicker()}>
+        <Button variant="secondary" disabledReason={prerecorded?'预录示例只供浏览，请切换到本地后端。':'正在读取岗位，请稍候。'} disabled={prerecorded || status === 'loading'} onClick={() => void openRadarPicker()}>
           从岗位雷达选择
         </Button>
         <Link className="text-action" to="/jobs">管理岗位雷达</Link>
@@ -233,18 +245,18 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
           {!libraryBusy && !libraryError && (
             <div className="jd-radar-picker-list" role="listbox" aria-label="可准备申请的收藏岗位">
               {selectableJobs.map((job) => (
-                <button
+                <ActionButton
                   type="button"
                   key={job.id}
                   role="option"
                   aria-selected={job.id === jobId}
                   className={`jd-radar-picker-item${job.id === jobId ? ' is-selected' : ''}`}
-                  disabled={status === 'loading'}
+                  disabledReason={'正在处理当前操作，完成后可继续。'} disabled={status === 'loading'}
                   onClick={() => selectRadarJob(job)}
                 >
                   <strong>{job.title}</strong>
                   <span>{job.company} · {job.location || '地点未知'} · {JOB_STATUS[job.status] || job.status}</span>
-                </button>
+                </ActionButton>
               ))}
               {!selectableJobs.length && (
                 <p className="muted">
@@ -257,7 +269,7 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
           )}
           <div className="btn-row">
             <Button asChild variant="secondary"><Link to="/jobs">打开岗位雷达</Link></Button>
-            <Button variant="secondary" disabled={libraryBusy} onClick={() => void openRadarPicker()}>刷新列表</Button>
+            <Button variant="secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={libraryBusy} onClick={() => void openRadarPicker()}>刷新列表</Button>
           </div>
         </Card>
       )}
@@ -301,20 +313,20 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
       </select>
       <p className="muted">{prerecorded ? '将显示预录样例。' : parseMode === 'offline' ? '在本机分析，无需调用模型。' : '将向模型服务发送岗位和相关经历。'}</p>
       <div className="btn-row">
-        <button type="button" className="btn secondary" disabled={prerecorded || Boolean(jobId) || loadingTarget || status === 'loading'} onClick={() => changeInput(SAMPLE_JD)}>
+        <ActionButton type="button" className="btn secondary" disabledReason={prerecorded?'预录示例只供浏览，请切换到本地后端。':jobId?'已关联收藏岗位版本；请到岗位雷达编辑或更换岗位。':'正在读取岗位，请稍候。'} disabled={prerecorded || Boolean(jobId) || loadingTarget || status === 'loading'} onClick={() => changeInput(SAMPLE_JD)}>
           填入示例岗位
-        </button>
-        <button type="button" className="btn secondary" disabled={prerecorded || Boolean(jobId) || loadingTarget || status === 'loading'} onClick={() => changeInput('')}>
+        </ActionButton>
+        <ActionButton type="button" className="btn secondary" disabledReason={prerecorded?'预录示例只供浏览，请切换到本地后端。':jobId?'已关联收藏岗位版本；请到岗位雷达编辑或更换岗位。':'正在读取岗位，请稍候。'} disabled={prerecorded || Boolean(jobId) || loadingTarget || status === 'loading'} onClick={() => changeInput('')}>
           清空
-        </button>
-        <button
+        </ActionButton>
+        <ActionButton
           type="button"
           className="btn primary"
-          disabled={status === 'loading' || loadingTarget || loadingResume || Boolean(targetError) || Boolean(resumeError) || Boolean(jobId && !resumeForm)}
+          disabledReason={status==='loading'||loadingTarget||loadingResume?'正在读取岗位或经历，请稍候。':targetError||resumeError?'请先处理页面显示的岗位或经历读取错误。':'请先在经历库保存简历，再准备这个岗位。'} guideRequirements={jobId&&!resumeForm?[{id:'resume',label:'请先在经历库导入、核对并保存你的简历。',href:'/vault'}]:[]} disabled={status === 'loading' || loadingTarget || loadingResume || Boolean(targetError) || Boolean(resumeError) || Boolean(jobId && !resumeForm)}
           onClick={() => void run(parseMode)}
         >
           {status === 'loading' ? '正在分析岗位…' : scenario.startsWith('prerecorded') ? '加载演示结果' : '分析岗位并匹配经历'}
-        </button>
+        </ActionButton>
       </div>
 
       {backendHint && <details className="processing-details"><summary>连接详情</summary><p>{backendHint}</p></details>}
@@ -360,7 +372,7 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
             <div className="callout warn">
               {offlineRules ? (
                 <p className="muted">
-                  离线规则保留明确列出的任职要求和加分项。无法判定的条目请对照原文人工核对。
+                  可逐项查看岗位职责、任职要求和加分项，核对原文与相关经历。
                 </p>
               ) : (
                 <p className="muted">

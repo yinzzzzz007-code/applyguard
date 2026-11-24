@@ -6,6 +6,25 @@ REM One-click local demo: backend :8000 + Vite :5173
 set "ROOT=%~dp0"
 cd /d "%ROOT%"
 
+REM Optional: load applyguard\.env into this process (KEY=VALUE lines; # comments ok)
+if exist "%ROOT%.env" (
+  echo [ApplyGuard] Loading "%ROOT%.env" for backend...
+  for /f "usebackq eol=# tokens=1,* delims==" %%A in ("%ROOT%.env") do (
+    if not "%%A"=="" if not "%%B"=="" set "%%A=%%B"
+  )
+) else (
+  echo [ApplyGuard] No .env found. Offline demo still works. For model path, copy .env.example to .env and set APPLYGUARD_AI_API_KEY.
+)
+
+REM Keep temporary installation files and pip cache inside the project.
+set "RUNTIME_TEMP=%ROOT%output\sag-tmp"
+if not exist "%RUNTIME_TEMP%\" mkdir "%RUNTIME_TEMP%"
+if exist "%RUNTIME_TEMP%\" (
+  set "TEMP=%RUNTIME_TEMP%"
+  set "TMP=%RUNTIME_TEMP%"
+  if not defined PIP_CACHE_DIR set "PIP_CACHE_DIR=%ROOT%output\pip-cache"
+)
+
 if not exist "%ROOT%.venv\Scripts\python.exe" (
   echo [ApplyGuard] .venv not found. Creating and installing requirements...
   where python >nul 2>&1
@@ -20,7 +39,7 @@ if not exist "%ROOT%.venv\Scripts\python.exe" (
     pause
     exit /b 1
   )
-  "%ROOT%.venv\Scripts\python.exe" -m pip install -r "%ROOT%requirements.txt"
+  "%ROOT%.venv\Scripts\python.exe" -m pip install -r "%ROOT%requirements-sag.txt"
   if errorlevel 1 (
     echo [ApplyGuard] ERROR: pip install failed
     pause
@@ -28,8 +47,20 @@ if not exist "%ROOT%.venv\Scripts\python.exe" (
   )
 )
 
+REM Ensure an existing environment also includes the SAG retrieval engine.
+"%ROOT%.venv\Scripts\python.exe" -c "import zleap.sag" >nul 2>&1
+if errorlevel 1 (
+  echo [ApplyGuard] Installing missing SAG dependencies into the project environment...
+  "%ROOT%.venv\Scripts\python.exe" -m pip install -r "%ROOT%requirements-sag.txt"
+  if errorlevel 1 (
+    echo [ApplyGuard] ERROR: SAG dependencies could not be installed.
+    pause
+    exit /b 1
+  )
+)
+
 REM Local OCR for scanned PDF / images (optional but needed for image-only materials)
-"%ROOT%.venv\Scripts\python.exe" -c "import paddleocr" >nul 2>&1
+"%ROOT%.venv\Scripts\python.exe" -c "import os,sys; sys.path.append(os.environ.get('APPLYGUARD_OCR_PACKAGES','')); import paddleocr, paddle" >nul 2>&1
 if errorlevel 1 (
   echo [ApplyGuard] Installing local OCR ^(paddlepaddle + paddleocr^). First time may take several minutes...
   "%ROOT%.venv\Scripts\python.exe" -m pip install paddlepaddle paddleocr
@@ -62,26 +93,7 @@ if not exist "%ROOT%frontend\node_modules\" (
   popd
 )
 
-REM Optional: load applyguard\.env into this process (KEY=VALUE lines; # comments ok)
-if exist "%ROOT%.env" (
-  echo [ApplyGuard] Loading "%ROOT%.env" for backend...
-  for /f "usebackq eol=# tokens=1,* delims==" %%A in ("%ROOT%.env") do (
-    if not "%%A"=="" if not "%%B"=="" set "%%A=%%B"
-  )
-) else (
-  echo [ApplyGuard] No .env found. Offline demo still works. For model path, copy .env.example to .env and set APPLYGUARD_AI_API_KEY.
-)
-
-REM Configure SAG before starting the backend. These settings are local to this launch.
-set "RUNTIME_TEMP=%ROOT%output\sag-tmp"
-if not exist "%RUNTIME_TEMP%\" mkdir "%RUNTIME_TEMP%"
-if exist "%RUNTIME_TEMP%\" (
-  set "TEMP=%RUNTIME_TEMP%"
-  set "TMP=%RUNTIME_TEMP%"
-) else (
-  echo [ApplyGuard] WARNING: Could not create the SAG temporary directory.
-)
-
+REM Configure SAG before starting the backend.
 if not defined APPLYGUARD_GROUNDING_STRATEGY (
   for /f "tokens=2 delims=/" %%H in ("%APPLYGUARD_AI_BASE_URL%") do (
     if /i "%%H"=="api.deepseek.com" set "APPLYGUARD_GROUNDING_STRATEGY=vector"
@@ -89,9 +101,14 @@ if not defined APPLYGUARD_GROUNDING_STRATEGY (
 )
 if /i "%APPLYGUARD_GROUNDING_STRATEGY%"=="vector" echo [ApplyGuard] SAG retrieval: vector.
 
-echo [ApplyGuard] Freeing ports 8000 / 5173 / 5174 if stale backends are holding them...
+echo [ApplyGuard] Checking ports 8000 / 5173 / 5174...
 powershell -NoProfile -Command ^
-  "foreach ($p in 8000,5173,5174) { Get-NetTCPConnection -LocalPort $p -ErrorAction SilentlyContinue | ForEach-Object { if ($_.OwningProcess -gt 0) { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } } }; Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -like '*backend.app*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+  "$busy=@(Get-NetTCPConnection -LocalPort 8000,5173,5174 -State Listen -ErrorAction SilentlyContinue); if($busy.Count -gt 0) { Write-Host '[ApplyGuard] Required port is already in use. Stop the existing service first.'; exit 1 }"
+if errorlevel 1 (
+  echo [ApplyGuard] No processes were stopped. Close the conflicting service and retry.
+  pause
+  exit /b 1
+)
 
 echo [ApplyGuard] Starting backend on http://127.0.0.1:8000 ...
 start "ApplyGuard-Backend" /D "%ROOT%" cmd /k ".\.venv\Scripts\python.exe -m backend.app"

@@ -33,7 +33,32 @@
       "git_blob_sha1": "62fde7e9200c3fa7f66eebbcb4d14d44278985d2",
       "sha256": "3e300d2bfaaff18bd6e1d385b934428499b0677259e5b8e8788f60943f579758",
       "bytes": 8634
+    },
+    "skills/interview/SKILL.md": {
+      "git_blob_sha1": "73c4da3cde55406dfb1b923bf05c4f444bcb5ac2",
+      "sha256": "5f7554bfbdb8bbccc48379ba39e02d165b125f514206cb0d9e1e81002668edfd",
+      "bytes": 7516
+    },
+    "skills/interview/references/interview-contract-and-session.md": {
+      "git_blob_sha1": "54ffeb70f9bb5d8a91bce0accea4b23a5f3a021c",
+      "sha256": "3a69992c01f3a2d2f87c19cca5599b61f459ab5bb0dfc8a093d041e218bea89c",
+      "bytes": 3004
+    },
+    "skills/interview/references/question-and-scoring-contract.md": {
+      "git_blob_sha1": "dd3073c0aa74f1558f7b65055a9bf4500ff2efe6",
+      "sha256": "b1b1e4f5453552ac1f52e8a4d2a509273478d9f9d241b0f0a8f61937381a961f",
+      "bytes": 2836
+    },
+    "skills/interview/references/review-and-retry.md": {
+      "git_blob_sha1": "83e44c35dc0d610d8ed1fe565632d36d98950f60",
+      "sha256": "1f84f5f1134227a4a2d367be286f9bcdad97b4e895ac2d6f8c40634d6c4d0350",
+      "bytes": 2172
+    },
+    "skills/interview/references/scenario-interviews.md": {
+      "git_blob_sha1": "e7a79b0eb101bfdb48c87fd17d0badf7f5928f3e",
+      "sha256": "531850f2160fb3498616cacc2998882badbc33532bbfc23d53a8fda405774db9",
+      "bytes": 2459
     }
   },
-  "scope": "Exact original great-resume instructions, references, ledger template and standalone validator; no plugin installation."
+  "scope": "Pinned great-resume and interview instructions, references and ledger tooling."
 }

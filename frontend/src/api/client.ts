@@ -53,8 +53,12 @@ function apiBase(): string {
 }
 
 async function apiFetch(url: string, options?: RequestInit): Promise<Response> {
-  const response = await fetch(url, options)
+  const slow = /\/(workflow|resume|interview)\//.test(url)
+  const deadline=AbortSignal.timeout(slow?600000:60000)
+  const signal=options?.signal?AbortSignal.any([options.signal,deadline]):deadline
+  const response = await fetch(url, {...options,signal})
   const path = new URL(url, window.location.origin).pathname
+  if(response.ok&&options?.method==='POST'&&path==='/api/v1/evidence/links')window.dispatchEvent(new Event('applyguard:evidence-linked'))
   if (response.ok && ['POST', 'DELETE'].includes(options?.method ?? 'GET') && path.startsWith('/api/v1/evidence')
       && !path.endsWith('/check-claim') && !path.endsWith('/match-resume')) {
     window.dispatchEvent(new Event('applyguard:evidence-changed'))
@@ -95,9 +99,11 @@ function toApiError(payload: unknown, httpStatus: number): ApiResult<never>['err
 export type WorkflowParseMode = 'offline' | 'dynamic'
 export type ResumeParseMode = WorkflowParseMode | 'offline_ocr'
 
+type HealthStatus = { status: string; service: string; version: string; cloud_model_configured?: boolean }
+
 export interface ApiClient {
   reverifyWorkflow(workflow: WorkflowResponse, claims: Array<{ claim_id: string; text: string }>, draft?: EditableResumeForm | null, mode?: GroundingMode): Promise<ApiResult<Partial<WorkflowResponse>>>
-  getHealth(): Promise<ApiResult<{ status: string; service: string; version: string }>>
+  getHealth(): Promise<ApiResult<HealthStatus>>
   getCareerVault(): Promise<ApiResult<CareerVaultSeed>>
   parseResumePdf(file: File, parseMode?: ResumeParseMode): Promise<ApiResult<ResumeParseResult>>
   getResumeDraft(): Promise<ApiResult<EditableResumeForm>>
@@ -256,24 +262,41 @@ export class ApplyGuardApiClient implements ApiClient {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({candidate_id: workflow.candidate_id, application_id: workflow.application_id,
           jd_text: workflow.parsed_jd.source_text, target_job: workflow.target_job, resume_draft: draft ?? undefined,
-          grounding_mode: mode ?? workflow.grounding?.mode, local_only: workflow.local_only ?? workflow.component_modes?.requested_parse_mode === 'OFFLINE', claims}),
+          fresh_atomic: mode === 'sag_atomic', grounding_mode: mode ?? workflow.grounding?.mode, local_only: workflow.local_only ?? workflow.component_modes?.requested_parse_mode === 'OFFLINE', claims}),
       })
       const body = await readJson(response)
-      if (!response.ok) return { error: toApiError(body, response.status) }
-      return { data: body as Partial<WorkflowResponse> }
-    } catch { return { error: toApiError(null, 0) } }
+      if (!response.ok) {
+        const err = toApiError(body, response.status)!
+        return { error: { ...err, message: err.code === 'INVALID_JSON' ? `核验服务返回 HTTP ${response.status}，请重试。` : err.message } }
+      }
+      const data = body as Partial<WorkflowResponse> | null
+      const report = data?.grounding
+      const verified = new Set(Array.isArray(data?.claim_verification) ? data.claim_verification.map(row => row?.claim_id) : [])
+      if (!Array.isArray(data?.resume_claims) || data.resume_claims.length !== claims.length ||
+          !claims.every((c, i) => data.resume_claims![i]?.claim_id === c.claim_id && verified.has(c.claim_id)) ||
+          (mode === 'sag_atomic' && (report?.mode !== mode || !report.fresh_atomic || report.operation !== 'verify' ||
+            !report.run_id || report.run_id === workflow.grounding?.run_id ||
+            !claims.every(c => report.results?.[c.claim_id]?.original_text === c.text.trim())))) {
+        return { error: { code: 'INVALID_VERIFICATION', message: '后端未返回本次正文的新核验记录。请刷新页面，确认前后端版本一致后重试。', retryable: true } }
+      }
+      return { data }
+    } catch (error) {
+      const timeout = error instanceof Error && error.name === 'TimeoutError'
+      return { error: { code: timeout ? 'VERIFICATION_TIMEOUT' : 'NETWORK_ERROR', retryable: true,
+        message: timeout ? '等待核验回执超时。当前页面尚未收到新结果。' : '未收到核验回执。请检查本地服务连接，恢复后再试。' } }
+    }
   }
 
-  async getHealth(): Promise<ApiResult<{ status: string; service: string; version: string }>> {
+  async getHealth(): Promise<ApiResult<HealthStatus>> {
     try {
       const res = await apiFetch(`${apiBase()}/health`, { signal: AbortSignal.timeout(5000), cache: 'no-store' })
       const body = await readJson(res)
       if (!res.ok) return { error: toApiError(body, res.status) }
-      const health = body as { status?: string; service?: string; version?: string } | null
+      const health = body as Partial<HealthStatus> | null
       if (health?.status !== 'ok' || health.service !== 'applyguard-foundation') {
         return { error: { code: 'INVALID_HEALTH', message: '本地服务响应异常，请检查 ApplyGuard 后端是否启动。', retryable: true } }
       }
-      return { data: health as { status: string; service: string; version: string } }
+      return { data: health as HealthStatus }
     } catch {
       return { error: toApiError(null, 0) }
     }
@@ -928,7 +951,7 @@ export function setApiClient(next: ApiClient): void {
 
 export { DEFAULT_CANDIDATE }
 
-export async function groundingRequest<T>(path: 'polish' | 'export', workflow: WorkflowResponse,
+export async function groundingRequest<T>(path: 'polish' | 'polish/start' | 'polish/status' | 'export', workflow: WorkflowResponse,
   draft: EditableResumeForm | null, extra: Record<string, unknown> = {}): Promise<ApiResult<T>> {
   try {
     const response = await apiFetch(`${apiBase()}/api/v1/resume/${path}`, {

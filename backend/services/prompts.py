@@ -18,7 +18,7 @@ Return one JSON object: {"scores":[{"requirement_id":"...","experience_id":"..."
 Rules:
 - Use ONLY the provided requirement_id, experience_id, and claim_id values. Never invent IDs or claim text.
 - Each score must list 1-3 claim_ids that belong to that experience_id.
-- At most two scores per requirement_id (best experiences only).
+- Return every distinctly relevant experience for each requirement, once per pair. Omit unrelated pairs. A training method alone cannot establish use of a particular framework.
 - score MUST be an integer or one-decimal number from 0 to 10.
 - Be generous for internship matching: if the claim is clearly on-topic, score 8-10; useful partial
   overlap should be 6.5-8. Avoid clustering around 4-6 when the topic matches.

@@ -109,6 +109,20 @@ class ResumeAbnormalUnitTests(unittest.TestCase):
         with patch.object(parser,'PdfReader',return_value=fake),self.assertRaisesRegex(ValueError,'第2页'):parser.pdf_bytes_to_text(b'%PDF')
     def test_drawing_without_text_is_not_treated_as_blank(self):
         with self.assertRaisesRegex(ValueError,'未能完整读取'):parser.pdf_bytes_to_text(pdf(text='',drawing=True))
+    def test_default_mode_automatically_recognizes_image_pdf_locally(self):
+        span=SimpleNamespace(raw_text='Contact: fictional@example.test')
+        with patch('backend.services.evidence_parsers._run_local_ocr',return_value=([span],None)) as ocr, patch.object(parser,'HttpModelClient',side_effect=AssertionError('offline must not send')):
+            result=parser.parse_resume_pdf(**body(pdf(text='',drawing=True)))
+        self.assertEqual(result['extractor'],'本地 OCR + 规则抽取')
+        self.assertEqual(result['form']['basic']['email'],'fictional@example.test')
+        self.assertEqual(ocr.call_count,1)
+    def test_default_mode_does_not_hide_damaged_page_with_ocr(self):
+        broken=MagicMock();broken.is_encrypted=False;broken.pages=[MagicMock()]
+        broken.pages[0].extract_text.side_effect=RuntimeError('fictional damaged page')
+        with patch.object(parser,'PdfReader',return_value=broken), patch.object(parser,'_pdf_local_ocr') as ocr:
+            with self.assertRaisesRegex(ValueError,'未能完整读取'):
+                parser.parse_resume_pdf(**body(pdf()))
+        ocr.assert_not_called()
     def test_opt_in_ocr_uses_local_recognizer_and_no_model(self):
         span=SimpleNamespace(raw_text='Contact: fictional@example.test')
         with patch('backend.services.evidence_parsers._run_local_ocr',return_value=([span],None)) as ocr, patch.object(parser,'HttpModelClient',side_effect=AssertionError('offline OCR must not send')):
@@ -149,6 +163,26 @@ class ResumeAbnormalUnitTests(unittest.TestCase):
         with patch.object(parser,'HttpModelClient',return_value=client),patch.object(parser,'pdf_bytes_to_text',return_value=text):
             result=parser.parse_resume_pdf(**body(parse_mode='dynamic'))
         self.assertEqual(result['form']['basic']['name'],'林晓舟');self.assertEqual(len(result['form']['projects']),2)
+    def test_one_unsupported_model_field_does_not_discard_other_source_backed_fields(self):
+        text='姓名：林晓舟\n邮箱：fictional@example.test\n使用 Python 做测试。使用 SQL 做检索。'
+        client=MagicMock();client.api_key='fixture';client.complete_json.return_value={
+            'basic':{'email':'fictional@example.test'},'extras':{'skills':'Python、SQL','summary':'Invented leadership'}}
+        with patch.object(parser,'HttpModelClient',return_value=client),patch.object(parser,'pdf_bytes_to_text',return_value=text):
+            result=parser.parse_resume_pdf(**body(parse_mode='dynamic'))
+        self.assertEqual(result['extractor'],'模型抽取')
+        self.assertEqual(result['form']['extras']['skills'],'Python、SQL')
+        self.assertNotIn('Invented',result['form']['extras']['summary'])
+        self.assertIn({'group':'extras','field':'summary','index':None},result['model_field_issues'])
+
+    def test_project_summer_research_is_not_duplicated_as_an_inferred_internship(self):
+        text='邮箱：fictional@example.test\n项目经历\nCacheBench — ExampleLab 暑研\n研究推理时延。'
+        client=MagicMock();client.api_key='fixture';client.complete_json.return_value={
+            'basic':{'email':'fictional@example.test'},'internships':[{'organization':'ExampleLab','title':'暑研'}]}
+        with patch.object(parser,'HttpModelClient',return_value=client),patch.object(parser,'pdf_bytes_to_text',return_value=text):
+            result=parser.parse_resume_pdf(**body(parse_mode='dynamic'))
+        self.assertFalse(result['form']['internships'])
+        self.assertIn({'group':'internships','field':'section','index':None},result['model_field_issues'])
+
     def test_invalid_or_invented_model_payload_falls_back(self):
         for payload in [[],{'basic':{'name':'InventedPerson'}},{'projects':[{'title':'x'}]*51}]:
             client=MagicMock();client.api_key='fixture';client.complete_json.return_value=payload

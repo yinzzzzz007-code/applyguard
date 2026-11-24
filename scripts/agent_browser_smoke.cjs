@@ -25,6 +25,7 @@ const assert=require('node:assert/strict');
   await page.locator('.harness-setup').screenshot({path:path.join(out,'harness-installation.png')});
   await page.getByText('首次使用：安装位置与完整准备步骤',{exact:true}).click();
   await page.getByLabel('查找需求').fill('Find Atlas evidence about Lin role, SQL technology and evaluation results.');
+  await page.getByText('手动输入路径（备用）',{exact:true}).click();
   await page.getByLabel('允许访问的文件夹（绝对路径，每行一个）').fill(fixtures);
   await page.getByLabel('允许片段进入我配置的云端模型上下文').check();
   await authorize().click();

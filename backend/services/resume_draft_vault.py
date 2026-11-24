@@ -57,6 +57,7 @@ def _one_experience(
     description: str,
     kind: str,
     form_confirmed: bool = False,
+    technology: str | list = "",
 ) -> dict[str, Any] | None:
     organization = (organization or "").strip() or "（未填组织）"
     role = (role or title or "").strip() or kind
@@ -91,8 +92,8 @@ def _one_experience(
         "start_date": _ym(start),
         "end_date": _ym(end),
         "summary": summary,
-        "responsibilities": lines[:12] or [summary],
-        "skills": [],
+        "responsibilities": list(dict.fromkeys(lines)) or [summary],
+        "skills": list(dict.fromkeys(s.strip() for s in (technology if isinstance(technology, list) else re.split(r"[,，、;；|\n]", technology)) if isinstance(s, str) and s.strip())),
         "metrics": [],
         "claims": [
             {
@@ -227,6 +228,7 @@ def experiences_from_resume_draft(form: dict[str, Any]) -> list[dict[str, Any]]:
                 end=str(row.get("end") or ""),
                 description=str(row.get("description") or ""),
                 kind="实习",
+                technology=row.get("techStack") or "",
                 # 实习与项目、竞赛一样，必须关联原件并核验。
                 form_confirmed=False,
             )
@@ -246,6 +248,7 @@ def experiences_from_resume_draft(form: dict[str, Any]) -> list[dict[str, Any]]:
                 end=str(row.get("end") or ""),
                 description=str(row.get("description") or ""),
                 kind="项目",
+                technology=row.get("techStack") or "",
                 # 项目须关联本地证据后才能视为已核验。
                 form_confirmed=False,
             )

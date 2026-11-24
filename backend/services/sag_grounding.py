@@ -3,7 +3,7 @@
 """Local, version-scoped retrieval using the real optional zleap-sag engine."""
 from __future__ import annotations
 
-from backend.services.model_client import DEFAULT_TEXT_MODEL, uses_deepseek_api
+from backend.services.model_client import ModelFailure, DEFAULT_TEXT_MODEL, uses_deepseek_api, uses_json_object_structured
 
 import asyncio
 import hashlib
@@ -31,7 +31,7 @@ def _local_embedding_dir() -> Path:
 
 
 def _retrieval_strategy(base_url: str) -> str:
-    default = 'vector' if uses_deepseek_api(base_url) else 'full_expand'
+    default = 'vector' if uses_json_object_structured(base_url, os.getenv('APPLYGUARD_AI_MODEL', DEFAULT_TEXT_MODEL)) else 'full_expand'
     return os.getenv('APPLYGUARD_GROUNDING_STRATEGY', default)
 
 
@@ -41,6 +41,11 @@ class GroundingUnavailable(RuntimeError):
 
 def fingerprint(value: Any) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+
+def model_sources(sources: list[dict]) -> list[dict]:
+    fields = ('source_id', 'candidate_id', 'experience_id', 'title', 'text', 'retrieval_channels')
+    return [{key: source[key] for key in fields if key in source} for source in sources]
 
 
 def evidence_snapshot(sources: list[dict]) -> str:
@@ -76,10 +81,11 @@ class SAGRetriever:
         digest = evidence_snapshot(sources)
         directory = Path(os.getenv('APPLYGUARD_GROUNDING_DIR', str(ROOT / 'data/local/grounding')))
         settings = [os.getenv(name,'') for name in ['APPLYGUARD_AI_MODEL','APPLYGUARD_AI_BASE_URL',
-            'APPLYGUARD_EMBEDDING_MODEL','APPLYGUARD_EMBEDDING_DIMENSIONS']]
+            'APPLYGUARD_EMBEDDING_MODEL','APPLYGUARD_EMBEDDING_DIMENSIONS','APPLYGUARD_EMBEDDING_BACKEND']]
+        settings.append('json_object' if uses_json_object_structured(os.getenv('APPLYGUARD_AI_BASE_URL', _DEFAULT_API_URL), os.getenv('APPLYGUARD_AI_MODEL', DEFAULT_TEXT_MODEL)) else 'json_schema')
         base_url = os.getenv('APPLYGUARD_AI_BASE_URL', _DEFAULT_API_URL)
-        if uses_deepseek_api(base_url):
-            settings.extend(['json_object', 'local_minilm_384_v1', str(_local_embedding_dir())])
+        if uses_deepseek_api(base_url) or os.getenv('APPLYGUARD_EMBEDDING_BACKEND')=='local':
+            settings.extend(['json_object' if uses_deepseek_api(base_url) else 'json_schema', 'local_minilm_384_v1', str(_local_embedding_dir())])
         if _retrieval_strategy(base_url) == 'vector':
             settings.append('document_vectors_only')
         directory = directory / fingerprint(candidate_id)[:20] / digest / fingerprint(['0.15.0','minimal',os.getenv('APPLYGUARD_AI_MODEL', DEFAULT_TEXT_MODEL),settings])[:20]
@@ -92,8 +98,21 @@ class SAGRetriever:
             except GroundingUnavailable:
                 raise
             except Exception as exc:
+                cause, seen = exc, set()
+                while cause is not None and id(cause) not in seen:
+                    seen.add(id(cause))
+                    if isinstance(cause, ModelFailure):
+                        raise cause from None
+                    if isinstance(cause, TimeoutError) or type(cause).__name__ in {'APITimeoutError', 'ReadTimeout', 'ConnectTimeout'}:
+                        raise ModelFailure('Retrieval provider timed out', code='MODEL_TIMEOUT') from None
+                    status = getattr(cause, 'status_code', None)
+                    if status in {401, 403, 429, 503}:
+                        raise ModelFailure('Retrieval provider unavailable', http_status=status) from None
+                    cause = cause.__cause__ or cause.__context__
                 stage = getattr(exc, 'stage', None)
                 message = _STAGE_ERRORS.get(stage, 'SAG核验准备失败；请检查本机依赖、模型配置与网络。')
+                if 'Unable to copy file' in str(exc) and ('os error 1)' in str(exc) or 'Incorrect function' in str(exc)):
+                    message='SAG 索引目录不支持所需文件操作（Windows exFAT 常见）。请将 APPLYGUARD_GROUNDING_DIR 配置到 NTFS 目录；原始材料无需移动。'
                 logging.getLogger(__name__).warning('SAG failed: stage=%s kind=%s',
                     stage if stage in _STAGE_ERRORS else 'unknown', type(exc).__name__)
                 # Provider exception messages can include credentials or document text.
@@ -118,21 +137,23 @@ class SAGRetriever:
         strategy = _retrieval_strategy(base_url)
         if strategy not in {'vector', 'full_expand'}:
             raise GroundingUnavailable('检索策略必须为vector或full_expand。')
+        from backend.services.sag_storage import check_index_directory
+        check_index_directory(str(directory))
         directory.mkdir(parents=True, exist_ok=True)
         dimensions = int(os.getenv('APPLYGUARD_EMBEDDING_DIMENSIONS', '1536'))
         if not 1 <= dimensions <= 8192:
             raise GroundingUnavailable('向量维度配置无效。')
         timeout = float(os.getenv('APPLYGUARD_GROUNDING_TIMEOUT', '110'))
-        output_mode = 'json_schema'
-        if uses_deepseek_api(base_url):
+        output_mode = 'json_object' if uses_json_object_structured(base_url, os.getenv('APPLYGUARD_AI_MODEL', DEFAULT_TEXT_MODEL)) else 'json_schema'
+        if uses_deepseek_api(base_url) or os.getenv('APPLYGUARD_EMBEDDING_BACKEND')=='local':
             directory_path = _local_embedding_dir()
             if not all((directory_path / name).is_file() for name in ('model_quantized.onnx', 'tokenizer.json')):
-                raise GroundingUnavailable('DeepSeek 检索需要本机 MiniLM 模型；请检查 APPLYGUARD_LOCAL_EMBEDDING_DIR。')
+                raise GroundingUnavailable('本地向量检索需要 MiniLM 模型；请检查 APPLYGUARD_LOCAL_EMBEDDING_DIR。')
             from backend.services.local_sag_embedding import local_embedding
             embedding = local_embedding(directory_path)
-            output_mode = 'json_object'
+            if uses_deepseek_api(base_url):output_mode = 'json_object'
         else:
-            embedding = EmbeddingConfig(model=os.getenv('APPLYGUARD_EMBEDDING_MODEL', 'text-embedding-3-small'),
+            embedding = EmbeddingConfig(api_key=key, base_url=base_url, model=os.getenv('APPLYGUARD_EMBEDDING_MODEL', 'text-embedding-3-small'),
                 schema_dimensions=dimensions, timeout=timeout, max_retries=0)
         config = EngineConfig(
             storage_mode='normal', data_dir=str(directory / 'index'), language='en', log_level='ERROR',

@@ -1,3 +1,6 @@
+import {matchScoreOutOfTen, STRONG_MATCH_SCORE} from '../resume/draftSelection'
+import {completeGuideStep} from '../guide'
+import { ExperienceCandidates } from '../components/ExperienceCandidates'
 import { ProfileCheckList } from '../components/ProfileCheckList'
 import { useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -28,20 +31,17 @@ type HlSpan = {
 }
 
 function toneForMatch(best: EvidenceMatchItem | undefined): MatchTone {
-  // Color by actual match strength. Backend may still list MEDIUM rows under
-  // uncovered_requirements when they are not ready_for_selection — that is not "无匹配".
   if (!best) return 'uncovered'
   if (best.conflicts?.length) return 'conflict'
-  if (best.evidence_strength === 'STRONG' || best.ready_for_selection) return 'strong'
-  if (best.evidence_strength === 'MEDIUM' || best.relevance_score >= 0.35) return 'medium'
-  if (best.evidence_strength === 'WEAK' || best.relevance_score > 0) return 'medium'
+  if (matchScoreOutOfTen(best) >= STRONG_MATCH_SCORE) return 'strong'
+  if (matchScoreOutOfTen(best) > 0) return 'medium'
   return 'uncovered'
 }
 
 function toneLabel(tone: MatchTone): string {
   switch (tone) {
     case 'strong':
-      return '强匹配'
+      return '较强匹配'
     case 'medium':
       return '弱匹配'
     case 'conflict':
@@ -52,13 +52,8 @@ function toneLabel(tone: MatchTone): string {
 }
 
 function scoreOutOfTen(match: EvidenceMatchItem): string {
-  const fromModel = match.score_breakdown?.ai_score_10
-  const value =
-    typeof fromModel === 'number' && Number.isFinite(fromModel)
-      ? Math.max(0, Math.min(10, fromModel))
-      : Math.max(0, Math.min(10, match.relevance_score * 10))
-  const text = Number.isInteger(value) ? String(value) : value.toFixed(1)
-  return `相关度 ${text}/10`
+  const score=matchScoreOutOfTen(match)
+  return `${score>=STRONG_MATCH_SCORE?'较强匹配':'相关度'} ${score}/10`
 }
 
 function pickNeedle(jdText: string, req: ParsedRequirement): string | null {
@@ -81,7 +76,7 @@ function buildHighlights(
   for (const v of views) {
     const needle = pickNeedle(jdText, v.requirement)
     if (!needle) continue
-    for (const idx of indexesInScope(jdText, needle, kinds)) {
+    for (const idx of indexesInScope(jdText, needle, v.requirement.section ? [v.requirement.section] : kinds)) {
       raw.push({
         start: idx,
         end: idx + needle.length,
@@ -115,7 +110,8 @@ function renderHighlightedJd(
       <mark
         key={`${span.reqId}-${span.start}-${i}`}
         className={`em-hl em-hl-${span.tone}`}
-        title="点击查看匹配详情"
+        title="点击查看匹配详情" tabIndex={0} role="button"
+        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") {e.preventDefault(); onOpen(span.reqId)} }}
         onClick={() => onOpen(span.reqId)}
       >
         {jdText.slice(span.start, span.end)}
@@ -130,8 +126,9 @@ function renderHighlightedJd(
 function sectionOf(jdText: string, requirement: ParsedRequirement): QualificationKind | 'out' {
   const quote = requirement.evidence_text || requirement.text || ''
   const kind = quoteKind(jdText, quote)
+  if (requirement.section) return requirement.section === 'requirement' && requirement.priority === 'preferred' ? 'bonus' : requirement.section
   if (kind === 'out') return 'out'
-  if (kind === 'requirement' || kind === 'bonus') return kind
+  if (kind === 'requirement' || kind === 'bonus' || kind === 'description') return kind
   return requirement.type === 'PREFERRED' ? 'bonus' : 'requirement'
 }
 
@@ -155,12 +152,12 @@ export function EvidenceMatchPage() {
     }
     return jd.requirements.flatMap((requirement) => {
       const candidates = byReq.get(requirement.requirement_id) ?? []
-      const best = [...candidates].sort((a, b) => b.relevance_score - a.relevance_score)[0]
+      const best = [...candidates].sort((a, b) => matchScoreOutOfTen(b) - matchScoreOutOfTen(a))[0]
       const uncoveredReason = uncovered.get(requirement.requirement_id)
       const profile = workflow.profile_checks?.[requirement.requirement_id]
       const personalEducation = requirement.category === 'EDUCATION' && Boolean(profile?.length)
       const tone = personalEducation ? 'medium' : toneForMatch(best)
-      const label = personalEducation ? '个人资料对照' : !requirement.normalized_terms?.length
+      const label = personalEducation ? '个人资料对照' : tone === 'conflict' ? '有冲突' : best?.lead ? (best.lead.kind === 'framework' ? '框架待确认' : best.lead.kind === 'direct' ? '经历有记录' : '有相关线索') : !requirement.normalized_terms?.length
         ? '需人工核对' : !best && profile?.some(check => check.state === 'DECLARED')
           ? '本人填写，待补证' : toneLabel(tone)
       const section = sectionOf((jd.source_text || jdRawInput || '').trim(), requirement)
@@ -187,7 +184,7 @@ export function EvidenceMatchPage() {
   )
 
   const highlights = useMemo(() => {
-    const kinds = scopeFilter === 'all' ? (['requirement', 'bonus'] as QualificationKind[]) : [scopeFilter]
+    const kinds = scopeFilter === 'all' ? (['requirement', 'bonus', 'description'] as QualificationKind[]) : [scopeFilter]
     return buildHighlights(jdText, visible, kinds)
   }, [jdText, visible, scopeFilter])
 
@@ -199,6 +196,7 @@ export function EvidenceMatchPage() {
   }, [visible])
   const scopeCounts = useMemo(() => {
     return {
+      description: views.filter(v => v.section === 'description').length,
       requirement: views.filter((view) => view.section === 'requirement').length,
       bonus: views.filter((view) => view.section === 'bonus').length,
     }
@@ -224,7 +222,7 @@ export function EvidenceMatchPage() {
   const relatedMatches = active
     ? workflow.evidence_match.matches.filter(
         (m) => m.requirement_id === active.requirement.requirement_id,
-      )
+      ).sort((a,b)=>matchScoreOutOfTen(b)-matchScoreOutOfTen(a))
     : []
 
   return (
@@ -258,6 +256,7 @@ export function EvidenceMatchPage() {
         {(
           [
             ['all', '全部', views.length],
+            ['description', '岗位职责', scopeCounts.description],
             ['requirement', '任职要求', scopeCounts.requirement],
             ['bonus', '加分项', scopeCounts.bonus],
           ] as const
@@ -275,7 +274,7 @@ export function EvidenceMatchPage() {
       </div>
 
       <div className="em-legend" aria-label="匹配图例">
-        <span className="em-chip strong">强匹配 {counts.strong}</span>
+        <span className="em-chip strong">较强匹配 {counts.strong}</span>
         <span className="em-chip medium">相关经历 / 个人资料 {counts.medium}</span>
         <span className="em-chip conflict">有冲突 {counts.conflict}</span>
         <span className="em-chip uncovered">未覆盖 {counts.uncovered}</span>
@@ -289,7 +288,7 @@ export function EvidenceMatchPage() {
             {workflow.parsed_jd.company === 'UNKNOWN' ? '未知公司' : workflow.parsed_jd.company} ·{' '}
             {views.length} 条参与匹配
             {workflow.parsed_jd.requirements.length > views.length
-              ? ` · 已排除职位描述等 ${workflow.parsed_jd.requirements.length - views.length} 条`
+              ? ` · 已排除背景信息等 ${workflow.parsed_jd.requirements.length - views.length} 条`
               : ''}
           </p>
           <div className="em-jd-body" role="article">
@@ -298,7 +297,7 @@ export function EvidenceMatchPage() {
           <p className="muted em-jd-hint">
             {highlights.length
               ? '点击着色词组查看对应经历。'
-              : '未能在任职要求或加分项中定位片段，可点下方条目查看详情。'}
+              : '未能在岗位原文中定位片段，可点下方条目查看详情。'}
           </p>
         </section>
 
@@ -307,7 +306,7 @@ export function EvidenceMatchPage() {
             title={workflow.parsed_jd.requirements.length ? '没有可匹配条目' : '无要求'}
             detail={
               workflow.parsed_jd.requirements.length
-                ? '证据匹配只看任职要求与加分项。当前原文里没有识别到这两段中的条目。'
+                ? '请补充具体的工作职责或任职要求。'
                 : 'parsed_jd 未返回 requirements。'
             }
             actionLabel="回退岗位说明"
@@ -330,7 +329,7 @@ export function EvidenceMatchPage() {
                   onClick={() => setActiveReqId(v.requirement.requirement_id)}
                 >
                   <span className="em-req-top">
-                    <span className="em-chip compact">{v.section === 'bonus' ? '加分项' : '任职要求'}</span>
+                    <span className="em-chip compact">{v.section === 'description' ? '岗位职责' : v.section === 'bonus' ? '加分项' : v.requirement.priority === 'general' ? '通用能力' : '任职要求'}</span>
                     <span className="em-chip compact">{v.label}</span>
                     <span className="em-req-id">
                       {v.requirement.requirement_id.replace(/^req_0*/, '要求 ')}
@@ -340,7 +339,7 @@ export function EvidenceMatchPage() {
                         {scoreOutOfTen(v.best)} · {zhLookup(ZH_STRENGTH, v.best.evidence_strength)}
                       </span>
                     ) : (
-                      <span className="em-req-score">无可用经历</span>
+                      <span className="em-req-score">尚未找到相关经历</span>
                     )}
                   </span>
                   <span className="em-req-text">{v.requirement.text}</span>
@@ -383,7 +382,7 @@ export function EvidenceMatchPage() {
               {zhLookup(ZH_CATEGORY, active.requirement.category)}
             </p>
 
-            {active.uncoveredReason ? (
+            {active.uncoveredReason && !relatedMatches.some(m => m.lead) ? (
               <div className={`callout ${active.tone === 'uncovered' ? 'warn' : 'ok'}`}>
                 <strong>
                   {active.tone === 'uncovered' ? '未覆盖原因' : '选入说明'}
@@ -399,9 +398,10 @@ export function EvidenceMatchPage() {
             {active.requirement.category === 'EDUCATION' && workflow.profile_checks?.[active.requirement.requirement_id]?.length ? (
               <p className="muted">对照依据为本人填写的教育信息。请按岗位要求另行核对学历证明。</p>
             ) : null}
-            {relatedMatches.length ? (
+            {active.requirement.category !== 'EDUCATION' && <ExperienceCandidates key={JSON.stringify([workflow.candidate_id, workflow.parsed_jd.jd_id, active.requirement.requirement_id])} requirement={active.requirement} matches={relatedMatches} />}
+            {relatedMatches.some(m => !m.lead) ? (
               <div className="stack">
-                {relatedMatches.map((m) => (
+                {relatedMatches.filter(m => !m.lead).map((m) => (
                   <article
                     key={`${m.requirement_id}-${m.experience_id}`}
                     className="item-block em-detail-card"
@@ -433,15 +433,13 @@ export function EvidenceMatchPage() {
                   </article>
                 ))}
               </div>
-            ) : (
-              <p className="muted">没有关联到经历库条目。</p>
-            )}
+            ) : null}
           </div>
         </div>
       )}
 
       <div className="btn-row end">
-        <button type="button" className="btn primary" onClick={() => navigate('/resume')}>
+        <button type="button" className="btn primary" data-guide="match-next" onClick={() => {completeGuideStep('match');navigate('/resume')}}>
           下一步：简历审查
         </button>
       </div>

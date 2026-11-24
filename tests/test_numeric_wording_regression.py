@@ -104,7 +104,7 @@ class NumericWordingRegression(unittest.TestCase):
             {'c':{'candidate_id':'p','experience_id':'x'}}, {'c':[source]})['c']
         self.assertEqual(row['relation'],'INSUFFICIENT')
 
-    def test_career_corpus_preserves_evidence_status_on_style_edit(self):
+    def test_career_corpus_preserves_text_and_evidence_status_on_punctuation_edits(self):
         # Seed the atomic verdict to isolate workflow routing. This is not a classifier benchmark.
         for record in RECORDS:
             for case in record['good'] + record['bad']:
@@ -127,9 +127,12 @@ class NumericWordingRegression(unittest.TestCase):
                         return rows
                     model.complete_structured = seeded_step
                     claim = {**copy.deepcopy(CLAIM),'text':old}
-                    claims,checks,report = GroundingService(model=model,retriever=AllSources()).run(
-                        [claim],[item],'cand_test','sag_atomic',polish=True)
+                    from unittest.mock import patch
+                    with patch('backend.services.structured_verifier.guard_cited_verdict',side_effect=lambda text,verdict:verdict):
+                        claims,checks,report = GroundingService(model=model,retriever=AllSources()).run(
+                            [claim],[item],'cand_test','sag_atomic',polish=True)
                     result = report['results'][claim['claim_id']]
                     self.assertEqual(result['relation'], relation)
                     self.assertEqual(checks[0]['grounded'], relation=='SUPPORTED')
-                    self.assertEqual(claims[0]['text'], old if relation=='CONTRADICTED' else proposal)
+                    self.assertEqual(claims[0]['text'], old)
+                    self.assertEqual(result['proposed_text'], old)

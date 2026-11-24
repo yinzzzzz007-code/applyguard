@@ -11,6 +11,7 @@ import math
 import os
 from typing import Any
 
+from backend.services.job_capabilities import framework_group
 from backend.services.evidence_matcher import EvidenceMatcher
 from backend.services.jd_match_scope import select_requirements_for_matching
 from backend.services.model_client import ModelClient, ModelFailure
@@ -128,14 +129,15 @@ def merge_ai_match(
     if not isinstance(scores, list) or not scores:
         raise ValueError("Model match output has no scores")
 
+    previous = {(row["requirement_id"], row["experience_id"]): row for row in baseline.get("matches", [])}
     ai_rows: list[dict[str, Any]] = []
-    per_requirement: dict[str, int] = {}
+    seen_pairs: set[tuple[str, str]] = set()
     for item in scores:
         parsed = _valid_score_item(item, set(requirement_by_id), experience_by_id)
         if parsed is None:
             continue
-        count = per_requirement.get(parsed["requirement_id"], 0)
-        if count >= 2:
+        pair = (parsed["requirement_id"], parsed["experience_id"])
+        if pair in seen_pairs:
             continue
         requirement = requirement_by_id[parsed["requirement_id"]]
         terms = matcher._requirement_terms(requirement)
@@ -150,11 +152,23 @@ def merge_ai_match(
         )
         if scored is None:
             continue
+        local = previous.get(pair, {})
+        lead = local.get("lead")
+        if framework_group(requirement.get("text", "")) and not lead:
+            continue
+        if lead:
+            scored["lead"] = lead
+            scored["relevance_score"] = max(scored["relevance_score"], lead["score"]) if lead["kind"] == "direct" else lead["score"]
+            scored["ready_for_selection"] = scored["ready_for_selection"] and bool(local.get("ready_for_selection"))
+        elif requirement.get("section") and requirement["category"] != "EDUCATION":
+            scored["lead"] = {"title": experience_by_id[parsed["experience_id"]].get("title") or parsed["experience_id"],
+                             "kind": "related", "terms": [], "quote": parsed["claims"][0]["text"], "score": scored["relevance_score"]}
+            scored["ready_for_selection"] = False
         breakdown = scored.setdefault("score_breakdown", {})
         breakdown["ai_score_10"] = parsed["score_10"]
         breakdown["ai_semantic_score"] = parsed["semantic_score"]
         ai_rows.append(scored)
-        per_requirement[parsed["requirement_id"]] = count + 1
+        seen_pairs.add(pair)
 
     if not ai_rows:
         raise ValueError("No grounded AI match rows survived validation")

@@ -74,6 +74,17 @@
               }
             }
           },
+          "lead": {
+            "type": "object", "additionalProperties": false,
+            "required": ["title", "kind", "terms", "quote", "score"],
+            "properties": {
+              "title": {"type": "string"}, "kind": {"enum": ["direct", "related", "framework"]},
+              "terms": {"type": "array", "items": {"type": "string"}}, "quote": {"type": "string"},
+              "score": {"type": "number", "minimum": 0, "maximum": 1},
+              "pending_context": {"type": "array", "items": {"type": "string"}},
+              "material_id": {"type": "string"}, "material_quote": {"type": "string"}, "material_reference": {"type": "string"}
+            }
+          },
           "score_breakdown": {
             "type": "object",
             "additionalProperties": false,

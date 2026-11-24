@@ -18,6 +18,35 @@ class AgentBridgeTests(unittest.TestCase):
     def call(self,action,**args):return a.agent_call({'id':self.c['id'],'action':action,'arguments':args},self.c['token'])
     def card(self):return self.call('search',query='Atlas')['cards'][0]
     def submit(self,c):return self.call('submit',card_id=c['id'],quote=c['quote'],version=c['source']['version'],experience='Atlas',interpretation='候选支持',missing=['仍需核验'])
+    def test_progress_is_derived_from_real_tools_and_does_not_approve_quotes(self):
+        status=lambda:a.ui_call({**self.c,'action':'status'})['progress']
+        self.call('run',state='started')
+        self.assertEqual(status()['stage'],'waiting')
+        self.assertFalse(self.g['connected'])
+        self.call('task')
+        self.assertEqual(status()['stage'],'task_received')
+        self.card()
+        self.assertEqual(status()['stage'],'searched')
+        self.assertGreater(status()['candidates'],0)
+        self.assertEqual(status()['submitted'],0)
+        self.submit(self.card())
+        self.assertEqual(status()['submitted'],1)
+        self.call('run',state='timed_out')
+        self.assertEqual(status()['run_state'],'timed_out')
+        self.assertEqual(status()['submitted'],1)
+        self.assertTrue(all(c['state']!='VERIFIED' for c in self.g['cards'].values()))
+        with self.assertRaises(ValueError):self.call('run',state='VERIFIED')
+
+    def test_private_repository_requires_server_credential_before_grant(self):
+        body={**self.body,'mode':'github','roots':[],'repos':['owner/repo@'+'a'*40],'private':True}
+        before=set(a.GRANTS)
+        for token in ('','synthetic-read-token'):
+            with self.subTest(token_present=bool(token)),patch.dict(os.environ,{'APPLYGUARD_GITHUB_TOKEN':token}),self.assertRaisesRegex(ValueError,'授权'):
+                a.create(body)
+        self.assertEqual(set(a.GRANTS),before)
+        with self.assertRaisesRegex(ValueError,'5 个仓库'):
+            a.create({**body,'private':False,'repos':['owner/repo@'+'a'*40]*6})
+
     def test_pre_read_disclosure_required(self):
         for value in [None,'','true']:
             with self.subTest(value=value),self.assertRaises(ValueError):a.create({**self.body,'disclosure':value})

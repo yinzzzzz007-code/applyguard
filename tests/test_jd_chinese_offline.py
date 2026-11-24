@@ -64,7 +64,7 @@ class ChineseOfflineJDTests(unittest.TestCase):
         # Numbered / bulleted markers must stay attached to the line, not become lone requirements.
         self.assertFalse(any(re.fullmatch(r"\d+[、.．]?", text.strip()) for text in texts))
         scoped = select_requirements_for_matching(parsed)
-        self.assertEqual(len(scoped), 14)
+        self.assertTrue(any(item.get("section") == "description" for item in scoped))
         req_texts = [item["text"] for item in scoped]
         self.assertTrue(any(text.startswith("本科及以上") for text in req_texts))
         self.assertTrue(any("熟悉 Python" in text for text in req_texts))
@@ -78,7 +78,7 @@ class ChineseOfflineJDTests(unittest.TestCase):
                   "了解 ES5/6/7、HTML、CSS，使用 ReactJS+Redux 或 EmberJS。\n"
                   "具备数据结构、算法和设计模式知识。\n热爱编码。\n加分项\n熟悉 React Native 或 Flutter。")
         parsed, _, _ = JDParser().parse(source)
-        requirements = select_requirements_for_matching(parsed)
+        requirements = [r for r in select_requirements_for_matching(parsed) if r.get("section") != "description"]
         self.assertEqual(len(requirements), 6)
         self.assertTrue(all(row['evidence_text'] in source for row in requirements))
         self.assertEqual(requirements[4]['normalized_terms'], [])

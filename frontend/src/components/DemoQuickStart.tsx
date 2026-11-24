@@ -64,10 +64,10 @@ export function DemoQuickStart() {
   return <Card asChild><section className="demo-quick-start" aria-labelledby="demo-start-title">
     <CardTitle asChild><h3 id="demo-start-title">课堂演示</h3></CardTitle>
     <div className="btn-row">
-      <Button disabled={loading} onClick={() => void openClassroomDemo()}>载入完整示例</Button>
-      <Button variant="secondary" disabled={loading} onClick={() => void loadTemplateResume()}>{loading ? '正在载入模板…' : '载入模板简历并看岗位'}</Button>
-      <Button variant="secondary" disabled={loading} onClick={() => start('prerecorded_block')}>体验错改阻断</Button>
-      <Button variant="secondary" disabled={loading} onClick={() => start('prerecorded_fallback')}>体验超时回退</Button>
+      <Button disabledReason={'正在处理当前操作，完成后可继续。'} disabled={loading} onClick={() => void openClassroomDemo()}>载入完整示例</Button>
+      <Button variant="secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={loading} onClick={() => void loadTemplateResume()}>{loading ? '正在载入模板…' : '载入模板简历并看岗位'}</Button>
+      <Button variant="secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={loading} onClick={() => start('prerecorded_block')}>体验错改阻断</Button>
+      <Button variant="secondary" disabledReason={'正在处理当前操作，完成后可继续。'} disabled={loading} onClick={() => start('prerecorded_fallback')}>体验超时回退</Button>
     </div>
     {error && <p className="callout warn" role="alert">{error}</p>}
     <small>错改与超时样例仅供演示。</small>

@@ -7,6 +7,7 @@ import math
 import re
 from typing import Any
 
+from backend.services.job_capabilities import structure
 from backend.services.model_client import ModelClient, ModelFailure
 from backend.services.jd_match_scope import _HEADER, _header_kind
 from backend.services.prompts import JD_PARSE_SYSTEM_PROMPT
@@ -235,7 +236,7 @@ class JDParser:
                 try:
                     raw = self.model.complete_json(JD_PARSE_SYSTEM_PROMPT, _sanitize_user_input(source))
                     parsed, repaired = self._adapt(raw, source)
-                    return parsed, "MODEL_SPAN_REPAIRED" if repaired else "MODEL", None
+                    return structure(parsed, _injection), "MODEL_SPAN_REPAIRED" if repaired else "MODEL", None
                 except (ModelFailure, JDParseError, ValueError, TypeError, KeyError) as exc:
                     detail = str(exc).strip()
                     failure = f"{type(exc).__name__}: {detail}" if detail else type(exc).__name__
@@ -244,7 +245,7 @@ class JDParser:
                     if isinstance(exc, ModelFailure) and not exc.retryable:
                         break
         try:
-            return self._fallback(source), "RULE_FALLBACK", failure
+            return structure(self._fallback(source), _injection), "RULE_FALLBACK", failure
         except JDParseError as exc:
             raise JDParseError("JD could not be parsed safely") from exc
 
@@ -387,7 +388,7 @@ class JDParser:
                 category = "EDUCATION" if _EDUCATION.search(fragment) else "EXPERIENCE" if _EXPERIENCE.search(fragment) else section_category or ("RESPONSIBILITY" if _RESPONSIBILITY.search(fragment) else "SKILL")
                 if not terms and category in {"EDUCATION", "EXPERIENCE"}:
                     terms = [fragment]
-                if not terms and not in_qualifications:
+                if not terms and not in_qualifications and category != "RESPONSIBILITY":
                     continue
                 if not terms:
                     category = "OTHER"

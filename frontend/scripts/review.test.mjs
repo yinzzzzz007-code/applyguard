@@ -71,3 +71,93 @@ test('legacy demo labels retain blocking but edits still require verification',(
  const edited=changeClaim(w,id,'A changed sentence','edit')
  assert.equal(currentSupport(edited,id),'当前文字待核验')
 })
+
+test('proposal status distinguishes supported, incomplete, contradictions and unavailable checks',async()=>{
+ const {proposalStatus}=await import('../src/resume/review.ts')
+ const base={verification_scope:'experience',proposal_rejected:false}
+ assert.match(proposalStatus(base),/尚无独立事实核查/)
+ assert.match(proposalStatus({...base,proposal_check:{relation:'SUPPORTED',complete:true}}),/已对照材料核查/)
+ assert.match(proposalStatus({...base,proposal_check:{relation:'SUPPORTED',complete:true},proposal_rejected:true}),/其他改写检查未确认/)
+ assert.match(proposalStatus({...base,proposal_check:{relation:'CONTRADICTED',complete:true}}),/存在冲突/)
+ assert.match(proposalStatus({...base,proposal_check:{relation:'SUPPORTED',complete:false}}),/不完整/)
+ assert.match(proposalStatus(base,'服务失败'),/核查未完成/)
+})
+
+test('education profile exemption requires exact form-bound identity and content',async()=>{
+ const {isEducationProfile}=await import('../src/resume/review.ts')
+ const form={education:[{id:'education_0',school:'华南理工大学',degree:'本科',major:'数据科学与大数据技术',start:'2024',end:'2028'}]}
+ const claim={claim_id:'claim_education_0',text:'华南理工大学 · 本科 · 数据科学与大数据技术 · 2024 — 2028'}
+ assert.equal(isEducationProfile(claim,form),true)
+ assert.equal(isEducationProfile({...claim,text:claim.text+'，项目负责人'},form),false)
+ assert.equal(isEducationProfile({...claim,claim_id:'claim_projects_0'},form),false)
+ assert.equal(isEducationProfile(claim,null),false)
+})
+
+test('polish diff retains both texts and distinguishes unverified changes', async()=>{
+ const {diffSpans, proposalNeedsReview}=await import('../src/resume/review.ts')
+ for(const [before,after] of [['负责3个项目，准确率约80%','负责3个项目，准确率80%'],['ABCABC','ABCXABC'],['参与😀开发','主导😀开发'],['删除文字',''],['','新增文字']]){
+  const diff=diffSpans(before,after)
+  assert.equal(diff.original.map(p=>p.text).join(''),before)
+  assert.equal(diff.proposal.map(p=>p.text).join(''),after)
+  if(before!==after)assert.ok([...diff.original,...diff.proposal].some(p=>p.changed))
+ }
+ assert.equal(proposalNeedsReview({}),true)
+ assert.equal(proposalNeedsReview({proposal_check:{relation:'SUPPORTED',complete:true}}),false)
+ assert.equal(proposalNeedsReview({proposal_check:{relation:'CONTRADICTED',complete:true}}),true)
+ assert.equal(proposalNeedsReview({proposal_check:{relation:'SUPPORTED',complete:true}},'核查失败'),true)
+})
+
+
+test('supplement recheck is bound to the selected claim, application, and consent window',async()=>{
+ const {targetForClaim,savePendingRecheck,getPendingRecheck,completePendingLink,clearPendingRecheck}=await import('../src/resume/supplementRecheck.ts')
+ const form={projects:[{id:'projects_0'}],internships:[{id:'exp_work_1'}],awards:[{id:'award_1'}]}
+ assert.deepEqual(targetForClaim('claim_projects_0',form),{target_type:'project',target_id:'projects_0'})
+ assert.deepEqual(targetForClaim('claim_work_1',form),{target_type:'internship',target_id:'exp_work_1'})
+ assert.equal(targetForClaim('claim_manual_1',form),null)
+ const map=new Map();const storage={getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)}
+ const pending={target_type:'project',target_id:'projects_0',claim_id:'claim_projects_0',candidate_id:'cand_1',application_id:'app_1',created_at:Date.now(),ready:false}
+ savePendingRecheck(storage,pending)
+ assert.equal(completePendingLink(storage,{target_type:'project',target_id:'other'},'cand_1','app_1'),null)
+ assert.equal(completePendingLink(storage,pending,'other','app_1'),null)
+ assert.equal(getPendingRecheck(storage,pending.created_at+31*60*1000),null)
+ assert.equal(completePendingLink(storage,pending,'cand_1','app_1').ready,true)
+ assert.equal(completePendingLink(storage,pending,'cand_1','app_1'),null)
+ clearPendingRecheck(storage);assert.equal(getPendingRecheck(storage),null)
+})
+
+test('shared polish lock prevents duplicate starts until cancellation or completion', async()=>{
+ const {createOperationLock}=await import('../src/resume/operationLock.ts')
+ const lock=createOperationLock()
+ const observed=[]
+ const unsubscribe=lock.subscribe(value=>observed.push(value))
+ assert.equal(lock.acquire(),true)
+ assert.equal(lock.isLocked(),true)
+ assert.equal(lock.acquire(),false)
+ assert.deepEqual(observed,[true])
+ unsubscribe()
+ lock.release()
+ assert.equal(lock.acquire(),true)
+ assert.equal(lock.acquire(),false)
+ lock.release()
+ assert.equal(lock.acquire(),true)
+})
+
+test('failed and partial polish outcomes do not create a false success history label',async()=>{
+ const {polishResultSummary,historyVersionLabel}=await import('../src/resume/review.ts')
+ assert.deepEqual(polishResultSummary({grounding:{error:'服务失败',results:{}}}),{count:0,error:'服务失败'})
+ assert.deepEqual(polishResultSummary({grounding:{error:null,results:{a:{original_text:'原文',proposed_text:'原文'}}}}),{count:0,error:null})
+ assert.deepEqual(polishResultSummary({grounding:{error:'核验未完成',results:{a:{proposed_text:'建议'}}}}),{count:1,error:'核验未完成'})
+ assert.match(historyVersionLabel('建议已生成：等待预览与采用',0),/未生成建议/)
+ assert.equal(historyVersionLabel('建议已生成：等待预览与采用',1),'建议已生成：等待预览与采用')
+ assert.equal(historyVersionLabel('建议已生成：等待预览与采用',null),'建议已生成：等待预览与采用')
+})
+
+test('the unresolved current conflict comes before other suggestions without reordering the draft',async()=>{
+ const {reviewPriority}=await import('../src/resume/review.ts')
+ const workflow={resume_claims:[{claim_id:'a',text:'draft A'},{claim_id:'b',text:'draft B'}],grounding:{results:{
+   a:{original_text:'draft A',final_text:'draft A',proposed_text:'revised A',state:'NEEDS_REVIEW'},
+   b:{original_text:'draft B',final_text:'draft B',state:'BLOCKED',relation:'CONTRADICTED'}}}}
+ assert.ok(reviewPriority(workflow,'b')>reviewPriority(workflow,'a'))
+ workflow.resume_claims[1].text='user correction'
+ assert.ok(reviewPriority(workflow,'b')<5)
+})

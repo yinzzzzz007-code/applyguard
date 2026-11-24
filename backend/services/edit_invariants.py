@@ -43,6 +43,11 @@ def causal_escalation(original,proposal,sources=()):
     Narrowly require review for new causal phrasing on observational work. An exact
     in-scope source statement can justify it; keyword overlap alone cannot.
     """
+    inquiry = r'(?:检查|观察|研究|评估|分析).{0,80}(?:是否|能否|差异|影响)|(?:whether|investigat|examin|explor)'
+    confirmed = r'(?:验证|证实|证明|确定|确认)(?:了|出)|(?:demonstrat|proven|confirmed|established)'
+    if (re.search(inquiry,original,re.I|re.S) and re.search(confirmed,proposal,re.I)
+        and not re.search(confirmed,original,re.I) and not any(proposal.strip() in s.get('text','') for s in sources)):
+        return ['建议可能把探索或检验目的写成已验证的结论，请核对原文及证据。']
     observation=r'评测|测得|测量|\bevaluat(?:ed|ing|ion)\b|\bmeasur(?:ed|ing|ement)\b'
     causal=(r'\bcontribut(?:ed|ing)\s+to\b|\bachiev(?:ed|ing|es)\b|\b(?:drove|driving)\b'
             r'|\bdeliver(?:ed|ing|s)?\s+(?:a\s+)?(?:\d+(?:\.\d+)?\s*%\s+)?'

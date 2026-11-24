@@ -1,4 +1,4 @@
-import type { EditableResumeForm, ParsedRequirement } from './types'
+import type { EditableResumeForm, ParsedRequirement, ExperienceLead } from './types'
 
 export interface JobFactor {
   slug: string
@@ -42,6 +42,10 @@ export interface Opportunity extends JobTarget {
   unread?: boolean
   details_available?: boolean
   match_level?: JobMatch['level']
+  recommendation_score?: number
+  recommendation_rank?: number
+  recommendation_reasons?: string[]
+  interest?: number
   match_score?: number | null
   match_reasons?: JobMatch
 }
@@ -69,7 +73,7 @@ export interface JobSource {
   details_count: number
   next_refresh_at: string
 }
-type RefreshRun = { id: string; sources: string[]; result: Record<string, { created: number; updated: number; closed: number; skipped: number; error?: string }>; finished_at?: string }
+type RefreshRun = { id: string; sources: string[]; result: Record<string, { created: number; updated: number; closed: number; skipped: number; unchanged?: number; complete?: boolean; notice?: string; error?: string }>; finished_at?: string }
 export interface RefreshStatus {
   state: 'waiting' | 'running' | 'success' | 'partial' | 'failed' | 'interrupted'
   current: RefreshRun | null
@@ -83,6 +87,7 @@ export interface JobLibrary {
   stats: { open: number; unknown: number; reference: number; closed: number; analyzed_jobs: number; factors: Array<{ slug: string; label: string; jobs: number }> }
   notice: string
   ai_matching?: boolean
+  ranking?: {state:string;notice:string;engine?:string}
 }
 export interface JobAnalysis {
   job_id: string
@@ -93,7 +98,7 @@ export interface JobAnalysis {
   supported: number
   excluded?: number
   profile_checks?: ProfileChecks
-  requirements: Array<ParsedRequirement & { coverage: 'SUPPORTED' | 'NEEDS_EVIDENCE' | 'NO_MATCH' | 'PROFILE_REPORTED' | 'REVIEW_REQUIRED'; evidence_ids: string[]; experience_ids: string[]; notes: string[] }>
+  requirements: Array<ParsedRequirement & { coverage: 'SUPPORTED' | 'NEEDS_EVIDENCE' | 'NO_MATCH' | 'PROFILE_REPORTED' | 'REVIEW_REQUIRED'; evidence_ids: string[]; experience_ids: string[]; related_projects?: ExperienceLead[]; notes: string[] }>
   notice: string
 }
 export interface RadarPage {
@@ -109,10 +114,10 @@ export async function jobsRequest<T>(path = '', body?: unknown, method: 'GET' | 
   let response: Response
   try {
     response = await fetch(`${base}/api/v1/jobs${path}`, {
-      method,
+      method, signal: AbortSignal.timeout(/\/(?:match|analyze)$/.test(path)?60000:30000),
       ...(body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
     })
-  } catch { throw new Error('无法连接本机后端，请确认服务已启动。') }
+  } catch (reason) { throw new Error(reason instanceof DOMException&&reason.name==='TimeoutError'?'请求超时，可稍后重试；已提交的刷新任务仍可查看状态。':'无法连接本机后端，请确认服务已启动。') }
   const result = await response.json().catch(() => ({ error: { message: '后端未返回有效 JSON，请重启更新后的后端。' } }))
   if (!response.ok || result.error) throw new Error(result.error?.message ?? `请求失败（${response.status}）`)
   if (method !== 'GET' && !path.endsWith('/analyze')) window.dispatchEvent(new Event('applyguard:jobs-changed'))

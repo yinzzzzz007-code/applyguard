@@ -1,8 +1,28 @@
 # ApplyGuard 当前实现与代码位置（2026-11-13）
 
+### 陈述核验的操作与故障定位（2026-11-24）
+
+在 `/claims` 点击“编辑陈述”，可在该条直接保存修改或取消。存在多条未保存的编辑时，点“查看原因与补全引导”，云朵先定位距离当前按钮最近的一组保存操作。处理完后移向下一条。补材料和重新核验各自保留发送前确认。
+
+| 页面现象 | 用户操作 | 实现位置 |
+| --- | --- | --- |
+| 陈述中的短语带蓝框 | 对照下方原子事实、理由及材料原文，选择修改、保留或补材料 | `frontend/src/pages/ClaimVerificationPage.tsx`、`backend/services/structured_verifier.py`。正文摘录须逐字匹配且位置唯一 |
+| 页首提示核验中断 | 按具体原因处理后重试。中断的结果不能用于严格导出 | `backend/services/sag_grounding.py`、`backend/services/grounded_workflow.py`、`backend/services/model_client.py` |
+| 蓝框围住保存按钮 | 保存或取消框中这条编辑，再继续原操作 | `frontend/src/components/CloudGuide.tsx`、`frontend/src/context/DemoContext.tsx` |
+
+操作回归入口为 `node scripts/claims_guide_browser_smoke.cjs`。启动本机页面后可通过 `APPLYGUARD_TEST_URL` 指定地址，默认 8020；用 Playwright 的 Edge 在隔离窗口验证桌面和窄屏。该用例拦截工作流 API，云端核验另行实测。后端回归入口为 `python -m unittest tests.test_grounding_scope tests.test_grounding_v2`。
+
+11 月 24 日，本机 8020 对当前 3 条简历正文进行了真实 Gemini 复测。最终一轮用时 57 秒，关联到原件的两条共拆出 12 个事实，其中 11 个需要核对，6 个取得正文中的唯一逐字摘录。剩余事实展示核对原因。另一条没有可用原件，严格导出返回 422。浏览器回归另用合成内容验证双编辑、按距离引导、保存/取消、补材料入口和重试。该样本用于验证流程，不能据此估计模型准确率。
+
+2026-11-22 导入修复：简历导入默认优先提取文字；遇到存在页面内容但无法提取文字的 PDF 页时，自动使用本地 OCR 重新识别（最多 5 页），识别结果明确标注 OCR，仍须逐项核对。损坏或其他读取异常不静默降级为成功。运行环境可通过 `APPLYGUARD_OCR_PACKAGES` 和 `PADDLE_PDX_CACHE_HOME` 指定独立的 E 盘软件包与模型目录。启动脚本先加载本地 `.env`，安装缓存和临时目录位于项目 `output`；验证入口：`python -m unittest tests.test_resume_abnormal`，另用真实图片型 PDF 验证 OCR 与字段结果。
+
 本说明按 GitHub 仓库 `yinzzzzz007-code/applyguard` 的 `feature/ui-review-improvements-20261105` 分支核对。代码基线为 `1eab77cbcd86d79a180ce2834ab3a82a777df89f`，提交时间 2026-11-10 11:07 +08:00。它是本机运行的求职材料审核原型，核心是“经历与原件关联 → 岗位匹配 → 简历陈述核验／润色 → 人工确认与导出”。
 
 当前实际运行结构为 React/Vite 前端、Python 标准库 HTTP 服务、JSON/SQLite 本地存储和 SAG 检索引擎。下文包含 11 月 13 日基于上述 GitHub 提交的修复：首页视频、本机 Harness 安装／启动向导及 `/help` 直达。测试结果另见 [本次测试报告](testing-report-2026-11-13-gemini.md)。
+
+2026-11-22 真实文件和岗位刷新验证：见 [本地 OCR 与岗位刷新验证](testing-report-2026-11-22-ocr-job-refresh.md)。教育经历入口还修复了项目符号学校行漏提、院系被拆为独立学校的问题。
+
+2026-11-23 经历库流程更新：`/` 选择 PDF 并识别 → 主按钮“导入到经历库” → `/vault` 未保存卡片 → 编辑／完成编辑 → 统一“保存经历库”。首页没有保存接口调用；新旧内容差异作为卡片建议，默认保留已有内容。`frontend/src/resume/importTransfer.ts` 负责 sessionStorage 交接、草稿合并、原文与建议，沿用原条目编号及材料关联；`ResumeParseResult.source_text` 返回完整识别正文，兼容旧版 preview。操作说明见 [识别结果带入经历库](vault-import-flow.md)。验证入口仍为 `python scripts/verify_vault_flow.py`；本轮仅构建和一次界面跳转检查。
 
 ## 1. 整体结构
 
@@ -221,8 +241,8 @@ npm run dev -- --host 127.0.0.1
 | 图片简历本地 OCR | 首页简历识别方式选择本地 OCR → `resume_parser._pdf_local_ocr` → `evidence_parsers._run_local_ocr` → `resume_sections.py` | `python scripts/evaluate_resume_ocr.py --output <新文件> <pdf...>`；`--replay-ocr` 回放已保存正文，`--expected-education` 等可检查手工计数；统计条数不等于准确率 |
 | 事实与引用人工标注汇总 | `scripts/evaluate_doclens_audit.py` → `third_party/doclens/aggregate_scores.py` | `python scripts/evaluate_doclens_audit.py --input eval/doclens-example.json --output <新文件>`；需可选 `requirements-audit.txt`；只汇总标签，不自动验真 |
 | RefChecker 提示词复核 | `refchecker_review.py`、`third_party/refchecker/`、`scripts/evaluate_refchecker_pilot.py` | `--input eval/refchecker-pilot.json --output <新文件> --live` 只发送给定案例；设置 `APPLYGUARD_REFCHECKER_AUDIT=1` 可启用改写额外否决，额外调用模型，详情见[研究记录](research-2026-11-13-factuality-ocr.md) |
-| JPEG 转图片型 PDF | `scripts/images_to_resume_pdfs.py` | `tests/test_images_to_resume_pdfs.py`；逐页校验原图字节，`--merge` 可另建多页版本。该格式无文字层，应在简历入口选择本地 OCR |
-| 图片简历 OCR 及字段抽取 | `evidence_parsers.py` 的 OCR 引擎、`resume_parser.py`、`resume_sections.py` | 选择本地 OCR 可读取图片 PDF；教育字段仍可能漏提，历史截图结果见[本轮报告](testing-report-2026-11-13-ambiguity.md) |
+| JPEG 转图片型 PDF | `scripts/images_to_resume_pdfs.py` | `tests/test_images_to_resume_pdfs.py`；逐页校验原图字节，`--merge` 可另建多页版本。该格式无文字层，默认本地模式会自动转到 OCR |
+| 图片简历 OCR 及字段抽取 | `evidence_parsers.py` 的 OCR 引擎、`resume_parser.py`、`resume_sections.py` | 默认本地模式或显式本地 OCR 可读取图片 PDF；教育字段仍可能漏提，历史截图结果见[本轮报告](testing-report-2026-11-13-ambiguity.md) |
 | 人工确认与导出分离 | `review_export.py`、`copyRules.ts` | `test_review_export.py`、前端 review／copy-rules／review-session 测试 |
 | 岗位与外部 Agent | `job_radar.py`、`agent_bridge.py` | `test_job_radar.py`、`test_agent_bridge.py`、`test_agent_mcp.py` |
 | 本机 Harness 接入与迁移 | `harness_setup.py`、`scripts/connect_harness.py`、`HarnessSetupGuide.tsx`。检测项目根目录并生成可复制安装命令 | `test_harness_setup.py`、`agent-connection.test.mjs`、`scripts/agent_browser_smoke.cjs`、`scripts/harness_agent_probe.py` |
@@ -234,6 +254,8 @@ npm run dev -- --host 127.0.0.1
 
 当前范围仍是本机原型：真实中文 OCR 已通过一项合成图片用例，不能代表多种扫描质量下的准确率；真实招聘投递、外部 Radar 的在线运行、独立真人标注的模型准确率以及生产级多用户隔离，尚未由本次自动化测试验证。
 
+2026-11-23 文件夹入口：`AgentConnector` 通过现有本机同源 `/api/v1/agent/ui` 的 `pick_folder` 动作调用系统选择窗口；前端连续追加、去重、移除，最多五个目录。选择不创建授权，最终仍由 `create` 校验并授权。实现与验证入口见 [连接文档](agent-connector.md)。
+
 ## 11. 本机 Harness 一次检索的路径
 
 `/evidence` → `AgentConnector` → 同源 `/agent/ui setup` → 检测并显示安装步骤 → 用户选择材料与外发规则 → `/agent/ui create` 返回 30 分钟能力凭据 → 复制生成的 PowerShell 命令 → `scripts/connect_harness.py`。
@@ -241,3 +263,176 @@ npm run dev -- --host 127.0.0.1
 启动器先调用 `/agent/call prepare` 校验有效性和云端授权，再创建独立临时 profile，启动已安装的 `dsh`。Harness 的 MCP stdio 插件运行同一 Python 下的 `scripts/agent_mcp.py`，经本机 HTTP 使用三个工具：`get_task`、`search_materials`、`submit_evidence`。模型和 API 地址取当前配置，Key 隐藏输入，仅传运行进程。
 
 只有实际 `get_task` 后后端才标记配对。前端轮询拿到候选原文；用户核对归属、数字后导入原工作区，随后仍经过材料关联与原子核验。Harness 不能直接批准陈述。离页／撤销／超时使凭据失效，独立检索进程退出后清理临时 profile。完整操作见 [连接文档](agent-connector.md)。
+
+
+2026-11-23 早期 Harness 复测：当时只完成配对，检索回传失败；后续恢复及新 Key 完成记录见文末最终报告。早期证据与 CLI 见 [文件夹选择与 Harness 报告](testing-report-2026-11-23-folders-harness.md)。
+
+## 2026-11-23 目录弹窗与按钮审查
+
+目录选择采用 `pick_folder → folder_status / cancel_folder` 异步任务：`backend/services/folder_picker.py` 管理唯一窗口、可见启动、超时与取消；`AgentConnector.tsx` 轮询并提供“取消选择”。选择目录不会授权或扫描；成功后连续追加，最多五个，去重和移除仍由 `agentConnection.ts` 与界面处理。同源访问校验继续由 `backend/app.py` 负责。
+
+导入交接会移除未填写的历史 `edu_1` 占位行，保留手工填写及稳定经历 ID；重复导入保留已有描述，差异进入卡片建议。帮助页与首页短片共用的 `motion/onboarding.ts` 已同步“选择 → 导入到经历库 → 编辑 → 保存”的说明。
+
+验证入口：`python scripts/verify_ui_actions.py --build`。默认运行目录窗口、连接器、MCP 与前端动作状态检查，保存日志及 JSON 到 `output/test-reports/*_ui-actions/`。它不会代替实际弹窗、官网网络或模型的端到端证据。逐页实际点击记录见 [按钮与流程审查](testing-report-2026-11-23-ui-actions.md)。真实 Harness 连接的阶段与失败边界见 [连接测试](testing-report-2026-11-23-folders-harness.md)。
+
+## 2026-11-23 分层诊断与恢复
+
+真实 Harness 已再次跑通 get_task → search_materials → submit_evidence：探针 32.876 秒，正式启动器 61.503 秒，页面完成原文确认导入。已给正式启动器增加默认 240 秒会话时限，单次模型尝试／流式空闲 90 秒、最多重试一次，并显示领取、搜索、回传、异常结束和超时阶段。运行目录在项目 `output/harness-runtime`。本轮成功和原有失败分别保留，完整证据见 [诊断与恢复报告](testing-report-2026-11-23-harness-recovery.md)。
+
+GitHub 可选入口新增点按引导：`AgentConnector.tsx`、`GithubGuideTip.tsx`、`githubGuide.ts` 与 `github-guide.css` 负责五步定位、红点、校验与跳过。后端仅检测是否存在凭据；私有仓库缺凭据时，在创建授权前失败。`scripts/diagnose_harness_model.py` 是独立模型／工具协议诊断入口；`scripts/verify_ui_actions.py --build` 已纳入共享会话截止与引导状态检查。GitHub 真实授权／私有仓库读取尚未进行，需要明确的仓库范围授权。
+
+## 2026-11-23 按钮补全引导、公开发现与语义推荐
+
+| 用户入口与触发 | 实现与预期证据 | 验证入口 |
+| --- | --- | --- |
+| 首次使用，或页头“云朵引导” | `components/CloudGuide.tsx`、`guide.ts`、`cloud-guide.css`；自绘 #87CEEB 云朵，在导入、保存、关联、岗位分析等真实完成回调后提示下一步；可关闭、重开、减少动态效果 | `frontend/scripts/cloud-guide.test.mjs`；实际首次／补全点击截图见本轮报告 |
+| 禁用按钮旁“查看原因与补全引导” | `components/ui/action-button.tsx` 保留原生 disabled，明确显示原因；有准确目标的缺项按距按钮的文档坐标距离排序，补齐后才移动一次；等待／已保存等只解释状态 | `frontend/scripts/button-inventory.mjs`，禁止新增无原因的条件按钮；`scripts/verify_ui_actions.py --build` |
+| 证明材料 → Agent → GitHub | `GithubSources.tsx`、`github_discovery.py`；用户名、公开邮箱候选、关键词查询公开元数据 → 选择仓库 → 固定 SHA → 单独授权读取；私有权限不随查询扩大 | `tests/test_github_discovery.py`；本轮实际返回公开仓库列表 |
+| 岗位雷达统计卡片 | `RadarDialog.tsx`、`OfficialJobRadar.tsx`；提醒列表 → 单条详情 → 岗位；原列表保留，翻页不静默截掉 200 条以后提醒 | `tests/test_job_recommendation.py` 的提醒分页；实际弹窗截图 |
+| 岗位雷达默认推荐 | `job_recommendation.py` 本地 MiniLM 语义向量 + 偏好与可撤销兴趣反馈 + 公司／重复项打散；`job_radar.py` 提供 feedback API；向量不发云端 | `scripts/setup_job_semantics.py`；`tests/test_job_recommendation.py`；个人实测排序报告 |
+| 简历审查 → AI 简历润色 | `SAGPolishPanel.tsx` 提升到正文上方；ASu great-resume 只规范建议，原子核验与错改保护仍独立；先预览再采用 | `scripts/evaluate_personal_resume_flow.py --all-claims --live --interview`，失败后可用 `scripts/retry_resume_polish.py` 复用同一批源版本 |
+| 索引存储异常／长简历模型等待 | `sag_storage.py` 在模型前检查硬链接；exFAT 给出 NTFS 提示；`scripts/check_sag_storage.py` 可单独检查。共享 fetch／面经上限 600 秒，Vite 代理 630 秒，避免后端 185 秒完成但页面 180 秒中止 | 本轮真实 14 条简历润色 185.45 秒；预算源码检查和实际结果分别记录 |
+
+默认 OCR 批量复查：`python scripts/evaluate_resume_ocr.py <PDF路径…> --parse-mode offline --output output/<新文件>.json`。默认 offline 与首页一致，会对图片页自动尝试本地 OCR。计数不代表逐字准确。
+
+完整证据、限制与后续需本人确认事项见 [最终复查记录](testing-report-2026-11-23-final-personal-flow.md)。个人 CV、材料正文、模型结果位于 gitignored output，不进入公开报告。
+
+
+## 本轮真实云功能复查入口
+
+| 用户动作 | 当前共享边界 | 必要证据与 CLI |
+| --- | --- | --- |
+| 简历识别选择 AI | `resume_parser.py` 按字段核对来源，舍弃无原文依据字段；`resume_sections.py` 保留规则字段，没有实习上下文时不凭项目标题重复建立实习 | `tests.test_resume_abnormal`、`tests.test_resume_sections`；真实 counts 为教育 1、项目 10、实习 0、奖项 3 |
+| 离线解析岗位后主动点 AI 润色／核验 | `resume/modelReview.ts` 按当前操作选择 transport；`SAGPolishPanel.tsx` 页面内确认，取消不调用模型 | `cloud-guide.test.mjs`；真实模型模式不能被历史 `local_only` 静默改成离线 |
+| 用户改数字 → 保存 → 重核验 | `reviewSession.ts` 使旧核验失效；`structured_verifier.py`、`fact_lock.py` 识别合法千位分组，仍阻止错数字／单位 | `tests.test_grounding_v2`；手动按证书校正名次和分母后重新核验 |
+| 长原件的原子核验与润色 | `sag_grounding.model_sources` 保留完整正文、来源 ID、候选人和经历范围，省去模型不需要的索引元数据；服务器仍按完整原件校验引用位置、哈希与版本。原子核验每请求一条陈述 | `tests.test_grounding_v2` 的真实来源位置保留检查；不截断证据、不放宽事实门禁 |
+| 云调用等待／岗位解释 | `model_client.py` 复杂调用默认 90 秒、普通 60 秒；岗位 AI 解释 30 秒；前端岗位操作 60 秒，简历模型操作 600 秒 | 外部 503／超时仍可能发生。`HTTP 200 + grounding.error` 必须记录为未完成 |
+| 受限真实测试与账单 | `scripts/evaluate_cloud_features.py` 隐藏输入 Key、固定 Gemini、调用前预留预算、阶段后查账单，`--only` 可重试单项；`scripts/summarize_cloud_features.py` 汇总真实状态 | `python scripts/evaluate_cloud_features.py --help`；`python scripts/summarize_cloud_features.py <report.json…> --output output/<summary>.json --balance-check`；未通过返回非零 |
+
+默认链路覆盖简历 AI 抽取、JD 解析、语义匹配、SAG 原子核验、ASu 润色及改写核对、严格导出复核、面经、可选岗位 AI 解释、Harness 工具回传。可选 RefChecker 额外审计另外做单句组件探针，结果与个人简历前置核验分开；所有检索策略的消融不在本轮功能测试范围。
+
+中文录屏步骤与逐句英文说明见 [演示指南](demo-recording-guide-2026-11-23.md)。`eval/public-demo` 为虚构公开素材；个人 CV 和私人原文不作为公开测试集发布。
+
+## 云朵引导按页面定位（2026-11-23）
+
+`frontend/src/guide.ts` 的 `GUIDE_PAGES`／`guideForPage` 定义全部 13 条业务与帮助路由的独立提示；当前页真实完成后才提示下一步，不能用全站第一个未完成步骤代替当前页。`reopenGuide` 只解除隐藏，保留完成记录。`CloudGuide.tsx` 将按钮缺项绑定路由并在切页清除；异步内容出现后重定位，保留距离排序和减少动画设置。
+
+验证入口仍为 `scripts/verify_ui_actions.py --build`，其前端 smoke 纳入 `frontend/scripts/cloud-guide.test.mjs`。本轮 69 项前端检查及构建通过；13 页实际切换、刷新和重开记录见 [修复报告](testing-report-2026-11-23-cloud-guide-pages.md)。
+
+
+## 简历正文自动选入与补选（2026-11-23 历史版本，当前行为见文末）
+
+`frontend/src/resume/draftSelection.ts` 从经历库当前快照和已分析岗位的匹配结果挑选最多 3 条相关经历，作为 `DRAFT`／`NEEDS_REVIEW`，与证据支持分开；语义分或关键词覆盖用于排序，不按证据强弱冒充相关性。已有正文、已编辑内容、跨候选人或预录样例不覆盖。无匹配时说明并允许手选；只对空草稿初始化一次，持久保存 `draft_initialized`，删除后刷新不会重新填入。已打开的既有草稿会保留。
+
+`ResumeReviewPage.tsx` 提供经历名／内容搜索、类型筛选和下拉选择，正文已存在的经历按 ID 和内容过滤；`ReviewDraft.tsx` 每条有“从正文移除”和撤销。补选／移除后保留当前文字、使旧核验失效。云朵默认折叠；显式点击时根据当前草稿状态提示，缺项引导仍按距离排序，鼠标经过禁用按钮不会自动打断。
+
+验证：`npm --prefix frontend run smoke`（包含 `draft-selection.test.mjs` 和 `cloud-guide.test.mjs`），`npm --prefix frontend run build`。独立 8017 测试副本中实际观察自动选入 3 条、移除后刷新仍为 2 条、下拉补回后候选消失；没有发送模型请求。有关界面和细节见 `docs/testing-report-2026-11-23-draft-selection.md`。
+
+
+## 润色对照与教育信息（2026-11-23）
+
+`ReviewDraft.tsx` 在每条经历中直接展示原文、润色建议和针对建议本身的核查状态，`change_audit` 仅是字符差异，不自动声称修改意图；大幅改写以完整段落对照为主。建议需要用户主动采用，过期草稿需重新生成，采用后仍重新核验。`atomic_verifier.POLISH_PROMPT` 要求突出真实贡献、技术和岗位相关性，避免无意义换词；实际生成效果仍需真人检查。
+
+`resume/review.ts:isEducationProfile` 仅在陈述 ID 与当前教育表单内容严格匹配时标记为基础资料；`ClaimVerificationPage` 将其从经历的待复核统计中区分，修改学历到经历库进行。后端仍以自身表单和文本比对判断，不因客户端显示跳过核查。
+
+验证入口：`npm --prefix frontend run smoke`、`npm --prefix frontend run build`、`python -m unittest tests.test_grounding_v2 tests.test_edit_preservation_v2 tests.test_resume_draft_vault`。隔离页面回放先前真实 Gemini 结果检查展示，不作为修改后模型质量实测；用户测试后应重启后端以加载新的润色指令。
+
+本轮已重启 8015 隔离测试后端以加载新润色指令，用户草稿沿用原目录。页面对照使用先前真实 Gemini 的隔离回放结果确认，未以旧输出证明新指令的润色质量；后续实际生成仍需观察。
+
+## 当前正文逐条润色（2026-11-23）
+
+`grounded_workflow.py` 将用户当前正文中全部非个人资料陈述送入 ASu great-resume 润色，包含手动添加的经历；不扩展至未选入正文的经历库条目。`atomic_verifier.py` 要求逐条返回建议，候选人专属材料可用时对改写进行事实核查；缺少材料的内容显示未核验，不能视为已通过。教育资料按现有资料规则处理。模型遗漏条目时界面会提示，不将未返回视为成功。
+
+`ReviewDraft.tsx` 展示每条完整原文、建议、差异及建议核查状态，正文编辑框随内容展开；建议须用户决定是否采用。验证入口：`python -m unittest tests.test_grounding_v2 tests.test_edit_preservation_v2 tests.test_wording_review`，`npm --prefix frontend run smoke` 和 `npm --prefix frontend run build`。隔离页面用先前模型结果检查长文本显示；这不代表新指令已经完成真实云模型复测。
+
+## 润色与正式核验分开（2026-11-23）
+
+`SAGPolishPanel.tsx` 在缺少原件时仍按正文生成建议并说明尚未核验；有来源时沿用 SAG 检索、ASu great-resume 和参考 ALCE/FActScore 的原子事实检查与改写保护。`ClaimVerificationPage.tsx` 的“启动 AI 原子核验”经用户同意后，`DemoContext.reverifyClaims(true)` 明确请求 `sag_atomic` 和模型模式；展示原子事实、引用，交用户编辑、保留或排除。结果中的模型错误不再被静默当作成功。关联岗位不存在时 `job_radar.validate_target` 返回明确的中文处理提示。
+
+验证：相关 43 个后端测试、32 个岗位测试和前端构建通过。隔离浏览器实际点击验证了模型发送确认和岗位缺失提示。真实 Gemini 在两条无有效关联原件的正文上返回两条 ASu 润色建议，正式核验均维持 BLOCKED，见 `output/cloud-polish-formal-20261123/report.json`。补齐证据的另一次测试在 SAG 建索引阶段耗时过长而主动停止，不能宣称新版有材料云端核验通过。测试后 API 累计用量为 0.85851546 CA；不是本次单次费用。CLI 可用 `--claim-id` 限制参与测试的正文，完整参数见 `python scripts/evaluate_cloud_features.py --help`。
+
+## ASu 完整简历指导、润色对照与补证重核验（2026-11-23）
+
+比对 ASu 上游 main `5d6592acadcd77385a884c1de042986486cfe2bc` 与项目锁定版本：忽略换行后，`great-resume/SKILL.md`、两份参考资料、证据账本模板、验证器和 MIT 许可证内容一致。`asu_resume.proposal_policy` 每次提供完整简历技能及两份参考，业务分析内容仅在相关时使用；范围仍限于用户当前正文的改写，不执行投递、发信或其他技能。SAG 与原子检查先读取可用材料，改写后重新核查；没有有效原件的内容可忠于原文润色，但不授予已核验状态。
+
+`ReviewDraft.tsx` 显示真实的原文／建议差异：蓝色标出改写，橙色表示整条建议需复核，不声称精确定位风险；删除内容在原文上标注。无结果时可在当前面板直接打开润色确认，已采用、原文不变和个人教育资料分别说明。`ClaimVerificationPage.tsx` 展示需复核原因与原子事实，并提供编辑、知情保留、补充材料。经明确同意后，`supplementRecheck.ts` 将申请、候选人、目标经历及有效期绑定；仅用户确认关联对应材料后自动返回并启动重核验，不自动修改正文。缺少经历库对应条目的手写内容需先加入经历库。未核验的知情保留不会成为已核验，可导出用户确认稿。
+
+验证入口：`python -m unittest tests.test_asu_resume tests.test_grounding_v2 tests.test_edit_preservation_v2`（43 项）、`node --experimental-strip-types --test frontend/scripts/review.test.mjs`（10 项）和 `npm --prefix frontend run build`。隔离页面使用虚构材料实际测试了生成按钮、差异高亮、材料选择和关联后的自动返回；副本缺少关联岗位，重核验显示岗位缺失，因此没有证明云模型端到端成功。有关已授权个人材料的真实新版本云测试也未在本轮重跑；上次有证据的 SAG 建索引耗时过长已中止。
+
+## Gemini 连通性与润色入口互锁（2026-11-23）
+
+简历审查的主按钮和快捷入口共用后台润色任务。确认后，`POST /api/v1/resume/polish/start` 交给本机后端执行；返回页面通过 `POST /api/v1/resume/polish/status` 读取进度和已有建议。页面可以切换、刷新或关闭。后台服务需保持运行。重复提交进行中的相同申请只启动一次。旧的同步 `/api/v1/resume/polish` 接口继续供评测 CLI 使用。
+
+任务索引在本机工作区的 `local/polish-jobs/`，正文、岗位和候选人参与匹配，结果引用 `local/verification-runs/` 原始记录。取回结果前会核对材料快照，未保存的编辑优先。浏览器展示原文与建议，用户可逐条决定是否采用。回归入口为 `python -m unittest tests.test_polish_navigation`。
+
+简历审查页读取 `/health` 的 `cloud_model_configured`。缺密钥时，主润色按钮、快捷入口和模型核验显示配置原因。本地检查仍可用。配置就绪后，点击润色并确认才发送岗位、经历及材料。配置标记只检测密钥是否存在，账户额度和上游响应在调用时单独检查。
+
+在仓库根目录启动 8032 同一份演示草稿：`python scripts/start_recording_workspace.py --port 8032 --workspace output/relevance-preview --cache output/relevance-preview/cache --cloud`。云端启动优先使用当前进程的 `APPLYGUARD_AI_API_KEY`，也可在隐藏提示中输入演示密钥。启动器先读取累计账单，运行中沿用 15 元预算保护。省略 `--cloud` 会进入离线模式。可用 `python -m unittest tests.test_api.ApiTests.test_health` 检查两种配置的响应。
+
+`ReviewDraft.tsx` 将下方按钮标注为快捷入口，主按钮和快捷按钮通过 `resume/operationLock.ts` 在本页会话共享锁；等待确认及请求进行中两者禁用，鼠标悬停和按钮下方说明它们功能相同并需等待。取消、成功和失败时释放；请求进行中切页再返回仍读取共享锁。`ActionButton` 为禁用容器添加原因提示。
+
+`scripts/probe_gemini.py --output <report.json> [--structured]` 在隐藏输入密钥并检查累计账单后，最多发两次不含个人资料的短请求。2026-11-23 普通文本和 JSON Schema 各一请求均 HTTP 200（分别 1.71 秒、3.25 秒），累计用量从 1.11941878 至 1.11952078 CA；该探针不证明含真实材料的完整润色和核验持续可用。历史 503 只说明服务当时不可用，无法据此区分网关与上游。
+
+验证：`node --experimental-strip-types --test frontend/scripts/review.test.mjs`、`npm --prefix frontend run build`；隔离页面实际检查两个入口在确认、请求期间禁用，以及取消或接口错误后恢复。切页状态由共享锁及订阅单元检查，未用较长的真实云调用验证。
+
+## 503 时真实建议与历史状态（2026-11-23）
+
+用户实际遇到的响应在 `grounding.error_code=MODEL_SERVICE_UNAVAILABLE` 且建议数为 0 时，旧前端仍写入“建议已生成”的历史标题。`SAGPolishPanel.tsx` 现在根据实际建议数量和核验错误生成记录；`GroundingHistory.tsx` 对旧记录中已有空建议列表的错误标题作显示纠正，不删除用户历史。
+
+`grounded_workflow.py` 按材料检索、原文原子核验、润色生成、改写核验记录失败阶段。检索或原文核验失败时尝试一次 ASu 忠实改写：仍使用已检索到的候选原文，但所有建议标为未核验，仅供人工选择；如果建议已生成而后续检查失败则保留预览。事实状态不会升级，正文不自动覆盖，严格核验稿仍由服务端拦截。模型继续不可用时明确告知没有生成建议。`edit_invariants.py` 对“检查是否”升级成“验证了”增加风险提示；该规则不代表识别所有语义变化。
+
+真实隔离复测：用户当前 3 条正文及原关联材料，目标岗位绑定，`evaluate_cloud_features.py --only ai_resume_polish --bind-target`；48.64 秒返回 3 条建议，其中 2 条检索到材料、1 条没有有效材料；原文原子核验遇到 503，3 条均未核验，不构成完整成功。成本 0.058091 CA，累计 1.18139278 CA。新增本地检查对这批真实输出重新分析，前两条出现“检查是否”变为“验证了”的风险提示；UI 隔离回放用真实输出加重新计算的风险提示，见 `output/polish-503-personal-report-20261123`。源正文的竞赛名次和分母仍与同项证书不一致；本次未自动纠正。
+
+验证：`python -m unittest tests.test_asu_resume tests.test_grounding_v2 tests.test_edit_preservation_v2` 47 项，`node --experimental-strip-types --test frontend/scripts/review.test.mjs` 12 项，`npm --prefix frontend run build` 均通过；CLI 增加 `--bind-target` 和润色阶段 `passed`，不把有核验错误的 HTTP 200 当完整通过。尚未用本版跑出有材料且原文、改写原子核验全部成功的真实云结果。
+
+
+## 2026-11-24 演示前复查
+
+全量后端和 UI 构建、OCR 边界、隔离岗位刷新、真实 Harness、用户确认稿导出及个人云功能的范围和结果见 [演示前复查](testing-report-2026-11-24-demo.md)。当前云端原子核验及严格导出遇到模型超时或 503，不能标记为通过。
+
+验证入口：项目 Python 下 `python scripts/run_test_report.py --label <名称> --all`、`python scripts/verify_ui_actions.py --build`、`python scripts/check_running_resume.py --port <端口> --cv <PDF>`；云调用使用 `scripts/evaluate_cloud_features.py`，缺少或失败阶段现在返回非零，汇总用 `scripts/summarize_cloud_features.py`。`tests.test_cloud_reporting` 覆盖规则回退不冒充模型成功。`start-demo.bat` 检查 SAG 并在端口冲突时停止启动，不终止其他后端。
+
+## 2026-11-24 润色和核查分流
+
+简历审查页的 `SAGPolishPanel` 调用 `resume/polish`。后端由 `sag_grounding.py` 检索、`structured_verifier.py` 区分支持、反证与缺证，`asu_resume.py` 加载 ASu 原文，`atomic_verifier.py` 只暂停有反证的经历并改写其余经历，`grounded_workflow.py` 复核建议及严格导出。页面 `ReviewDraft.tsx` 直接展示冲突引文、黄色改动和蓝色核查提示；`resume/review.ts` 决定优先查看哪条。实际结果、503 格式对照、图检索限制及 CLI 命令见[云端修复和实测记录](testing-report-2026-11-24-cloud-repair.md)。
+
+## 2026-11-24 材料归属、核验与空白录制
+
+|用户入口|实际调用|可检查的结果|
+|---|---|---|
+|简历导入 → 选择材料来源|独立启动器 `scripts/start_recording_workspace.py` 设置本地数据、证据库、SAG 缓存和端口；首页读取 `connections_summary`|新端口使用独立浏览器存储，显示两项连接状态|
+|证明材料 → 推荐关联／关联经历|后端 `evidence_scope.py`、`evidence_workspace.py`、`local_evidence.py` 判断材料原文归属|不相关的新关联被拒绝，旧关联在核验记录中列出排除原因|
+|简历审查 → 按目标岗位润色|后端 `asu_resume.py`、`atomic_verifier.py`、`grounded_workflow.py`|仅处理当前正文。展示改写前后、实际差异与依据。存在明确冲突的经历保留原文|
+|陈述核验 → 材料与核验明细|后端 `draft_anchors.py`、`structured_verifier.py`、`rank_evidence.py`；前端 `AtomicEvidence.tsx`|每条事实关联正文片段，保留证据引用、句段位置及未定位原因。每次运行写入独立 JSON|
+|简历审查／陈述核验 → 快速完成|前端 `QuickReviewActions.tsx`、`GroundedExport.tsx`、`InterviewPage.tsx`|选中且保留的当前正文用于个人稿或面试。下载个人稿须勾选，严格稿另行核验|
+|生成面经 → 模拟练习|后端 `interview_guide.py`、`interview_practice.py`；前端 `InterviewPractice.tsx`|ASu 固定版本题单、依据、固定量规、单题追问和弱项复练，回答标记为自述|
+|证明材料 → 从 GitHub 选择材料|前端 `GithubImport.tsx`、`PrivateGithub.tsx`；后端 `github_discovery.py`、`github_app_session.py`、`github_material.py`|默认按用户名、公开邮箱或关键词查找公开仓库，选择后自动固定版本。常规匿名额度用完时，用户名列表可改用 GitHub 公开搜索。私库单独提示官方授权，选定已授权仓库后才可读取|
+|证明材料 → 连接 DeepSeek Harness|后端 `agent_bridge.py`、`harness_setup.py`、`scripts/agent_mcp.py`|安装检测、范围授权、实际配对、候选回传分别可见。提交后仍由用户核对|
+
+后端模块均位于 `backend/services/`。详细操作、回放命令、测试边界和结果见[演示验收记录](testing-report-2026-11-24-recording.md)。
+
+## 岗位雷达与相关经历（2026-11-24）
+
+| 用户入口 | 处理位置 | 可核对的结果 |
+| --- | --- | --- |
+| 岗位雷达 → 为你推荐、新增岗位、未读提醒 | `job_capabilities.py`、`job_fit.py`、`job_recommendation.py`、`job_radar.py`、`job_alerts.py` | 三个入口使用同一份排名。首次加载标明初步排序，再次更新时沿用上一轮已完成的结果。 |
+| 岗位说明 → 分析 → 证据匹配 | `jd_parser.py`、`jd_match_scope.py`、`experience_relevance.py`、`evidence_matcher.py` | 点职责或要求的原句，查看项目名、相关理由、经历原句及可定位的材料。任选框架仅需一项。 |
+| 证据匹配 → 补选或加入简历正文 | `ExperienceCandidates.tsx`、`draftSelection.ts`、`JdInputPage.tsx` | 同一经历取各项岗位要求中的最高显示分。达到 3.5/10 自动进入草稿，按分数降序，达到 6/10 标记为较强匹配。用户可补选、移除或修改，同一岗位再次分析保留这些决定。材料核验单独进行。 |
+| 草稿阈值与补选回归 | 在 frontend 目录运行 `npm run smoke` | 覆盖 3.5 与 6 分边界、同一经历去重、手动补回排序、刷新和重新分析。 |
+| 离线复测 | `scripts/check_job_relevance.py --help` | `--cv` 逐项回放，`--collection` 批量导入，`--only` 复测指定文件，`--radar-cvs` 以多个履历比较同一岗位库。 |
+
+[跨简历验收报告、指标定义与复现命令](testing-report-2026-11-24-job-relevance.md)
+
+## 陈述核验、整页保留与 LaTeX 导出（2026-11-24）
+
+| 操作入口 | 数据与行为 | 复查入口 |
+|---|---|---|
+| 陈述核验 → 材料分级 | 本机 match-resume 查同项目候选，核对并关联已有文件后再核验。候选、已关联、部分支持、当前有引文支持和明确冲突分别展示。冲突与待确认的量化细节优先显示。 | `frontend/src/resume/claimReview.ts`、`ClaimVerificationPage.tsx` |
+| 简历审查 → 陈述核验 → 申请内容检查 | 继续时保存有效编辑。逐条可编辑、排除或撤销排除。页尾和侧栏向后导航都保留未排除的正文。个人选择与核验状态分开记录。检查页可继续预览最终稿，严格导出和敏感操作沿用各自的确认条件。 | `DemoContext.tsx`、`AppShell.tsx`、`AtsSimulatorPage.tsx` |
+| 简历生成 → 下载 LaTeX | 当前预览提供 UTF-8 单文件 .tex，同一份数据生成纯文本及 LaTeX。个人草稿入口也可选 LaTeX，沿用正文哈希校验并跳过已排除条目。用 XeLaTeX 编译。 | `resume/generate.ts`、`resume/latex.ts`、`GroundedExport.tsx` |
+
+回归入口：`npm --prefix frontend run smoke`（含 `claim-review-export.test.mjs`）、`npm --prefix frontend run build`、`python -m unittest tests.test_review_export tests.test_grounding_v2`。本机 8032 演示数据实测 7 条陈述中 1 条找到待关联原件，6 条暂无关联。已回放 9 份有证书的历史报告（5 次有冲突、4 次已支持）；回放未调用云模型。浏览器实测修改、排除、撤销、两种继续入口与两条下载路径，两份下载的 .tex 均以 XeLaTeX 编译为 PDF。
+
+陈述核验正文标色：`frontend/src/resume/reviewHighlights.ts` 根据当前正文位置和逐事实引文生成标记，`ClaimStatement.tsx` 让用户直接点词句查看原因。蓝色表示待核对；尚未取得材料结论时，仅提示优先对照的数字、身份或工作内容。红色表示可定位且有引文的冲突。已获支持的陈述保留普通正文。回归入口仍为 `npm --prefix frontend run smoke`。8032 页面实测 7 条陈述共 17 处可见标记，另用本机历史证书记录回放冲突和已支持两种情况。
+
+陈述核验 → 启动 AI 原子核验 → 同意并开始核验。每次确认 POST `/api/v1/workflow/reverify` 并请求新模型结果。有同项目原件的经历对照材料，无关联原件的经历由模型拆出待核对事实，引用为空。个人资料沿用表单。回执显示运行编号、模型和耗时，并与本机 `local/verification-runs/<run_id>.json` 对照。页面显示连接异常、服务失败或旧回执时，可以重试。离线回归运行 `python -m unittest tests.test_grounding_scope` 和 `npm --prefix frontend run smoke`。经授权的计费实测可运行 `node scripts/check_claim_reverify.cjs http://127.0.0.1:8032 --live-twice`（需 Playwright 和 Edge）。
