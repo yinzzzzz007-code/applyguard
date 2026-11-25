@@ -491,3 +491,5 @@ GitHub 可选入口新增点按引导：`AgentConnector.tsx`、`GithubGuideTip.t
 ### 证据匹配 → Harness 二次补充
 
 `EvidenceMatchPage.tsx` 挂载 `HarnessExperienceDiscovery.tsx`，复用 `AgentConnector.tsx`。当前有效授权通过 `/api/v1/agent/ui` 的 `discover_experiences` 更新岗位任务，复用 `harness_autostart.start_harness` 重新搜索；不修改授权来源和到期时间。概括由既有 `suggest_experience` 生成，用户选择后用 `draftSelection.addDiscoveredProject` 加入经历草稿及当前正文，后续仍需核验。[定向回归与边界](testing-report-2026-11-26-harness-secondary.md)。
+
+面经配置故障复查：先 GET `/api/v1/model-settings` 检查 `key_configured`，再核对 `/health` 的 `cloud_model_configured`。密钥通过同源模型设置入口保存，不能仅靠启动脚本的临时环境变量。2026-11-26 录制版重启丢失临时密钥，已恢复本地持久配置；不在报告或 Git 中记录密钥。
