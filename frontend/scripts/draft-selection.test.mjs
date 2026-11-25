@@ -97,3 +97,19 @@ test('reanalysis preserves edited text and explicit removals and adds new qualif
  assert.deepEqual(rerun.resume_claims.map(c=>c.claim_id),['claim_finance','claim_sql'])
  assert.equal(rerun.resume_claims[1].text,'My edited SQL statement.')
 })
+import {addDiscoveredProject} from '../src/resume/draftSelection.ts'
+test('Harness discovered experience joins the current body and survives session restore without reanalysis',()=>{
+ const {workflow,form}=setup()
+ const next=addDiscoveredProject(workflow,form,'agent-found','Compiler Optimizer','Implemented an offline graph optimization prototype; individual contribution awaits review.',true)
+ assert.equal(form.projects.length,3)
+ assert.equal(next.form.projects.length,4)
+ assert.equal(next.workflow.resume_claims.length,1)
+ assert.equal(next.workflow.claim_verification[0].state,'NEEDS_REVIEW')
+ const data=new Map(),storage={getItem:key=>data.get(key)??null,setItem:(key,value)=>data.set(key,value),removeItem:key=>data.delete(key)}
+ saveReviewSession({workflow:next.workflow,form:next.form,jd:'Compiler role',drafts:{}},storage)
+ const restored=loadReviewSession(storage)
+ assert.equal(restored.workflow.resume_claims[0].claim_id,'claim_agent_found')
+ assert.equal(restored.form.projects.length,4)
+ assert.throws(()=>addDiscoveredProject(next.workflow,next.form,'another',' compiler optimizer ','duplicate',true),/已有同名/)
+ assert.throws(()=>addDiscoveredProject(workflow,form,'big','Long', 'x'.repeat(421),true),/420/)
+})

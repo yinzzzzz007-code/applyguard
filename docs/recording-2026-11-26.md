@@ -10,6 +10,7 @@
 | 经历库 → 查看项目、技术和日期，可以编辑或新增 | The experience library keeps reusable, editable records. |
 | 岗位说明 → 展示已解析的职责和任职要求 | ApplyGuard reads both the job duties and the qualifications. |
 | 证据匹配 → 点开要求，查看关联项目和理由 | It finds relevant experience. Relevance does not mean every fact is verified. |
+| 证据匹配 → 让 Harness 二次查找并补充经历 → 沿用有效授权再次查找 → 修改概括并加入本次简历草稿 | I search the approved sources again for missing experience. I review the summary and add it directly to this draft. |
 | 证明材料 → 查看同项目原文及关联；选择目录后授权 Harness 才能运行新搜索 | I choose the search scope and authorize access. Returned passages stay pending until I review them. |
 | 简历审查 → 历史版本 → 展开保存的润色对照；点击回放可恢复当时页面 | This is a saved result from an earlier model run. Yellow marks wording changes. |
 | 对照原文和建议 → 采用、保留，或直接编辑；结束回放回到正常流程 | I can accept the suggestion, keep my wording, or edit it myself. |

@@ -25,6 +25,7 @@ tests = [
     'tests.test_counterevidence_anchors',
     'tests.test_export_conflict_preflight',
     'tests.test_harness_process',
+    'tests.test_harness_autostart',
     'tests.test_evidence_workspace',
     'tests.test_evidence_field_checks',
     'tests.test_polish_navigation',

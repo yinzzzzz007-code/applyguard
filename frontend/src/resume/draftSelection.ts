@@ -63,6 +63,22 @@ export function claimsFromResumeForm(form: EditableResumeForm | null): DraftClai
 export const AUTO_DRAFT_MIN_SCORE = 3.5
 export const STRONG_MATCH_SCORE = 6
 
+export function addDiscoveredProject(workflow:WorkflowResponse|null,form:EditableResumeForm,
+  id:string,title:string,description:string,includeInDraft:boolean) {
+  title=title.trim();description=description.trim()
+  if(!title||!description)throw Error('请填写项目名称和概括。')
+  if(description.length>420)throw Error('概括超过 420 字，请在本页精简后加入。')
+  if(form.projects.some(project=>project.id===id||textKey(project.title)===textKey(title)))
+    throw Error('已有同名经历，请核对后编辑原经历，避免重复新增。')
+  if(workflow&&workflow.candidate_id!==form.candidateId)throw Error('当前简历与经历资料不一致，请重新载入。')
+  const nextForm:EditableResumeForm={...form,dirty:true,projects:[...form.projects,
+    {id,title,description,organization:'',role:'',start:'',end:'',location:'',techStack:'',link:''}]}
+  const claim=claimsFromResumeForm(nextForm).find(row=>row.claim_id===safeClaimId(id))
+  const nextWorkflow=includeInDraft&&workflow&&claim
+    ?addDraftClaim(workflow,claim,'用户确认加入 Harness 发现的经历概括，事实与个人分工待核验。'):workflow
+  return {form:nextForm,workflow:nextWorkflow}
+}
+
 export function matchScoreOutOfTen(row: EvidenceMatchItem): number {
   const raw = row.lead ? row.lead.score * 10 : row.score_breakdown?.ai_score_10
   const score = Number.isFinite(raw) ? raw! : row.relevance_score * 10

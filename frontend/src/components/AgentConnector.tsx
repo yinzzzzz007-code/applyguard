@@ -12,8 +12,9 @@ import {authorizationIssues,authorizationRequirements} from '../githubGuide'
 import {HarnessSetupGuide} from './HarnessSetupGuide'
 import {GithubGuideTip} from './GithubGuideTip'
 import {githubGuideSteps, githubGuideBlocker} from '../githubGuide'
+import {addDiscoveredProject} from '../resume/draftSelection'
 type Card = { id: string; quote: string; state: string; page: number | null; line: number; source: {path:string;version:string;commit_sha?:string}; interpretation:string; experience?:string; missing:string[]; numeric_confirmation_required:boolean }
-type SavedConnection={connection:AgentConnection;task:string;purpose:string;disclosure:string}
+type SavedConnection={connection:AgentConnection;task:string;purpose:string;disclosure:string;discoveryJob?:string;suggestions?:Record<string,{title:string;description:string;reason:string}>}
 let savedConnection:SavedConnection|null=null
 let closeListener:(()=>void)|null=null
 function rememberConnection(saved:SavedConnection){
@@ -26,7 +27,7 @@ function rememberConnection(saved:SavedConnection){
 export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false}:{ensureWorkspace:()=>Promise<string|null>;onImported:(id:string)=>Promise<void>;inlineDiscovery?:boolean}) {
   const restored=savedConnection&&savedConnection.connection.expires*1000>Date.now()?savedConnection:null
   const routeLocation = useLocation()
-  const { jdRawInput, workflow, resumeForm, setResumeForm } = useDemo()
+  const { jdRawInput, workflow, resumeForm, setResumeForm, patchWorkflow } = useDemo()
   const job = jdRawInput || workflow?.parsed_jd.source_text || ''
   const connectorRoot=useRef<HTMLElement|null>(null)
   const [githubStep,setGithubStep]=useState(-1)
@@ -42,7 +43,8 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
   const [progress,setProgress]=useState<AgentProgress|null>(null)
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('')
   const [sourceConfirmed,setSourceConfirmed]=useState<Record<string,boolean>>({}),[numbers,setNumbers]=useState<Record<string,boolean>>({})
-  const [experienceSuggestions, setExperienceSuggestions] = useState<Record<string,{title:string;description:string;reason:string}>>({})
+  const [discoveryJob,setDiscoveryJob]=useState(restored?.discoveryJob||'')
+  const [experienceSuggestions, setExperienceSuggestions] = useState<Record<string,{title:string;description:string;reason:string}>>(restored?.discoveryJob===job?restored?.suggestions??{}:{})
   const [folderBusy,setFolderBusy]=useState(false),[folderError,setFolderError]=useState('')
   const pickingFolder=useRef(false), pickerId=useRef<string|null>(null)
   const folders=roots.split('\n').map(path=>path.trim()).filter(Boolean)
@@ -144,14 +146,15 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
     return ()=>{cancelled=true;window.clearInterval(interval)}
   },[connection])
   useEffect(()=>{
-    if(connection)rememberConnection({connection,task,purpose,disclosure})
-  },[connection,task,purpose,disclosure])
+    if(connection)rememberConnection({connection,task,purpose,disclosure,discoveryJob,suggestions:experienceSuggestions})
+  },[connection,task,purpose,disclosure,discoveryJob,experienceSuggestions])
 
   const autoSummarized=useRef(new Set<string>())
+  const mounted=useRef(true)
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false}},[])
   const cardSignature=cards.map(card=>`${card.id}:${card.state}`).join('|')
   useEffect(()=>{
-    if(!inlineDiscovery||!connection||!connected||!job||disclosure!=='cloud_allowed'||progress?.run_state!=='finished')return
-    let cancelled=false
+    if(!inlineDiscovery||!connection||!connected||!job||discoveryJob!==job||disclosure!=='cloud_allowed'||progress?.run_state!=='finished')return
     const selected:Card[]=[]
     for(const card of [...cards.filter(item=>item.state==='NEEDS_REVIEW'),...cards.filter(item=>item.state==='CANDIDATE')]) {
       if(autoSummarized.current.has(card.source.path))continue
@@ -162,16 +165,34 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
     setNotice('正在根据候选原文生成可编辑概括，最多处理三个来源。')
     void (async()=>{
       for(const card of selected){
-        if(cancelled)break
+        if(!mounted.current)break
         try {
           const value=await api({...connection,action:'suggest_experience',card_id:card.id,job},120000)
-          if(!cancelled)setExperienceSuggestions(prev=>({...prev,[card.id]:{title:value.title,description:value.description,reason:value.reason}}))
-        } catch(e) {if(!cancelled)setError(e instanceof Error?`自动概括未完成：${e.message}`:'自动概括未完成，可手动重试。')}
+          if(mounted.current&&activeConnection.current===connection.id)setExperienceSuggestions(prev=>({...prev,[card.id]:{title:value.title,description:value.description,reason:value.reason}}))
+        } catch(e) {autoSummarized.current.delete(card.source.path);if(mounted.current)setError(e instanceof Error?`自动概括未完成：${e.message}`:'自动概括未完成，可手动重试。')}
       }
-      if(!cancelled)setNotice('候选概括已处理；请核对来源和个人分工，再决定是否加入草稿。')
+      if(mounted.current)setNotice('候选概括已处理；请核对来源和个人分工，再决定是否加入草稿。')
     })()
-    return ()=>{cancelled=true}
-  },[inlineDiscovery,connection,connected,job,disclosure,progress?.run_state,cardSignature])
+  },[inlineDiscovery,connection,connected,job,discoveryJob,disclosure,progress?.run_state,cardSignature])
+  async function discoverAgain() {
+    if(!connection)return
+    await api({...connection,action:'discover_experiences',job,
+      known_projects:(resumeForm?.projects??[]).map(project=>project.title)})
+    autoSummarized.current.clear();setDiscoveryJob(job);setExperienceSuggestions({});setCards([])
+    setSourceConfirmed({});setNumbers({});setProgress({stage:'waiting',updated_at:Date.now()/1000,run_state:'started',candidates:0,submitted:0})
+    setNotice('已按当前岗位重新查找；沿用本次授权范围，完成后会在这里生成概括。')
+  }
+  function addExperience(card:Card) {
+    try {
+      if(!resumeForm)throw Error('请先导入简历建立个人经历资料。')
+      const suggestion=experienceSuggestions[card.id]
+      const next=addDiscoveredProject(workflow,resumeForm,`agent-${card.id}`,suggestion.title,suggestion.description,inlineDiscovery)
+      setResumeForm(next.form)
+      if(inlineDiscovery&&next.workflow)patchWorkflow(next.workflow)
+      setExperienceSuggestions(prev=>{const value={...prev};delete value[card.id];return value})
+      setError('');setNotice(inlineDiscovery?'已加入本次简历草稿；当前页无需重新分析或跳转，后续可继续编辑和核验。':'已加入经历草稿，后续可编辑并保存。')
+    } catch(e) {setError(e instanceof Error?e.message:'加入草稿失败，请重试。')}
+  }
   async function run(fn:()=>Promise<void>) {setBusy(true);setError('');try{await fn()}catch(e){setError(e instanceof Error?e.message:'操作失败')}finally{setBusy(false)}}
   async function changeGithubScope(nextPrivate:boolean) {
     if(nextPrivate===privateRepo)return
@@ -228,13 +249,13 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
         <label>查找目的<select className="resume-input" value={purpose} onChange={e=>setPurpose(e.target.value)}><option value="contribution">寻找本人贡献依据</option><option value="background">查技术背景（不可导入为个人经历）</option></select></label>
         <div {...targetProps('disclosure')}><fieldset><legend>读取前确定材料外发规则</legend><label><input type="radio" name="agent-disclosure" value="cloud_allowed" checked={disclosure==='cloud_allowed'} onChange={e=>setDisclosure(e.target.value)} />允许片段进入我配置的云端模型上下文</label><label><input type="radio" name="agent-disclosure" value="isolated_local" checked={disclosure==='isolated_local'} onChange={e=>setDisclosure(e.target.value)} />我已配置隔离的本地模型，禁止外发</label></fieldset>{guideTip('disclosure')}</div>
         <p>本接口只能约束自己的工具。请使用仅启用此连接器的检索配置；Agent 自带的 shell 等其他工具不受这里的目录授权限制。</p>
-        <div {...targetProps('authorize')}><ActionButton className="btn primary" disabledReason={folderBusy?'请先完成或取消文件夹选择。':sourceBusy?'正在处理仓库请求，请稍候。':issues.length?issues.join('；'):'正在处理，请稍候。'} guideRequirements={busy||folderBusy||sourceBusy?[]:requirements} disabled={busy||folderBusy||(mode!=='local'&&sourceBusy)||issues.length>0} aria-describedby="agent-authorization-issues" onClick={()=>void run(async()=>{if(sourceBusy&&mode!=='local')throw new Error('正在固定 GitHub 仓库版本，请稍候。');if(issues.length){throw new Error(issues.join('；'))}const c=await api({action:'create',mode,task,purpose,disclosure,private:mode!=='local'&&privateRepo,github_handle:mode!=='local'&&privateRepo?githubHandle:undefined,roots:mode==='github'?[]:roots.split('\n').map(s=>s.trim()).filter(Boolean),repos:mode==='local'?[]:repos.split('\n').map(s=>s.trim()).filter(Boolean)});try{if(mode!=='github')sessionStorage.setItem('applyguard.agent.lastFolders',roots)}catch{/* Optional convenience only. */}activeConnection.current=c.id;setConnection(c);setGithubStep(step=>step<0?-1:steps.length-1);setClock(Date.now());setCards([]);setConnected(false);setProgress(null);setNotice('');setSourceConfirmed({});setNumbers({});if(disclosure==='cloud_allowed'){await api({...c,action:'start_harness'});setNotice('已启动 Harness，正在查找已授权范围内的材料。')}})}>{disclosure==='isolated_local'?'授权并生成手动配置':'授权并开始查找'}</ActionButton><div id="agent-authorization-issues" role="status">{issues.length>0&&<><p>继续前请完成：</p><ul>{issues.map(issue=><li key={issue}>{issue}</li>)}</ul></>}{folderBusy&&<p>请先完成或取消文件夹选择。</p>}{busy&&<p>正在处理，请稍候…</p>}</div>{guideTip('authorize')}</div>
+        <div {...targetProps('authorize')}><ActionButton className="btn primary" disabledReason={folderBusy?'请先完成或取消文件夹选择。':sourceBusy?'正在处理仓库请求，请稍候。':issues.length?issues.join('；'):'正在处理，请稍候。'} guideRequirements={busy||folderBusy||sourceBusy?[]:requirements} disabled={busy||folderBusy||(mode!=='local'&&sourceBusy)||issues.length>0} aria-describedby="agent-authorization-issues" onClick={()=>void run(async()=>{if(sourceBusy&&mode!=='local')throw new Error('正在固定 GitHub 仓库版本，请稍候。');if(issues.length){throw new Error(issues.join('；'))}const c=await api({action:'create',mode,task,purpose,disclosure,private:mode!=='local'&&privateRepo,github_handle:mode!=='local'&&privateRepo?githubHandle:undefined,roots:mode==='github'?[]:roots.split('\n').map(s=>s.trim()).filter(Boolean),repos:mode==='local'?[]:repos.split('\n').map(s=>s.trim()).filter(Boolean)});try{if(mode!=='github')sessionStorage.setItem('applyguard.agent.lastFolders',roots)}catch{/* Optional convenience only. */}activeConnection.current=c.id;setConnection(c);if(inlineDiscovery)setDiscoveryJob(job);setGithubStep(step=>step<0?-1:steps.length-1);setClock(Date.now());setCards([]);setConnected(false);setProgress(null);setNotice('');setSourceConfirmed({});setNumbers({});if(disclosure==='cloud_allowed'){await api({...c,action:'start_harness'});setNotice('已启动 Harness，正在查找已授权范围内的材料。')}})}>{disclosure==='isolated_local'?'授权并生成手动配置':'授权并开始查找'}</ActionButton><div id="agent-authorization-issues" role="status">{issues.length>0&&<><p>继续前请完成：</p><ul>{issues.map(issue=><li key={issue}>{issue}</li>)}</ul></>}{folderBusy&&<p>请先完成或取消文件夹选择。</p>}{busy&&<p>正在处理，请稍候…</p>}</div>{guideTip('authorize')}</div>
       </> : <>
         <div className={`harness-status ${connected&&progress?.run_state!=='failed'&&progress?.run_state!=='timed_out'?'paired':''}`} role="status"><strong>{connectionStage(connection,connected,clock,progress)}</strong><span>{new Date(connection.expires*1000).toLocaleTimeString()} 到期 · 每 3 秒自动刷新</span></div>
         {expired?<p className="harness-warning">本次授权已过期。请撤销后重新授权，并使用新的命令与令牌。</p>:<div className="harness-launch">
           <h4>本机 Harness 检索</h4><p className="muted">会话最多 {setup?.session_timeout_seconds??180} 秒。站内切页后可返回查看；候选原文需要你核对后导入。</p>
           {disclosure==='cloud_allowed'?<>
-            <div className="button-row"><ActionButton className="btn primary" disabled={busy||progress?.run_state==='started'} disabledReason="Harness 正在检索，请稍候。" onClick={()=>void run(async()=>{await api({...connection,action:'start_harness'});setNotice('已重新启动 Harness，请稍候。')})}>重新开始查找</ActionButton></div>
+            <div className="button-row"><ActionButton className="btn primary" disabled={busy||progress?.run_state==='started'} disabledReason="Harness 正在检索，请稍候。" onClick={()=>void run(inlineDiscovery?discoverAgain:async()=>{await api({...connection,action:'start_harness'});setNotice('已重新启动 Harness，请稍候。')})}>{inlineDiscovery?'按当前岗位再次查找并生成概括':'重新开始查找'}</ActionButton></div>
             <details><summary>手动连接（备用）</summary><ol><li>复制启动命令，在本机 {shell} 中执行。它会启动独立的 Harness 检索会话。</li>
               <li>终端询问时，粘贴“临时连接令牌”，然后输入模型 API Key。两次输入都隐藏，不写入配置文件。</li>
               <li>Harness 调用 <code>get_task → search_materials → submit_evidence</code> 后，这里会自动更新配对状态与候选证据。</li></ol>
@@ -266,7 +287,7 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
             <p>关联原因：{experienceSuggestions[c.id].reason}</p>
             <label>项目名称<input className="resume-input" value={experienceSuggestions[c.id].title} onChange={e=>setExperienceSuggestions(prev=>({...prev,[c.id]:{...prev[c.id],title:e.target.value}}))}/></label>
             <label>项目描述<textarea className="resume-input" value={experienceSuggestions[c.id].description} onChange={e=>setExperienceSuggestions(prev=>({...prev,[c.id]:{...prev[c.id],description:e.target.value}}))}/></label>
-            <button className="btn secondary" onClick={()=>{const suggestion=experienceSuggestions[c.id]; if(!resumeForm){setError('请先进入经历库建立资料，再回来添加。');return} const title=suggestion.title.trim();if(!title||!suggestion.description.trim()){setError('请填写项目名称和描述。');return} if(resumeForm.projects.some(p=>p.id===`agent-${c.id}`||p.title.trim().toLowerCase()===title.toLowerCase())){setError('经历库中已有同名项目，请核对后编辑已有经历。');return} setResumeForm(prev=>prev?{...prev,dirty:true,projects:[...prev.projects,{id:`agent-${c.id}`,title,description:suggestion.description.trim(),organization:'',role:'',start:'',end:'',location:'',techStack:'',link:''}]}:prev);setExperienceSuggestions(prev=>{const next={...prev};delete next[c.id];return next});setError('');setNotice('已加入本次经历草稿；请重新分析岗位，使这条经历参与匹配。后续仍可编辑并保存。')}}>加入经历库草稿</button>{' '}
+            <button className="btn secondary" onClick={()=>addExperience(c)}>{inlineDiscovery?'加入本次简历草稿':'加入经历库草稿'}</button>{' '}
             <button className="btn secondary" onClick={()=>setExperienceSuggestions(prev=>{const next={...prev};delete next[c.id];return next})}>不要这条</button>{' '}{!inlineDiscovery&&<Link to="/vault">前往经历库</Link>}
           </>}
         </div>}

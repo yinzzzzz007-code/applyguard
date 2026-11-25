@@ -61,6 +61,32 @@ class HarnessAutostartTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'模型设置'):
                 bridge.ui_call({**self.connection,'action':'start_harness'},server_port=8766)
 
+    def test_second_search_reuses_scope_finds_new_project_and_summarizes(self):
+        (self.root/'routekv.md').write_text('RouteKV project measured KV memory and inference latency.',encoding='utf8')
+        finished=threading.Event()
+        def fake_run(command,*,env,**kwargs):
+            def call(action,args=None):
+                return bridge.agent_call({'id':self.connection['id'],'action':action,'arguments':args or {}},env['APPLYGUARD_AGENT_TOKEN'])
+            task=call('task')
+            self.assertIn('KV memory',str(task))
+            card=call('search',{'query':'RouteKV'})['cards'][0]
+            call('submit',{'card_id':card['id'],'quote':card['quote'],'version':card['source']['version']})
+            finished.set()
+            return HarnessResult(0,False)
+        with patch.dict(os.environ,{'APPLYGUARD_AI_API_KEY':'test-only','APPLYGUARD_LOCAL_DIR':str(self.root)}), \
+             patch('backend.services.harness_autostart.setup_info',return_value=self.setup), \
+             patch('backend.services.harness_autostart.retrieval_patch',return_value='test'), \
+             patch('backend.services.harness_autostart.run_harness',side_effect=fake_run), \
+             patch('backend.services.model_client.HttpModelClient') as model:
+            bridge.ui_call({**self.connection,'action':'discover_experiences','job':'Optimize KV memory and inference latency','known_projects':['Atlas']},server_port=8766)
+            self.assertTrue(finished.wait(5))
+            card=next(iter(bridge.GRANTS[self.connection['id']]['cards'].values()))
+            model.return_value.complete_json.return_value={'title':'RouteKV','description':'Measured KV memory and inference latency; personal contribution awaits confirmation.','reason':'岗位涉及推理性能。'}
+            value=bridge.ui_call({**self.connection,'action':'suggest_experience','card_id':card['id'],'job':'KV memory optimization'})
+            self.assertEqual(value['title'],'RouteKV')
+            self.assertEqual(card['state'],'NEEDS_REVIEW')
+            self.assertEqual(bridge.GRANTS[self.connection['id']]['roots'],[str(self.root.resolve())])
+
 
 if __name__ == '__main__':
     unittest.main()

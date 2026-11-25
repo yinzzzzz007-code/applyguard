@@ -268,6 +268,32 @@ def ui_call(body, server_port=None):
             if g:g['revoked']=True
             return {'revoked':True}
     g=grant(body.get('id'),body.get('ui_token'),ui=True)
+    if body.get('action')=='discover_experiences':
+        from backend.services.harness_autostart import start_harness
+        job=body.get('job')
+        known=body.get('known_projects',[])
+        if not isinstance(job,str) or not 4<=len(job.strip())<=20000:
+            raise ValueError('请先分析目标岗位，再查找遗漏经历。')
+        if not isinstance(known,list) or len(known)>100 or any(not isinstance(title,str) for title in known):
+            raise ValueError('已有项目清单格式无效。')
+        if any(key in body for key in ('roots','repos','mode','private','github_handle','disclosure')):
+            raise ValueError('二次查找只能使用当前已授权范围；修改范围请重新授权。')
+        task=('根据目标岗位重新搜索已授权范围，寻找尚未整理的相关经历。已有项目不要重复新增；'
+              '返回来源原文、版本及待确认的个人分工。不能把相关技术推断为本人贡献。\n已有项目：'
+              +('、'.join(title.strip() for title in known if title.strip())[:500] or '无')
+              +'\n目标岗位：'+job.strip()[:1200])
+        with LOCK:
+            grant(g['id'],body.get('ui_token'),ui=True)
+            if g.get('run_state')=='started':
+                raise ValueError('当前 Harness 查找尚未结束，请等待后再二次查找。')
+            previous={key:g[key] for key in ('task','purpose','cards','stage')}
+            g.update(task=task,purpose='contribution',cards={},stage='waiting')
+            try:
+                result=start_harness(g,server_port)
+            except Exception:
+                g.update(previous)
+                raise
+            return {**result,'task':task,'scope_reused':True}
     if body.get('action')=='start_harness':
         from backend.services.harness_autostart import start_harness
         return start_harness(g, server_port)

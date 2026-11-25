@@ -63,6 +63,39 @@ class AgentExperienceSuggestionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, '不完整'):
             agent_bridge.ui_call(self.body)
 
+    @patch('backend.services.harness_autostart.start_harness')
+    def test_second_search_updates_task_and_preserves_granted_scope(self, start):
+        start.return_value={'started':True}
+        before={key:self.grant[key] for key in ('roots','repos','expires','token','disclosure')}
+        result=agent_bridge.ui_call({**self.connection,'action':'discover_experiences',
+            'job':'AI Infra 训练与 GPU 调度','known_projects':['Atlas']},server_port=8766)
+        self.assertTrue(result['scope_reused'])
+        self.assertIn('GPU 调度',self.grant['task'])
+        self.assertIn('已有项目：Atlas',self.grant['task'])
+        self.assertEqual(self.grant['cards'],{})
+        self.assertEqual({key:self.grant[key] for key in before},before)
+        start.assert_called_once_with(self.grant,8766)
+
+    @patch('backend.services.harness_autostart.start_harness')
+    def test_active_revoked_and_expanded_search_cannot_start(self, start):
+        body={**self.connection,'action':'discover_experiences','job':'AI Infra 训练工程师'}
+        self.grant['run_state']='started'
+        with self.assertRaisesRegex(ValueError,'尚未结束'):agent_bridge.ui_call(body)
+        self.grant['run_state']='finished'
+        with self.assertRaisesRegex(ValueError,'已授权范围'):agent_bridge.ui_call({**body,'roots':['E:/another']})
+        self.grant['revoked']=True
+        with self.assertRaises(ValueError):agent_bridge.ui_call(body)
+        start.assert_not_called()
+
+    @patch('backend.services.harness_autostart.start_harness',side_effect=ValueError('模型设置'))
+    def test_failed_start_keeps_previous_candidate_results(self, start):
+        old=self.grant['cards']
+        old_task=self.grant['task']
+        with self.assertRaisesRegex(ValueError,'模型设置'):
+            agent_bridge.ui_call({**self.connection,'action':'discover_experiences','job':'AI Infra 工程师'})
+        self.assertIs(self.grant['cards'],old)
+        self.assertEqual(self.grant['task'],old_task)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -2,6 +2,7 @@ import {matchScoreOutOfTen, STRONG_MATCH_SCORE} from '../resume/draftSelection'
 import {completeGuideStep} from '../guide'
 import { ExperienceCandidates } from '../components/ExperienceCandidates'
 import { ProfileCheckList } from '../components/ProfileCheckList'
+import {HarnessExperienceDiscovery} from '../components/HarnessExperienceDiscovery'
 import { useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { EvidenceMatchItem, ParsedRequirement } from '../api/types'
@@ -252,6 +253,7 @@ export function EvidenceMatchPage() {
         })()}
       </header>
 
+      {!workflow._prerecorded&&<HarnessExperienceDiscovery/>}
       <div className="em-scope" role="group" aria-label="匹配范围">
         {(
           [

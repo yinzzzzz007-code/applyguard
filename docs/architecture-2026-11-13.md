@@ -487,3 +487,7 @@ GitHub 可选入口新增点按引导：`AgentConnector.tsx`、`GithubGuideTip.t
 - 页面流程：简历审查 → 陈述核验 → 最终确认 → 简历生成；也可直接走个人稿或面试。申请内容检查已从正常流程移除。
 - CLI：`python scripts/verify_desktop_changes.py`、`python scripts/check_packaged_mcp.py --exe <ApplyGuard.exe>`、`ApplyGuard.exe --check-storage`。按钮审计：`npm --prefix frontend run audit:buttons`。
 - 验收证据、预算、冻结文件指纹、三份实际简历及真实 Harness 回传边界见[最终桌面验收报告](testing-report-2026-11-26-desktop.md)。
+
+### 证据匹配 → Harness 二次补充
+
+`EvidenceMatchPage.tsx` 挂载 `HarnessExperienceDiscovery.tsx`，复用 `AgentConnector.tsx`。当前有效授权通过 `/api/v1/agent/ui` 的 `discover_experiences` 更新岗位任务，复用 `harness_autostart.start_harness` 重新搜索；不修改授权来源和到期时间。概括由既有 `suggest_experience` 生成，用户选择后用 `draftSelection.addDiscoveredProject` 加入经历草稿及当前正文，后续仍需核验。[定向回归与边界](testing-report-2026-11-26-harness-secondary.md)。
