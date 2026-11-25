@@ -1024,6 +1024,7 @@ def get_evidence(evidence_id: str) -> dict[str, Any]:
             SELECT s.* FROM source_span s
             JOIN evidence_span es ON es.span_id = s.span_id
             WHERE es.evidence_id = ?
+            ORDER BY s.page, s.line_start, s.rowid
             """,
             (evidence_id,),
         ).fetchall()
@@ -1735,12 +1736,15 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
         span_map: dict[str, str] = {}
         for row in conn.execute(
             """
-            SELECT es.evidence_id, GROUP_CONCAT(s.raw_text, '\n') AS corpus
-            FROM evidence_span es
-            JOIN source_span s ON s.span_id = es.span_id
-            JOIN evidence_record e ON e.evidence_id = es.evidence_id
-            WHERE e.workspace_id = ?
-            GROUP BY es.evidence_id
+            SELECT evidence_id, GROUP_CONCAT(raw_text, '\n') AS corpus
+            FROM (
+                SELECT es.evidence_id, s.raw_text
+                FROM evidence_span es
+                JOIN source_span s ON s.span_id = es.span_id
+                JOIN evidence_record e ON e.evidence_id = es.evidence_id
+                WHERE e.workspace_id = ?
+                ORDER BY s.page, s.line_start, s.rowid
+            ) GROUP BY evidence_id
             """,
             (workspace_id,),
         ).fetchall():
@@ -2139,6 +2143,9 @@ def handle_evidence_post(path: str, body: dict[str, Any]) -> dict[str, Any]:
     if pathname == "/api/v1/evidence/field-checks":
         return preview_field_checks(body)
 
+    if pathname == '/api/v1/evidence/discover':
+        from backend.services.material_discovery import discover
+        return discover(body)
     if pathname.startswith("/api/v1/evidence/workspaces/") and pathname.endswith("/match-resume"):
         workspace_id = pathname[len("/api/v1/evidence/workspaces/") : -len("/match-resume")]
         return match_resume(workspace_id, body)

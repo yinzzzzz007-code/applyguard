@@ -12,6 +12,7 @@ import { AtomicEvidence } from '../components/AtomicEvidence'
 import { GroundingHistory } from '../components/GroundingHistory'
 import { HistoryReplayNotice } from '../components/HistoryReplayNotice'
 import { RadarDialog } from '../components/RadarDialog'
+import { ReviewMaterials } from '../components/ReviewMaterials'
 import {QuickReviewActions} from '../components/QuickReviewActions'
 import { useDemo } from '../context/DemoContext'
 import {evidenceCoverage, isQuantitative} from '../resume/claimReview'
@@ -220,7 +221,7 @@ export function ClaimVerificationPage() {
   const failed = !workflow.requires_reverification && workflow.grounding?.error
   const kept = workflow.resume_claims.filter(c => claimDecisions[c.claim_id]?.decision !== 'reject').length
   const nextReason = reviewAdvanceReason
-  function advance(destination = '/ats') {
+  function advance(destination = '/confirm') {
     if (finishReviewStep(true)) { completeGuideStep('claims'); navigate(destination) }
   }
 
@@ -318,11 +319,12 @@ export function ClaimVerificationPage() {
       {confirmRecheck && <RadarDialog title="确认启动 AI 原子核验" onClose={() => setConfirmRecheck(false)}>
         <p>当前正文、岗位说明和关联材料将发送到配置的模型服务，可能产生费用。教育等个人资料按表单使用。</p>
         <p>每次确认都会重新请求模型。有原件的经历逐项对照材料；缺少关联原件的经历会拆出待核对事实。</p>
-        <div className="btn-row"><button type="button" className="btn secondary" onClick={() => setConfirmRecheck(false)}>取消</button><button type="button" className="btn primary" onClick={() => {
+        <ReviewMaterials label="确认所选材料并开始核验" onStart={() => {
           setConfirmRecheck(false)
           setRecheckError('')
           void reverifyClaims()
-        }}>同意并开始核验</button></div>
+        }}/>
+        <button type="button" className="btn secondary" onClick={() => setConfirmRecheck(false)}>取消</button>
       </RadarDialog>}
       {supplement && <RadarDialog title="补充材料并自动核验" onClose={()=>setSupplement(null)}>
         <p>请选择并确认关联这条经历的材料。关联完成后会自动返回此页，对当前正文重新运行 AI 原子核验。</p>
@@ -460,10 +462,10 @@ export function ClaimVerificationPage() {
       <div className="claim-page-footer">
         <p className="muted" role="status">{nextReason ?? `将保存当前编辑并保留 ${kept} 条陈述。待确认和冲突会随个人稿保留记录。`}</p>
         <ActionButton id="claims-next" type="button" className="btn primary" guideRequirements={pendingEdits} disabledReason={nextReason} disabled={!!nextReason} onClick={() => advance()}>
-          知悉并保留，下一步：申请内容检查
+          知悉并保留，下一步：最终确认
         </ActionButton>
         <ActionButton type="button" className="btn secondary" guideRequirements={pendingEdits} disabledReason={nextReason} disabled={!!nextReason} onClick={() => advance('/history')}>
-          跳过申请内容检查，去简历生成
+          直接去简历生成
         </ActionButton>
       </div>
     </section>

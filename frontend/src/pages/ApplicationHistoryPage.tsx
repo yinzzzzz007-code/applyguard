@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getApiClient } from '../api/client'
 import type { ApiResult, EditableResumeForm } from '../api/types'
@@ -16,6 +16,7 @@ import {
 import {buildLatex,downloadFile} from '../resume/latex'
 import { CLASSROOM_APPLICATION_ID } from '../resume/classroomSample'
 import { normalizeResumeForm } from '../resume/formModel'
+import { reviewedResume } from '../resume/finalResume'
 
 function storedResumeForm(): EditableResumeForm | null {
   try {
@@ -396,7 +397,7 @@ function ResumePreview({
 
 export function ApplicationHistoryPage() {
   const navigate = useNavigate()
-  const { resumeForm, scenario, workflow } = useDemo()
+  const { resumeForm, scenario, workflow, claimDecisions } = useDemo()
   const classroom = workflow?.application_id === CLASSROOM_APPLICATION_ID
   const [records, setRecords] = useState(loadApplicationHistory)
   const [error, setError] = useState('')
@@ -417,15 +418,17 @@ export function ApplicationHistoryPage() {
     return () => { cancelled = true }
   }, [loadSavedResume])
   const source = activeForm ?? (loadSavedResume ? savedResume?.data : null)
-  const sourceForm = useMemo(() => source ? normalizeResumeForm(source) : null, [source])
+  const sourceForm = useMemo(() => source ? reviewedResume(normalizeResumeForm(source), workflow, claimDecisions) : null, [source,workflow,claimDecisions])
+  const sourceSignature=JSON.stringify(sourceForm)
+  const previousSource=useRef('')
 
   useEffect(() => {
     if (!sourceForm) {
       setDraft(null)
       return
     }
-    setDraft((prev) => (prev ? prev : cloneForm(sourceForm)))
-  }, [sourceForm])
+    if(previousSource.current!==sourceSignature){previousSource.current=sourceSignature;setDraft(cloneForm(sourceForm))}
+  }, [sourceForm,sourceSignature])
 
   const form = draft
   const plain = useMemo(
@@ -445,7 +448,7 @@ export function ApplicationHistoryPage() {
 
   function resetDraft() {
     if (!sourceForm) return
-    if (!window.confirm('恢复为经历库当前内容？预览里已删除的段落会回来。')) return
+    if (!window.confirm('恢复为当前已采用的正文？预览里已删除的段落会回来。')) return
     setDraft(cloneForm(sourceForm))
   }
 
@@ -487,7 +490,7 @@ export function ApplicationHistoryPage() {
               <p>岗位分析已完成，初稿已保存。申请待确认，未投递。</p>
             )}
             <div className="btn-row">
-              <Link className="btn secondary" to="/ats">继续检查</Link>
+              <Link className="btn secondary" to="/claims">继续检查</Link>
               <Link className="btn secondary" to="/resume#review-export">导出个人草稿</Link>
             </div>
           </article>
@@ -541,7 +544,7 @@ export function ApplicationHistoryPage() {
                 ? ` · 关联岗位 ${workflow.parsed_jd.title === 'UNKNOWN' ? '未知岗位' : workflow.parsed_jd.title}`
                 : ''}
             </p>
-            <p className="muted">预览修改仅用于本次导出。</p>
+            <p className="muted">预览使用当前已采用的正文；这里的预览修改仅用于本次导出。</p>
             <div className="btn-row">
               <Link className="btn secondary" to="/vault">
                 编辑经历库
@@ -566,7 +569,7 @@ export function ApplicationHistoryPage() {
                 {editing ? '完成编辑' : '编辑预览（可删除）'}
               </button>
               <button type="button" className="btn secondary" onClick={resetDraft}>
-                恢复经历库内容
+                恢复当前确认正文
               </button>
               <button type="button" className="btn primary" onClick={copyPlain}>
                 {copied ? '已复制文本' : '复制纯文本'}

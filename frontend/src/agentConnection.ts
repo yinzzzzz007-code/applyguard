@@ -51,7 +51,7 @@ export function connectionStage(connection:AgentConnection|null, paired:boolean,
   if (progress?.run_state==='timed_out') return '检索已超时'
   if (progress?.run_state==='failed') return '检索会话异常结束'
   if (progress?.submitted) return '已回传引用，待确认'
-  if (progress?.run_state==='finished') return '会话已结束，暂无回传'
+  if (progress?.run_state==='finished') return progress.candidates ? '已找到原文，可核对导入' : '会话已结束，暂无回传'
   if (progress?.stage==='searching') return '正在搜索材料'
   if (progress?.stage==='searched') return '已搜索，等待回传'
   return paired ? '已配对，可让 Agent 搜索材料' : '等待 Agent 连接'
@@ -80,7 +80,7 @@ export function connectionDetail(progress:AgentProgress|null, now=Date.now()):st
   const returned=progress.submitted ? `已回传 ${progress.submitted} 条引用，可先核对。` : '尚未回传引用。'
   if (progress.run_state==='timed_out') return `本次检索已超时，${returned}请检查终端提示和模型服务后重新执行启动命令。`
   if (progress.run_state==='failed') return `Harness 会话异常结束，${returned}${progress.failure_reason||'请检查环境后重试。'}`
-  if (progress.run_state==='finished') return progress.submitted ? returned+'会话已结束；确认来源后才能导入。' : '会话已结束，未回传引用。请核对任务和授权来源后重试。'
+  if (progress.run_state==='finished') return progress.submitted ? returned+'会话已结束；确认来源后才能导入。' : progress.candidates ? `未回传引用解释，但已找到 ${progress.candidates} 段原文。核对下方来源、归属和数字后可直接导入。` : '会话已结束，未回传引用。请核对任务和授权来源后重试。'
   let detail=progress.submitted ? returned : progress.stage==='searching' ? '正在搜索已授权材料。'
     : progress.stage==='searched' ? `已找到 ${progress.candidates} 个候选片段，等待 Harness 回传引用。`
     : progress.stage==='search_failed' ? '材料搜索失败，请检查授权来源和终端提示。'

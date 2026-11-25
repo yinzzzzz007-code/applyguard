@@ -18,8 +18,7 @@ export const GUIDE_STEPS=[
   {id:'jd',href:'/jd',selector:'#jd-input',label:'填写目标岗位的职责和要求，再分析岗位。'},
   {id:'match',href:'/match',selector:'[data-guide="match-next"]',label:'检查岗位匹配和缺口，再进入简历审查。'},
   {id:'resume',href:'/resume',selector:'[data-guide="polish"]',label:'先核对按岗位选入的正文，可移除或补选经历；需要时再润色。'},
-  {id:'claims',href:'/claims',selector:'#claims-recheck',label:'可用当前材料核验正文，点击正文的蓝色词句看待核对项，红色词句看材料冲突。进入申请内容检查会保留未排除的陈述。'},
-  {id:'ats',href:'/ats',selector:'#workspace-main > section',label:'检查拟填内容和风险提示，再进入最终确认。'},
+  {id:'claims',href:'/claims',selector:'#claims-recheck',label:'可用当前材料核验正文，点击正文的蓝色词句看待核对项，红色词句看材料冲突。进入最终确认会保留未排除的陈述。'},
   {id:'confirm',href:'/confirm',selector:'main',label:'核对最终内容；实际投递仍由你本人完成。'},
 ] as const
 

@@ -13,7 +13,18 @@ import {HarnessSetupGuide} from './HarnessSetupGuide'
 import {GithubGuideTip} from './GithubGuideTip'
 import {githubGuideSteps, githubGuideBlocker} from '../githubGuide'
 type Card = { id: string; quote: string; state: string; page: number | null; line: number; source: {path:string;version:string;commit_sha?:string}; interpretation:string; experience?:string; missing:string[]; numeric_confirmation_required:boolean }
+type SavedConnection={connection:AgentConnection;task:string;purpose:string;disclosure:string}
+let savedConnection:SavedConnection|null=null
+let closeListener:(()=>void)|null=null
+function rememberConnection(saved:SavedConnection){
+  if(savedConnection?.connection.id===saved.connection.id){savedConnection=saved;return}
+  if(closeListener)window.removeEventListener('pagehide',closeListener)
+  savedConnection=saved
+  closeListener=()=>{const connection=saved.connection;void fetch('/api/v1/agent/ui',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json','X-ApplyGuard-UI':'1'},body:JSON.stringify({...connection,action:'revoke'})}).catch(()=>{});savedConnection=null}
+  window.addEventListener('pagehide',closeListener)
+}
 export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false}:{ensureWorkspace:()=>Promise<string|null>;onImported:(id:string)=>Promise<void>;inlineDiscovery?:boolean}) {
+  const restored=savedConnection&&savedConnection.connection.expires*1000>Date.now()?savedConnection:null
   const routeLocation = useLocation()
   const { jdRawInput, workflow, resumeForm, setResumeForm } = useDemo()
   const job = jdRawInput || workflow?.parsed_jd.source_text || ''
@@ -21,11 +32,11 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
   const [githubStep,setGithubStep]=useState(-1)
   const [githubHandle,setGithubHandle]=useState('')
   const [sourceBusy,setSourceBusy]=useState(false)
-  const [open,setOpen]=useState(inlineDiscovery),[mode,setMode]=useState('local'),[roots,setRoots]=useState(()=>{try{return sessionStorage.getItem('applyguard.agent.lastFolders')||''}catch{return ''}}),[repos,setRepos]=useState('')
+  const [open,setOpen]=useState(inlineDiscovery||!!restored),[mode,setMode]=useState('local'),[roots,setRoots]=useState(()=>{try{return sessionStorage.getItem('applyguard.agent.lastFolders')||''}catch{return ''}}),[repos,setRepos]=useState('')
   const defaultTask='查找与简历经历和目标岗位有关的材料，重点寻找本人职责、技术和成果的依据。'
-  const [task,setTask]=useState(defaultTask)
-  const [purpose,setPurpose]=useState('contribution'),[disclosure,setDisclosure]=useState(''),[privateRepo,setPrivate]=useState(false)
-  const [connection,setConnection]=useState<AgentConnection|null>(null),[connected,setConnected]=useState(false),[cards,setCards]=useState<Card[]>([])
+  const [task,setTask]=useState(restored?.task||defaultTask)
+  const [purpose,setPurpose]=useState(restored?.purpose||'contribution'),[disclosure,setDisclosure]=useState(restored?.disclosure||''),[privateRepo,setPrivate]=useState(false)
+  const [connection,setConnection]=useState<AgentConnection|null>(restored?.connection||null),[connected,setConnected]=useState(false),[cards,setCards]=useState<Card[]>([])
   const [setup,setSetup]=useState<HarnessSetup|null>(null),[setupBusy,setSetupBusy]=useState(false),[setupError,setSetupError]=useState('')
   const [clock,setClock]=useState(()=>Date.now())
   const [progress,setProgress]=useState<AgentProgress|null>(null)
@@ -100,7 +111,7 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
     try {await api({action:'cancel_folder',picker_id:pickerId.current})}
     catch {setFolderError('取消未完成，请关闭系统选择窗口后重试。')}
   }
-  const activeConnection=useRef<string|null>(null)
+  const activeConnection=useRef<string|null>(connection?.id||null)
   async function detectSetup() {
     setSetupBusy(true);setSetupError('')
     try {setSetup(await api({action:'setup'}))} catch(e) {setSetupError(e instanceof Error?e.message:'无法检测本机环境')}
@@ -128,15 +139,14 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
         if (!cancelled && activeConnection.current===connection.id) {setConnected(false);setError(e instanceof Error?e.message:'连接状态更新失败')}
       } finally {pending=false}
     }
+    void poll()
     const interval=window.setInterval(()=>void poll(),3000)
     return ()=>{cancelled=true;window.clearInterval(interval)}
   },[connection])
   useEffect(()=>{
-    if(!connection)return
-    const revoke=()=>{void fetch('/api/v1/agent/ui',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json','X-ApplyGuard-UI':'1'},body:JSON.stringify({...connection,action:'revoke'})}).catch(()=>{})}
-    window.addEventListener('pagehide',revoke)
-    return ()=>{window.removeEventListener('pagehide',revoke);revoke()}
-  },[connection])
+    if(connection)rememberConnection({connection,task,purpose,disclosure})
+  },[connection,task,purpose,disclosure])
+
   const autoSummarized=useRef(new Set<string>())
   const cardSignature=cards.map(card=>`${card.id}:${card.state}`).join('|')
   useEffect(()=>{
@@ -171,7 +181,7 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
   }
   async function revoke() {
     if(!connection)return
-    try{await api({...connection,action:'revoke'});activeConnection.current=null;setConnection(null);setConnected(false);setCards([]);setProgress(null);setGithubStep(-1);setSourceConfirmed({});setNumbers({});setNotice('连接已撤销；重新授权后才能继续读取。');setError('')}
+    try{await api({...connection,action:'revoke'});activeConnection.current=null;savedConnection=null;if(closeListener)window.removeEventListener('pagehide',closeListener);closeListener=null;setConnection(null);setConnected(false);setCards([]);setProgress(null);setGithubStep(-1);setSourceConfirmed({});setNumbers({});setNotice('连接已撤销；重新授权后才能继续读取。');setError('')}
     catch(e){setError(e instanceof Error?e.message:'撤销未成功，请重试')}
   }
   async function copyText(text:string, label:string) {
@@ -187,7 +197,7 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
     {connection&&!open&&<button className="btn secondary" onClick={()=>void revoke()}>撤销 Agent 连接</button>}
     {(open || privateRepo) && <div className="agent-connector-body" hidden={!open}>
       <div className="harness-setup-target"><HarnessSetupGuide setup={setup} loading={setupBusy} error={setupError} onRefresh={()=>void detectSetup()} /></div>
-      <h3 className="agent-section-heading">授权查找材料</h3><p>连接须由你授权，可随时撤销，最多30分钟有效。请保持当前页面开启；离开页面会尝试撤销。候选依据由你核对后导入。</p>
+      <h3 className="agent-section-heading">授权查找材料</h3><p>连接须由你授权，可随时撤销，最多30分钟有效。站内切页会保留本次会话；关闭窗口或主动撤销后停止。候选依据由你核对后导入。</p>
       {!connection ? <>
         <div className="github-guide-entry"><ActionButton type="button" className="btn secondary" disabledReason="请等待当前操作完成。" disabled={busy||folderBusy||sourceBusy} onClick={()=>void run(async()=>{await changeGithubScope(false);setMode('github');setGithubStep(0)})}>从 GitHub 查找公开仓库</ActionButton><p>支持用户名、公开邮箱或项目关键词。</p></div>
         <label className="agent-task">查找需求<textarea className="resume-input" value={task} onChange={e=>setTask(e.target.value)} /></label>
@@ -222,7 +232,7 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
       </> : <>
         <div className={`harness-status ${connected&&progress?.run_state!=='failed'&&progress?.run_state!=='timed_out'?'paired':''}`} role="status"><strong>{connectionStage(connection,connected,clock,progress)}</strong><span>{new Date(connection.expires*1000).toLocaleTimeString()} 到期 · 每 3 秒自动刷新</span></div>
         {expired?<p className="harness-warning">本次授权已过期。请撤销后重新授权，并使用新的命令与令牌。</p>:<div className="harness-launch">
-          <h4>本机 Harness 检索</h4><p className="muted">会话最多 {setup?.session_timeout_seconds??180} 秒。请保持本页打开；候选原文需要你核对后导入。</p>
+          <h4>本机 Harness 检索</h4><p className="muted">会话最多 {setup?.session_timeout_seconds??180} 秒。站内切页后可返回查看；候选原文需要你核对后导入。</p>
           {disclosure==='cloud_allowed'?<>
             <div className="button-row"><ActionButton className="btn primary" disabled={busy||progress?.run_state==='started'} disabledReason="Harness 正在检索，请稍候。" onClick={()=>void run(async()=>{await api({...connection,action:'start_harness'});setNotice('已重新启动 Harness，请稍候。')})}>重新开始查找</ActionButton></div>
             <details><summary>手动连接（备用）</summary><ol><li>复制启动命令，在本机 {shell} 中执行。它会启动独立的 Harness 检索会话。</li>

@@ -15,6 +15,7 @@ tests = [
     'tests.test_resume_abnormal',
     'tests.test_folder_picker',
     'tests.test_agent_bridge',
+    'tests.test_material_discovery',
     'tests.test_evidence_workspace',
     'tests.test_evidence_field_checks',
     'tests.test_polish_navigation',

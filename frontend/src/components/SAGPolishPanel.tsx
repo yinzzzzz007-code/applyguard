@@ -1,5 +1,6 @@
 import type {usePolishJob} from '../resume/usePolishJob'
 import {RadarDialog} from './RadarDialog'
+import {ReviewMaterials} from './ReviewMaterials'
 import {Button} from './ui/button'
 import {reviewTransport} from '../resume/modelReview'
 import {resumePolishOperationLock} from '../resume/operationLock'
@@ -80,7 +81,8 @@ export const SAGPolishPanel = forwardRef<SAGPolishHandle,{cloudIssue:string;job:
     {pendingOperation&&<RadarDialog title="确认使用模型" onClose={cancelOperation} showClose={false}>
       <p>本次会处理当前正文中的每条经历，并把岗位说明、经历文字和关联材料发送到后端配置的模型服务，可能产生费用。请确认材料适合发送。</p>
       <p>确认后可离开本页。后台会保留建议，回来后可逐条对照并决定是否采用。</p>
-      <div className="btn-row"><Button variant="secondary" onClick={cancelOperation}>取消</Button><Button onClick={()=>{const operation=pendingOperation;setPendingOperation(null);void run(operation.polish,operation.forceModel)}}>同意并开始</Button></div>
+      <ReviewMaterials label="确认所选材料并开始" onStart={()=>{const operation=pendingOperation;setPendingOperation(null);void run(operation.polish,operation.forceModel)}}/>
+      <Button variant="secondary" onClick={cancelOperation}>取消</Button>
     </RadarDialog>}
     <GroundingHistory />
   </div>

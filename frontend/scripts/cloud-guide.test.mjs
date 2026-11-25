@@ -34,7 +34,7 @@ test('explicit AI polish and recheck use the model even when the JD was parsed o
 })
 
 test('every workspace page resolves its own guide even with no earlier completion events',()=>{
- const routes=['/','/vault','/evidence','/jobs','/jd','/match','/resume','/claims','/ats','/confirm','/history','/interview','/help']
+ const routes=['/','/vault','/evidence','/jobs','/jd','/match','/resume','/claims','/confirm','/history','/interview','/help']
  assert.equal(GUIDE_PAGES.length,routes.length)
  for(const path of routes){
    assert.equal(guideForPage(path)?.href,path)

@@ -28,7 +28,6 @@ export const STEP_ORDER: FlowStep[] = [
   'match',
   'resume',
   'claims',
-  'ats',
   'confirm',
 ]
 

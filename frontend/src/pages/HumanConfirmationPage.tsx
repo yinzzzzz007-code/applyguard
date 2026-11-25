@@ -225,7 +225,7 @@ export function HumanConfirmationPage() {
       <section className="panel">
         <header className="panel-head">
           <h2>人工确认</h2>
-          <p>尚未完成申请内容检查。</p>
+          <p>请先核对简历正文。</p>
         </header>
         <div className="btn-row">
           <Link className="btn secondary" to="/vault">回到经历库</Link>
@@ -264,8 +264,8 @@ export function HumanConfirmationPage() {
       </header>
 
       <div className="btn-row confirm-actions">
-        <button type="button" className="btn secondary" onClick={() => navigate('/ats')}>
-          回退申请内容检查
+        <button type="button" className="btn secondary" onClick={() => navigate('/claims')}>
+          返回陈述核验
         </button>
         {allowed.includes('EDIT') && (
           <button type="button" className="btn secondary" onClick={() => navigate('/jd')}>
@@ -585,7 +585,7 @@ export function HumanConfirmationPage() {
       )}
       {readOnlyView && (
         <div className="callout">
-          <p className="muted">只读预览不提供确认备注编辑。返回申请内容检查后，仍按原规则确认。</p>
+          <p className="muted">只读预览不提供确认备注编辑。返回陈述核验后可继续编辑。</p>
           <GroundedExport />
         </div>
       )}

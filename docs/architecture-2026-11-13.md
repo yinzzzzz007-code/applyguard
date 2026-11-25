@@ -467,3 +467,12 @@ GitHub 可选入口新增点按引导：`AgentConnector.tsx`、`GithubGuideTip.t
 - 简历审查：同一申请的另一版正文正在润色时不重复启动；结果和当前正文不一致时提示重新生成。
 - 陈述核验 → 可跳过模拟申请内容检查并进入简历生成；人工确认页的操作栏位于页面顶部。
 - 验证：`python scripts/verify_desktop_changes.py`；前端 `npm --prefix frontend run build` 和 `npm --prefix frontend run smoke`。实际云端和桌面打包结果应单独记录，不能由离线测试推断。
+
+### 2026-11-25 正文、材料与检索链路修复
+
+- 用户入口：简历审查 / 陈述核验 → 启动模型 → 先显示对应材料清单 → 核对、选择并一次确认关联 → 再运行模型。文件导入不会自动认定归属或事实支持。
+- `ReviewMaterials.tsx` 使用本地匹配提出候选；文件名不同可显式点击 SAG 搜索。`POST /api/v1/evidence/discover` 复用 `SAGRetriever` 和实际 `zleap.sag.DataEngine`，语义线索与同项目候选分别返回；均不能自动升级为材料支持。索引保留真实文件名、原文与版本。
+- `finalResume.ts` 将当前已采用、编辑、排除的正文投影到简历生成页；预览、TXT、PDF 打印和 LaTeX 共用这份内容，经历库不因导出而被改写。
+- 正常流程：陈述核验 → 最终确认 → 简历生成。旧 `/ats` 地址跳转最终确认，导航与云朵引导移除该步骤。
+- Harness 授权在站内切页后保留于当前页面会话内存；主动撤销、关闭页面或到期后停止。检索到原文但未回传解释时仍可核对导入。诊断摘要写入本机 `harness-runs`，不记录密钥或完整原文。
+- CLI：`python scripts/check_material_discovery.py` 检查关联统计；显式增加 `--sag --output output/material-discovery.json` 才允许模型检索。通过环境变量 `APPLYGUARD_LOCAL_DIR`、`APPLYGUARD_EVIDENCE_DIR` 指定隔离资料。模型检索摘要保存在本机 `material-discovery-runs`。

@@ -5,7 +5,6 @@ import { RouteBoundary } from './components/RouteBoundary'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { DemoProvider } from './context/DemoContext'
-const AtsSimulatorPage = lazy(() => import('./pages/AtsSimulatorPage').then(module => ({ default: module.AtsSimulatorPage })))
 const ApplicationHistoryPage = lazy(() => import('./pages/ApplicationHistoryPage').then(module => ({ default: module.ApplicationHistoryPage })))
 const InterviewPage = lazy(() => import('./pages/InterviewPage').then(module => ({ default: module.InterviewPage })))
 const ResumeImportPage = lazy(() => import('./pages/ResumeImportPage').then(module => ({ default: module.ResumeImportPage })))
@@ -31,7 +30,7 @@ function PageRoutes() {
             <Route path="/match" element={<EvidenceMatchPage />} />
             <Route path="/resume" element={<ResumeReviewPage />} />
             <Route path="/claims" element={<ClaimVerificationPage />} />
-            <Route path="/ats" element={<AtsSimulatorPage />} />
+            <Route path="/ats" element={<Navigate to="/confirm" replace />} />
             <Route path="/confirm" element={<HumanConfirmationPage />} />
             <Route path="/history" element={<ApplicationHistoryPage />} />
             <Route path="/interview" element={<InterviewPage />} />

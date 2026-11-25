@@ -53,14 +53,14 @@ function apiBase(): string {
 }
 
 async function apiFetch(url: string, options?: RequestInit): Promise<Response> {
-  const slow = /\/(workflow|resume|interview)\//.test(url)
+  const slow = /\/(workflow|resume|interview)\//.test(url)||url.endsWith('/evidence/discover')
   const deadline=AbortSignal.timeout(slow?600000:60000)
   const signal=options?.signal?AbortSignal.any([options.signal,deadline]):deadline
   const response = await fetch(url, {...options,signal})
   const path = new URL(url, window.location.origin).pathname
   if(response.ok&&options?.method==='POST'&&path==='/api/v1/evidence/links')window.dispatchEvent(new Event('applyguard:evidence-linked'))
   if (response.ok && ['POST', 'DELETE'].includes(options?.method ?? 'GET') && path.startsWith('/api/v1/evidence')
-      && !path.endsWith('/check-claim') && !path.endsWith('/match-resume')) {
+      && !path.endsWith('/check-claim') && !path.endsWith('/match-resume') && !path.endsWith('/discover')) {
     window.dispatchEvent(new Event('applyguard:evidence-changed'))
     try { localStorage.setItem('applyguard.evidence.version', crypto.randomUUID()) } catch { /* optional cross-tab notice */ }
   }
@@ -967,4 +967,14 @@ export async function groundingRequest<T>(path: 'polish' | 'polish/start' | 'pol
     if (!response.ok) return {error:toApiError(body,response.status)}
     return {data:body as T}
   } catch { return {error:toApiError(null,0)} }
+}
+
+export async function discoverMaterials(workflow:WorkflowResponse,draft:EditableResumeForm){
+  try{
+    const response=await apiFetch(`${apiBase()}/api/v1/evidence/discover`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({candidate_id:workflow.candidate_id,resume_draft:draft,claims:workflow.resume_claims,local_only:false})})
+    const value=await readJson(response)
+    if(!response.ok)throw Error(toApiError(value,response.status)?.message||'SAG 检索请求失败')
+    return value as {results:Array<import('./types').ResumeMatchItem & {file_sha256:string}>;unresolved_candidates:Array<import('./types').ResumeMatchItem & {file_sha256:string}>;engine:string;source_count:number;query_count:number}
+  }catch(e){throw Error(e instanceof Error?e.message:'SAG 材料检索未完成')}
 }

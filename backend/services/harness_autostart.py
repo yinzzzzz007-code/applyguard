@@ -2,6 +2,10 @@
 from __future__ import annotations
 
 import os
+import json
+import hashlib
+import logging
+from uuid import uuid4
 import tempfile
 import threading
 import time
@@ -42,6 +46,8 @@ def start_harness(g: dict, server_port: int | None) -> dict:
         g.update(run_state='started', failure_reason='', updated_at=time.time())
 
     def run():
+        run_id=uuid4().hex
+        started=time.time()
         outcome, reason = 'failed', 'Harness 未能完成检索，请检查模型服务或重新检测环境。'
         try:
             runtime = local_dir() / 'harness-runtime'
@@ -73,6 +79,16 @@ def start_harness(g: dict, server_port: int | None) -> dict:
         finally:
             with LOCK:
                 g.update(run_state=outcome, failure_reason=reason, updated_at=time.time())
+                report={'run_id':run_id,'started_at':started,'elapsed_seconds':round(time.time()-started,2),
+                    'task_hash':hashlib.sha256(g['task'].encode()).hexdigest(),'state':outcome,'reason':reason,
+                    'paired':g['connected'],'candidates':len(g['cards']),
+                    'submitted':sum(c['state'] in {'NEEDS_REVIEW','IMPORTED'} for c in g['cards'].values()),
+                    'revoked':g['revoked']}
+            try:
+                folder=local_dir()/'harness-runs';folder.mkdir(parents=True,exist_ok=True)
+                (folder/(run_id+'.json')).write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+            except OSError:
+                logging.warning('Could not save Harness diagnostic summary')
 
     try:
         threading.Thread(target=run, daemon=True).start()
