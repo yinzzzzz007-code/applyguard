@@ -16,7 +16,8 @@ def configure(workspace,cache,port):
         APPLYGUARD_GROUNDING_DIR=str(cache), APPLYGUARD_HOST='127.0.0.1',APPLYGUARD_PORT=str(port),
         APPLYGUARD_JOBS_AUTO_REFRESH='false',APPLYGUARD_GROUNDING_MODE='sag_atomic',
         APPLYGUARD_AI_MODEL='gemini-3.1-flash-lite-preview', APPLYGUARD_COMPLEX_AI_MODEL='gemini-3.1-flash-lite-preview',
-        APPLYGUARD_AI_BASE_URL='https://api.chatanywhere.tech/v1',APPLYGUARD_AI_TIMEOUT='90')
+        APPLYGUARD_AI_BASE_URL='https://api.chatanywhere.tech/v1',APPLYGUARD_AI_TIMEOUT='90',
+        APPLYGUARD_SETTINGS_PATH=str(workspace/'.env'))
     empty=workspace/'empty-vault.json'
     if not empty.exists():
         empty.write_text(json.dumps({'candidate_id':'cand_demo_001','profile':{},'experiences':[],'awards':[]}),encoding='utf-8')
