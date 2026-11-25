@@ -35,12 +35,18 @@ def _claim_text(organization: str, title: str, role: str, description: str) -> s
         # Keep short multi-line descriptions intact: later lines often contain scope or negation.
         if len(desc) <= 420:
             return desc
-        # Longer source material stays in the vault; use the first bounded paragraph.
+        # Keep as many complete lines as the editable claim permits; a project
+        # heading by itself must not hide all the following responsibilities.
+        lines = []
         for line in re.split(r"[\n\r]+", desc):
-            line = line.strip().lstrip("•-*·、 ").strip()
-            if len(line) >= 8:
-                return line[:420]
-        return desc[:420]
+            line = line.strip()
+            if not line:
+                continue
+            candidate = "\n".join([*lines, line])
+            if len(candidate) > 420:
+                break
+            lines.append(line)
+        return "\n".join(lines) if len(lines) > 1 else desc[:420]
     bits = [b for b in (organization, title or role) if b]
     return " · ".join(bits) if bits else "（未填写经历描述）"
 

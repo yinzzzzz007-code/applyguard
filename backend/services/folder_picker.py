@@ -24,6 +24,20 @@ try:
 finally:
     root.destroy()
 '''
+_WINDOWS_PICKER = r'''
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+Add-Type -AssemblyName System.Windows.Forms
+$dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+$dialog.Description = '选择允许 ApplyGuard 查找材料的文件夹'
+$dialog.ShowNewFolderButton = $false
+try {
+    $result = $dialog.ShowDialog()
+    $selected = $result -eq [System.Windows.Forms.DialogResult]::OK
+    @{ path = if ($selected) { $dialog.SelectedPath } else { $null }; cancelled = -not $selected } | ConvertTo-Json -Compress
+} finally {
+    $dialog.Dispose()
+}
+'''
 
 def _stop(process):
     if process.poll() is not None:
@@ -80,7 +94,10 @@ def start_folder_picker() -> dict:
             startup.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             startup.wShowWindow = 1
         try:
-            process = subprocess.Popen([sys.executable, '-u', '-c', _PICKER], stdout=subprocess.PIPE,
+            command = [sys.executable, '-u', '-c', _PICKER]
+            if os.name == 'nt' and getattr(sys, 'frozen', False):
+                command = ['powershell.exe', '-NoProfile', '-STA', '-Command', _WINDOWS_PICKER]
+            process = subprocess.Popen(command, stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE, text=True, encoding='utf-8', errors='replace', startupinfo=startup,
                                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
         except OSError as exc:

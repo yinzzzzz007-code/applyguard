@@ -52,7 +52,7 @@ export const SAGPolishPanel = forwardRef<SAGPolishHandle,{cloudIssue:string;job:
         setWorkflow({...workflow,review_session:{...review,interruptions:review.interruptions+1}})
         setError(result.error?.message ?? '处理未完成，原稿保留。');return
       }
-      const next = mergeReviewResult({...workflow,local_only:transport.local_only},result.data)
+      const next = {...mergeReviewResult({...workflow,local_only:transport.local_only},result.data),_historyReplay:undefined}
       saveTextVersion(workflow,'核验前')
       saveTextVersion(next,'刷新材料支持情况')
       setWorkflow(next)

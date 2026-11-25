@@ -31,6 +31,16 @@ def response(projects=1):
 
 
 class InterviewTests(unittest.TestCase):
+    def test_short_but_complete_introduction_does_not_fail_generation(self):
+        model = MagicMock()
+        value = response()
+        value['three_minutes'] = '我负责项目中的接口测试。'
+        model.complete_structured.return_value = value
+        with patch('backend.services.interview_guide.HttpModelClient', return_value=model):
+            result = generate_interview(request())
+        self.assertEqual(result['three_minutes'], value['three_minutes'])
+        self.assertEqual(len(result['questions']), 8)
+
     def test_uses_selected_projects_and_validates_output_without_contact_fields(self):
         model = MagicMock()
         model.complete_structured.return_value = response()

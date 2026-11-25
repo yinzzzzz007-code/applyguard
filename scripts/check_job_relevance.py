@@ -52,16 +52,16 @@ SEED_CHECKS = (
     ("Nemotron", "熟悉大模型或RL", {"direct"}),
     ("Nemotron", "任一深度学习框架", {"framework"}),
     ("Multi-Agent PPO", "熟悉大模型或RL", {"direct"}),
-    ("DialogueBench", "真实软件工程场景的评测体系", {"related"}),
-    ("CacheBench", "出色的问题分析", {"direct", "related"}),
-    ("CacheBench", "真实软件工程场景的评测体系", {"related"}),
+    ("SocialMimic", "真实软件工程场景的评测体系", {"related"}),
+    ("RouteKV", "出色的问题分析", {"direct", "related"}),
+    ("RouteKV", "真实软件工程场景的评测体系", {"related"}),
 )
 SEED_CONTROLS = (
-    ("LedgerDemo", "任一深度学习框架", {"no_project_signal"}),
-    ("DialogueBench", "任一深度学习框架", {"no_project_signal"}),
-    ("DialogueBench", "负责提升Code Agent", {"no_project_signal", "related"}),
+    ("FinBot", "任一深度学习框架", {"no_project_signal"}),
+    ("SocialMimic", "任一深度学习框架", {"no_project_signal"}),
+    ("SocialMimic", "负责提升Code Agent", {"no_project_signal", "related"}),
     ("Nemotron", "真实软件工程场景的评测体系", {"related"}),
-    ("CacheBench", "主导过有影响力的项目", {"related"}),
+    ("RouteKV", "主导过有影响力的项目", {"related"}),
 )
 
 def labeled_cases(traces, cases):

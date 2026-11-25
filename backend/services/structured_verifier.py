@@ -151,6 +151,20 @@ def guard_cited_verdict(text, verdict):
                          and compared[1].casefold() != compared[2].casefold()
                          and not _MISSING_MENTION.search(compared[2]))
     if not (incompatible_values or incompatible_words or explicit_pair):
+        approximate_metrics = (r'效率|efficiency', r'内存|memory', r'吞吐|throughput',
+                               r'macro[- ]?f1', r'交付时间|delivery\s*time',
+                               r'(?<![A-Za-z0-9])cpu(?![A-Za-z0-9])')
+        if numbers(text) and numbers(quoted) and numbers(text) != numbers(quoted) and any(
+                re.search(metric, text, re.I) and re.search(metric, quoted, re.I)
+                for metric in approximate_metrics):
+            return {**verdict, 'relation':'INSUFFICIENT', 'counterevidence_missing':True,
+                    'reason':'材料与陈述的相近指标数值不同，可能存在冲突；请核对统计口径和项目版本。'+reason}
+        technical_names = {name.casefold() for name in re.findall(r'(?<![A-Za-z0-9])[A-Za-z][A-Za-z0-9-]{2,}(?![A-Za-z0-9])', text)}
+        cited_names = {name.casefold() for name in re.findall(r'(?<![A-Za-z0-9])[A-Za-z][A-Za-z0-9-]{2,}(?![A-Za-z0-9])', quoted)}
+        explicit_denial = re.search(r'不使用|未使用|没有使用|不支持|未实现|不采用|does not use|not implemented', quoted, re.I)
+        if technical_names & cited_names and explicit_denial:
+            return {**verdict, 'relation':'INSUFFICIENT', 'counterevidence_missing':True,
+                    'reason':'材料对同一技术给出了否定描述，可能存在冲突；请确认项目版本和具体实现。'+reason}
         return {**verdict,'relation':'INSUFFICIENT','counterevidence_missing':True,
                 'reason':'尚缺少能比较的同项指标、职责或明确相反的原文。'+reason}
     return verdict

@@ -2,7 +2,8 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import { copyableClaim, copyableField } from '../src/copyRules.ts'
-import { loadTextVersions, restoreTextVersion, saveTextVersion } from '../src/resume/groundingHistory.ts'
+import { loadTextVersions, replayTextVersion, restoreTextVersion, saveTextVersion } from '../src/resume/groundingHistory.ts'
+import { changeClaim } from '../src/resume/review.ts'
 
 const normal = JSON.parse(readFileSync(new URL('../public/prerecorded/normal.json', import.meta.url)))
 const blocked = JSON.parse(readFileSync(new URL('../public/prerecorded/unsupported_block.json', import.meta.url)))
@@ -84,6 +85,49 @@ test('state-only changes and rejected suggestions are retained in history', () =
   assert.equal(history.length,2)
   assert.equal(history[0].stateSnapshot.proposals[0].rejected,true)
   assert.equal(history[0].stateSnapshot.requiresReverification,true)
+})
+
+test('history preserves original, rewrite and cited atomic decisions without restoring approval', () => {
+  const data=new Map();const storage={getItem:k => data.get(k) ?? null,setItem:(k,v) => data.set(k,v)}
+  const workflow=structuredClone(normal), claim=workflow.resume_claims[0]
+  workflow.grounding={mode:'sag_atomic',run_id:'run123',operation:'polish',results:{[claim.claim_id]:{
+    original_text:claim.text,final_text:claim.text,proposed_text:'A clearer version',state:'NEEDS_REVIEW',
+    atoms:[{atom_id:'a1',text:'A fact',relation:'INSUFFICIENT',reason:'Need evidence',citations:[{quote:'Source quote'}]}],
+    retrieved_sources:[{text:'A potentially long original source'}],
+  }}}
+  saveTextVersion(workflow,'model result',storage)
+  const historical=loadTextVersions(workflow.candidate_id,storage)[0]
+  const result=historical.stateSnapshot.historicalResults[claim.claim_id]
+  assert.equal(result.original_text,claim.text)
+  assert.equal(result.proposed_text,'A clearer version')
+  assert.equal(result.atoms[0].citations[0].quote,'Source quote')
+  assert.deepEqual(result.retrieved_sources,[])
+  const restored=restoreTextVersion(workflow,historical)
+  assert.equal(restored.requires_reverification,true)
+  assert.deepEqual(restored.grounding.results,{})
+  const replayed=replayTextVersion(workflow,historical)
+  assert.equal(replayed.grounding.results[claim.claim_id].proposed_text,'A clearer version')
+  assert.equal(replayed.grounding.results[claim.claim_id].atoms[0].citations[0].quote,'Source quote')
+  assert.equal(replayed.requires_reverification,true)
+  assert.equal(copyableClaim(replayed,{},claim.claim_id),false)
+  assert.ok(replayed.claim_verification.every(row => row.state==='NEEDS_REVIEW' && !row.grounded))
+  const accepted=changeClaim(replayed,claim.claim_id,'A clearer version','accept')
+  assert.equal(accepted.resume_claims[0].text,'A clearer version')
+  assert.equal(accepted.requires_reverification,true)
+  assert.equal(copyableClaim(accepted,{},claim.claim_id),false)
+  accepted._historyReplay={label:'课堂模拟 · 润色回放',createdAt:''}
+  saveTextVersion(accepted,'用户采用建议',storage)
+  assert.match(loadTextVersions(workflow.candidate_id,storage)[0].label,/^课堂模拟/)
+  const oldVersion=structuredClone(historical)
+  delete oldVersion.stateSnapshot.historicalResults
+  const legacyReplay=replayTextVersion(workflow,oldVersion)
+  assert.equal(legacyReplay._historyReplay.legacy,true)
+  assert.equal(legacyReplay.grounding.results[claim.claim_id].proposed_text,'A clearer version')
+  assert.deepEqual(legacyReplay.grounding.results[claim.claim_id].atoms,[])
+  assert.equal(copyableClaim(legacyReplay,{},claim.claim_id),false)
+  saveTextVersion(legacyReplay,'旧版回放',storage)
+  const savedLegacy=loadTextVersions(workflow.candidate_id,storage)[0]
+  assert.equal(replayTextVersion(workflow,savedLegacy)._historyReplay.legacy,true)
 })
 
 test('verified claim is copyable, blocked and edited claims are not', () => {

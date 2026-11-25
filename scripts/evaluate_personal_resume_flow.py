@@ -106,7 +106,7 @@ def main():
             url=f"https://raw.githubusercontent.com/{args.repository}/{pinned['sha']}/README.md"
             with build_opener().open(Request(url,headers={'User-Agent':'ApplyGuard-personal-flow'}),timeout=30) as response:raw=response.read(1000001)
             if len(raw)>1000000:raise ValueError('Selected public README exceeds limit')
-            imported=ew.import_files(workspace['workspace_id'],[{'relative_path':'ledgerdemo-public-readme.md','content_base64':base64.b64encode(raw).decode()}])
+            imported=ew.import_files(workspace['workspace_id'],[{'relative_path':'finbot-public-readme.md','content_base64':base64.b64encode(raw).decode()}])
             ev=imported['files'][0]['evidence_id'];ew.review_evidence(ev,{'normalized_fields':{},'review_state':'REVIEWED'})
             ew.create_link({'target_type':'project','target_id':project['id'],'evidence_id':ev})
             record('github_evidence',{'repository':pinned['repo'],'sha':pinned['sha'],'path':'README.md','notice':'Project documentation does not establish every individual contribution.'})

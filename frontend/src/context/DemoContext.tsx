@@ -30,6 +30,7 @@ import { zhLookup } from '../i18n'
 import type { FlowStep } from '../flow'
 import { changeClaim, isEducationProfile } from '../resume/review'
 import { invalidateRestoredWorkflow, loadReviewSession, saveReviewSession } from '../resume/reviewSession'
+import { saveTextVersion } from '../resume/groundingHistory'
 
 interface RecheckAttempt {
   application: string
@@ -69,6 +70,7 @@ interface DemoState {
   reverifyClaims: () => Promise<void>
   validateExport: () => Promise<boolean>
   patchWorkflow: (patch: Partial<WorkflowResponse> | ((w: WorkflowResponse) => WorkflowResponse)) => void
+  restoreHistoryWorkflow: (workflow: WorkflowResponse) => void
   setResumeForm: Dispatch<SetStateAction<EditableResumeForm | null>>
   setClaimDecision: (claimId: string, patch: Partial<LocalClaimDecision>) => void
   setFieldDecision: (fieldId: string, patch: Partial<LocalFieldDecision>) => void
@@ -292,6 +294,16 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     },
     [],
   )
+
+  const restoreHistoryWorkflow = useCallback((restored: WorkflowResponse) => {
+    revision.current += 1
+    setWorkflowState(restored)
+    setClaimDecisions({})
+    setReviewDrafts({})
+    setFieldDecisions({})
+    setSimulatedConfirmed(false)
+    setConfirmationNote('')
+  }, [])
 
   const invalidateWorkflow = useCallback((reason = '岗位或经历材料有变动，请重新核验当前草稿。') => {
     if (!activeApplication.current) return
@@ -520,8 +532,12 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         workflow._prerecorded ? null : resumeForm, 'sag_atomic')
       if (version !== revision.current) return finish('等待期间正文、岗位或材料已改变，请重新核验当前版本。')
       if (res.error || !res.data) return finish(res.error?.message ?? '没有收到本次核验结果，请重试。')
-      setWorkflow({...workflow, ...res.data, local_only: false})
-      finish()
+      const next = {...workflow, ...res.data, local_only: false, _historyReplay: undefined}
+      let historyFailure = false
+      try { saveTextVersion(workflow,'核验前'); saveTextVersion(next,'原子核验结果') }
+      catch { historyFailure = true }
+      setWorkflow(next)
+      finish(historyFailure ? '核验已完成，但本地历史保存失败，请检查存储空间。' : '')
     } catch {
       finish('核验请求未完成，请检查本地服务后重试。')
     } finally {
@@ -573,6 +589,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       setJdRawInput, setActiveJobId,
       setWorkflow,
       patchWorkflow,
+      restoreHistoryWorkflow,
       recheckAttempt, reverifyClaims,
       validateExport,
       setResumeForm,
@@ -603,6 +620,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       setScenario,
       setWorkflow,
       patchWorkflow,
+      restoreHistoryWorkflow,
       recheckAttempt, reverifyClaims,
       validateExport,
       setClaimDecision,

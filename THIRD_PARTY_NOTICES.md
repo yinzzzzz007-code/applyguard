@@ -97,3 +97,6 @@ is retained with the project.
 候选排序、兴趣反馈、公司／重复岗位打散的产品逻辑参考 [Twitter Home Mixer](https://github.com/twitter/the-algorithm/blob/main/home-mixer/README.md) 和 [X algorithm](https://github.com/xai-org/x-algorithm)。本项目独立实现适用于岗位内容的相似度与排序逻辑，未复制其生产模型、权重或训练系统。推荐分不是录用概率。
 
 天蓝色小云朵为项目自绘 SVG，沿用用户指定的 `#87CEEB`，没有嵌入参考图片。
+## Desktop OCR
+
+The Windows desktop build bundles `rapidocr-onnxruntime` 1.2.3 (Apache-2.0) and ONNX Runtime 1.32.0 (MIT). Package metadata and license files are included in the executable. RapidOCR source: https://github.com/RapidAI/RapidOCR.

@@ -98,15 +98,15 @@ class GroundingV2Tests(unittest.TestCase):
     def test_numeric_coverage_in_chinese(self):
         self.assertEqual(missing_numeric_qualifiers('通过18/20条，准确率90%，提高4个百分点',['通过18条']),['20','4个百分点','90%'])
     def test_thousands_grouping_does_not_look_like_dropped_numbers(self):
-        self.assertEqual(missing_numeric_qualifiers('排名247/5,255',['排名247，总队伍5255']),[])
+        self.assertEqual(missing_numeric_qualifiers('排名197/4,185',['排名197，总队伍4185']),[])
         self.assertEqual(missing_numeric_qualifiers('处理1,024,000条',['处理1024000条']),[])
-        self.assertTrue(missing_numeric_qualifiers('排名247/5,255',['排名246，总队伍5255']))
-        self.assertIn('5255',missing_numeric_qualifiers('排名247/5,255',['排名247，总队伍5252']))
+        self.assertTrue(missing_numeric_qualifiers('排名197/4,185',['排名196，总队伍4185']))
+        self.assertIn('4185',missing_numeric_qualifiers('排名197/4,185',['排名197，总队伍4182']))
         self.assertTrue(missing_numeric_qualifiers('数值4,18',['数值418']))
-        self.assertTrue(missing_numeric_qualifiers('通过率4.185%',['通过率5255%']))
+        self.assertTrue(missing_numeric_qualifiers('通过率4.185%',['通过率4185%']))
         from backend.services.fact_lock import wording_invariants
-        self.assertFalse(wording_invariants('Processed 5,255 records.','Processed 5255 records.'))
-        self.assertTrue(wording_invariants('Processed 5,255 records.','Processed 5252 records.'))
+        self.assertFalse(wording_invariants('Processed 4,185 records.','Processed 4185 records.'))
+        self.assertTrue(wording_invariants('Processed 4,185 records.','Processed 4182 records.'))
 
     def test_missing_atom_ids_never_pass(self):
         model=Model();original=model.complete_structured

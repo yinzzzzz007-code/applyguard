@@ -1,4 +1,5 @@
 import {CloudGuide} from './CloudGuide'
+import {ModelSettings} from './ModelSettings'
 import { BackendStatus } from './BackendStatus'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
@@ -76,6 +77,7 @@ export function AppShell({children}:{children:React.ReactNode}) {
       <header className="workspace-topbar">
         <div className="workspace-breadcrumb"><span>申请工作台</span><Icon name="chevron" /><h1>{title}</h1></div>
         <button type="button" className="text-action" onClick={()=>window.dispatchEvent(new Event('applyguard:guide-open'))}>云朵引导</button>
+        <ModelSettings />
         <NavLink className="workspace-help-link" to="/help" aria-label="使用帮助"><Icon name="file" /><span>使用帮助</span></NavLink>
         <details className="workspace-scenario"><summary><BackendStatus key={scenario} live={scenario === 'live'} /><Icon name="down" /></summary>
           <div className="scenario-popover"><label htmlFor="demo-scenario">演示场景</label><select id="demo-scenario" value={scenario} onChange={event => {

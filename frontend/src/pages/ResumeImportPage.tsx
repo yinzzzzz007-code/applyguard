@@ -88,7 +88,7 @@ export function ResumeImportPage() {
         <option value="offline_ocr">本地 OCR（图片或扫描件）</option>
         <option value="dynamic">模型抽取（发送简历正文，可能产生费用）</option>
       </select>
-      <p className="mode-note">{parseMode === 'offline' ? '优先提取文字；遇到扫描页时自动使用本地 OCR（最多 5 页，需安装 OCR）。识别结果请逐项核对。' : parseMode === 'offline_ocr' ? '在本机逐页识别，最多 5 页，需先安装本地 OCR；可能耗时较长，结果须逐项核对。' : '正文和文件名将发送给后端配置的模型服务，可能产生费用；请先脱敏。'}</p>
+      <p className="mode-note">{parseMode === 'offline' ? '优先提取文字；遇到扫描页时自动使用本地 OCR（最多 5 页）。如组件不可用，页面会提示配置；识别结果请逐项核对。' : parseMode === 'offline_ocr' ? '在本机逐页识别，最多 5 页；如 OCR 组件不可用，页面会提示配置。识别可能耗时较长，结果须逐项核对。' : '正文和文件名将发送给后端配置的模型服务，可能产生费用；请先脱敏。'}</p>
       <label
         className={dragOver ? 'resume-dropzone is-over' : 'resume-dropzone'}
         aria-busy={status === 'loading'}

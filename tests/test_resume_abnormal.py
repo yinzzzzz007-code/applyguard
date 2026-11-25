@@ -175,9 +175,9 @@ class ResumeAbnormalUnitTests(unittest.TestCase):
         self.assertIn({'group':'extras','field':'summary','index':None},result['model_field_issues'])
 
     def test_project_summer_research_is_not_duplicated_as_an_inferred_internship(self):
-        text='邮箱：fictional@example.test\n项目经历\nCacheBench — ExampleLab 暑研\n研究推理时延。'
+        text='邮箱：fictional@example.test\n项目经历\nRouteKV — JHU 暑研\n研究推理时延。'
         client=MagicMock();client.api_key='fixture';client.complete_json.return_value={
-            'basic':{'email':'fictional@example.test'},'internships':[{'organization':'ExampleLab','title':'暑研'}]}
+            'basic':{'email':'fictional@example.test'},'internships':[{'organization':'JHU','title':'暑研'}]}
         with patch.object(parser,'HttpModelClient',return_value=client),patch.object(parser,'pdf_bytes_to_text',return_value=text):
             result=parser.parse_resume_pdf(**body(parse_mode='dynamic'))
         self.assertFalse(result['form']['internships'])

@@ -41,7 +41,7 @@ def attach_local_evidence(experiences: list[dict[str, Any]], draft: dict[str, An
                 from backend.services.evidence_scope import matches_item
                 text='\n'.join(span['raw_text'] for span in record['spans'])
                 raw=next((r for k in ('projects','internships','awards') for r in draft.get(k,[]) if r.get('id')==target[1]),{})
-                if not matches_item(item['title'],(record.get('file') or {}).get('relative_path',''),text,
+                if not link.get('association_confirmed') and not matches_item(item['title'],(record.get('file') or {}).get('relative_path',''),text,
                                     organization=item.get('organization',''),description=raw.get('description',''),kind=target[0]):continue
                 alias = vault_evidence_id(local_id)
                 if any(source['evidence_id'] == alias for source in sources):

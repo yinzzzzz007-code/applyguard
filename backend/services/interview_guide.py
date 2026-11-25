@@ -72,8 +72,8 @@ def generate_interview(request):
     for index in range(max(0, 8 - len(plan))):
         plan[f'general_{index + 1}'] = {'scope': '结合 JD 与项目、实习经历的补充面试题'}
     schema = obj({
-        'one_minute': {'type': 'string', 'minLength': 160, 'maxLength': 600},
-        'three_minutes': {'type': 'string', 'minLength': 500, 'maxLength': 1600},
+        'one_minute': {'type': 'string', 'minLength': 1, 'maxLength': 600},
+        'three_minutes': {'type': 'string', 'minLength': 1, 'maxLength': 1600},
         'questions': obj({key: question_schema for key in plan}),
     })
     from backend.services.interview_practice import interview_policy, open_session

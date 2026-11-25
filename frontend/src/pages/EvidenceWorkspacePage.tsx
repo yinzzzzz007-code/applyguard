@@ -1051,12 +1051,17 @@ export function EvidenceWorkspacePage() {
       })
       checks = preview.data?.field_checks || []
     }
-    const res = await api.createEvidenceLink({
+    let res = await api.createEvidenceLink({
       target_type: linkTargetType,
       target_id: linkTargetId,
       evidence_id: selectedEvidenceId,
       field_checks: checks,
     })
+    if (res.error?.message?.includes('无法自动确认材料属于该经历')) {
+      const confirmed = window.confirm(`系统无法自动确认这份材料属于「${target.label}」。请先检查材料原文和项目名称。\n\n确认是同一经历并继续关联吗？关联后仍需逐项核验，不能直接证明事实。`)
+      if (confirmed) res = await api.createEvidenceLink({target_type:linkTargetType,target_id:linkTargetId,
+        evidence_id:selectedEvidenceId,field_checks:checks,association_confirmed:true})
+    }
     setBusy('')
     if (res.error || !res.data) {
       setMessage(res.error?.message || '关联失败（需先确认识别完成）')

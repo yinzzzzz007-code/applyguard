@@ -21,7 +21,7 @@ export function usePolishJob() {
     setRunning(false)
     setMessage('')
     retryRun.current=''
-    if(!workflow || workflow._prerecorded || !workflow.resume_claims.length) return
+    if(!workflow || workflow._prerecorded || workflow._historyReplay || !workflow.resume_claims.length) return
     const draft = workflow
     async function check() {
       if(!active||checking)return
@@ -44,7 +44,7 @@ export function usePolishJob() {
       if(job.state!=='ready'||!report||report.run_id===draft.grounding?.run_id)return
       if(editing){setMessage('建议已保存在本机。请先保存或取消正在编辑的正文。');return}
       if(!draft.resume_claims.every(c=>report.results[c.claim_id]?.original_text===c.text))return
-      const next={...invalidateRestoredWorkflow(draft,'润色建议待审阅，请按当前正文核验。'),grounding:report}
+      const next={...invalidateRestoredWorkflow(draft,'润色建议待审阅，请按当前正文核验。'),grounding:report,_historyReplay:undefined}
       // Browser history is optional. A full storage quota must not hide the server result.
       try {
         saveTextVersion(draft,'润色前')
@@ -59,6 +59,7 @@ export function usePolishJob() {
 
   async function start(){
     if(!workflow||editing||running)return
+    if(workflow._historyReplay)setWorkflow({...workflow,_historyReplay:undefined})
     const result=await groundingRequest<Job>('polish/start',workflow,resumeForm,{
       grounding_mode:'sag_atomic',local_only:false,known_run:retryRun.current||workflow.grounding?.run_id})
     setRevision(n=>n+1)

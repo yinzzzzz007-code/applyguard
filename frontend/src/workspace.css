@@ -148,6 +148,10 @@ input:focus,select:focus,textarea:focus { border-color:var(--primary); outline:2
 .claim-verification-page .claim.blocked { border-inline-start:3px solid var(--danger-edge); }
 .claim-card-heading { display:flex; gap:8px 12px; align-items:center; flex-wrap:wrap; }
 .claim-card-heading h3 { margin:0; font-size:var(--text-control); }
+.history-comparison { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:16px 0; }
+.history-comparison > div { padding:16px; border:1px solid var(--hairline); border-radius:12px; }
+.history-comparison mark { background:#fff0aa; color:inherit; border-radius:3px; }
+@media (max-width:760px) { .history-comparison { grid-template-columns:1fr; } }
 .claim-choice,.claim-meta { color:var(--steel); font-size:var(--text-meta); }
 .claim-statement { margin:10px 0 0; line-height:1.75; white-space:pre-wrap; }
 .claim-meta { margin:6px 0 0; }
@@ -619,3 +623,10 @@ button:focus-visible,a:focus-visible,summary:focus-visible { scroll-margin:80px;
   .field-check-head { display: none; }
   .field-check-row { grid-template-columns: 1fr; }
 }
+.model-settings { position:relative; }
+.model-settings-panel { position:absolute; right:0; top:calc(100% + 8px); z-index:100; width:min(420px,90vw); padding:24px; background:#fff; border:1px solid #cbd7e6; border-radius:16px; box-shadow:0 12px 32px rgba(28,48,74,.16); }
+.model-settings-panel h2 { margin:0 0 8px; font-size:22px; }
+.model-settings-panel p { margin:8px 0; line-height:1.5; }
+.model-settings-panel label { display:block; margin-top:16px; }
+.model-settings-panel input { width:100%; margin-top:8px; }
+.model-settings-panel .btn-row { margin-top:16px; }

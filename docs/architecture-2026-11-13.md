@@ -401,7 +401,7 @@ GitHub 可选入口新增点按引导：`AgentConnector.tsx`、`GithubGuideTip.t
 |用户入口|实际调用|可检查的结果|
 |---|---|---|
 |简历导入 → 选择材料来源|独立启动器 `scripts/start_recording_workspace.py` 设置本地数据、证据库、SAG 缓存和端口；首页读取 `connections_summary`|新端口使用独立浏览器存储，显示两项连接状态|
-|证明材料 → 推荐关联／关联经历|后端 `evidence_scope.py`、`evidence_workspace.py`、`local_evidence.py` 判断材料原文归属|不相关的新关联被拒绝，旧关联在核验记录中列出排除原因|
+|证明材料 → 推荐关联／关联经历|后端 `evidence_scope.py`、`evidence_workspace.py`、`grounded_workflow.py` 判断材料归属|无法自动判断时要求用户核对并明确确认；旧的无确认错链仍被排除，人工关联本身不代表事实获支持|
 |简历审查 → 按目标岗位润色|后端 `asu_resume.py`、`atomic_verifier.py`、`grounded_workflow.py`|仅处理当前正文。展示改写前后、实际差异与依据。存在明确冲突的经历保留原文|
 |陈述核验 → 材料与核验明细|后端 `draft_anchors.py`、`structured_verifier.py`、`rank_evidence.py`；前端 `AtomicEvidence.tsx`|每条事实关联正文片段，保留证据引用、句段位置及未定位原因。每次运行写入独立 JSON|
 |简历审查／陈述核验 → 快速完成|前端 `QuickReviewActions.tsx`、`GroundedExport.tsx`、`InterviewPage.tsx`|选中且保留的当前正文用于个人稿或面试。下载个人稿须勾选，严格稿另行核验|
@@ -436,3 +436,20 @@ GitHub 可选入口新增点按引导：`AgentConnector.tsx`、`GithubGuideTip.t
 陈述核验正文标色：`frontend/src/resume/reviewHighlights.ts` 根据当前正文位置和逐事实引文生成标记，`ClaimStatement.tsx` 让用户直接点词句查看原因。蓝色表示待核对；尚未取得材料结论时，仅提示优先对照的数字、身份或工作内容。红色表示可定位且有引文的冲突。已获支持的陈述保留普通正文。回归入口仍为 `npm --prefix frontend run smoke`。8032 页面实测 7 条陈述共 17 处可见标记，另用本机历史证书记录回放冲突和已支持两种情况。
 
 陈述核验 → 启动 AI 原子核验 → 同意并开始核验。每次确认 POST `/api/v1/workflow/reverify` 并请求新模型结果。有同项目原件的经历对照材料，无关联原件的经历由模型拆出待核对事实，引用为空。个人资料沿用表单。回执显示运行编号、模型和耗时，并与本机 `local/verification-runs/<run_id>.json` 对照。页面显示连接异常、服务失败或旧回执时，可以重试。离线回归运行 `python -m unittest tests.test_grounding_scope` 和 `npm --prefix frontend run smoke`。经授权的计费实测可运行 `node scripts/check_claim_reverify.cjs http://127.0.0.1:8032 --live-twice`（需 Playwright 和 Edge）。
+# Windows 桌面试用入口（2026-11-25）
+
+`desktop_main.py` 启动 127.0.0.1:8766 的本地后端和桌面窗口。单文件由 `ApplyGuard.spec` 打包，用户数据位于 exe 同目录的 `ApplyGuard-data`。运行 `ApplyGuard-Windows.exe --check-backend` 检查后端与 SAG 模块导入。打包范围、配置和验证记录见 `桌面版使用与验证.md`。
+
+# 2026-11-25：桌面 OCR 与岗位驱动经历发现
+
+桌面入口使用内置 RapidOCR 识别扫描件，文件夹选择在冻结程序中由 Windows 对话框完成。岗位说明页提供 Harness 经历发现入口，授权连接后，已回传的原文片段可调用模型生成待编辑项目草稿；重复标题保留已有经历，用户在经历库保存。材料来源版本变更或授权失效时拒绝生成结果。验证入口为 `python scripts/verify_desktop_changes.py`，此入口不调用云端模型。
+
+扫描简历长项目不能只以标题作为默认草稿：`resume_draft_vault._claim_text` 在 420 字限制内优先保留完整行；超出仍需用户核对、编辑。关联确认入口为 `EvidenceWorkspacePage.tsx`，后端持久记录人工确认及材料版本，`grounded_workflow.load_grounding_experiences` 仍执行版本和事实检查。真实计费冲突复测入口 `scripts/verify_conflict_corpus_live.py` 在输入密钥后运行，私有日志包含摘录，不可直接公开；预算预留记录为 `output/desktop-check/session-budget.json`。
+
+面经生成由 `interview_guide.py` 校验题单覆盖与结构；介绍较短不再因字数下限导致整份 503，`InterviewPage.tsx` 会提示预计时长不足。离线入口 `python -m unittest tests.test_interview_guide`；授权计费排查入口 `scripts/diagnose_interview_live.py`。Harness 真机模型调用入口为 `scripts/harness_agent_probe.py --metered`，与上述云端复测共用预算预留记录。
+
+打包版连接器实测：`scripts/harness_agent_probe.py --metered --desktop-exe dist/ApplyGuard-Windows.exe` 在本机安装的 DeepSeek Harness 下，使用三份虚构材料和真实云模型完成取任务、检索与回传一条候选；测试不证明另一台电脑已安装或授权 Harness。
+
+## 历史页面回放（2026-11-25）
+
+简历审查和陈述核验均可进入“历史版本”。`groundingHistory.ts` 保存正文、改写、原子判断和引用；`GroundingHistory.tsx` 可展开对照或打开当时页面。回放前先备份当前正文，恢复后清除当前处理选择并标记待核验；历史结果仅供展示，不能用于严格导出。首页“载入完整示例”附带明确标注的课堂模拟回放，不请求模型。前端回归入口 `npm --prefix frontend run smoke`，包含回放、采用建议后仍需核验以及跨申请隔离。

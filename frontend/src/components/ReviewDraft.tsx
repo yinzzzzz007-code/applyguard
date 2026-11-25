@@ -70,6 +70,7 @@ export function ReviewDraft() {
     document.getElementById(`edit-${id}`)?.focus()
   }
   return <div className="review-editor">
+    {workflow._historyReplay && <p className="callout warn" role="status"><strong>历史回放：</strong>{workflow._historyReplay.label}。你可以查看、采用建议或编辑；当时的材料核验仅供参考，当前正文需重新核验。{workflow._historyReplay.legacy && ' 此旧版未保存逐项核验引用。'}</p>}
     <SAGPolishPanel ref={polishPanel} cloudIssue={cloudIssue} job={polishJob} />
     <div className="review-workspace">
       <div className="review-draft">
@@ -110,7 +111,7 @@ export function ReviewDraft() {
                 <p className="polish-legend">黄色：与原文不同的内容；蓝色提示：整条建议需要核查，颜色不定位具体风险。原文中删除的内容也会标出。</p>
                 <div className="polish-comparison"><div><strong>润色前</strong><p>{spans.original.map((part,i)=>part.changed?<mark className="polish-diff removed change" key={i}>{part.text}</mark>:<span key={i}>{part.text}</span>)}</p></div>
                   <div><strong>润色建议</strong><p>{spans.proposal.map((part,i)=>part.changed?<mark className="polish-diff change" key={i}>{part.text}</mark>:<span key={i}>{part.text}</span>)}</p></div></div>
-                <div className={`polish-check ${reviewRequired?'needs-review':''}`}><strong>建议核查：</strong>{stale?'正文已变化，以下是历史结果，请重新润色或核验。':proposalStatus(comparison,workflow.grounding?.error)}</div>
+                <div className={`polish-check ${reviewRequired?'needs-review':''}`}><strong>建议核查：</strong>{workflow._historyReplay ? '这是当时的核查记录，采用或编辑后需按当前材料重新核验。' : stale?'正文已变化，以下是历史结果，请重新润色或核验。':proposalStatus(comparison,workflow.grounding?.error)}</div>
                 {comparison.proposal_notice&&<p className="warn-text">{comparison.proposal_notice}</p>}
                 {comparison.preservation?.lost_supported_details?.map((detail,i)=><p className="warn-text" key={i}>可能遗漏：{detail}</p>)}
                 <details><summary>具体改了什么{edits.length?`（${edits.length} 处）`:''}</summary>
@@ -167,7 +168,7 @@ export function ReviewDraft() {
               <div className="btn-row"><ActionButton type="button" className="btn primary" disabledReason={'请先保存或取消正在编辑的句子。'} disabled={editing} onClick={() => commit(selected.claim_id,proposal,'accept')}>采用此建议</ActionButton>
                 <ActionButton type="button" className="btn secondary" disabledReason={'请先保存或取消正在编辑的句子。'} disabled={editing} onClick={() => commit(selected.claim_id,selected.text,'original')}>保留当前句</ActionButton></div>
             </div> : selected && isEducationProfile(selected,resumeForm) ? <p className="muted">这条是教育资料，按表单填写；润色重点是正文中的项目、实习和获奖经历。</p> : selected && row?.proposed_text ? <p className="muted">{workflow.review_session?.choices[selected.claim_id]?.action === 'accept' ? '你已采用这条润色建议。' : row.proposed_text === row.original_text ? (row.original_check?.relation==='CONTRADICTED'?'材料与原文有冲突。请展开材料检查记录，核对引用后修改或补充材料。':'本次未生成有效改写，可重新生成。') : '当前正文已是这条建议，或建议已过期；请检查正文。'}</p> : selected ? <div className="review-empty-proposal"><p>这条经历还没有润色结果。下方是上方“按目标岗位润色简历”的快捷入口，都会处理当前正文中的所有经历。</p><ActionButton type="button" className="btn primary" title="与上方的按目标岗位润色简历相同，都会处理当前正文。" disabled={editing||polishBusy||Boolean(cloudIssue)} disabledReason={cloudIssue|| (polishBusy?'两个润色按钮是同一功能，正在处理，请等完成后再操作。':'请先保存或取消正在编辑的句子。')} onClick={()=>polishPanel.current?.startPolishing()}>生成润色建议（快捷入口）</ActionButton></div> : <p className="muted">请先选择一条经历，再生成润色建议。</p>}
-            <details><summary>材料检查记录{row?.final_text !== selected?.text ? '（历史记录）' : ''}</summary>{row ? <AtomicEvidence result={row} /> : <p>尚无此句的检查记录。请补充材料后核验。</p>}</details>
+            <details><summary>材料检查记录{workflow._historyReplay || row?.final_text !== selected?.text ? '（历史记录）' : ''}</summary>{workflow._historyReplay?.legacy ? <p>旧版历史未保存逐项核验引用，请按当前材料重新核验。</p> : row ? <AtomicEvidence result={row} historical={!!workflow._historyReplay} /> : <p>尚无此句的检查记录。请补充材料后核验。</p>}</details>
           </div>
         </details>
       </aside>

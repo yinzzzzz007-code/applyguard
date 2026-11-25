@@ -162,6 +162,7 @@ export interface ApiClient {
     evidence_id: string
     link_state?: 'ACTIVE' | 'REJECTED' | string
     field_checks?: import('./types').EvidenceFieldCheck[]
+    association_confirmed?: boolean
   }): Promise<ApiResult<EvidenceLink>>
   removeEvidenceLink(body: {
     link_id?: string
@@ -715,6 +716,7 @@ export class ApplyGuardApiClient implements ApiClient {
     evidence_id: string
     link_state?: 'ACTIVE' | 'REJECTED' | string
     field_checks?: import('./types').EvidenceFieldCheck[]
+    association_confirmed?: boolean
   }): Promise<ApiResult<EvidenceLink>> {
     try {
       const res = await apiFetch(`${apiBase()}/api/v1/evidence/links`, {

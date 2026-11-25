@@ -166,6 +166,8 @@ export function InterviewPage() {
           <button className="btn secondary" type="button" aria-pressed={duration === 'three_minutes'} onClick={() => setDuration('three_minutes')}>3 分钟版</button>
         </div>
         <p className="interview-text">{guide[duration]}</p>
+        {guide[duration].length < (duration === 'one_minute' ? 160 : 500) &&
+          <p className="muted">当前资料生成的介绍较短，实际讲述时间可能不足；可补充经历后重新生成，或自行编辑。</p>}
       </section>
       {guide.practice&&<InterviewPractice key={guide.practice.session} initial={guide.practice}/>}
       <section className="interview-questions">

@@ -1,0 +1,8 @@
+-r requirements-sag.txt
+PyInstaller==6.22.3
+pywebview==6.2.1
+rapidocr-onnxruntime==1.2.3
+onnxruntime==1.32.0
+opencv-python==5.1.0.95
+shapely==2.2.0
+pyclipper==1.4.0

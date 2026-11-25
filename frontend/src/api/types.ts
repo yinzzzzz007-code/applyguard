@@ -464,6 +464,7 @@ export interface AuditRecord {
 
 /** Full POST /api/v1/workflow/mock success body (offline / dynamic / fixture). */
 export interface WorkflowResponse {
+  _historyReplay?: {label:string; createdAt:string; runId?:string; legacy?:boolean}
   review_session?: import('../resume/review').ReviewSession
   grounding?: GroundingReport
   target_job?: import('./jobs').JobTarget

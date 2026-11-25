@@ -97,7 +97,7 @@ def load_grounding_experiences(vault_path: Path, request: dict) -> list[dict]:
                 from backend.services.evidence_scope import matches_item, source_identity
                 filename = file['relative_path']
                 origin, original_body = source_identity(filename, text)
-                if not matches_item(item['title'],filename,text,kind=target[0],organization=item.get('organization',''),
+                if not link.get('association_confirmed') and not matches_item(item['title'],filename,text,kind=target[0],organization=item.get('organization',''),
                                     description=str(next((r.get('description','') for k in ('projects','internships','awards') for r in draft.get(k,[]) if r.get('id')==target[1]),''))):
                     item.setdefault('_excluded_links', {})[link['evidence_id']] = {
                         'evidence_id':link['evidence_id'], 'filename':filename, 'version':file['version'],

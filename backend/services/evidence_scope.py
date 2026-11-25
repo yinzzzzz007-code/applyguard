@@ -60,4 +60,15 @@ def project_match(title, filename, body, origin):
     if words and re.search(r'(?<![A-Za-z0-9])'+re.escape(words[0])+r'(?![A-Za-z0-9])', filename+' '+origin.get('repo','')+' '+body, re.I):
         return True
     chinese = re.findall(r'[\u3400-\u9fff]{4,}', stem)
-    return any(normalized(w) in corpus for w in chinese if w not in {'项目经历','机器学习','数据分析','项目名称','实习经历'})
+    if any(normalized(w) in corpus for w in chinese if w not in {'项目经历','机器学习','数据分析','项目名称','实习经历'}):
+        return True
+    # OCR may attach a generic prefix or suffix to the actual project heading.
+    # Only compare long, specific Chinese fragments with the source identity;
+    # shared technologies in the document body are not proof of identity.
+    generic_fragments = {'大语言模型训练与对齐', '大模型的训练与性能优化', '项目的设计与实现方案'}
+    for word in chinese:
+        for start in range(max(0, len(word) - 9)):
+            fragment = word[start:start + 10]
+            if len(fragment) == 10 and fragment not in generic_fragments and fragment in corpus:
+                return True
+    return False

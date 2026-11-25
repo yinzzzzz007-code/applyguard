@@ -77,25 +77,25 @@ def main():
         record('import',{'chars':parsed['char_count'],'projects':len(form['projects']),'extractor':parsed.get('extractor')})
         blank=ew.create_workspace('复测专用')
         files=[{'relative_path':args.certificate.name,'content_base64':pack(args.certificate.read_bytes())},
-               {'relative_path':'ledgerdemo-public-readme.md','content_base64':pack(args.foreign_readme.read_bytes())}]
+               {'relative_path':'finbot-public-readme.md','content_base64':pack(args.foreign_readme.read_bytes())}]
         trans=json.loads(args.transcription.read_text('utf-8'))
         if trans['sha256']!=hashlib.sha256(args.certificate.read_bytes()).hexdigest():raise ValueError('证书与已对照的文字版本不符。')
         files[0]['ocr_sidecar_base64']=pack(json.dumps({'lines':trans['lines']}).encode())
         rows=ew.import_files(blank['workspace_id'],files)['files']
         items=experiences_from_resume_draft(form)
         selected=[]
-        for term in ('AtlasPersona','DialogueBench','Nemotron'):
+        for term in ('ActionPersona','SocialMimic','Nemotron'):
             item=next(i for i in items if term.lower() in i['title'].lower())
             c=item['claims'][0];selected.append({'claim_id':c['claim_id'],'text':c['text']})
-            if term=='DialogueBench':continue
-            row=next(r for r in rows if r['relative_path']==(args.certificate.name if term=='Nemotron' else 'ledgerdemo-public-readme.md'))
+            if term=='SocialMimic':continue
+            row=next(r for r in rows if r['relative_path']==(args.certificate.name if term=='Nemotron' else 'finbot-public-readme.md'))
             eid=row['evidence_id'];ew.review_evidence(eid,{'normalized_fields':{},'review_state':'REVIEWED'})
             ew.create_link({'evidence_id':eid,'target_type':'project','target_id':item['experience_id'].removeprefix('exp_')})
         saved=post('resume/draft',form)
         if saved.get('error'):raise ValueError(saved['error'])
         try:
-            ew.create_link({'evidence_id':next(r['evidence_id'] for r in rows if r['relative_path']=='ledgerdemo-public-readme.md'),
-                            'target_type':'project','target_id':next(p['id'] for p in form['projects'] if 'AtlasPersona' in p['title'])})
+            ew.create_link({'evidence_id':next(r['evidence_id'] for r in rows if r['relative_path']=='finbot-public-readme.md'),
+                            'target_type':'project','target_id':next(p['id'] for p in form['projects'] if 'ActionPersona' in p['title'])})
         except ValueError as exc:record('new_mislink',{'refused':True,'message':str(exc)})
         else:record('new_mislink',{'refused':False})
         jd='大模型研发实习生：评估模型可靠性，分析实验数据，使用 Python、PyTorch 和 LoRA 开展训练与对照实验。'
@@ -106,7 +106,7 @@ def main():
         record('match',{'error':matched.get('error'),'requirements':len(matched.get('parsed_jd',{}).get('requirements',[]))})
         for i in range(3):
             out=post('workflow/reverify',request);record(f'verify_{i+1}',summarize(out))
-        repeated = '在 NVIDIA Nemotron Model Reasoning Challenge 中获得银牌。获得银牌。团队排名 247/5,255。'
+        repeated = '在 NVIDIA Nemotron Model Reasoning Challenge 中获得银牌。获得银牌。团队排名 197/4,185。'
         for attempt in range(1,4):
             check=post('workflow/reverify',{**request,'claims':[{'claim_id':selected[-1]['claim_id'],'text':repeated}]})
             result=check.get('grounding',{}).get('results',{}).get(selected[-1]['claim_id'],{})
@@ -124,9 +124,9 @@ def main():
                 'confirmed_text_sha256':hashlib.sha256(text.encode()).hexdigest(),'export_policy':'user_confirmed'})
             record(stage,{'matches_final_text':result.get('text')==text,'error':result.get('error')})
         export_personal('personal_export',selected)
-        corrected=[{**c,'text':c['text'].replace('246/5,252','247/5,255')} for c in selected]
+        corrected=[{**c,'text':c['text'].replace('196/4,182','197/4,185')} for c in selected]
         export_personal('skip_with_user_edit',corrected)
-        award={'claim_id':selected[-1]['claim_id'],'text':'在 NVIDIA Nemotron Model Reasoning Challenge 中获得银牌，团队排名 247/5,255。'}
+        award={'claim_id':selected[-1]['claim_id'],'text':'在 NVIDIA Nemotron Model Reasoning Challenge 中获得银牌，团队排名 197/4,185。'}
         strict=post('resume/export',{**request,'claims':[award],'human_confirmed':True,'export_policy':'verified'})
         record('strict_supported_award',{'status':strict.get('http_error',200),'matches':strict.get('text')==award['text'],'error':strict.get('error')})
         resume={'projects':[{'title':c['text'].split('·')[0][:65],'description':c['text']} for c in corrected]}

@@ -1,6 +1,8 @@
 import {ActionButton} from './ui/action-button'
 // Gitvextor的原型：连接用户自己的 Agent，授权先于读取。
 import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { useDemo } from '../context/DemoContext'
 import {appendAllowedFolder, agentMcpConfig, connectionDetail, connectionStage, launchHarnessCommand} from '../agentConnection'
 import type {AgentConnection, AgentProgress, HarnessSetup} from '../agentConnection'
 import {PrivateGithub} from './PrivateGithub'
@@ -12,6 +14,9 @@ import {GithubGuideTip} from './GithubGuideTip'
 import {githubGuideSteps, githubGuideBlocker} from '../githubGuide'
 type Card = { id: string; quote: string; state: string; page: number | null; line: number; source: {path:string;version:string;commit_sha?:string}; interpretation:string; experience?:string; missing:string[]; numeric_confirmation_required:boolean }
 export function AgentConnector({ensureWorkspace,onImported}:{ensureWorkspace:()=>Promise<string|null>;onImported:(id:string)=>Promise<void>}) {
+  const routeLocation = useLocation()
+  const { jdRawInput, workflow, resumeForm, setResumeForm } = useDemo()
+  const job = jdRawInput || workflow?.parsed_jd.source_text || ''
   const connectorRoot=useRef<HTMLElement|null>(null)
   const [githubStep,setGithubStep]=useState(-1)
   const [githubHandle,setGithubHandle]=useState('')
@@ -25,11 +30,18 @@ export function AgentConnector({ensureWorkspace,onImported}:{ensureWorkspace:()=
   const [progress,setProgress]=useState<AgentProgress|null>(null)
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('')
   const [sourceConfirmed,setSourceConfirmed]=useState<Record<string,boolean>>({}),[numbers,setNumbers]=useState<Record<string,boolean>>({})
+  const [experienceSuggestions, setExperienceSuggestions] = useState<Record<string,{title:string;description:string;reason:string}>>({})
   const [folderBusy,setFolderBusy]=useState(false),[folderError,setFolderError]=useState('')
   const pickingFolder=useRef(false), pickerId=useRef<string|null>(null)
   const folders=roots.split('\n').map(path=>path.trim()).filter(Boolean)
   const steps=githubGuideSteps(privateRepo)
   const guideTarget=steps[githubStep]?.target
+  useEffect(()=>{
+    if(new URLSearchParams(routeLocation.search).get('find_experiences') !== '1' || !job) return
+    setOpen(true)
+    const known = (resumeForm?.projects ?? []).map(project=>project.title.trim()).filter(Boolean).slice(0,20).join('、').slice(0,400)
+    setTask(`根据以下目标岗位查找我可能参与但尚未整理进经历库的项目。返回原文、来源版本和待确认的个人分工。\n已有项目：${known||'无'}\n岗位：${job.slice(0, 1400)}`)
+  },[routeLocation.search,job,resumeForm])
   const guideBlocker=sourceBusy?'正在处理仓库请求，请稍候。':githubGuideBlocker(guideTarget,{repos,credentialConfigured:!!githubHandle,disclosure})
   const authorizedSetup=setup?{...setup,github_token_configured:!!githubHandle}:setup
   const issues=authorizationIssues({mode,folders:folders.length,repos,task,disclosure,setup:authorizedSetup,privateRepo})
@@ -201,6 +213,21 @@ export function AgentConnector({ensureWorkspace,onImported}:{ensureWorkspace:()=
       {error&&<p role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
       {connected&&!cards.length&&<p>尚无候选证据。请让 Agent 调用搜索并回传引用，再刷新。</p>}
       {cards.map(c=><article className="agent-evidence" key={c.id}><h4>{c.source.path} · {c.state==='IMPORTED'?'已导入，待陈述核验':'待确认草稿'}</h4><p>{c.page?`第 ${c.page} 页`:`第 ${c.line} 行/段`} · 版本 {c.source.commit_sha||c.source.version}</p><blockquote>{c.quote}</blockquote><p>关联经历：{c.experience||'待指定'}</p><p>Agent 候选解释：{c.interpretation||'尚未回传解释'}</p><p>仍缺信息：{c.missing.join('；')||'仍需核对本人归属及支持关系'}</p>
+        {job && purpose==='contribution' && (c.state==='NEEDS_REVIEW'||c.state==='IMPORTED') && <div className="callout">
+          <h4>按当前岗位整理遗漏经历</h4>
+          <p>依据上方原文生成项目描述，个人分工和事实仍由你核对。生成时将岗位与这段材料发送给已配置的云端模型。</p>
+          <ActionButton className="btn secondary" disabled={busy||disclosure!=='cloud_allowed'} disabledReason="请先允许材料片段进入云端模型。" onClick={()=>void run(async()=>{
+            const value=await api({...connection,action:'suggest_experience',card_id:c.id,job},120000)
+            setExperienceSuggestions(prev=>({...prev,[c.id]:{title:value.title,description:value.description,reason:value.reason}}))
+          })}>生成可编辑的经历建议</ActionButton>
+          {experienceSuggestions[c.id] && <>
+            <p>关联原因：{experienceSuggestions[c.id].reason}</p>
+            <label>项目名称<input className="resume-input" value={experienceSuggestions[c.id].title} onChange={e=>setExperienceSuggestions(prev=>({...prev,[c.id]:{...prev[c.id],title:e.target.value}}))}/></label>
+            <label>项目描述<textarea className="resume-input" value={experienceSuggestions[c.id].description} onChange={e=>setExperienceSuggestions(prev=>({...prev,[c.id]:{...prev[c.id],description:e.target.value}}))}/></label>
+            <button className="btn secondary" onClick={()=>{const suggestion=experienceSuggestions[c.id]; if(!resumeForm){setError('请先进入经历库建立资料，再回来添加。');return} const title=suggestion.title.trim();if(!title||!suggestion.description.trim()){setError('请填写项目名称和描述。');return} if(resumeForm.projects.some(p=>p.id===`agent-${c.id}`||p.title.trim().toLowerCase()===title.toLowerCase())){setError('经历库中已有同名项目，请核对后编辑已有经历。');return} setResumeForm(prev=>prev?{...prev,dirty:true,projects:[...prev.projects,{id:`agent-${c.id}`,title,description:suggestion.description.trim(),organization:'',role:'',start:'',end:'',location:'',techStack:'',link:''}]}:prev);setExperienceSuggestions(prev=>{const next={...prev};delete next[c.id];return next});setError('');setNotice('已加入经历库草稿，请前往经历库核对、编辑并保存。')}}>加入经历库草稿</button>{' '}
+            <button className="btn secondary" onClick={()=>setExperienceSuggestions(prev=>{const next={...prev};delete next[c.id];return next})}>不要这条</button>{' '}<Link to="/vault">前往经历库</Link>
+          </>}
+        </div>}
         <label><input type="checkbox" checked={!!sourceConfirmed[c.id]} onChange={e=>setSourceConfirmed({...sourceConfirmed,[c.id]:e.target.checked})} />我已核对原文及本人归属</label>
         {c.numeric_confirmation_required&&<label><input type="checkbox" checked={!!numbers[c.id]} onChange={e=>setNumbers({...numbers,[c.id]:e.target.checked})} />我已逐项核对数字、单位及适用范围</label>}
         <p className="muted">{c.state==='IMPORTED'?'此片段已导入。':purpose==='background'?'技术背景不能导入为个人经历。':c.state!=='NEEDS_REVIEW'?'等待 Agent 回传解释后可导入。':!sourceConfirmed[c.id]?'请先核对原文及本人归属。':c.numeric_confirmation_required&&!numbers[c.id]?'请逐项核对数字、单位与范围。':''}</p><ActionButton className="btn secondary" disabledReason={busy?'正在处理，请稍候。':c.state==='IMPORTED'?'此片段已导入。':purpose==='background'?'技术背景不能导入为个人经历。':c.state!=='NEEDS_REVIEW'?'等待 Agent 回传候选解释。':!sourceConfirmed[c.id]?'请先核对原文和本人归属。':'请先核对数字、单位和范围。'} disabled={busy||c.state!=='NEEDS_REVIEW'||!sourceConfirmed[c.id]||(c.numeric_confirmation_required&&!numbers[c.id])||purpose==='background'} onClick={()=>void run(async()=>{const id=connection?.id;const ws=await ensureWorkspace();if(activeConnection.current!==id)return;if(!ws)throw new Error('请先建立材料工作区');await api({...connection,action:'accept',card_id:c.id,workspace_id:ws,confirm_source:sourceConfirmed[c.id],confirm_numbers:!!numbers[c.id]});await onImported(ws);if(activeConnection.current!==id)return;const s=await api({...connection,action:'status'});if(activeConnection.current!==id)return;setCards(s.cards);setNotice('原文片段已导入，陈述仍须经过事实核验；未自动改写简历。')})}>确认来源并导入片段</ActionButton>

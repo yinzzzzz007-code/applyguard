@@ -12,9 +12,19 @@ from backend.services.harness_process import run_harness
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--timeout',type=int,default=180)
-    parser.add_argument('--metered',action='store_true',help='Apply a 15 CA cumulative limit to every Gemini request, including retries')
+    parser.add_argument('--metered',action='store_true',help='Share the desktop test session budget for every Gemini request, including retries')
+    parser.add_argument('--desktop-exe',type=Path,help='Use the packaged EXE as the MCP subprocess')
     args=parser.parse_args()
     if not 15<=args.timeout<=600:parser.error('--timeout must be between 15 and 600 seconds')
+    if args.desktop_exe:
+        executable=args.desktop_exe.resolve(strict=True)
+        from backend.services import harness_setup
+        original_entry=harness_setup.mcp_entry
+        def packaged_entry():
+            entry=original_entry()
+            entry['config'].update(command=str(executable),args=['agent_mcp.py'])
+            return entry
+        harness_setup.mcp_entry=packaged_entry
     exe=find_harness()
     if not exe:raise SystemExit('未检测到 Harness，请先完成前端连接向导中的安装步骤。')
     settings=setup_info()
@@ -24,10 +34,11 @@ def main():
     out=ROOT/'output/test-reports'/(stamp+'_harness-live');out.mkdir(parents=True)
     meter=None
     if args.metered:
-        from demo_budget import install
+        from decimal import Decimal
+        from session_budget import install
         from harness_meter import relay
         os.environ['APPLYGUARD_AI_API_KEY']=key
-        used=install(out);print('Starting cumulative CA',used(),flush=True)
+        install(ROOT/'output/desktop-check/session-budget.json',Decimal('20'))
         meter,child_key=relay(key)
         settings.update(base_url=f'http://127.0.0.1:{meter.server_port}/v1',model='gemini-3.1-flash-lite-preview')
     else:child_key=key
@@ -73,12 +84,12 @@ def main():
     finally:
         server.shutdown();server.server_close();thread.join()
         agent_bridge.agent_call=original_call
-    if meter:meter.shutdown();meter.server_close();print('Final cumulative CA',used(),flush=True)
+    if meter:meter.shutdown();meter.server_close()
     for secret in [key,child_key,c['token'],c['ui_token']]:logs=logs.replace(secret,'<REDACTED>')
     (out/'test.log').write_text(logs,encoding='utf8')
     g=GRANTS[c['id']];cards=list(g['cards'].values());g['revoked']=True
     submitted=[c for c in cards if c['state']=='NEEDS_REVIEW']
-    report={'date':datetime.now(timezone(timedelta(hours=8))).isoformat(),'harness':str(exe),'model':settings['model'],'endpoint':settings['base_url'],'fixture':'3 synthetic Atlas files','connected':g['connected'],'retrieved_cards':len(cards),'submitted_cards':len(submitted),'elapsed_seconds':round(time.monotonic()-start,3),'exit_code':result.returncode if result else None,'failure':failure,'events':events,'timeout_seconds':args.timeout,'progress':agent_bridge.connection_progress(g),'status':'PASS' if result and result.returncode==0 and submitted else 'FAIL','cards':cards,'note':'Single integration pilot, not independent accuracy evidence; source snippets returned are untrusted candidates.'}
+    report={'date':datetime.now(timezone(timedelta(hours=8))).isoformat(),'harness':str(exe),'desktop_exe':bool(args.desktop_exe),'model':settings['model'],'endpoint':settings['base_url'],'fixture':'3 synthetic Atlas files','connected':g['connected'],'retrieved_cards':len(cards),'submitted_cards':len(submitted),'elapsed_seconds':round(time.monotonic()-start,3),'exit_code':result.returncode if result else None,'failure':failure,'events':events,'timeout_seconds':args.timeout,'progress':agent_bridge.connection_progress(g),'status':'PASS' if result and result.returncode==0 and submitted else 'FAIL','cards':cards,'note':'Single integration pilot, not independent accuracy evidence; source snippets returned are untrusted candidates.'}
     (out/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf8')
     print(json.dumps({k:v for k,v in report.items() if k!='cards'},ensure_ascii=False));print('REPORT',out)
     return 0 if report['status']=='PASS' else 1

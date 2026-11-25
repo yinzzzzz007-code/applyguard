@@ -8,7 +8,7 @@ import re
 
 _HEADINGS = {
     'education': (r'教育(?:背景|经历)', r'education(?:al background)?'),
-    'projects': (r'(?:重点|主要|精选)?(?:科研|研究)(?:(?:与|及)项目经历|经历|项目)|当前研究|在研项目|(?:工程|个人|重点|精选)?项目(?:经历|经验)?',
+    'projects': (r'(?:重点|主要|精选)?(?:科研|研究)(?:(?:与|及)项目经历|经历|项目)|当前研究|在研项目|横向课题|(?:工程|个人|重点|精选)?项目(?:经历|经验)?',
                  r'(?:selected |current |ongoing )?research(?: experience| projects)?|(?:engineering |selected |personal )?projects?(?: experience|\s*(?:&|and)\s*competitions?)?'),
     'internships': (r'实习(?:经历|经验)?|工作(?:经历|经验)?|职业经历', r'(?:(?:work|professional|intern|internship) )?experience|internships?|employment'),
     'awards': (r'(?:获奖|荣誉|奖项|竞赛|比赛|学科竞赛)(?:情况|经历|成果|获奖)?|荣誉奖项', r'(?:awards?|honou?rs?|competitions?)(?:\s*(?:&|and)\s*(?:awards?|honou?rs?))?'),
@@ -31,8 +31,13 @@ _EN_RANGE = re.compile(r'\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may
 
 def heading_kind(line):
     line=line.strip().strip(':：').strip()
+    line=re.sub(r'^[·•●▪<>]+\s*', '', line)
+    if re.fullmatch(r'[已0口](?:教育(?:背景|经历)|荣誉奖项|实习经历)',line):
+        line=line[1:]
     plain = re.sub(r'\s+', '', line).casefold()
-    if plain in {'projects&competitions', 'projectsandcompetitions'}:
+    if plain in {'professionalexperience', 'workexperience', 'internshipexperience'}:
+        return 'internships'
+    if plain in {'projects&competitions', 'projectsandcompetitions', 'projectexperience', 'projectsexperience'}:
         return 'projects'
     for kind,(cn,en) in _HEADINGS.items():
         if re.fullmatch(rf'(?:{cn})(?:\s+(?:{en}))?|(?:{en})',line,re.I):return kind
@@ -81,7 +86,7 @@ def dates(text):
 def _school_in_line(line):
     if len(line) > 180:
         return ''
-    line = re.sub(r'^\s*[•●▪*]\s*', '', line)
+    line = re.sub(r'^\s*(?:[•●▪*·]\s*|\.\s+)', '', line)
     for part in re.split(r'[|｜,，;；]', line):
         part = part.strip()
         chinese = _SCHOOL.search(part)
@@ -120,6 +125,8 @@ def education(lines):
     return rows
 
 def _title_line(line):
+    if re.fullmatch(r'(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+20\d{2}', line, re.I):
+        return False
     if re.fullmatch(r"[A-Z][A-Za-z .'-]{1,50},\s*[A-Z]{2}", line):
         return False
     if len(line)>180 or re.match(r'[•●▪]|研究[:：]|贡献[:：]|职责[:：]|负责[:：]|项目负责人[。.]',line):return False
@@ -138,7 +145,7 @@ def _title_line(line):
 
 def project_entries(lines,kind):
     groups=[];current=[]
-    for line in lines:
+    for index, line in enumerate(lines):
         # Loose date fragments can be emitted before the entry they belong to.
         if not current and not re.search(r'[^\W\d_]', _RANGE.sub('', line)):
             continue
@@ -160,8 +167,21 @@ def project_entries(lines,kind):
             and not re.match(r'[•●▪*]', line)
             and re.search(r'实习生|志愿者|\b(?:intern|volunteer)\b', line, re.I))
         keep_with_entry = ((company_group and not company_header(line)) or role_header or role_follows_employer or experience_detail
-                           or bool(_EN_RANGE.fullmatch(line.strip())))
-        if (_title_line(line) or experience_header) and current and (experience_header or not keep_with_entry):groups.append(current);current=[]
+                           or bool(_EN_RANGE.fullmatch(re.sub(r'(?<=[A-Za-z])\.(?=\s)', '', line.strip()))))
+        compact_title = (kind == 'projects' and bool(re.fullmatch(r'[A-Z][A-Za-z0-9-]{6,70}', line))
+            and len(re.findall(r'[A-Z]', line)) >= 3
+            and any(re.search(r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*20\d{2}\s*[-–—]\s*(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*20\d{2}', value, re.I)
+                    for value in lines[index + 1:index + 3]))
+        next_date = index + 1 < len(lines) and bool(_RANGE.fullmatch(lines[index + 1].strip()))
+        project_header = kind == 'projects' and (bool(re.match(r'^[·•●▪*:]\s*[A-Za-z][\w &-]{2,60}:', line))
+            or bool(re.match(r'^[·.]?(?:已完成|进行中)[.。:：]',line))
+            or bool(next_date and len(line) < 120 and re.search(r'[\u4e00-\u9fff]', line))
+            or bool(len(line) < 140 and '|' in line and index + 1 < len(lines)
+                    and re.fullmatch(r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+20\d{2}', lines[index + 1], re.I)))
+        if compact_title and len(current) == 1 and current[0].count(',') >= 2:
+            current = [line, current[0]]
+            continue
+        if (_title_line(line) or experience_header or compact_title or project_header) and current and (experience_header or not keep_with_entry):groups.append(current);current=[]
         current.append(line)
     if current:groups.append(current)
     rows=[]
@@ -225,7 +245,15 @@ def enrich_sections(result,text):
         if re.search(r'\bGPA\b|\bCET[-–]?\d\b|\bIELTS\b|\bTOEFL\b|\bRank\b|绩点|四六级|雅思|托福',line,re.I):
             summary.append(line.strip())
     for kind,lines in blocks:
-        if kind=='education':edu.extend(education(lines))
+        if kind=='education':
+            edu.extend(education(lines))
+            for index, line in enumerate(lines):
+                if re.match(r'^Capstone\s*Project\s*:', line, re.I):
+                    details=[line]
+                    for continuation in lines[index + 1:]:
+                        if re.match(r'^(?:Award|Honou?r|Scholarship)\b', continuation, re.I) or _school_in_line(continuation): break
+                        details.append(continuation)
+                    project_rows.append({'organization':'','title':'Capstone Project','role':'','start':'','end':'','description':'\n'.join(details)})
         elif kind in {'projects','internships'}:
             rows=project_entries(lines,kind)
             (project_rows if kind=='projects' else intern_rows).extend(rows)
@@ -246,7 +274,7 @@ def enrich_sections(result,text):
         elif kind in {'interests','summary'}:summary.append(' '.join(lines))
     kinds={kind for kind,_ in blocks}
     if 'education' in kinds:result['education']=edu
-    if kinds & {'projects','mixed'}:result['projects']=project_rows
+    if project_rows or kinds & {'projects','mixed'}:result['projects']=project_rows
     if 'internships' in kinds:result['internships']=intern_rows
     if kinds & {'awards','mixed','projects'}:
         unique={re.sub(r'\s+','',a['name']).casefold():a for a in awards}

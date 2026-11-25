@@ -391,6 +391,7 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
               </div>
             )}
           <div className="btn-row end">
+            <Link className="btn secondary" to="/evidence?find_experiences=1">让 Harness 查找可能遗漏的经历</Link>
             <button type="button" className="btn primary" onClick={() => navigate('/match')}>
               下一步：证据匹配
             </button>

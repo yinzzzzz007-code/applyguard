@@ -2,7 +2,7 @@ import type { GroundingClaimResult } from '../api/types'
 
 const LABEL = {SUPPORTED:'支持',CONTRADICTED:'矛盾',INSUFFICIENT:'证据不足'}
 
-export function AtomicEvidence({result}: {result?: GroundingClaimResult}) {
+export function AtomicEvidence({result, historical=false}: {result?: GroundingClaimResult; historical?: boolean}) {
   if (!result) return null
   if (result.verification_scope === 'personal') return <div className="evidence-box"><p>{result.scope_notice || '个人资料按填写使用，不进行SAG核验或AI润色。'}</p></div>
   const facts=result.material_status==='no_related_material' ? [] : result.atoms
@@ -26,12 +26,12 @@ export function AtomicEvidence({result}: {result?: GroundingClaimResult}) {
         </small>
       </blockquote>)}
     </div>)}
-    <details><summary>查看本次检索原文（{result.retrieved_sources.length}块）</summary>
+    {!historical && <details><summary>查看本次检索原文（{result.retrieved_sources.length}块）</summary>
       {result.retrieved_sources.map((source,index) => <div className="callout" key={`${source.source_id}-${index}`}>
         <p><strong>{source.title}</strong> · {source.evidence_id}</p>
         <p className="muted">{source.file_version != null ? `文件 v${source.file_version} · ` : ''}原文指纹 {source.sha256.slice(0,12)}</p>
         <p style={{whiteSpace:'pre-wrap'}}>{source.text}</p>
       </div>)}
-    </details>
+    </details>}
   </div>
 }

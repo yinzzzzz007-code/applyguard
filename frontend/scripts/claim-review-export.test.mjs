@@ -5,7 +5,7 @@ import {evidenceCoverage,isQuantitative,retainRemaining,retainedFieldValue} from
 import {buildLatex} from '../src/resume/latex.ts'
 import {splitBullets} from '../src/resume/generate.ts'
 
-const citation = {start:0,end:3,quote:'247'}
+const citation = {start:0,end:3,quote:'197'}
 const atom = (text,relation,citations=[]) => ({text,relation,citations})
 const grade = (atoms, state='NEEDS_REVIEW') => evidenceCoverage({atoms,state,complete:state==='VERIFIED',retrieved_sources:[{}]},false,false,true,'ready')
 
@@ -20,7 +20,7 @@ test('distinguishes missing, candidate, linked and backed evidence',()=>{
   const partial=grade([supported,atom('LoRA 训练','INSUFFICIENT'),atom('Top 4.7%','INSUFFICIENT')])
   assert.equal(partial.label,'材料支持部分事实')
   assert.deepEqual(partial.unresolved.map(a=>a.text),['Top 4.7%','LoRA 训练'])
-  assert.equal(grade([supported,atom('排名 246','CONTRADICTED',[citation])]).label,'材料有冲突')
+  assert.equal(grade([supported,atom('排名 196','CONTRADICTED',[citation])]).label,'材料有冲突')
   assert.equal(isQuantitative('使用 Nemotron-3-Nano-30B-A3B'),false)
   assert.equal(evidenceCoverage({atoms:[supported],retrieved_sources:[{}]},false,false,false,'ready').supported.length,0)
 })
@@ -43,7 +43,7 @@ test('TeX exports readable sections, balanced lists, literal user text and numer
   assert.ok(tex.includes('\\textbackslash{}input\\{file\\}\\par\n下一句'))
   assert.ok(tex.indexOf('\\end{itemize}')<tex.indexOf('\\textbackslash{}'))
   assert.ok(tex.endsWith('\\end{document}\n'))
-  assert.deepEqual(splitBullets('4.7% 提升\n247/5,255\n1. 完成评测'),['4.7% 提升','247/5,255','完成评测'])
+  assert.deepEqual(splitBullets('4.7% 提升\n197/4,185\n1. 完成评测'),['4.7% 提升','197/4,185','完成评测'])
 })
 
 test('retained summaries omit excluded source text from the next two screens',()=>{
@@ -56,10 +56,10 @@ test('retained summaries omit excluded source text from the next two screens',()
 })
 
 test('unlinked and stale claims still point to current metrics and roles without alleging conflict',()=>{
-  const text='Kaggle Silver, 246/5,252, Top 4.7% · 共同第一作者 · Nemotron-3-Nano-30B'
+  const text='Kaggle Silver, 196/4,182, Top 4.7% · 共同第一作者 · Nemotron-3-Nano-30B'
   const report={material_status:'no_related_material',atoms:[]}
   const marks=reviewMarks(text,report,true,true)
-  assert.deepEqual(marks.map(m=>text.slice(m.start,m.end)),['Kaggle Silver','246/5,252','Top 4.7%','共同第一作者'])
+  assert.deepEqual(marks.map(m=>text.slice(m.start,m.end)),['Kaggle Silver','196/4,182','Top 4.7%','共同第一作者'])
   assert.ok(marks.every(m=>m.kind==='pending'))
   assert.equal(reviewMarks(text,report,true,false).length,0)
   assert.ok(reviewMarks('提交报告',undefined,false,true).length)

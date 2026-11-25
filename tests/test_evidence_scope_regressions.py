@@ -11,12 +11,12 @@ from backend.services.structured_verifier import guard_cited_verdict
 
 class MaterialScopeRegression(unittest.TestCase):
     def test_target_name_in_import_metadata_does_not_count_as_a_source(self):
-        text = '# GitHub 来源\n{"repo":"org/ledgerdemo","experience":"AtlasPersona","commit_sha":"abc"}\n\n# LedgerDemo\nJob-matching software.'
-        self.assertFalse(matches_item('AtlasPersona','AtlasPersona-readme.md',text))
-        self.assertTrue(matches_item('LedgerDemo','asset.md',text))
+        text = '# GitHub 来源\n{"repo":"org/finbot","experience":"ActionPersona","commit_sha":"abc"}\n\n# Finbot\nJob-matching software.'
+        self.assertFalse(matches_item('ActionPersona','ActionPersona-readme.md',text))
+        self.assertTrue(matches_item('Finbot','asset.md',text))
         origin,body=source_identity('asset.md',text)
-        self.assertEqual(origin['repo'],'org/ledgerdemo')
-        self.assertNotIn('AtlasPersona',body)
+        self.assertEqual(origin['repo'],'org/finbot')
+        self.assertNotIn('ActionPersona',body)
 
     def test_unsupported_is_not_a_conflict(self):
         verdict={'relation':'CONTRADICTED','reason':'材料未提到这个指标。','citations':[{'quote':'# Sample Project'}]}
@@ -26,10 +26,10 @@ class MaterialScopeRegression(unittest.TestCase):
         self.assertEqual(guard_cited_verdict('Phase alpha',verdict)['relation'],'CONTRADICTED')
 
     def test_same_metric_and_rank_on_both_sides(self):
-        source={'text':'Nemotron competition. Placed 247th of 5255 teams.','title':'Nemotron.pdf'}
-        self.assertIsNotNone(rank_conflict('Nemotron Kaggle Silver · 246/5,252','Nemotron',[source]))
+        source={'text':'Nemotron competition. Placed 197th of 4185 teams.','title':'Nemotron.pdf'}
+        self.assertIsNotNone(rank_conflict('Nemotron Kaggle Silver · 196/4,182','Nemotron',[source]))
         self.assertIsNone(rank_conflict('Nemotron 团队完成 10/20 个样本','Nemotron',[source]))
-        self.assertIsNone(rank_conflict('Nemotron 排名 247/5,255','Nemotron',[source]))
+        self.assertIsNone(rank_conflict('Nemotron 排名 197/4,185','Nemotron',[source]))
 
     def test_repeated_and_multi_phrase_anchors(self):
         text='获得银牌。获得银牌。团队排名第二。'

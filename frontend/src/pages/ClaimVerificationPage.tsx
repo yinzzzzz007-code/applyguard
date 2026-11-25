@@ -9,6 +9,7 @@ import { ClaimBadge, EmptyState } from '../components/States'
 import {reviewMarks} from '../resume/reviewHighlights'
 import {ClaimStatement} from '../components/ClaimStatement'
 import { AtomicEvidence } from '../components/AtomicEvidence'
+import { GroundingHistory } from '../components/GroundingHistory'
 import { RadarDialog } from '../components/RadarDialog'
 import {QuickReviewActions} from '../components/QuickReviewActions'
 import { useDemo } from '../context/DemoContext'
@@ -261,7 +262,8 @@ export function ClaimVerificationPage() {
       !result?.excluded_links?.some(x => evidenceKey(x.evidence_id) === evidenceKey(m.evidence_id!)))
     const coverage = evidenceCoverage(result, scopedLinks.length > 0, !!candidate, !!currentCheck, lookup)
     const currentText = !failed && !needsRecheck && !editing && (!result || result.final_text===text)
-    const marks = reviewMarks(text ?? '',result,!!currentText,needsDecision && !editing && decision?.decision!=='reject', verification.unsupported_fragments)
+    const historicalCheck = Boolean(workflow._historyReplay && !editing && result?.final_text===text)
+    const marks = reviewMarks(text ?? '',result,!!currentText || historicalCheck,needsDecision && !editing && decision?.decision!=='reject', verification.unsupported_fragments)
     const candidatePath = candidate && supplementTarget ? '/evidence?' + new URLSearchParams({view:'materials',return_claim:id,
       target_type:supplementTarget.target_type,target_id:supplementTarget.target_id,evidence_id:candidate.evidence_id!}) : ''
     return {verification, id, claim, decision, result, personal, editing, needsDecision, supplementTarget, canEdit, needsRecheck, text, materials, evidenceKey, extraFragments, stateClass, title, coverage, marks, candidate, candidatePath}
@@ -296,6 +298,8 @@ export function ClaimVerificationPage() {
 
       {rechecking && <p id="claims-progress" role="status" className="callout">{runningElsewhere ? '另一份草稿正在核验，完成后可核验当前正文。' : '已发送新的核验请求，正在等待模型。可以切到站内其他页面，回来查看结果。'}</p>}
       {attempt?.error && <p role="alert" className="callout warn">{attempt.error}</p>}
+      {workflow._historyReplay && <p className="callout warn" role="status"><strong>历史回放：</strong>{workflow._historyReplay.label}。你可以编辑或保留正文，当前材料仍需重新核验。{workflow._historyReplay.legacy ? ' 此旧版未保存逐项核验引用。' : '下方为当时的核验结果。'}</p>}
+      <GroundingHistory />
       {receipt && !attempt?.error && !rechecking && <div role="status" className={receipt.error ? 'callout warn' : 'callout'} data-testid="verification-receipt">
         <strong>{receipt.error ? '后端已返回，本次核验未完成' : '本次模型核验已返回'}</strong>
         <p>{receipt.at && new Date(receipt.at).toLocaleTimeString()} · 后端耗时 {((receipt.elapsed_ms ?? 0) / 1000).toFixed(1)} 秒 · 运行编号 <code>{receipt.run_id}</code></p>
@@ -404,7 +408,7 @@ export function ClaimVerificationPage() {
                       <ul>{extraFragments.map((fragment, index) => <li key={index}>{fragment}</li>)}</ul>
                     </div>
                   )}
-                  <AtomicEvidence result={result} />
+                  {workflow._historyReplay?.legacy ? <p>旧版历史未保存逐项核验引用，请按当前材料重新核验。</p> : <AtomicEvidence result={result} historical={!!workflow._historyReplay} />}
                   {materials.size > 0 && (
                     <div className="claim-details-group">
                       <h4>关联材料</h4>

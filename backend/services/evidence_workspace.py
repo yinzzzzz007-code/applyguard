@@ -163,6 +163,8 @@ def init_db() -> None:
             conn.execute("ALTER TABLE evidence_link ADD COLUMN candidate_id TEXT")
         if "field_checks_json" not in cols:
             conn.execute("ALTER TABLE evidence_link ADD COLUMN field_checks_json TEXT")
+        if "association_confirmed" not in cols:
+            conn.execute("ALTER TABLE evidence_link ADD COLUMN association_confirmed INTEGER NOT NULL DEFAULT 0")
 
 
 def _workspace_dir(workspace_id: str) -> Path:
@@ -1171,6 +1173,7 @@ def create_link(body: dict[str, Any]) -> dict[str, Any]:
             if frow:
                 file_sha = frow["sha256"]
         candidate_id=None
+        association_confirmed=False
         if link_state=='ACTIVE' and target_type in {'award','project','internship','experience','claim'} and ev['primary_file_id']:
             from backend.services.evidence_scope import matches_item
             from backend.services.local_store import load_resume_draft
@@ -1185,7 +1188,9 @@ def create_link(body: dict[str, Any]) -> dict[str, Any]:
                     body_text='\n'.join(r[0] for r in conn.execute('SELECT raw_text FROM source_span WHERE file_id=? ORDER BY rowid',(ev['primary_file_id'],)))
                     title=item.get('title') or item.get('name') or item.get('organization') or ''
                     if not matches_item(title,frow['relative_path'],body_text,organization=item.get('organization',''),description=item.get('description',''),kind=kind):
-                        raise ValueError('暂无相关材料：此文件无法对应所选经历。请选择本项目的原件。')
+                        if body.get('association_confirmed') is not True:
+                            raise ValueError('暂无相关材料：无法自动确认材料属于该经历。请检查原件与项目名称后，再决定是否手动确认关联。')
+                        association_confirmed=True
         # Replace prior decision for the same target + evidence
         conn.execute(
             """
@@ -1201,10 +1206,10 @@ def create_link(body: dict[str, Any]) -> dict[str, Any]:
             """
             INSERT INTO evidence_link(
               link_id, target_type, target_id, evidence_id, file_sha256, linked_at, link_state,
-              field_checks_json,candidate_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+              field_checks_json,candidate_id,association_confirmed
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (link_id, target_type, target_id, evidence_id, file_sha, linked_at, link_state, checks_json,candidate_id),
+            (link_id, target_type, target_id, evidence_id, file_sha, linked_at, link_state, checks_json,candidate_id,int(association_confirmed)),
         )
     return {
         "link_id": link_id,
@@ -1215,6 +1220,7 @@ def create_link(body: dict[str, Any]) -> dict[str, Any]:
         "linked_at": linked_at,
         "link_state": link_state,
         "field_checks": field_checks,
+        "association_confirmed": association_confirmed,
     }
 
 

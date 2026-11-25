@@ -336,6 +336,11 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
         # Strip query string for static / SPA routing
         path_only = self.path.split("?", 1)[0] or "/"
 
+        if path_only == '/api/v1/model-settings':
+            from backend.services.model_settings import current_settings
+            self._send_json(HTTPStatus.OK, current_settings())
+            return
+
         if path_only == "/":
             self._send_spa_index()
             return
@@ -502,6 +507,24 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         trace_id = f"trace_{uuid.uuid4().hex[:12]}"
+        if self.path == '/api/v1/model-settings':
+            try:
+                host = self.headers.get('Host', '')
+                if (urlsplit('http://' + host).hostname not in {'127.0.0.1', 'localhost'}
+                        or self.headers.get('Origin') != 'http://' + host
+                        or self.headers.get('X-ApplyGuard-UI') != '1'):
+                    raise ValueError('需要本机同源界面授权。')
+                length = int(self.headers.get('Content-Length', '0'))
+                if not 0 < length <= 16000:
+                    raise ValueError('配置过大或为空。')
+                data = json.loads(self.rfile.read(length))
+                if not isinstance(data, dict):
+                    raise ValueError('配置格式错误。')
+                from backend.services.model_settings import save_settings
+                self._send_json(HTTPStatus.OK, save_settings(data, ROOT))
+            except (ValueError, OSError) as exc:
+                self._send_json(HTTPStatus.UNPROCESSABLE_ENTITY, {'error': {'message': str(exc)}})
+            return
         if self.path in {'/api/v1/agent/ui', '/api/v1/agent/call'}:
             from backend.services.agent_bridge import ui_call, agent_call
             try:

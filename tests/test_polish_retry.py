@@ -37,11 +37,11 @@ class PolishRetryTests(unittest.TestCase):
 
     def test_polish_quality_rejects_one_word_and_changed_year(self):
         from backend.services.asu_resume import polish_quality
-        original='独立主导 AtlasPersona 研究（研究会议 2027 投稿），完成实验设计、用户研究与论文撰写。'
+        original='独立主导 ActionPersona 研究（CHI 2027 投稿），完成实验设计、用户研究与论文撰写。'
         self.assertTrue(polish_quality(original,original.replace('完成','完成了')))
         self.assertTrue(polish_quality(original,original.replace('2027','2025')))
         numeric_only='参与挑战（Top 4.7%），负责模型训练和数据分析，整理测试样本并复核模型输出。'
-        self.assertTrue(polish_quality(numeric_only,numeric_only.replace('Top 4.7%','排名247/5255，前4.7%')))
+        self.assertTrue(polish_quality(numeric_only,numeric_only.replace('Top 4.7%','排名197/4185，前4.7%')))
 
     def test_redundant_year_can_be_merged_but_a_distinct_year_must_remain(self):
         from backend.services.asu_resume import polish_quality
@@ -52,12 +52,12 @@ class PolishRetryTests(unittest.TestCase):
     def test_missing_mention_is_distinct_from_a_contradictory_rank(self):
         from backend.services.structured_verifier import guard_cited_verdict
         def relation(quote,reason):
-            return guard_cited_verdict('项目 A 排名 246/5,252。',{'relation':'CONTRADICTED',
+            return guard_cited_verdict('项目 A 排名 196/4,182。',{'relation':'CONTRADICTED',
                 'citations':[{'quote':quote}], 'reason':reason})['relation']
         self.assertEqual(relation('# 项目 B', '文档介绍另一项目。'),'INSUFFICIENT')
         self.assertEqual(relation('项目 B 用于检索文档。','来源未提及项目 A。'),'INSUFFICIENT')
-        self.assertEqual(relation('# 项目 A 团队排名 247/5,255', '与原文名次矛盾。'),'CONTRADICTED')
-        self.assertEqual(relation('项目 A 团队排名 247/5,255。','证书记载 247/5,255，而非 246/5,252。'),'CONTRADICTED')
+        self.assertEqual(relation('# 项目 A 团队排名 197/4,185', '与原文名次矛盾。'),'CONTRADICTED')
+        self.assertEqual(relation('项目 A 团队排名 197/4,185。','证书记载 197/4,185，而非 196/4,182。'),'CONTRADICTED')
 
     def test_wording_repair_cannot_reintroduce_a_year(self):
         import copy
@@ -76,7 +76,7 @@ class PolishRetryTests(unittest.TestCase):
         self.assertTrue(row['wording_review']['repair_quality_issues'])
 
     def test_conflicting_claim_is_skipped_and_other_claim_is_polished(self):
-        first='独立主导 AtlasPersona 研究（研究会议 2027 投稿），完成实验设计和论文撰写。'
+        first='独立主导 ActionPersona 研究（CHI 2027 投稿），完成实验设计和论文撰写。'
         second='负责 Python 测试工作'
         revised='测试工作由本人使用 Python 负责'
         class MixedModel:
@@ -99,7 +99,7 @@ class PolishRetryTests(unittest.TestCase):
         self.assertTrue(hits['one'])
 
     def test_model_year_drift_is_not_presented_as_rewrite(self):
-        original='独立主导研究（研究会议 2027 投稿），完成实验设计和论文撰写。'
+        original='独立主导研究（CHI 2027 投稿），完成实验设计和论文撰写。'
         class DriftModel:
             def complete_structured(self,prompt,data,schema):
                 return {'one':{'text':original.replace('2027','2025')}}

@@ -15,6 +15,10 @@ output/
 .playwright-cli/
 .codex-finalizer/
 .build/
+/build/
+/dist/
+ApplyGuard-data/
+_MEI*/
 frontend/node_modules/
 frontend/dist/
 # Local runtime data (do not push)

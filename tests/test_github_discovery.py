@@ -4,16 +4,16 @@ from urllib.error import HTTPError
 from backend.services.github_discovery import discover, pin
 from backend.services import agent_bridge
 
-def row(name='sample-user/project',private=False):
+def row(name='Gitvextor/project',private=False):
     return {'full_name':name,'private':private,'default_branch':'main','description':'Project'}
 
 class GithubDiscoveryTests(unittest.TestCase):
     def test_natural_username_public_only(self):
         before=set(agent_bridge.GRANTS)
-        fetch=Mock(return_value=[row(),row('sample-user/private',True)])
-        result=discover({'query':'sample-user的公开仓库'},fetch)
-        self.assertEqual([r['repo'] for r in result['items']],['sample-user/project'])
-        self.assertTrue(fetch.call_args.args[0].startswith('users/sample-user/repos?'))
+        fetch=Mock(return_value=[row(),row('Gitvextor/private',True)])
+        result=discover({'query':'Gitvextor的公开仓库'},fetch)
+        self.assertEqual([r['repo'] for r in result['items']],['Gitvextor/project'])
+        self.assertTrue(fetch.call_args.args[0].startswith('users/Gitvextor/repos?'))
         self.assertIs(fetch.call_args.args[1],False)
         self.assertEqual(set(agent_bridge.GRANTS),before)
     def test_email_requires_account_selection(self):
@@ -36,9 +36,9 @@ class GithubDiscoveryTests(unittest.TestCase):
             with self.assertRaises(ValueError):discover({'query':query,'kind':'keyword'},fetch)
     def test_pin_checks_visibility_and_freezes_commit(self):
         fetch=Mock(side_effect=[row(),{'object':{'type':'commit','sha':'a'*40}}])
-        self.assertEqual(pin({'repo':'sample-user/project'},fetch)['spec'],'sample-user/project@'+'a'*40)
+        self.assertEqual(pin({'repo':'Gitvextor/project'},fetch)['spec'],'Gitvextor/project@'+'a'*40)
         self.assertTrue(all(call.args[1] is False for call in fetch.call_args_list))
-        with self.assertRaises(ValueError):pin({'repo':'sample-user/project'},Mock(return_value=row(private=True)))
+        with self.assertRaises(ValueError):pin({'repo':'Gitvextor/project'},Mock(return_value=row(private=True)))
     def test_forbidden_is_not_reported_as_rate_limit(self):
         fetch=Mock(side_effect=HTTPError('url',403,'blocked',{},None))
         with self.assertRaisesRegex(ValueError,'HTTP 403'):discover({'query':'octocat'},fetch)
@@ -61,14 +61,14 @@ class GithubDiscoveryTests(unittest.TestCase):
         self.assertEqual(fetch.call_count,1)
     def test_ui_dispatch_uses_same_public_boundary(self):
         with patch.object(agent_bridge,'gh',return_value=[row()]):
-            self.assertEqual(len(agent_bridge.ui_call({'action':'github_discover','query':'sample-user'})['items']),1)
+            self.assertEqual(len(agent_bridge.ui_call({'action':'github_discover','query':'Gitvextor'})['items']),1)
 
     def test_public_refs_fallback_does_not_inherit_credentials(self):
         import subprocess
         from backend.services.github_discovery import public_git_head
         completed=subprocess.CompletedProcess([],0,'ref: refs/heads/main\tHEAD\n'+'b'*40+'\tHEAD\n','')
         with patch.dict('os.environ',{'APPLYGUARD_GITHUB_TOKEN':'secret','GH_TOKEN':'secret'}),patch('subprocess.run',return_value=completed) as run:
-            result=public_git_head('sample-user/project')
+            result=public_git_head('Gitvextor/project')
             self.assertEqual(result['sha'],'b'*40)
             self.assertNotIn('GH_TOKEN',run.call_args.kwargs['env'])
             self.assertNotIn('APPLYGUARD_GITHUB_TOKEN',run.call_args.kwargs['env'])
