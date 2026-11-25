@@ -4,7 +4,7 @@ ApplyGuard 是一个在本机运行的中文求职工作台。给它一份简历
 
 ## Windows 桌面版
 
-从 [Windows 桌面版发行页](https://github.com/yinzzzzz007-code/applyguard/releases/tag/v2026.11.25-replay-fix)下载 `ApplyGuard-Windows.exe` 并双击启动。程序内含本地后端和 OCR；用户数据保存在程序旁的 `ApplyGuard-data` 文件夹。云端模型需在“模型设置”中自行填写服务地址和密钥；DeepSeek Harness 属于独立应用，使用它查找材料前需按页面引导安装并授权。
+从 [Windows 桌面版发行页](https://github.com/yinzzzzz007-code/applyguard/releases/tag/v2026.11.25-harness-oneclick)下载 `ApplyGuard-Windows.exe` 并双击启动。程序内含本地后端和 OCR；用户数据保存在程序旁的 `ApplyGuard-data` 文件夹。云端模型需在“模型设置”中自行填写服务地址和密钥；DeepSeek Harness 属于独立应用，使用它查找材料前需按页面引导安装并授权。
 
 现场演示可以从首页“载入完整示例”，然后在“简历审查”或“陈述核验”展开“历史版本”，选择标明“课堂模拟”的记录并点击“回放当时页面”，无需等待云端模型。真实润色和核验也会记录历史。回放后的历史结论仅供参考，修改后仍需重新核验。具体说明见[桌面版使用与验证](桌面版使用与验证.md)。
 
