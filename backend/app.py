@@ -546,7 +546,7 @@ class ApplyGuardHandler(BaseHTTPRequestHandler):
                     raise ValueError('Agent接口不接受浏览器跨域请求')
                 body=json.loads(raw)
                 if not isinstance(body,dict): raise ValueError('需要JSON对象')
-                result = ui_call(body) if self.path.endswith('/ui') else agent_call(body,self.headers.get('Authorization','').removeprefix('Bearer '))
+                result = ui_call(body, server_port=self.server.server_address[1]) if self.path.endswith('/ui') else agent_call(body,self.headers.get('Authorization','').removeprefix('Bearer '))
                 self._send_json(HTTPStatus.OK,result)
             except (ValueError, OSError) as exc:
                 self._send_json(HTTPStatus.UNPROCESSABLE_ENTITY, {'error':{'message':str(exc)}})

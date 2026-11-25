@@ -160,10 +160,14 @@ def search(g, query):
                     errors.append({'path':source['path'],'error':'POSSIBLE_SECRET_SKIPPED'});continue
                 try: spans=extract(source['path'],raw)
                 except Exception: errors.append({'path':source['path'],'error':'EXTRACTION_FAILED'});continue
+                path_text=source['path'].lower()
+                distinctive={t for t in terms if len(t)>=2 and t not in {'ai','项目','数据','材料','技术','报告','开发'} and t in path_text}
+                path_score=min(12,2*len(distinctive))
                 for page,line,text in spans:
                     if not text.strip(): continue
-                    score=sum(t in text.lower() for t in set(terms))
-                    if not score: continue
+                    text_score=sum(t in text.lower() for t in set(terms))
+                    if not text_score: continue
+                    score=text_score+path_score
                     quote=text[:4000]
                     cid=hashlib.sha256(json.dumps([source,page,line,quote],sort_keys=True).encode()).hexdigest()[:24]
                     hits.append({'id':cid,'source':source,'page':page,'line':line,'quote':quote,'score':score,
@@ -187,6 +191,7 @@ def activity(g, stage):
 
 def connection_progress(g):
     return {'stage':g['stage'],'updated_at':g['updated_at'],'run_state':g['run_state'],
+            'failure_reason':g.get('failure_reason',''),
             'candidates':len(g['cards']),
             'submitted':sum(c['state'] in {'NEEDS_REVIEW','IMPORTED'} for c in g['cards'].values())}
 
@@ -228,7 +233,7 @@ def agent_call(body, token):
         return c
     raise ValueError('不允许的Agent操作')
 
-def ui_call(body):
+def ui_call(body, server_port=None):
     if body.get('action')=='connections_summary':
         from backend.services.github_app_session import authorized
         now=time.time()
@@ -263,6 +268,9 @@ def ui_call(body):
             if g:g['revoked']=True
             return {'revoked':True}
     g=grant(body.get('id'),body.get('ui_token'),ui=True)
+    if body.get('action')=='start_harness':
+        from backend.services.harness_autostart import start_harness
+        return start_harness(g, server_port)
     if body.get('action')=='status':
         with LOCK:
             grant(g['id'],body.get('ui_token'),ui=True)

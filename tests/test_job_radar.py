@@ -45,6 +45,17 @@ class JobFixture:
 
 
 class JobLibraryTests(JobFixture, unittest.TestCase):
+    def test_incomplete_official_job_requires_actual_details_before_editing(self):
+        partial = jr.normalize({**JOB, 'details_available': False}, source_id='huawei')
+        with jr.database() as conn:
+            row, _ = jr.write_job(conn, partial, jr.now())
+            job_id = row['id']
+        with self.assertRaisesRegex(ValueError, '补充岗位职责'):
+            jr.edit_job(job_id, {'description': JOB['description']})
+        updated = jr.edit_job(job_id, {'description': JD + ' Responsibilities include building reliable Python services.'})['job']
+        self.assertNotEqual(updated.get('details_available'), False)
+        self.assertEqual(updated['source_kind'], 'local_edit')
+
     def test_dedup_and_versions_preserve_history_and_stage(self):
         first = self.save()
         self.assertEqual(jr.save_jobs([JOB])['unchanged'], 1)

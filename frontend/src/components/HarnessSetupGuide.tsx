@@ -25,7 +25,7 @@ export function HarnessSetupGuide({setup, loading, error, onRefresh}:{
     </div>
     <ol className="harness-steps">
       <li><span>01</span><div><strong>准备本机环境</strong><p>确认 Harness 与 Python 连接依赖</p></div></li>
-      <li><span>02</span><div><strong>授权并启动</strong><p>选择材料范围，复制专属启动命令</p></div></li>
+      <li><span>02</span><div><strong>授权并启动</strong><p>选择材料范围后，一键开始查找</p></div></li>
       <li><span>03</span><div><strong>配对与回传</strong><p>调用 get_task 后显示已配对</p></div></li>
     </ol>
     {error&&<p className="harness-warning" role="alert">环境检测失败：{error}。请保持后端运行后重试。</p>}

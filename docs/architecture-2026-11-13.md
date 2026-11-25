@@ -452,6 +452,10 @@ GitHub 可选入口新增点按引导：`AgentConnector.tsx`、`GithubGuideTip.t
 
 ## 历史页面回放（2026-11-25）
 
+## Harness 一键查找与岗位补充（2026-11-25）
+
+`/evidence` → 选择文件夹或仓库 → 选择云端外发规则 → “授权并开始查找”。`harness_autostart.py` 在本机以隔离配置启动 Harness，通过 MCP 返回待用户确认的来源；撤销、过期或超时会停止检索。目录授权不覆盖其他 Agent 工具。尚未读取详情的官网岗位可打开原文并点击“补充岗位要求”，保存为用户编辑版本后再准备申请。回归入口：`python -m unittest tests.test_harness_autostart tests.test_agent_bridge tests.test_job_radar tests.test_harness_setup`；真实模型验证须使用用户授权和受控预算。
+
 简历审查和陈述核验中的“结束回放，保留当前正文”切回正常流程，历史证据结果不再作为当前核验；回放前正文仍可从自动备份找回。模型设置保存后触发配置刷新，润色按钮无需切换窗口。小云朵按当前页面区分回放和正常引导。回归入口：`npm --prefix frontend run smoke` 中 `cloud-guide.test.mjs` 与 `review-session.test.mjs`。
 
 简历审查和陈述核验均可进入“历史版本”。`groundingHistory.ts` 保存正文、改写、原子判断和引用；`GroundingHistory.tsx` 可展开对照或打开当时页面。回放前先备份当前正文，恢复后清除当前处理选择并标记待核验；历史结果仅供展示，不能用于严格导出。首页“载入完整示例”附带明确标注的课堂模拟回放，不请求模型。前端回归入口 `npm --prefix frontend run smoke`，包含回放、采用建议后仍需核验以及跨申请隔离。

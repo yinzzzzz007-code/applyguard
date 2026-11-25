@@ -379,6 +379,8 @@ def edit_job(job_id: str, raw: Any) -> dict[str, Any]:
         raise ValueError("job 必须是对象")
     fields = {key: raw.get(key, original[key]) for key in
               ("title", "company", "location", "url", "status", "description")}
+    if original.get('details_available') is False and (not isinstance(fields['description'], str) or fields['description'].strip() == original['description'].strip() or len(fields['description'].strip()) < 40):
+        raise ValueError('请先从官网补充岗位职责或任职要求，再保存。')
     metadata = {key: raw.get(key, original.get(key) if fields["description"] == original["description"] else None)
                 for key in ("salary", "internship_schedule", "graduation_window")}
     job = normalize({**original, **fields, **metadata, "source_kind": "local_edit", "source_observed_at": ""})

@@ -17,6 +17,14 @@ class AgentBridgeTests(unittest.TestCase):
     def tearDown(self):a.GRANTS.clear();self.temp.cleanup()
     def call(self,action,**args):return a.agent_call({'id':self.c['id'],'action':action,'arguments':args},self.c['token'])
     def card(self):return self.call('search',query='Atlas')['cards'][0]
+    def test_project_path_helps_rank_related_material_without_inventing_quotes(self):
+        wanted=self.root/'AI编译器图优化';wanted.mkdir()
+        (wanted/'README.md').write_text('性能优化后，显存下降 8%。',encoding='utf8')
+        other=self.root/'通用AI项目';other.mkdir()
+        (other/'README.md').write_text('性能优化后，显存下降 3%。',encoding='utf8')
+        cards=self.call('search',query='AI编译器图优化 显存')['cards']
+        self.assertIn('AI编译器图优化',cards[0]['source']['path'])
+        self.assertEqual(cards[0]['quote'],'性能优化后，显存下降 8%。')
     def submit(self,c):return self.call('submit',card_id=c['id'],quote=c['quote'],version=c['source']['version'],experience='Atlas',interpretation='候选支持',missing=['仍需核验'])
     def test_progress_is_derived_from_real_tools_and_does_not_approve_quotes(self):
         status=lambda:a.ui_call({**self.c,'action':'status'})['progress']

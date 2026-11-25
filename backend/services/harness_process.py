@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import signal
 import subprocess
+import time
 
 SESSION_TIMEOUT_SECONDS = 240
 
@@ -32,7 +33,8 @@ def stop_harness(process: subprocess.Popen) -> None:
 
 
 def run_harness(command: list[str], *, env: dict[str, str], cwd: Path,
-                timeout: int = SESSION_TIMEOUT_SECONDS, capture_output: bool = False) -> HarnessResult:
+                timeout: int = SESSION_TIMEOUT_SECONDS, capture_output: bool = False,
+                should_cancel=None) -> HarnessResult:
     if not 15 <= timeout <= 600:
         raise ValueError('Harness 会话时限须为 15–600 秒')
     process = subprocess.Popen(command, env=env, cwd=cwd,
@@ -42,8 +44,21 @@ def run_harness(command: list[str], *, env: dict[str, str], cwd: Path,
                                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
                                start_new_session=os.name != 'nt')
     try:
-        stdout, stderr = process.communicate(timeout=timeout)
-        return HarnessResult(process.returncode, False, stdout or '', stderr or '')
+        deadline = time.monotonic() + timeout
+        while True:
+            if should_cancel and should_cancel():
+                stop_harness(process)
+                stdout, stderr = process.communicate(timeout=5)
+                return HarnessResult(process.returncode, False, stdout or '', stderr or '')
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise subprocess.TimeoutExpired(command, timeout)
+            try:
+                stdout, stderr = process.communicate(timeout=min(1, remaining) if should_cancel else remaining)
+                return HarnessResult(process.returncode, False, stdout or '', stderr or '')
+            except subprocess.TimeoutExpired:
+                if not should_cancel or time.monotonic() >= deadline:
+                    raise
     except subprocess.TimeoutExpired:
         stop_harness(process)
         try:

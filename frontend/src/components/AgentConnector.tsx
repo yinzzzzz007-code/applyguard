@@ -22,7 +22,8 @@ export function AgentConnector({ensureWorkspace,onImported}:{ensureWorkspace:()=
   const [githubHandle,setGithubHandle]=useState('')
   const [sourceBusy,setSourceBusy]=useState(false)
   const [open,setOpen]=useState(false),[mode,setMode]=useState('local'),[roots,setRoots]=useState(''),[repos,setRepos]=useState('')
-  const [task,setTask]=useState('找出我参与的数据分析项目，重点寻找本人职责、使用的技术和成果数字的依据。')
+  const defaultTask='查找与简历经历和目标岗位有关的材料，重点寻找本人职责、技术和成果的依据。'
+  const [task,setTask]=useState(defaultTask)
   const [purpose,setPurpose]=useState('contribution'),[disclosure,setDisclosure]=useState(''),[privateRepo,setPrivate]=useState(false)
   const [connection,setConnection]=useState<AgentConnection|null>(null),[connected,setConnected]=useState(false),[cards,setCards]=useState<Card[]>([])
   const [setup,setSetup]=useState<HarnessSetup|null>(null),[setupBusy,setSetupBusy]=useState(false),[setupError,setSetupError]=useState('')
@@ -35,6 +36,11 @@ export function AgentConnector({ensureWorkspace,onImported}:{ensureWorkspace:()=
   const pickingFolder=useRef(false), pickerId=useRef<string|null>(null)
   const folders=roots.split('\n').map(path=>path.trim()).filter(Boolean)
   const steps=githubGuideSteps(privateRepo)
+  useEffect(()=>{
+    if(!open || task!==defaultTask)return
+    const titles=[...(resumeForm?.projects??[]).map(item=>item.title),...(resumeForm?.internships??[]).map(item=>item.organization)].filter(Boolean).slice(0,12).join('、')
+    if(titles||job)setTask(`${defaultTask}${titles?'\n简历经历：'+titles.slice(0,600):''}${job?'\n目标岗位：'+job.slice(0,800):''}`)
+  },[open,task,resumeForm,job])
   const guideTarget=steps[githubStep]?.target
   useEffect(()=>{
     if(new URLSearchParams(routeLocation.search).get('find_experiences') !== '1' || !job) return
@@ -187,19 +193,20 @@ export function AgentConnector({ensureWorkspace,onImported}:{ensureWorkspace:()=
         <label>查找目的<select className="resume-input" value={purpose} onChange={e=>setPurpose(e.target.value)}><option value="contribution">寻找本人贡献依据</option><option value="background">查技术背景（不可导入为个人经历）</option></select></label>
         <div {...targetProps('disclosure')}><fieldset><legend>读取前确定材料外发规则</legend><label><input type="radio" name="agent-disclosure" value="cloud_allowed" checked={disclosure==='cloud_allowed'} onChange={e=>setDisclosure(e.target.value)} />允许片段进入我配置的云端模型上下文</label><label><input type="radio" name="agent-disclosure" value="isolated_local" checked={disclosure==='isolated_local'} onChange={e=>setDisclosure(e.target.value)} />我已配置隔离的本地模型，禁止外发</label></fieldset>{guideTip('disclosure')}</div>
         <p>本接口只能约束自己的工具。请使用仅启用此连接器的检索配置；Agent 自带的 shell 等其他工具不受这里的目录授权限制。</p>
-        <div {...targetProps('authorize')}><ActionButton className="btn primary" disabledReason={folderBusy?'请先完成或取消文件夹选择。':sourceBusy?'正在处理仓库请求，请稍候。':issues.length?issues.join('；'):'正在处理，请稍候。'} guideRequirements={busy||folderBusy||sourceBusy?[]:requirements} disabled={busy||folderBusy||(mode!=='local'&&sourceBusy)||issues.length>0} aria-describedby="agent-authorization-issues" onClick={()=>void run(async()=>{if(sourceBusy&&mode!=='local')throw new Error('正在固定 GitHub 仓库版本，请稍候。');if(issues.length){throw new Error(issues.join('；'))}const c=await api({action:'create',mode,task,purpose,disclosure,private:mode!=='local'&&privateRepo,github_handle:mode!=='local'&&privateRepo?githubHandle:undefined,roots:mode==='github'?[]:roots.split('\n').map(s=>s.trim()).filter(Boolean),repos:mode==='local'?[]:repos.split('\n').map(s=>s.trim()).filter(Boolean)});activeConnection.current=c.id;setConnection(c);setGithubStep(step=>step<0?-1:steps.length-1);setClock(Date.now());setCards([]);setConnected(false);setProgress(null);setNotice('');setSourceConfirmed({});setNumbers({})})}>授权连接并生成配置（30 分钟有效）</ActionButton><div id="agent-authorization-issues" role="status">{issues.length>0&&<><p>继续前请完成：</p><ul>{issues.map(issue=><li key={issue}>{issue}</li>)}</ul></>}{folderBusy&&<p>请先完成或取消文件夹选择。</p>}{busy&&<p>正在处理，请稍候…</p>}</div>{guideTip('authorize')}</div>
+        <div {...targetProps('authorize')}><ActionButton className="btn primary" disabledReason={folderBusy?'请先完成或取消文件夹选择。':sourceBusy?'正在处理仓库请求，请稍候。':issues.length?issues.join('；'):'正在处理，请稍候。'} guideRequirements={busy||folderBusy||sourceBusy?[]:requirements} disabled={busy||folderBusy||(mode!=='local'&&sourceBusy)||issues.length>0} aria-describedby="agent-authorization-issues" onClick={()=>void run(async()=>{if(sourceBusy&&mode!=='local')throw new Error('正在固定 GitHub 仓库版本，请稍候。');if(issues.length){throw new Error(issues.join('；'))}const c=await api({action:'create',mode,task,purpose,disclosure,private:mode!=='local'&&privateRepo,github_handle:mode!=='local'&&privateRepo?githubHandle:undefined,roots:mode==='github'?[]:roots.split('\n').map(s=>s.trim()).filter(Boolean),repos:mode==='local'?[]:repos.split('\n').map(s=>s.trim()).filter(Boolean)});activeConnection.current=c.id;setConnection(c);setGithubStep(step=>step<0?-1:steps.length-1);setClock(Date.now());setCards([]);setConnected(false);setProgress(null);setNotice('');setSourceConfirmed({});setNumbers({});if(disclosure==='cloud_allowed'){await api({...c,action:'start_harness'});setNotice('已启动 Harness，正在查找已授权范围内的材料。')}})}>{disclosure==='isolated_local'?'授权并生成手动配置':'授权并开始查找'}</ActionButton><div id="agent-authorization-issues" role="status">{issues.length>0&&<><p>继续前请完成：</p><ul>{issues.map(issue=><li key={issue}>{issue}</li>)}</ul></>}{folderBusy&&<p>请先完成或取消文件夹选择。</p>}{busy&&<p>正在处理，请稍候…</p>}</div>{guideTip('authorize')}</div>
       </> : <>
         <div className={`harness-status ${connected&&progress?.run_state!=='failed'&&progress?.run_state!=='timed_out'?'paired':''}`} role="status"><strong>{connectionStage(connection,connected,clock,progress)}</strong><span>{new Date(connection.expires*1000).toLocaleTimeString()} 到期 · 每 3 秒自动刷新</span></div>
         {expired?<p className="harness-warning">本次授权已过期。请撤销后重新授权，并使用新的命令与令牌。</p>:<div className="harness-launch">
-          <h4>在本机 Harness 完成连接</h4><p className="muted">每次模型尝试最多 {setup?.request_timeout_seconds??45} 秒，最多重试一次；检索会话最多 {setup?.session_timeout_seconds??180} 秒。超时后会停止并保留已回传候选。</p>
+          <h4>本机 Harness 检索</h4><p className="muted">会话最多 {setup?.session_timeout_seconds??180} 秒。请保持本页打开；候选原文需要你核对后导入。</p>
           {disclosure==='cloud_allowed'?<>
-            <ol><li>复制启动命令，在本机 {shell} 中执行。它会启动独立的 Harness 检索会话。</li>
+            <div className="button-row"><ActionButton className="btn primary" disabled={busy||progress?.run_state==='started'} disabledReason="Harness 正在检索，请稍候。" onClick={()=>void run(async()=>{await api({...connection,action:'start_harness'});setNotice('已重新启动 Harness，请稍候。')})}>重新开始查找</ActionButton></div>
+            <details><summary>手动连接（备用）</summary><ol><li>复制启动命令，在本机 {shell} 中执行。它会启动独立的 Harness 检索会话。</li>
               <li>终端询问时，粘贴“临时连接令牌”，然后输入模型 API Key。两次输入都隐藏，不写入配置文件。</li>
               <li>Harness 调用 <code>get_task → search_materials → submit_evidence</code> 后，这里会自动更新配对状态与候选证据。</li></ol>
             <div {...targetProps('launch')}><div className="button-row"><ActionButton className="btn primary" disabledReason={'请先完成 Harness 安装并重新检测环境。'} disabled={!setup?.harness_command||!launch} onClick={()=>void copyText(launch,'启动命令')}>复制 {shell} 启动命令</ActionButton>
               <button className="btn secondary" onClick={()=>void copyText(connection.token,'临时连接令牌')}>复制临时连接令牌</button></div>{guideTip('launch')}</div>
             {!setup?.harness_command&&<p className="harness-warning">请先完成上方 Harness 安装步骤，或用下方手动配置接入现有 MCP 客户端。</p>}
-            <details><summary>查看启动命令（不含密钥）</summary><pre>{launch}</pre></details>
+            <details><summary>查看启动命令（不含密钥）</summary><pre>{launch}</pre></details></details>
           </>:<p>你选择了隔离本地模型。请使用下方手动 MCP 配置接入已隔离的 Harness profile；云端 Gemini 快捷启动不适用于本次授权。</p>}
         </div>}
         <div {...(disclosure==='isolated_local'?targetProps('launch'):{})}><details className="harness-manual"><summary>手动配置 / 其他 MCP 客户端（含临时凭据）</summary>

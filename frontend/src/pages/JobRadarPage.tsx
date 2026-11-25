@@ -398,7 +398,7 @@ export function JobRadarPage() {
             })
           }}>删除岗位</ActionButton>
         </div>
-        {!canPrepareJob(selected) && <p className="callout warn">{selected.details_available === false ? '官网完整职责和要求尚未读取。请打开官方详情核对。' : '已归档、已关闭或参考快照仅供查看，不能从这里准备申请。'}</p>}
+        {!canPrepareJob(selected) && <div className="callout warn">{selected.details_available === false ? <><p>官网只返回了岗位列表，尚未获取完整职责和要求。请打开招聘原文，复制职责和要求后补充到岗位说明。</p><button type="button" className="btn primary" onClick={()=>{setEditingId(selected.id);setForm({title:selected.title,company:selected.company,location:selected.location,url:selected.url,status:selected.status,description:selected.description});openForm()}}>补充岗位要求</button>{selected.url&&<a className="btn secondary" href={selected.url} target="_blank" rel="noreferrer">打开招聘原文 ↗</a>}</> : <p>已归档、已关闭或参考快照仅供查看，不能从这里准备申请。</p>}</div>}
         <Tabs id="job-tab" label="岗位详情视图" panelId="job-detail-panel" value={detailTab} onChange={setDetailTab} items={[{id:'description',label:'岗位原文'},{id:'analysis',label:'证据预检'},{id:'versions',label:'版本记录'}]} />
         <div id="job-detail-panel" role="tabpanel" aria-labelledby={'job-tab-'+detailTab} tabIndex={0}>
         <section className="radar-recommendation" aria-label="岗位推荐依据"><h4>为什么推荐</h4><ul>{selected.recommendation_reasons?.map(reason=><li key={reason}>{reason}</li>)}</ul><p>兴趣反馈只影响本机推荐，不会投递，也不会更改你的简历。</p><div className="btn-row">

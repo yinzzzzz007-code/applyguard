@@ -28,7 +28,7 @@ def main() -> None:
         from importlib import import_module
 
         results = {}
-        for name in ('backend.app', 'backend.services.grounded_workflow', 'zleap.sag', 'lancedb', 'pyarrow', 'rapidocr_onnxruntime', 'onnxruntime', 'cv2'):
+        for name in ('backend.app', 'backend.services.grounded_workflow', 'backend.services.harness_autostart', 'mcp', 'zleap.sag', 'lancedb', 'pyarrow', 'rapidocr_onnxruntime', 'onnxruntime', 'cv2'):
             try:
                 import_module(name)
                 results[name] = 'ok'
