@@ -53,7 +53,7 @@ export function HarnessSetupGuide({setup, loading, error, onRefresh}:{
           </>}</li>
         <li><strong>Harness 需要 MCP stdio 客户端。</strong>下面的快捷启动会加载 <code>@deepseek-ai/dsh-mcp-client</code>。
           若终端报告找不到该插件，请更新 Harness；手动配置方式见 <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/mcp/mcp-client/README.md" target="_blank" rel="noreferrer">官方 MCP 说明</a>。</li>
-        <li><strong>准备模型 API Key。</strong>快捷检索使用 {setup?.model||'配置的文本模型'}，连接令牌与模型 Key 是两个不同值，运行时分别隐藏输入。已有的 Harness 聊天不会自动接入本次授权。</li>
+        <li><strong>准备模型 API Key。</strong>在右上角“模型设置”填写服务和密钥，一键查找会使用 {setup?.model||'配置的文本模型'}。已有的 Harness 聊天不会自动接入本次授权；如需手动连接，可在授权后展开备用说明。</li>
       </ol>
       {setup&&<details><summary>本机检测到的路径</summary><dl>{setup.project_root&&<><dt>项目根目录</dt><dd>{setup.project_root}</dd></>}<dt>Python</dt><dd>{setup.python}</dd><dt>连接器</dt><dd>{setup.connector_path}</dd><dt>Harness</dt><dd>{setup.harness_command||'未检测到'}</dd></dl></details>}
     </details>
