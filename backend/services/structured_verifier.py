@@ -146,10 +146,12 @@ def guard_cited_verdict(text, verdict):
                     ('主导|独立完成|led','仅协助|仅参与|assisted only'), ('已部署|deployed','未部署|never deployed')]
     incompatible_words = any((re.search(left,text,re.I) and re.search(right,quoted,re.I)) or
                              (re.search(right,text,re.I) and re.search(left,quoted,re.I)) for left,right in alternatives)
-    compared = re.search(r'DRAFT\[([^\]\n]+)\]\s*(?:[,;，；:：]\s*)?SOURCE\[([^\]\n]+)\]',reason)
-    explicit_pair = bool(compared and compared[1] in text and compared[2] in quoted
-                         and compared[1].casefold() != compared[2].casefold()
-                         and not _MISSING_MENTION.search(compared[2]))
+    draft_quotes = re.findall(r'DRAFT\[([^\]\n]+)\]',reason)
+    source_quotes = re.findall(r'SOURCE\[([^\]\n]+)\]',reason)
+    explicit_pair = bool(len(draft_quotes)==1 and len(source_quotes)==1
+                         and draft_quotes[0] in text and source_quotes[0] in quoted
+                         and draft_quotes[0].casefold() != source_quotes[0].casefold()
+                         and not _MISSING_MENTION.search(source_quotes[0]))
     if not (incompatible_values or incompatible_words or explicit_pair):
         approximate_metrics = (r'效率|efficiency', r'内存|memory', r'吞吐|throughput',
                                r'macro[- ]?f1', r'交付时间|delivery\s*time',
@@ -266,11 +268,14 @@ class StructuredVerifier:
         result={}
         for claim in claims:
             cid=claim['claim_id'];entry=inputs[cid];row=judged[cid]
-            checked=[{'atom_id':aid,'text':text,**guard_cited_verdict(text,citations(row['atoms'][aid],hits.get(cid,[]),entry['context']))}
+            checked=[{'atom_id':aid,'text':text,**citations(row['atoms'][aid],hits.get(cid,[]),entry['context'])}
                 for aid,text in entry['atoms'].items()]
             for atom, binding in zip(checked, bindings[cid]):
                 atom.update(binding)
                 finalize_anchor(atom, claim['text'], row['atoms'][atom['atom_id']]['claim_excerpt'])
+                comparison = atom.get('claim_excerpt') if atom['claim_spans'] else atom['text']
+                atom.update(guard_cited_verdict(comparison or atom['text'], {
+                    key:atom[key] for key in ('relation','citations','reason')}))
                 if not atom['claim_spans'] and atom['relation']!='INSUFFICIENT':
                     atom.update(relation='INSUFFICIENT', reason='无法定位到当前稿原文。'+atom['reason'])
             from backend.services.rank_evidence import rank_conflict

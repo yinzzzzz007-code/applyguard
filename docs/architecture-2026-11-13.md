@@ -438,7 +438,7 @@ GitHub 可选入口新增点按引导：`AgentConnector.tsx`、`GithubGuideTip.t
 陈述核验 → 启动 AI 原子核验 → 同意并开始核验。每次确认 POST `/api/v1/workflow/reverify` 并请求新模型结果。有同项目原件的经历对照材料，无关联原件的经历由模型拆出待核对事实，引用为空。个人资料沿用表单。回执显示运行编号、模型和耗时，并与本机 `local/verification-runs/<run_id>.json` 对照。页面显示连接异常、服务失败或旧回执时，可以重试。离线回归运行 `python -m unittest tests.test_grounding_scope` 和 `npm --prefix frontend run smoke`。经授权的计费实测可运行 `node scripts/check_claim_reverify.cjs http://127.0.0.1:8032 --live-twice`（需 Playwright 和 Edge）。
 # Windows 桌面试用入口（2026-11-25）
 
-`desktop_main.py` 启动 127.0.0.1:8766 的本地后端和桌面窗口。单文件由 `ApplyGuard.spec` 打包，用户数据位于 exe 同目录的 `ApplyGuard-data`。运行 `ApplyGuard-Windows.exe --check-backend` 检查后端与 SAG 模块导入。打包范围、配置和验证记录见 `桌面版使用与验证.md`。
+`desktop_main.py` 启动本地后端和桌面窗口。`ApplyGuard.spec` 冻结后端，`scripts/build_desktop_launcher.py` 嵌入单文件 `ApplyGuard.exe`。运行缓存自动选可写 NTFS，优先非系统盘；用户数据仍在 EXE 旁 `ApplyGuard-data`。`--check-backend` 检查模块，`--check-storage` 实际初始化 SAG 与原生索引。打包范围见 `桌面版使用与验证.md`。
 
 # 2026-11-25：桌面 OCR 与岗位驱动经历发现
 
@@ -476,3 +476,14 @@ GitHub 可选入口新增点按引导：`AgentConnector.tsx`、`GithubGuideTip.t
 - 正常流程：陈述核验 → 最终确认 → 简历生成。旧 `/ats` 地址跳转最终确认，导航与云朵引导移除该步骤。
 - Harness 授权在站内切页后保留于当前页面会话内存；主动撤销、关闭页面或到期后停止。检索到原文但未回传解释时仍可核对导入。诊断摘要写入本机 `harness-runs`，不记录密钥或完整原文。
 - CLI：`python scripts/check_material_discovery.py` 检查关联统计；显式增加 `--sag --output output/material-discovery.json` 才允许模型检索。通过环境变量 `APPLYGUARD_LOCAL_DIR`、`APPLYGUARD_EVIDENCE_DIR` 指定隔离资料。模型检索摘要保存在本机 `material-discovery-runs`。
+
+
+## 2026-11-26：最终桌面链路与冲突对照
+
+- 入口：`ApplyGuard.exe` → `desktop/Launcher.cs` 选择 NTFS 缓存并校验内核 → `desktop_main.py` 启动后端和 WebView。缓存互斥保护首次解包，同工作区只开一个窗口；MCP 辅助进程不受窗口单实例限制。
+- 材料检索：`sag_storage.py` 实测文件操作能力，自动回退兼容目录。`runtime_logging.py` 避免 Windows GBK 日志异常破坏 SAG 已成功的调用。依赖冻结包含动态 aiosqlite 驱动。
+- 核验：`structured_verifier.py` 先绑定正文，再检查两端原文；`ConflictSummary.tsx` 展示简历和材料对照、行号及上下文。`verification_audit.py` 保存本机运行及脱敏异常记录。
+- 严格导出：`export_grounded` 只对本机服务端已保存的同人、同正文、同材料快照且有引文的冲突提前拒绝；不沿用历史通过结论。主动重新核验仍请求模型。
+- 页面流程：简历审查 → 陈述核验 → 最终确认 → 简历生成；也可直接走个人稿或面试。申请内容检查已从正常流程移除。
+- CLI：`python scripts/verify_desktop_changes.py`、`python scripts/check_packaged_mcp.py --exe <ApplyGuard.exe>`、`ApplyGuard.exe --check-storage`。按钮审计：`npm --prefix frontend run audit:buttons`。
+- 验收证据、预算、冻结文件指纹、三份实际简历及真实 Harness 回传边界见[最终桌面验收报告](testing-report-2026-11-26-desktop.md)。

@@ -1,3 +1,4 @@
+import {ActionButton} from './ui/action-button'
 import {useState} from 'react'
 
 type Settings = {base_url:string; model:string; complex_model:string; key_configured:boolean}
@@ -35,7 +36,7 @@ export function ModelSettings() {
       <label>模型名称<input className="resume-input" value={form.model} onChange={e=>setForm({...form,model:e.target.value})}/></label>
       <label>复杂任务模型（可选）<input className="resume-input" value={form.complex_model} onChange={e=>setForm({...form,complex_model:e.target.value})}/></label>
       <label>API Key<input type="password" autoComplete="off" className="resume-input" value={key} placeholder={form.key_configured?'已配置，留空保留':'输入密钥'} onChange={e=>setKey(e.target.value)}/></label>
-      <div className="btn-row"><button className="btn primary" type="button" disabled={busy} onClick={()=>void save()}>{busy?'保存中…':'保存设置'}</button><button className="btn secondary" type="button" onClick={()=>{setKey('');setOpen(false)}}>关闭</button></div>
+      <div className="btn-row"><ActionButton disabledReason="正在保存模型设置，请稍候。" className="btn primary" type="button" disabled={busy} onClick={()=>void save()}>{busy?'保存中…':'保存设置'}</ActionButton><button className="btn secondary" type="button" onClick={()=>{setKey('');setOpen(false)}}>关闭</button></div>
       {message&&<p role="status">{message}</p>}
     </section>}
   </div>

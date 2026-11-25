@@ -671,6 +671,8 @@ def _configure_runtime_temp() -> None:
 
 
 def main() -> None:
+    from backend.services.runtime_logging import configure_text_streams
+    configure_text_streams()
     host = os.getenv("APPLYGUARD_HOST", "127.0.0.1")
     port = int(os.getenv("APPLYGUARD_PORT", "8000"))
     level = os.getenv("APPLYGUARD_LOG_LEVEL", "INFO").upper()

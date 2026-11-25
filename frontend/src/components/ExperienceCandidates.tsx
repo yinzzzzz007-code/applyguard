@@ -1,3 +1,4 @@
+import {ActionButton} from './ui/action-button'
 import { useState } from 'react'
 import type { EvidenceMatchItem, ParsedRequirement } from '../api/types'
 import { useDemo } from '../context/DemoContext'
@@ -74,7 +75,7 @@ export function ExperienceCandidates({ requirement, matches }: {requirement: Par
             <button type="button" className="btn secondary" onClick={() => {setEditing(frameworkKey+'-other'); setOther('')}}>其他</button>
             <button type="button" className="btn secondary" onClick={() => confirm('暂不确定')}>暂不确定</button></div></>}
           {editing === frameworkKey+'-other' && <label>其他框架 <input value={other} maxLength={80} onChange={e => setOther(e.target.value)}/>
-            <button type="button" className="btn secondary" disabled={!other.trim()} onClick={() => confirm(other.trim())}>确认框架</button></label>}</div>}
+            <ActionButton type="button" className="btn secondary" disabled={!other.trim()} disabledReason="请先填写实际使用的框架名称。" onClick={() => confirm(other.trim())}>确认框架</ActionButton></label>}</div>}
         {addButton(m.claim_ids[0])}
       </article>
     })}

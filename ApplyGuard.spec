@@ -5,6 +5,7 @@ from pathlib import Path
 datas = [(str(path), 'data') for path in Path('data').glob('*.json')]
 datas += [('frontend/dist', 'frontend/dist'), ('frontend/public', 'frontend/public'), ('third_party', 'third_party'), ('contracts', 'contracts'), ('demo', 'demo'), ('.env.example', '.')]
 datas += [('scripts/agent_mcp.py', 'scripts'), ('scripts/connect_harness.py', 'scripts'), ('requirements-agent.txt', '.'), ('THIRD_PARTY_NOTICES.md', '.')]
+datas += [('scripts/session_budget.py', 'scripts')]
 binaries = []
 hiddenimports = []
 tmp_ret = collect_all('webview')
@@ -15,6 +16,7 @@ for package in ('zleap.sag', 'lancedb', 'pyarrow', 'tiktoken', 'tokenizers', 'ra
     binaries += package_binaries
     hiddenimports += package_imports
 hiddenimports += collect_submodules('mcp', filter=lambda name: not name.startswith('mcp.cli'))
+hiddenimports += collect_submodules('aiosqlite')
 datas += copy_metadata('mcp')
 
 

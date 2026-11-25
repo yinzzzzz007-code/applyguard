@@ -97,6 +97,7 @@ export function ReviewDraft() {
             {workflow.grounding?.results[claim.claim_id]?.proposed_text && (()=>{
               const comparison=workflow.grounding!.results[claim.claim_id]
               const suggestion=comparison.proposed_text!
+              const adopted=suggestion===claim.text&&suggestion!==comparison.original_text
               const stale=claim.text!==comparison.original_text && claim.text!==suggestion
               if (!stale && suggestion===comparison.original_text && comparison.original_check?.relation==='CONTRADICTED') {
                 return <section className="polish-check needs-review" aria-label={`第 ${index+1} 条材料冲突`}>
@@ -109,7 +110,7 @@ export function ReviewDraft() {
               const spans=diffSpans(comparison.original_text,suggestion)
               const reviewRequired=stale||proposalNeedsReview(comparison,workflow.grounding?.error)
               return <section className="inline-polish" aria-label={`第 ${index+1} 条润色对照`}>
-                <div className="inline-polish-heading"><h4>润色与核查</h4><span>{stale?'历史建议 · 正文已修改':comparison.original_check?.relation==='CONTRADICTED'?'材料冲突 · 请先核查':suggestion===comparison.original_text?'暂未改写':'等待你确认'}</span></div>
+                <div className="inline-polish-heading"><h4>润色与核查</h4><span>{adopted?'已采用 · 正文已更新':stale?'历史建议 · 正文已修改':comparison.original_check?.relation==='CONTRADICTED'?'材料冲突 · 请先核查':suggestion===comparison.original_text?'暂未改写':'等待你确认'}</span></div>
                 <p className="polish-legend">黄色：与原文不同的内容；蓝色提示：整条建议需要核查，颜色不定位具体风险。原文中删除的内容也会标出。</p>
                 <div className="polish-comparison"><div><strong>润色前</strong><p>{spans.original.map((part,i)=>part.changed?<mark className="polish-diff removed change" key={i}>{part.text}</mark>:<span key={i}>{part.text}</span>)}</p></div>
                   <div><strong>润色建议</strong><p>{spans.proposal.map((part,i)=>part.changed?<mark className="polish-diff change" key={i}>{part.text}</mark>:<span key={i}>{part.text}</span>)}</p></div></div>
@@ -120,7 +121,7 @@ export function ReviewDraft() {
                   {edits.length>5?<p>这是一处较大幅度的重写，请直接对照上方两段完整文字，重点检查职责、数字和限定条件。</p>:edits.length?<ol>{edits.map((change,i)=><li key={i}><span>原文：{change.before||'（无）'}</span><span>建议：{change.after||'（删除）'}</span></li>)}</ol>:<p>两版文字一致，或没有可用的逐项改动记录。</p>}
                 </details>
                 {comparison.proposal_check&&<details><summary>查看建议的逐项核查</summary><AtomicEvidence result={{...comparison,...comparison.proposal_check,verification_scope:'experience'}} /></details>}
-                <div className="btn-row"><ActionButton type="button" className="btn primary" disabledReason={stale?'正文已变化，请重新生成建议。':suggestion===claim.text?'本次没有有效改写，请重新生成。':'请先保存或取消正在编辑的句子。'} disabled={editing||stale||suggestion===claim.text} onClick={()=>commit(claim.claim_id,suggestion,'accept')}>采用建议</ActionButton>
+                <div className="btn-row"><ActionButton type="button" className="btn primary" disabledReason={adopted?'已采用这条建议，正文已更新。':stale?'正文已变化，请重新生成建议。':suggestion===claim.text?'本次没有有效改写，请重新生成。':'请先保存或取消正在编辑的句子。'} disabled={editing||stale||suggestion===claim.text} onClick={()=>commit(claim.claim_id,suggestion,'accept')}>{adopted?'已采用':'采用建议'}</ActionButton>
                   <ActionButton type="button" className="btn secondary" disabledReason={'请先保存或取消正在编辑的句子。'} disabled={editing} onClick={()=>commit(claim.claim_id,claim.text,'original')}>保留原文</ActionButton></div>
               </section>
             })()}

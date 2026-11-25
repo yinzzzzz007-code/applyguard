@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "audit:buttons": "node scripts/audit-buttons.mjs",
     "preview": "vite preview",
     "smoke": "node scripts/smoke-mock.mjs && node --experimental-strip-types --test scripts/copy-rules.test.mjs scripts/history.test.mjs scripts/materials.test.mjs scripts/jobs.test.mjs scripts/reel.test.mjs scripts/review.test.mjs scripts/review-session.test.mjs scripts/preparation.test.mjs scripts/demo-client.test.mjs scripts/ats-check-view.test.mjs scripts/agent-connection.test.mjs scripts/import-review.test.mjs scripts/cloud-guide.test.mjs scripts/draft-selection.test.mjs scripts/claim-review-export.test.mjs scripts/final-resume.test.mjs"
   },

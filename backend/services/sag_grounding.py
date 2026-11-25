@@ -79,7 +79,8 @@ class SAGRetriever:
         if not sources:
             return {query['claim_id']: [] for query in queries}
         digest = evidence_snapshot(sources)
-        directory = Path(os.getenv('APPLYGUARD_GROUNDING_DIR', str(ROOT / 'data/local/grounding')))
+        from backend.services.sag_storage import resolve_index_directory
+        directory = resolve_index_directory(os.getenv('APPLYGUARD_GROUNDING_DIR', str(ROOT / 'data/local/grounding')))
         settings = [os.getenv(name,'') for name in ['APPLYGUARD_AI_MODEL','APPLYGUARD_AI_BASE_URL',
             'APPLYGUARD_EMBEDDING_MODEL','APPLYGUARD_EMBEDDING_DIMENSIONS','APPLYGUARD_EMBEDDING_BACKEND']]
         settings.append('json_object' if uses_json_object_structured(os.getenv('APPLYGUARD_AI_BASE_URL', _DEFAULT_API_URL), os.getenv('APPLYGUARD_AI_MODEL', DEFAULT_TEXT_MODEL)) else 'json_schema')
@@ -98,6 +99,8 @@ class SAGRetriever:
             except GroundingUnavailable:
                 raise
             except Exception as exc:
+                if os.getenv('APPLYGUARD_DESKTOP_HOME'):
+                    logging.getLogger(__name__).exception('Desktop SAG operation failed')
                 cause, seen = exc, set()
                 while cause is not None and id(cause) not in seen:
                     seen.add(id(cause))
@@ -112,7 +115,7 @@ class SAGRetriever:
                 stage = getattr(exc, 'stage', None)
                 message = _STAGE_ERRORS.get(stage, 'SAG核验准备失败；请检查本机依赖、模型配置与网络。')
                 if 'Unable to copy file' in str(exc) and ('os error 1)' in str(exc) or 'Incorrect function' in str(exc)):
-                    message='SAG 索引目录不支持所需文件操作（Windows exFAT 常见）。请将 APPLYGUARD_GROUNDING_DIR 配置到 NTFS 目录；原始材料无需移动。'
+                    message='索引数据库写入失败，请检查本机缓存磁盘的权限和剩余空间；原始材料无需移动。'
                 logging.getLogger(__name__).warning('SAG failed: stage=%s kind=%s',
                     stage if stage in _STAGE_ERRORS else 'unknown', type(exc).__name__)
                 # Provider exception messages can include credentials or document text.

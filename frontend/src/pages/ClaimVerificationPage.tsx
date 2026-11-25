@@ -9,6 +9,7 @@ import { ClaimBadge, EmptyState } from '../components/States'
 import {reviewMarks} from '../resume/reviewHighlights'
 import {ClaimStatement} from '../components/ClaimStatement'
 import { AtomicEvidence } from '../components/AtomicEvidence'
+import { ConflictSummary } from '../components/ConflictSummary'
 import { GroundingHistory } from '../components/GroundingHistory'
 import { HistoryReplayNotice } from '../components/HistoryReplayNotice'
 import { RadarDialog } from '../components/RadarDialog'
@@ -366,11 +367,12 @@ export function ClaimVerificationPage() {
                   <textarea id={`text-${id}`} className="jd-input" rows={4} value={text ?? ''} maxLength={420}
                     onChange={event => setReviewDraft(id,event.target.value)} />
                   {!text?.trim() && <p role="status">请填写陈述，或取消本次编辑。</p>}
-                  <div className="btn-row" id={`edit-${id}`}><button type="button" className="btn primary" disabled={!text?.trim() || text.trim().length>420}
-                    onClick={() => saveClaimEdit(id,text ?? '')}>保存修改</button>
+                  <div className="btn-row" id={`edit-${id}`}><ActionButton type="button" className="btn primary" disabledReason="请填写 1 至 420 个字符的陈述。" disabled={!text?.trim() || text.trim().length>420}
+                    onClick={() => saveClaimEdit(id,text ?? '')}>保存修改</ActionButton>
                     <button type="button" className="btn secondary" onClick={() => setReviewDraft(id,null)}>取消编辑</button></div>
                 </div>
               ) : <ClaimStatement id={id} text={text ?? '草稿中缺少该条陈述。'} marks={marks} />}
+              {!editing&&!needsRecheck&&!failed&&result?.final_text===text&&<ConflictSummary result={result}/>}
 
               {needsDecision && !editing && decision?.decision !== 'reject' && !marks.length && <p className="claim-meta">这条陈述仍待核对。当前结果未定位到具体词句，可展开核验明细。</p>}
               {personal && <p className="claim-meta">教育信息按经历库表单填写使用；如需修改，请到<Link to="/vault">经历库</Link>编辑。</p>}

@@ -1,6 +1,7 @@
 """Conservative per-request reservation for a user-approved test session."""
 from decimal import Decimal
 import json
+import logging
 import threading
 import time
 
@@ -53,7 +54,11 @@ def install(path, limit=Decimal('2')):
         return urlopen(request, *args, **kwargs)
 
     async def bounded_async(client, request, *args, **kwargs):
-        await asyncio.to_thread(reserve, str(request.url), await request.aread())
+        try:
+            await asyncio.to_thread(reserve, str(request.url), await request.aread())
+        except Exception:
+            logging.exception('Diagnostic budget rejected request to %s%s',request.url.host,request.url.path)
+            raise
         return await send_async(client, request, *args, **kwargs)
 
     def bounded_sync(client, request, *args, **kwargs):

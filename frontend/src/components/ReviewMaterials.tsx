@@ -1,3 +1,4 @@
+import {ActionButton} from './ui/action-button'
 import {useEffect,useRef,useState} from 'react'
 import {getApiClient,discoverMaterials} from '../api/client'
 import type {EvidenceRecord,ResumeMatchItem} from '../api/types'
@@ -12,9 +13,10 @@ export function ReviewMaterials({onStart,label}:{onStart:()=>void;label:string})
   const [linked,setLinked]=useState<string[]>([])
   const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState('')
   const [sagMessage,setSagMessage]=useState('')
+  const [reload,setReload]=useState(0)
   const mounted=useRef(true)
   useEffect(()=>{
-    let active=true;mounted.current=true
+    let active=true;mounted.current=true;setLoading(true);setError('')
     void (async()=>{
       const api=getApiClient(), spaces=await api.listEvidenceWorkspaces()
       if(spaces.error)throw Error(spaces.error.message)
@@ -39,7 +41,7 @@ export function ReviewMaterials({onStart,label}:{onStart:()=>void;label:string})
       if(active){setCandidates(found);setMissing(absent);setLinked(existing)}
     })().catch(e=>{if(active)setError(e instanceof Error?e.message:'读取材料清单失败')}).finally(()=>{if(active)setLoading(false)})
     return ()=>{active=false;mounted.current=false}
-  },[])
+  },[reload])
   async function searchSAG(){
     if(!workflow||!resumeForm)return
     setBusy(true);setSagMessage('SAG 正在从材料库检索相关原文，可以稍候查看。')
@@ -86,9 +88,9 @@ export function ReviewMaterials({onStart,label}:{onStart:()=>void;label:string})
     </div>)}
     {!!missing.filter(label=>!candidates.some(c=>c.row.label===label)).length&&<p className="callout warn">尚无相关原件：{missing.filter(label=>!candidates.some(c=>c.row.label===label)).join('、')}。这些经历将标为待确认，不会算作材料支持。</p>}
     <p className="muted">文件名未匹配时，可用 SAG 语义搜索。会将本次经历和材料库原文交给配置的模型服务，可能产生费用。</p>
-    <button type="button" className="btn secondary" disabled={loading||busy||!!error} onClick={()=>void searchSAG()}>用 SAG 搜索尚未关联的材料</button>
+    <ActionButton type="button" className="btn secondary" disabledReason={loading?"正在读取材料清单。":busy?"正在检索或关联材料，请稍候。":error} disabled={loading||busy||!!error} onClick={()=>void searchSAG()}>用 SAG 搜索尚未关联的材料</ActionButton>
     {sagMessage&&<p role="status">{sagMessage}</p>}
-    {error&&<p role="alert" className="danger-text">{error}；尚未启动模型。请检查材料后重新打开。</p>}
-    <button type="button" className="btn primary" disabled={loading||busy||!!error} onClick={()=>void confirm()}>{loading?'正在读取材料…':busy?'正在关联所选材料…':label}</button>
+    {error&&<div role="alert"><p className="danger-text">{error}；尚未启动模型。</p><button type="button" className="btn secondary" onClick={()=>setReload(value=>value+1)}>重新读取材料清单</button></div>}
+    <ActionButton type="button" className="btn primary" disabledReason={loading?"正在读取材料清单。":busy?"正在检索或关联材料，请稍候。":error} disabled={loading||busy||!!error} onClick={()=>void confirm()}>{loading?'正在读取材料…':busy?'正在关联所选材料…':label}</ActionButton>
   </div>
 }

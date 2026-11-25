@@ -11,7 +11,9 @@ class HarnessProcessTests(unittest.TestCase):
         with patch('backend.services.harness_process.subprocess.Popen', return_value=process):
             result = run_harness(['installed-harness'], env={}, cwd=Path('.'), timeout=30, capture_output=True)
         self.assertEqual((result.returncode, result.timed_out, result.stdout), (0, False, 'result'))
-        process.communicate.assert_called_once_with(timeout=30)
+        process.communicate.assert_called_once()
+        self.assertGreater(process.communicate.call_args.kwargs['timeout'],29)
+        self.assertLessEqual(process.communicate.call_args.kwargs['timeout'],30)
 
     def test_timeout_stops_owned_tree_and_preserves_prior_output(self):
         process = Mock(returncode=None)

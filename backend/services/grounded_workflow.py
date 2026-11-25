@@ -357,6 +357,8 @@ class GroundingService:
                         atomic.update({c['claim_id']:copy.deepcopy(original_checks[c['claim_id']]) for c in fallback})
                         reused_checks.update(restored)
         except (GroundingUnavailable,ModelFailure,OSError,ValueError,TypeError,KeyError) as exc:
+            from backend.services.verification_audit import save_failure
+            save_failure(stage, exc)
             # No fallback to a stale VERIFIED result, even for unchanged old text.
             if isinstance(exc, ModelFailure) and exc.http_status == 503:
                 error_code = _MODEL_UNAVAILABLE
@@ -550,6 +552,12 @@ def export_grounded(vault_path, request):
         return export_user_draft(vault_path, request)
     if policy != 'verified':
         raise ValueError('未知导出策略')
+    if request.get('fresh_atomic') is not True:
+        from backend.services.verification_audit import current_conflict
+        base = reverify_workflow(vault_path, request, _skip_grounding=True)
+        sources, _, _ = collect_sources(load_grounding_experiences(vault_path,request),request['candidate_id'])
+        if current_conflict(request['candidate_id'],base['resume_claims'],evidence_snapshot(sources)):
+            raise ValueError('当前正文仍有与当前材料一致的已记录冲突，不能严格导出。请修改后重新核验，或选择用户确认稿。')
     result = reverify_workflow(vault_path,{**request,'grounding_mode':'sag_atomic'})
     verified = result['claim_verification']
     if result['grounding'].get('error_code') == _MODEL_UNAVAILABLE:
