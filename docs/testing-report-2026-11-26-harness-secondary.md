@@ -10,3 +10,5 @@
 验证：相关后端 **35 项通过**，包括真实本地文件检索、范围复用、任务更新、提交候选和概括接口；Harness 进程及概括模型在本轮定向回归中使用替身。前端 **98 项通过**，含加入正文后暂存恢复、去重及长度检查；生产构建通过；278 个按钮定义审计未发现空处理函数或缺少解释的原生禁用按钮。上一轮真实付费 Harness 链路已通过；本轮不再发送付费请求，避免超过原 20 CA 预算。
 
 复现入口：`python scripts/verify_desktop_changes.py`，以及 `npm --prefix frontend run smoke`、`npm --prefix frontend run audit:buttons`、`npm --prefix frontend run build`。
+
+最终冻结 EXE 已在录制目录启动，界面实际点击确认二次查找面板可展开，任务自动带入当前 AI Infra 岗位及四项已有项目。没有点击授权或发起付费模型请求。文件 SHA-256：`26DA99912C79B0973128E2CA5EACF24F6EC5AA5C815BCC3ED8E4B661B0E4E5E1`。
