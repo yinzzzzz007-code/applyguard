@@ -452,4 +452,6 @@ GitHub 可选入口新增点按引导：`AgentConnector.tsx`、`GithubGuideTip.t
 
 ## 历史页面回放（2026-11-25）
 
+简历审查和陈述核验中的“结束回放，保留当前正文”切回正常流程，历史证据结果不再作为当前核验；回放前正文仍可从自动备份找回。模型设置保存后触发配置刷新，润色按钮无需切换窗口。小云朵按当前页面区分回放和正常引导。回归入口：`npm --prefix frontend run smoke` 中 `cloud-guide.test.mjs` 与 `review-session.test.mjs`。
+
 简历审查和陈述核验均可进入“历史版本”。`groundingHistory.ts` 保存正文、改写、原子判断和引用；`GroundingHistory.tsx` 可展开对照或打开当时页面。回放前先备份当前正文，恢复后清除当前处理选择并标记待核验；历史结果仅供展示，不能用于严格导出。首页“载入完整示例”附带明确标注的课堂模拟回放，不请求模型。前端回归入口 `npm --prefix frontend run smoke`，包含回放、采用建议后仍需核验以及跨申请隔离。

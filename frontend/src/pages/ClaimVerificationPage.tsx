@@ -10,6 +10,7 @@ import {reviewMarks} from '../resume/reviewHighlights'
 import {ClaimStatement} from '../components/ClaimStatement'
 import { AtomicEvidence } from '../components/AtomicEvidence'
 import { GroundingHistory } from '../components/GroundingHistory'
+import { HistoryReplayNotice } from '../components/HistoryReplayNotice'
 import { RadarDialog } from '../components/RadarDialog'
 import {QuickReviewActions} from '../components/QuickReviewActions'
 import { useDemo } from '../context/DemoContext'
@@ -298,7 +299,7 @@ export function ClaimVerificationPage() {
 
       {rechecking && <p id="claims-progress" role="status" className="callout">{runningElsewhere ? '另一份草稿正在核验，完成后可核验当前正文。' : '已发送新的核验请求，正在等待模型。可以切到站内其他页面，回来查看结果。'}</p>}
       {attempt?.error && <p role="alert" className="callout warn">{attempt.error}</p>}
-      {workflow._historyReplay && <p className="callout warn" role="status"><strong>历史回放：</strong>{workflow._historyReplay.label}。你可以编辑或保留正文，当前材料仍需重新核验。{workflow._historyReplay.legacy ? ' 此旧版未保存逐项核验引用。' : '下方为当时的核验结果。'}</p>}
+      <HistoryReplayNotice />
       <GroundingHistory />
       {receipt && !attempt?.error && !rechecking && <div role="status" className={receipt.error ? 'callout warn' : 'callout'} data-testid="verification-receipt">
         <strong>{receipt.error ? '后端已返回，本次核验未完成' : '本次模型核验已返回'}</strong>

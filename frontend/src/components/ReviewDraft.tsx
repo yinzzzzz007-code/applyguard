@@ -13,6 +13,7 @@ import { saveTextVersion } from '../resume/groundingHistory'
 import { AtomicEvidence } from './AtomicEvidence'
 import { GroundedExport } from './GroundedExport'
 import { SAGPolishPanel, type SAGPolishHandle } from './SAGPolishPanel'
+import { HistoryReplayNotice } from './HistoryReplayNotice'
 
 export function ReviewDraft() {
   const location = useLocation()
@@ -27,11 +28,12 @@ export function ReviewDraft() {
     async function check() {
       const {data} = await getApiClient().getHealth()
       if (active) setCloudIssue(!data ? '无法连接本机服务，请检查服务后刷新页面。'
-        : data.cloud_model_configured === false ? '当前后端未配置云端模型密钥。请以云端模式启动服务，再刷新本页。' : '')
+        : data.cloud_model_configured === false ? '请先在右上角「模型设置」中配置服务地址、模型和 API Key。' : '')
     }
     void check()
     window.addEventListener('focus',check)
-    return () => {active = false; window.removeEventListener('focus',check)}
+    window.addEventListener('applyguard:model-settings-updated',check)
+    return () => {active = false; window.removeEventListener('focus',check); window.removeEventListener('applyguard:model-settings-updated',check)}
   },[])
   const [selectedId,setSelectedId] = useState('')
   const [toolsOpen,setToolsOpen] = useState(() => window.matchMedia('(min-width:761px)').matches)
@@ -70,7 +72,7 @@ export function ReviewDraft() {
     document.getElementById(`edit-${id}`)?.focus()
   }
   return <div className="review-editor">
-    {workflow._historyReplay && <p className="callout warn" role="status"><strong>历史回放：</strong>{workflow._historyReplay.label}。你可以查看、采用建议或编辑；当时的材料核验仅供参考，当前正文需重新核验。{workflow._historyReplay.legacy && ' 此旧版未保存逐项核验引用。'}</p>}
+    <HistoryReplayNotice />
     <SAGPolishPanel ref={polishPanel} cloudIssue={cloudIssue} job={polishJob} />
     <div className="review-workspace">
       <div className="review-draft">

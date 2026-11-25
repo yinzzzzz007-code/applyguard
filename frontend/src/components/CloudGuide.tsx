@@ -18,7 +18,7 @@ export function CloudGuide() {
   const bubble=useRef<HTMLElement|null>(null)
   const currentRequest=request?.pathname===pathname?request:null
   const requirement=currentRequest?.requirements[0]
-  const step=guideForPage(pathname,finished?.pathname===pathname?finished.id:undefined,{hasWorkflow:!!workflow,hasForm:!!resumeForm,formDirty:!!resumeForm?.dirty,claimCount:workflow?.resume_claims.length??0,editingIds:Object.keys(reviewDrafts)})
+  const step=guideForPage(pathname,finished?.pathname===pathname?finished.id:undefined,{hasWorkflow:!!workflow,hasForm:!!resumeForm,formDirty:!!resumeForm?.dirty,claimCount:workflow?.resume_claims.length??0,editingIds:Object.keys(reviewDrafts),historyReplay:!!workflow?._historyReplay})
   const visible=!loadingWorkflow&&!progress.dismissed&&(!!requirement||!!step)
   const showMessage=expanded||!!currentRequest
   const label=requirement?.label??step?.label??''

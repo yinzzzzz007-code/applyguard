@@ -21,6 +21,13 @@ export function invalidateRestoredWorkflow(workflow: WorkflowResponse, reason = 
     human_confirmation: {...workflow.human_confirmation, allowed_actions: ['EDIT', 'CANCEL']}}
 }
 
+export function exitHistoryReplay(workflow: WorkflowResponse): WorkflowResponse {
+  if (!workflow._historyReplay) return workflow
+  const next = invalidateRestoredWorkflow(workflow, '已结束历史回放，请按当前正文重新核验。')
+  return {...next, _historyReplay: undefined,
+    grounding: next.grounding ? {...next.grounding, results: {}} : undefined}
+}
+
 export function loadReviewSession(storage: Pick<Storage, 'getItem'>): ReviewSessionSnapshot | null {
   try {
     const value = JSON.parse(storage.getItem(KEY) ?? 'null') as ReviewSessionSnapshot | null

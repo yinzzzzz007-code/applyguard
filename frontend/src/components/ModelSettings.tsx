@@ -23,11 +23,12 @@ export function ModelSettings() {
       const data=await response.json()
       if(!response.ok)throw new Error(data.error?.message||'保存失败。')
       setForm(data);setKey('');setMessage('已保存。新的模型请求将使用此配置。')
+      window.dispatchEvent(new Event('applyguard:model-settings-updated'))
     } catch(e) {setMessage(e instanceof Error?e.message:'无法连接本地后端。')}
     finally {setBusy(false)}
   }
   return <div className="model-settings">
-    <button type="button" className="text-action" onClick={()=>open?setOpen(false):void load()} aria-expanded={open}>模型设置</button>
+    <button type="button" className="text-action" data-guide="model-settings" onClick={()=>open?setOpen(false):void load()} aria-expanded={open}>模型设置</button>
     {open&&<section className="model-settings-panel" aria-label="模型设置">
       <h2>模型设置</h2><p>润色和核验使用你配置的云端服务。密钥保存在本机。</p>
       <label>服务地址<input className="resume-input" value={form.base_url} placeholder="https://.../v1" onChange={e=>setForm({...form,base_url:e.target.value})}/></label>

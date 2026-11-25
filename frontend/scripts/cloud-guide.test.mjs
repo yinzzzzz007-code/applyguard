@@ -70,3 +70,12 @@ test('resume guide points to the actual prerequisite instead of an unusable poli
  assert.equal(guideForPage('/resume',undefined,{...state,hasWorkflow:false}).href,'/jd')
  assert.equal(guideForPage('/resume',undefined,{...state,formDirty:true}).selector,'[data-guide="draft-pool"]')
 })
+
+test('replay guidance stays on the current page and returns to normal guidance after exit',()=>{
+ const state={hasWorkflow:true,hasForm:true,formDirty:false,claimCount:3,editingIds:[],historyReplay:true}
+ for(const path of ['/resume','/claims']) {
+   assert.equal(guideForPage(path,undefined,state).selector,'[data-guide="exit-history"]')
+   assert.equal(guideForPage(path,undefined,state).href,path)
+   assert.notEqual(guideForPage(path,undefined,{...state,historyReplay:false}).selector,'[data-guide="exit-history"]')
+ }
+})

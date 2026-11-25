@@ -36,10 +36,12 @@ export function reopenGuide(progress:GuideProgress):GuideProgress {
   return {...progress,dismissed:false}
 }
 
-export type GuideContext={hasWorkflow:boolean;hasForm:boolean;formDirty:boolean;claimCount:number;editingIds:string[]}
+export type GuideContext={hasWorkflow:boolean;hasForm:boolean;formDirty:boolean;claimCount:number;editingIds:string[];historyReplay?:boolean}
 export function guideForPage(pathname:string, completedHere?:string, context?:GuideContext) {
   const path=pathname.length>1?pathname.replace(/\/+$/,''):pathname
   const current=GUIDE_PAGES.find(item=>item.href===path)
+  if(context?.historyReplay && (current?.id==='resume'||current?.id==='claims'))
+    return {...current,selector:'[data-guide="exit-history"]',label:'当前是历史回放，可以查看和编辑当时的结果。点击这里结束回放，保留当前正文并继续正常流程。'}
   if(current?.id==='claims' && context?.editingIds.length && completedHere!=='claims')
     return {...current,selector:`[id=${JSON.stringify('edit-'+context.editingIds[0])}]`,label:'这条陈述还在编辑。在蓝框内选择“保存修改”或“取消编辑”。'}
   if(current?.id==='resume'&&context&&completedHere!=='resume') {
