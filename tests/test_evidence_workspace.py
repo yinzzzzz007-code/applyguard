@@ -9,6 +9,7 @@ import os
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,6 +31,29 @@ class EvidenceWorkspaceServiceTests(unittest.TestCase):
 
     def _b64(self, path: Path) -> str:
         return base64.b64encode(path.read_bytes()).decode("ascii")
+
+    def test_nearby_project_filename_requires_confirmation_and_preserves_link(self):
+        ws=self.ew.create_workspace('项目')
+        project={'id':'p1','title':'已完成.AI编译器图优化','description':'优化计算图'}
+        form={'candidateId':'candidate-one','projects':[project]}
+        payload=base64.b64encode('# 动态计算图优化\n完成图算子融合。'.encode()).decode()
+        imported=self.ew.import_files(ws['workspace_id'],[{'relative_path':'02_AI编译器动态计算图优化/README.md','content_base64':payload}])
+        evidence=imported['files'][0]['evidence_id']
+        with patch('backend.services.local_store.load_resume_draft',return_value=form):
+            report=self.ew.match_resume(ws['workspace_id'],{'projects':[project]})
+            self.assertEqual(report['results'][0]['status'],'NEEDS_CONFIRM')
+            self.ew.review_evidence(evidence,{'review_state':'REVIEWED','normalized_fields':{}})
+            link={'target_type':'project','target_id':'p1','evidence_id':evidence}
+            with self.assertRaisesRegex(ValueError,'无法自动确认'):
+                self.ew.create_link(link)
+            self.ew.create_link({**link,'association_confirmed':True})
+            self.assertEqual(self.ew.match_resume(ws['workspace_id'],{'projects':[project]})['results'][0]['status'],'LINKED')
+        with patch('backend.services.local_store.load_resume_draft',return_value={**form,'candidateId':'another'}):
+            self.assertNotEqual(self.ew.match_resume(ws['workspace_id'],{'projects':[project]})['results'][0]['status'],'LINKED')
+
+    def test_nearby_project_does_not_match_unrelated_readme(self):
+        from backend.services.evidence_scope import suggest_project_identity
+        self.assertFalse(suggest_project_identity('ActionPersona','Finbot/README.md','# Finbot'))
 
     def test_import_review_link_conflict_and_stale(self) -> None:
         ws = self.ew.create_workspace("测试工作区")

@@ -91,6 +91,7 @@ body { font: 400 var(--text-body)/1.7 var(--font); }
 }
 .workspace-main .stack { gap: var(--space-2); }
 .workspace-main .btn-row { gap: var(--space-1); }
+.workspace-main .confirm-actions { align-items: flex-start; gap: 16px; margin: 24px 0; }
 .workspace-main .btn-row.end { margin-top: var(--space-3); padding-top: var(--space-3); }
 
 .workspace-main :is(

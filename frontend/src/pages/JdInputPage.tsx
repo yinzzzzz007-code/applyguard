@@ -12,6 +12,7 @@ import { invalidateRestoredWorkflow } from '../resume/reviewSession'
 import { canPrepareJob, JOB_STATUS } from '../jobs'
 import { Button } from '../components/ui/button'
 import { Card, CardHeader, CardTitle } from '../components/ui/card'
+import { AgentConnector } from '../components/AgentConnector'
 
 export function JdInputPage() {
   const [params] = useSearchParams()
@@ -43,6 +44,7 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
   const [lastParseMode, setLastParseMode] = useState<WorkflowParseMode | null>(null)
   const [parseMode, setParseMode] = useState<WorkflowParseMode>('offline')
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [discoverExperiences, setDiscoverExperiences] = useState(false)
   const [library, setLibrary] = useState<JobLibrary | null>(null)
   const [libraryError, setLibraryError] = useState('')
   const [libraryBusy, setLibraryBusy] = useState(false)
@@ -391,13 +393,23 @@ function JdInputSession({ jobId }: { jobId: string | null }) {
               </div>
             )}
           <div className="btn-row end">
-            <Link className="btn secondary" to="/evidence?find_experiences=1">让 Harness 查找可能遗漏的经历</Link>
+            <button className="btn secondary" type="button" onClick={() => setDiscoverExperiences(true)}>让 Harness 查找可能遗漏的经历</button>
             <button type="button" className="btn primary" onClick={() => navigate('/match')}>
               下一步：证据匹配
             </button>
           </div>
+
         </div>
       )}
+          {discoverExperiences && <AgentConnector inlineDiscovery ensureWorkspace={async () => {
+            const api = getApiClient()
+            const listed = await api.listEvidenceWorkspaces()
+            const stored = sessionStorage.getItem('applyguard.evidence.workspaceId')
+            const existing = listed.data?.find(item => item.workspace_id === stored) || listed.data?.[0]
+            if (existing) return existing.workspace_id
+            const created = await api.createEvidenceWorkspace('本地证据工作区')
+            return created.data?.workspace_id || null
+          }} onImported={async () => {window.dispatchEvent(new Event('applyguard:evidence-changed'))}} />}
       {status === 'idle' && (
         <p className="muted tip">
           岗位可离线解析；使用模型解析、SAG检索或原子事实核验需先在后端配置密钥。

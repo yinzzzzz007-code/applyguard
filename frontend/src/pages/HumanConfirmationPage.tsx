@@ -263,6 +263,50 @@ export function HumanConfirmationPage() {
         </p>
       </header>
 
+      <div className="btn-row confirm-actions">
+        <button type="button" className="btn secondary" onClick={() => navigate('/ats')}>
+          回退申请内容检查
+        </button>
+        {allowed.includes('EDIT') && (
+          <button type="button" className="btn secondary" onClick={() => navigate('/jd')}>
+            编辑（回岗位说明）
+          </button>
+        )}
+        {allowed.includes('CANCEL') && (
+          <button type="button" className="btn secondary" onClick={() => resetFlow()}>
+            取消并重置
+          </button>
+        )}
+        {blocked ? (
+          <button
+            type="button"
+            className="btn primary"
+            onClick={() => {
+              if (finishSimulation('BLOCKED_REVIEWED')) navigate('/history')
+            }}
+          >
+            去简历生成
+          </button>
+        ) : (
+          <>
+            <ActionButton
+              type="button"
+              className="btn primary"
+              disabledReason={simulatedConfirmed?'本次模拟确认已经完成。':'请先完成当前页面列出的确认条件；阻断项不能直接确认。'} disabled={!canConfirm || simulatedConfirmed}
+              onClick={() => {
+                void validateExport().then((valid) => {
+                  if (valid) finishSimulation('SIMULATED_CONFIRMED')
+                  else setHistoryError('证据状态已改变或无法连接后端，请重新核验。')
+                })
+              }}
+            >
+              模拟确认（非投递）
+            </ActionButton>
+            <Link className="btn secondary" to="/history">去简历生成</Link>
+          </>
+        )}
+      </div>
+
       {readOnlyView && (
         <div className="callout warn">
           {blocked ? (
@@ -558,49 +602,7 @@ export function HumanConfirmationPage() {
       )}
       {historyError && <div className="callout danger">{historyError}</div>}
 
-      <div className="btn-row end">
-        <button type="button" className="btn secondary" onClick={() => navigate('/ats')}>
-          回退申请内容检查
-        </button>
-        {allowed.includes('EDIT') && (
-          <button type="button" className="btn secondary" onClick={() => navigate('/jd')}>
-            编辑（回岗位说明）
-          </button>
-        )}
-        {allowed.includes('CANCEL') && (
-          <button type="button" className="btn secondary" onClick={() => resetFlow()}>
-            取消并重置
-          </button>
-        )}
-        {blocked ? (
-          <button
-            type="button"
-            className="btn primary"
-            onClick={() => {
-              if (finishSimulation('BLOCKED_REVIEWED')) navigate('/history')
-            }}
-          >
-            去简历生成
-          </button>
-        ) : (
-          <>
-            <ActionButton
-              type="button"
-              className="btn primary"
-              disabledReason={simulatedConfirmed?'本次模拟确认已经完成。':'请先完成当前页面列出的确认条件；阻断项不能直接确认。'} disabled={!canConfirm || simulatedConfirmed}
-              onClick={() => {
-                void validateExport().then((valid) => {
-                  if (valid) finishSimulation('SIMULATED_CONFIRMED')
-                  else setHistoryError('证据状态已改变或无法连接后端，请重新核验。')
-                })
-              }}
-            >
-              模拟确认（非投递）
-            </ActionButton>
-            <Link className="btn secondary" to="/history">去简历生成</Link>
-          </>
-        )}
-      </div>
+
     </section>
   )
 }

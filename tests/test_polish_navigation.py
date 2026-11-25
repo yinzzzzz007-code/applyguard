@@ -32,6 +32,9 @@ class PolishNavigationTests(unittest.TestCase):
                 self.assertTrue(entered.wait(2))
                 self.assertEqual(jobs.status(None,body,start=True)['state'],'running')
                 self.assertEqual(jobs.status(None,body)['state'],'running')
+                edited={**body,'claims':[{'claim_id':'c1','text':'Edited.'}]}
+                self.assertIn('另一版正文',jobs.status(None,edited,start=True)['message'])
+                self.assertEqual(calls.call_count,1)
             finally:
                 finish.set()
             deadline=time.monotonic()+4

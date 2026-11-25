@@ -2,6 +2,7 @@
 import json
 import re
 import unicodedata
+from difflib import SequenceMatcher
 from pathlib import PurePosixPath
 
 
@@ -71,4 +72,23 @@ def project_match(title, filename, body, origin):
             fragment = word[start:start + 10]
             if len(fragment) == 10 and fragment not in generic_fragments and fragment in corpus:
                 return True
+    return False
+
+
+def suggest_project_identity(title, filename, text):
+    """A fuzzy filename candidate, never an automatic ownership decision."""
+    origin, _ = source_identity(filename, text)
+    title = re.sub(r'^(?:已完成|进行中|已结束|项目)[\s.：:·_-]*', '', title.strip())
+    wanted = normalized(title)
+    if len(wanted) < 7:
+        return False
+    identity = origin.get('path') or filename
+    parts = re.split(r'[/\\]', identity)
+    for part in parts:
+        actual = normalized(re.sub(r'^\d+[_\-. ]*', '', part))
+        if len(actual) < 7 or actual in {'readmemd', 'readmetxt'}:
+            continue
+        blocks = [block for block in SequenceMatcher(None, wanted, actual, autojunk=False).get_matching_blocks() if block.size >= 3]
+        if blocks and max(block.size for block in blocks) >= 4 and sum(block.size for block in blocks) / len(wanted) >= .8:
+            return True
     return False

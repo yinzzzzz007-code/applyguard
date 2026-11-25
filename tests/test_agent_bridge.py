@@ -153,4 +153,16 @@ class AgentBridgeTests(unittest.TestCase):
             result=a.ui_call({**self.c,'action':'accept','card_id':c['id'],'workspace_id':ws['workspace_id'],'confirm_source':True,'confirm_numbers':True})
             self.assertEqual(result['state'],'NEEDS_REVIEW');self.assertEqual(len(list_files(ws['workspace_id'])),1)
 
+    def test_candidate_can_be_imported_after_explicit_source_and_number_review(self):
+        from backend.services.evidence_workspace import create_workspace,list_files
+        with tempfile.TemporaryDirectory() as db,patch.dict(os.environ,{'APPLYGUARD_EVIDENCE_DIR':db}):
+            ws=create_workspace('synthetic');c=self.card()
+            self.assertEqual(c['state'],'CANDIDATE')
+            args={**self.c,'action':'accept','card_id':c['id'],'workspace_id':ws['workspace_id']}
+            with self.assertRaises(ValueError):a.ui_call({**args,'confirm_source':False,'confirm_numbers':True})
+            with self.assertRaises(ValueError):a.ui_call({**args,'confirm_source':True,'confirm_numbers':False})
+            result=a.ui_call({**args,'confirm_source':True,'confirm_numbers':True})
+            self.assertEqual(result['state'],'NEEDS_REVIEW')
+            self.assertEqual(len(list_files(ws['workspace_id'])),1)
+
 if __name__=='__main__':unittest.main()

@@ -43,7 +43,11 @@ export function usePolishJob() {
       const report=job.grounding
       if(job.state!=='ready'||!report||report.run_id===draft.grounding?.run_id)return
       if(editing){setMessage('建议已保存在本机。请先保存或取消正在编辑的正文。');return}
-      if(!draft.resume_claims.every(c=>report.results[c.claim_id]?.original_text===c.text))return
+      if(!draft.resume_claims.every(c=>report.results[c.claim_id]?.original_text===c.text)){
+        retryRun.current=job.run_id||''
+        setMessage(report.error ? `本次润色未完成：${report.error}。原文已保留，可以重试。` : '结果与当前正文不一致，或部分经历未返回。原文已保留，请重新生成。')
+        return
+      }
       const next={...invalidateRestoredWorkflow(draft,'润色建议待审阅，请按当前正文核验。'),grounding:report,_historyReplay:undefined}
       // Browser history is optional. A full storage quota must not hide the server result.
       try {

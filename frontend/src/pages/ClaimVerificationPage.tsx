@@ -220,8 +220,8 @@ export function ClaimVerificationPage() {
   const failed = !workflow.requires_reverification && workflow.grounding?.error
   const kept = workflow.resume_claims.filter(c => claimDecisions[c.claim_id]?.decision !== 'reject').length
   const nextReason = reviewAdvanceReason
-  function advance() {
-    if (finishReviewStep(true)) { completeGuideStep('claims'); navigate('/ats') }
+  function advance(destination = '/ats') {
+    if (finishReviewStep(true)) { completeGuideStep('claims'); navigate(destination) }
   }
 
   const cardData = rows.map((verification,index) => {
@@ -459,8 +459,11 @@ export function ClaimVerificationPage() {
 
       <div className="claim-page-footer">
         <p className="muted" role="status">{nextReason ?? `将保存当前编辑并保留 ${kept} 条陈述。待确认和冲突会随个人稿保留记录。`}</p>
-        <ActionButton id="claims-next" type="button" className="btn primary" guideRequirements={pendingEdits} disabledReason={nextReason} disabled={!!nextReason} onClick={advance}>
+        <ActionButton id="claims-next" type="button" className="btn primary" guideRequirements={pendingEdits} disabledReason={nextReason} disabled={!!nextReason} onClick={() => advance()}>
           知悉并保留，下一步：申请内容检查
+        </ActionButton>
+        <ActionButton type="button" className="btn secondary" guideRequirements={pendingEdits} disabledReason={nextReason} disabled={!!nextReason} onClick={() => advance('/history')}>
+          跳过申请内容检查，去简历生成
         </ActionButton>
       </div>
     </section>

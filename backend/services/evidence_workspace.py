@@ -1788,16 +1788,21 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
         "REJECTED": 0,
     }
 
+    from backend.services.local_store import load_resume_draft
+    from backend.services.evidence_scope import matches_item, suggest_project_identity
+    current_candidate=(load_resume_draft() or {}).get('candidateId')
+    evidence_by_id={ev['evidence_id']:ev for ev in evidence_cards}
     for item in items:
         key = (item["target_type"], item["target_id"])
         existing = links_by_target.get(key) or []
-        from backend.services.evidence_scope import matches_item
         raw=item.get('raw') or {}
         title=raw.get('name') or raw.get('title') or raw.get('organization') or ''
-        eligible=[ev for ev in evidence_cards if not title or matches_item(title,ev.get('relative_path') or '',
-                  ev.get('corpus') or '',organization=raw.get('organization',''),description=raw.get('description',''),kind=key[0])]
-        relevant_ids={ev['evidence_id'] for ev in eligible}
-        active = [l for l in existing if l["link_state"] == "ACTIVE" and l["evidence_id"] in relevant_ids]
+        strict_ids={ev['evidence_id'] for ev in evidence_cards if not title or matches_item(title,ev.get('relative_path') or '',
+                  ev.get('corpus') or '',organization=raw.get('organization',''),description=raw.get('description',''),kind=key[0])}
+        eligible=[ev for ev in evidence_cards if ev['evidence_id'] in strict_ids or (key[0]=='project' and suggest_project_identity(title,ev.get('relative_path') or '',ev.get('corpus') or ''))]
+        active = [l for l in existing if l["link_state"] == "ACTIVE" and
+                  (l["evidence_id"] in strict_ids or (current_candidate and l['association_confirmed'] and l['candidate_id']==current_candidate
+                   and l['file_sha256']==(evidence_by_id.get(l['evidence_id']) or {}).get('file_sha256')))]
         stale = [l for l in existing if l["link_state"] == "STALE"]
         rejected_ids = {l["evidence_id"] for l in existing if l["link_state"] == "REJECTED"}
 
@@ -1943,6 +1948,9 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
                 core_text=item.get("core_text"),
                 target_type=item.get("target_type"),
             )
+            if ev['evidence_id'] not in strict_ids:
+                score=max(score, 46)
+                notes.insert(0, '文件路径与项目名称相近，请人工确认是否属于同一项目')
             ranked.append((score, ev, notes, conflicts))
         ranked.sort(key=lambda x: x[0], reverse=True)
         best = ranked[0] if ranked else None
@@ -1971,7 +1979,7 @@ def match_resume(workspace_id: str, body: dict[str, Any]) -> dict[str, Any]:
         if best and best[0] >= 45:
             score, ev, notes, conflicts = best
             field_checks = _build_field_checks(ev)
-            if ev["review_state"] == "REVIEWED" and score >= 70:
+            if ev["review_state"] == "REVIEWED" and score >= 70 and ev['evidence_id'] in strict_ids:
                 status = "MATCHED"
                 action = "自动匹配仅作推荐：请核对字段后确认关联，不会自动证明全部信息"
             else:

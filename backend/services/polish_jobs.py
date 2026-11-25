@@ -10,6 +10,7 @@ from backend.services.sag_grounding import evidence_snapshot, fingerprint
 
 _lock = threading.Lock()
 _running = set()
+_running_by_application = {}
 
 
 def job_file(request):
@@ -49,6 +50,9 @@ def _run(path, vault, request):
         result = polish_workflow(vault, request)
         run_id = result['grounding']['run_id']
         record = {'state':'ready', 'run_id':run_id}
+    except ValueError as exc:
+        logging.warning('Background resume polish rejected for %s: %s', path.stem[:12], exc)
+        record = {'state':'failed', 'message':f'后台润色未完成：{exc}。原文已保留。'}
     except Exception:
         logging.exception('Background resume polish failed for %s', path.stem[:12])
         record = {'state':'failed', 'message':'后台润色未完成，可以重新发起。原文已保留。'}
@@ -57,13 +61,19 @@ def _run(path, vault, request):
             save(path, record)
         finally:
             _running.discard(path)
+            key = (request['candidate_id'], request['application_id'])
+            if _running_by_application.get(key) == path:
+                _running_by_application.pop(key, None)
 
 
 def status(vault, request, *, start=False):
     path = job_file(request)
+    key = (request['candidate_id'], request['application_id'])
     with _lock:
         if path in _running:
             return {'state':'running'}
+        if key in _running_by_application:
+            return {'state':'running', 'message':'另一版正文仍在后台润色。结果不会覆盖当前正文；完成后可按当前正文重新生成。'}
         record = _read(path)
         if start:
             if request.get('local_only') is not False:
@@ -72,10 +82,12 @@ def status(vault, request, *, start=False):
             if record.get('state') != 'ready' or request.get('known_run') == record.get('run_id'):
                 save(path, {'state':'running'})
                 _running.add(path)
+                _running_by_application[key] = path
                 try:
                     threading.Thread(target=_run,args=(path,vault,request),daemon=True).start()
                 except RuntimeError:
                     _running.discard(path)
+                    _running_by_application.pop(key, None)
                     raise
                 return {'state':'running'}
     if record['state'] == 'running':

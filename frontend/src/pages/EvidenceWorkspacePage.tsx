@@ -1203,13 +1203,17 @@ export function EvidenceWorkspacePage() {
     const checksToSave = (matchKey(row) === selectedMatchKey && fieldChecksDraft.length
       ? fieldChecksDraft
       : row.field_checks) || []
-    const linked = await api.createEvidenceLink({
+    let linked = await api.createEvidenceLink({
       target_type: row.target_type,
       target_id: row.target_id,
       evidence_id: row.evidence_id,
       link_state: 'ACTIVE',
       field_checks: checksToSave,
     })
+    if (linked.error?.message.includes('无法自动确认材料属于该经历') && window.confirm('系统不能自动确认这份材料属于该经历。请核对项目名称和来源，确认关联吗？关联不代表其中的事实已经核验。')) {
+      linked = await api.createEvidenceLink({target_type: row.target_type, target_id: row.target_id,
+        evidence_id: row.evidence_id, link_state: 'ACTIVE', field_checks: checksToSave, association_confirmed: true})
+    }
     setBusy('')
     if (linked.error || !linked.data) {
       setMessage(linked.error?.message || '关联失败')

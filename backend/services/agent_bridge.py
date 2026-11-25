@@ -280,8 +280,8 @@ def ui_call(body, server_port=None):
         if g['disclosure'] != 'cloud_allowed':
             raise ValueError('本次授权禁止向云端模型发送材料，请重新选择外发规则。')
         card = g['cards'].get(body.get('card_id'))
-        if not card or card['state'] not in {'NEEDS_REVIEW', 'IMPORTED'} or card['purpose'] != 'contribution':
-            raise ValueError('请先让 Agent 回传本人贡献相关的候选原文。')
+        if not card or card['state'] not in {'CANDIDATE', 'NEEDS_REVIEW', 'IMPORTED'} or card['purpose'] != 'contribution':
+            raise ValueError('请先查找到本人贡献相关的候选原文。')
         job = str(body.get('job', '')).strip()
         if not job:
             raise ValueError('请先选择岗位或填写岗位说明。')
@@ -319,7 +319,7 @@ def ui_call(body, server_port=None):
                 'notice': '候选经历需本人确认，尚未完成事实核验。'}
     if body.get('action')=='accept':
         c=g['cards'].get(body.get('card_id'))
-        if not c or c['state']!='NEEDS_REVIEW': raise ValueError('请先等待Agent回传候选解释')
+        if not c or c['state'] not in {'CANDIDATE','NEEDS_REVIEW'}: raise ValueError('没有可导入的候选原文')
         if c['purpose']=='background': raise ValueError('技术背景不能作为个人经历导入')
         if body.get('confirm_source') is not True: raise ValueError('请核对原文与本人归属')
         if c['numeric_confirmation_required'] and body.get('confirm_numbers') is not True: raise ValueError('量化内容必须单独确认')
@@ -333,7 +333,8 @@ def ui_call(body, server_port=None):
         content='# Agent候选证据（待陈述核验）\n\n'+json.dumps(provenance,ensure_ascii=False)+'\n\n'+c['quote']
         result=import_files(str(body.get('workspace_id','')),[{'relative_path':'agent-'+c['id']+'.md',
             'content_base64':base64.b64encode(content.encode()).decode()}])
-        if any(row.get('state')=='FAILED' or row.get('parse_error') for row in result.get('results',[])):
+        files=result.get('files',[])
+        if not files or any(row.get('state')=='FAILED' or row.get('parse_error') or not row.get('evidence_id') for row in files):
             raise ValueError('证据导入失败，请检查工作区')
         c['state']='IMPORTED'
         return {'import':result,'state':'NEEDS_REVIEW','note':'人工确认来源不等于陈述已核验'}
