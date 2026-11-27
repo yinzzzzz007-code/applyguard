@@ -19,7 +19,7 @@ def call(action,arguments=None):
     try:
         # Capabilities and source snippets must stay on loopback, even when the
         # desktop inherits a system/HTTP proxy. GitHub outbound uses its own path.
-        with build_opener(ProxyHandler({}),NoRedirect).open(req,timeout=90) as r:return json.load(r)
+        with build_opener(ProxyHandler({}),NoRedirect).open(req,timeout=240) as r:return json.load(r)
     except Exception as exc:
         raise ValueError('ApplyGuard拒绝请求或不可用；检查授权、期限和服务状态') from None
 

@@ -64,6 +64,8 @@ test('progress separates pairing, retrieval, submission and timed out sessions',
   assert.match(connectionDetail(p,71000),/超过 60 秒/)
   assert.equal(connectionStage(connection,true,11000,{...p,run_state:'timed_out'}),'检索已超时')
   assert.equal(connectionStage(connection,true,11000,{...p,submitted:1}),'已回传引用，待确认')
+  assert.equal(connectionStage(connection,true,11000,{...p,stage:'awaiting_review'}),'等待确认外发片段')
+  assert.match(connectionDetail({...p,stage:'awaiting_review'},11000),/请选择/)
 })
 
 test('GitHub guide validates exact repository scope and never accepts credentials as a repository',async()=>{

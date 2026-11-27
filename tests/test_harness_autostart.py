@@ -1,4 +1,5 @@
 import os
+import hashlib
 import tempfile
 import threading
 import time
@@ -60,6 +61,76 @@ class HarnessAutostartTests(unittest.TestCase):
         with patch.dict(os.environ,{'APPLYGUARD_AI_API_KEY':''}), patch('backend.services.harness_autostart.setup_info',return_value=self.setup):
             with self.assertRaisesRegex(ValueError,'模型设置'):
                 bridge.ui_call({**self.connection,'action':'start_harness'},server_port=8766)
+
+    def test_three_workers_run_concurrently_in_separate_profiles(self):
+        g=bridge.GRANTS[self.connection['id']]
+        g['workers']=3
+        barrier=threading.Barrier(3,timeout=5)
+        seen=[]
+        def fake_run(command,*,env,cwd,**kwargs):
+            seen.append((str(cwd),env['APPLYGUARD_AGENT_ID'],command[-1]))
+            barrier.wait()
+            return HarnessResult(0,False)
+        with patch.dict(os.environ,{'APPLYGUARD_AI_API_KEY':'test-only','APPLYGUARD_LOCAL_DIR':str(self.root),
+                                    'APPLYGUARD_PII_NER_MODE':'off'}), \
+             patch('backend.services.harness_autostart.setup_info',return_value=self.setup), \
+             patch('backend.services.harness_autostart.retrieval_patch',return_value='test'), \
+             patch('backend.services.harness_autostart.run_harness',side_effect=fake_run):
+            bridge.ui_call({**self.connection,'action':'start_harness'},server_port=8766)
+            for _ in range(500):
+                status=bridge.ui_call({**self.connection,'action':'status'})
+                if status['progress']['run_state']=='finished':break
+                time.sleep(.01)
+            self.assertEqual(status['progress']['run_state'],'finished')
+            self.assertEqual(status['progress']['workers_finished'],3)
+            self.assertEqual(len({row[0] for row in seen}),3)
+            self.assertTrue(all(row[1]==self.connection['id'] for row in seen))
+            self.assertEqual(len({row[2] for row in seen}),3)
+
+    def test_conflict_review_receives_only_user_approved_sources(self):
+        g=bridge.GRANTS[self.connection['id']]
+        g['review_disclosures']=True
+        for key in ('a','b','private'):(self.root/f'{key}.txt').write_text(key,encoding='utf8')
+        g['cards']={key:{'id':key,'quote':key,'source':{'kind':'local','root':str(self.root.resolve()),
+            'path':f'{key}.txt','version':hashlib.sha256(key.encode()).hexdigest()},'state':'CANDIDATE'}
+            for key in ('a','b','private')}
+        g['disclosed_cards']={'a','b'}
+        captured=[]
+        def review(cards,privacy,client,**kwargs):
+            captured.extend(card['id'] for card in cards)
+            return [{'state':'POTENTIAL_CONFLICT'}]
+        with patch.dict(os.environ,{'APPLYGUARD_AI_API_KEY':'test-only','APPLYGUARD_LOCAL_DIR':str(self.root),
+                                    'APPLYGUARD_PII_NER_MODE':'off'}), \
+             patch('backend.services.harness_autostart.setup_info',return_value=self.setup), \
+             patch('backend.services.harness_autostart.retrieval_patch',return_value='test'), \
+             patch('backend.services.harness_autostart.run_harness',return_value=HarnessResult(0,False)), \
+             patch('backend.services.harness_conflicts.review_conflicts',side_effect=review):
+            bridge.ui_call({**self.connection,'action':'start_harness'},server_port=8766)
+            for _ in range(500):
+                status=bridge.ui_call({**self.connection,'action':'status'})
+                if status['progress']['run_state']=='finished':break
+                time.sleep(.01)
+            self.assertEqual(set(captured),{'a','b'})
+            self.assertEqual(status['progress']['conflict_state'],'finished')
+            self.assertEqual(status['conflicts'][0]['state'],'POTENTIAL_CONFLICT')
+
+    def test_failed_parallel_worker_is_reported_as_partial(self):
+        g=bridge.GRANTS[self.connection['id']]
+        g['workers']=3
+        def fake_run(command,**kwargs):
+            return HarnessResult(1 if 'technical evidence' in command[-1] else 0,False)
+        with patch.dict(os.environ,{'APPLYGUARD_AI_API_KEY':'test-only','APPLYGUARD_LOCAL_DIR':str(self.root),
+                                    'APPLYGUARD_PII_NER_MODE':'off'}), \
+             patch('backend.services.harness_autostart.setup_info',return_value=self.setup), \
+             patch('backend.services.harness_autostart.retrieval_patch',return_value='test'), \
+             patch('backend.services.harness_autostart.run_harness',side_effect=fake_run):
+            bridge.ui_call({**self.connection,'action':'start_harness'},server_port=8766)
+            for _ in range(500):
+                status=bridge.ui_call({**self.connection,'action':'status'})
+                if status['progress']['run_state']=='partial':break
+                time.sleep(.01)
+            self.assertEqual(status['progress']['run_state'],'partial')
+            self.assertEqual(status['progress']['workers_finished'],3)
 
     def test_second_search_reuses_scope_finds_new_project_and_summarizes(self):
         (self.root/'routekv.md').write_text('RouteKV project measured KV memory and inference latency.',encoding='utf8')

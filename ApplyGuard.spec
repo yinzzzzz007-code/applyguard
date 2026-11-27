@@ -6,6 +6,11 @@ datas = [(str(path), 'data') for path in Path('data').glob('*.json')]
 datas += [('frontend/dist', 'frontend/dist'), ('frontend/public', 'frontend/public'), ('third_party', 'third_party'), ('contracts', 'contracts'), ('demo', 'demo'), ('.env.example', '.')]
 datas += [('scripts/agent_mcp.py', 'scripts'), ('scripts/connect_harness.py', 'scripts'), ('requirements-agent.txt', '.'), ('THIRD_PARTY_NOTICES.md', '.')]
 datas += [('scripts/session_budget.py', 'scripts')]
+privacy_model = Path('data/local/models/privacy-ner')
+privacy_files = ('config.json', 'tokenizer.json', 'LICENSE', 'onnx/model_quantized.onnx')
+if all((privacy_model / name).is_file() for name in privacy_files):
+    datas += [(str(privacy_model / name), str(Path('data/local/models/privacy-ner') / Path(name).parent))
+              for name in privacy_files]
 binaries = []
 hiddenimports = []
 tmp_ret = collect_all('webview')

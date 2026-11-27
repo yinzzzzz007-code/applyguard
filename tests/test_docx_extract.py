@@ -8,6 +8,7 @@ import unittest
 import zipfile
 from pathlib import Path
 from xml.etree.ElementTree import Element, SubElement, tostring
+from unittest.mock import patch
 
 from backend.services import evidence_parsers as ep
 
@@ -86,6 +87,46 @@ def _build_image_only_docx(path: Path, image_bytes: bytes) -> None:
 
 
 class DocxExtractTests(unittest.TestCase):
+    def test_mixed_text_and_embedded_image_are_both_preserved(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            docx = Path(tmp) / 'mixed.docx'
+            _build_textbox_docx(docx, ['获奖证明'])
+            with zipfile.ZipFile(docx, 'a') as archive:
+                archive.writestr('word/media/image1.png', b'image')
+            image = ep.SpanDraft(raw_text='程序设计竞赛二等奖', extractor='docx-embedded-ocr')
+            with patch.object(ep, '_docx_ocr_embedded_images', return_value=([image], None)), \
+                 patch.object(ep, '_libreoffice_to_pdf', return_value=None):
+                result = ep.parse_file(docx, 'mixed.docx', Path(tmp))
+            self.assertEqual(result.state, 'NEEDS_REVIEW')
+            self.assertIn('获奖证明', [span.raw_text for span in result.spans])
+            self.assertIn('程序设计竞赛二等奖', [span.raw_text for span in result.spans])
+            self.assertIn('图片含义仍需核对', result.conversion_note)
+
+    def test_mixed_image_ocr_failure_is_visible(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            docx = Path(tmp) / 'mixed.docx'
+            _build_textbox_docx(docx, ['获奖证明'])
+            with zipfile.ZipFile(docx, 'a') as archive:
+                archive.writestr('word/media/image1.png', b'image')
+            with patch.object(ep, '_docx_ocr_embedded_images', return_value=([], 'missing OCR')), \
+                 patch.object(ep, '_libreoffice_to_pdf', return_value=None):
+                result = ep.parse_file(docx, 'mixed.docx', Path(tmp))
+            self.assertIn('未识别到图片文字', result.conversion_note)
+            self.assertEqual(result.state, 'NEEDS_REVIEW')
+
+    def test_mixed_image_read_error_keeps_original_text(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            docx = Path(tmp) / 'mixed.docx'
+            _build_textbox_docx(docx, ['获奖证明'])
+            with zipfile.ZipFile(docx, 'a') as archive:
+                archive.writestr('word/media/image1.png', b'image')
+            with patch.object(ep, '_docx_ocr_embedded_images', side_effect=OSError('unavailable')), \
+                 patch.object(ep, '_libreoffice_to_pdf', return_value=None):
+                result = ep.parse_file(docx, 'mixed.docx', Path(tmp))
+            self.assertEqual(result.state, 'NEEDS_REVIEW')
+            self.assertIn('获奖证明', [span.raw_text for span in result.spans])
+            self.assertIn('图片识别未完成', result.conversion_note)
+
     def test_extracts_textbox_text_without_libreoffice(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             docx = Path(tmp) / "box.docx"

@@ -82,6 +82,15 @@ class AgentBridgeTests(unittest.TestCase):
         with self.assertRaises(ValueError):self.call('task')
         self.g['expires']=float('inf');a.ui_call({**self.c,'action':'revoke'})
         with self.assertRaises(ValueError):self.call('search',query='Atlas')
+    def test_search_round_budget_is_reported_and_enforced(self):
+        self.g['search_rounds'] = 11
+        self.card()
+        self.assertEqual(a.ui_call({**self.c,'action':'status'})['progress']['search_rounds'],12)
+        with self.assertRaisesRegex(ValueError,'轮数上限'):
+            self.card()
+        self.call('run',state='finished')
+        self.call('run',state='started')
+        self.assertEqual(self.g['search_rounds'],0)
     def test_revoke_during_search_discards_inflight_results(self):
         original=a.extract
         def revoke_then_extract(path,raw):

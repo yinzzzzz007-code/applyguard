@@ -46,6 +46,7 @@ def find_harness() -> str | None:
 
 
 def setup_info() -> dict:
+    from backend.services.privacy_ner import status as privacy_ner_status
     try:
         relative = Path(os.path.relpath(sys.executable, ROOT))
         install_python = str(relative) if relative.parts[0] == '..' else '.' + os.sep + str(relative)
@@ -67,6 +68,7 @@ def setup_info() -> dict:
         'github_token_configured': bool(os.getenv('APPLYGUARD_GITHUB_APP_CLIENT_ID', '').strip()),
         'request_timeout_seconds': MODEL_REQUEST_TIMEOUT_SECONDS,
         'session_timeout_seconds': SESSION_TIMEOUT_SECONDS,
+        'privacy_ner': privacy_ner_status(),
     }
 
 

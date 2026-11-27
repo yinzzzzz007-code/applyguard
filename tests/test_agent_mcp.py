@@ -1,4 +1,4 @@
-import json,os,sys,tempfile,threading,unittest
+import asyncio,json,os,sys,tempfile,threading,unittest
 from pathlib import Path
 from urllib.request import Request,build_opener,ProxyHandler
 from urllib.error import HTTPError
@@ -7,6 +7,42 @@ from backend.app import ApplyGuardHandler as Handler
 from backend.services import agent_bridge as a
 
 class MCPIntegrationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_mcp_waits_for_preview_and_only_returns_selected_quote(self):
+        from mcp import ClientSession,StdioServerParameters
+        from mcp.client.stdio import stdio_client
+        with tempfile.TemporaryDirectory() as folder:
+            Path(folder,'one.md').write_text('Atlas 张三参与测试。',encoding='utf8')
+            Path(folder,'two.md').write_text('Atlas 张三负责评估。',encoding='utf8')
+            server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
+            thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+            url=f'http://127.0.0.1:{server.server_port}'
+            c=a.create({'mode':'local','roots':[folder],'task':'查找 Atlas 项目','disclosure':'cloud_allowed',
+                        'purpose':'contribution','review_disclosures':True,'private_terms':['张三']})
+            params=StdioServerParameters(command=sys.executable,args=[str(Path(__file__).resolve().parents[1]/'scripts/agent_mcp.py')],env={**os.environ,
+                'APPLYGUARD_AGENT_URL':url,'APPLYGUARD_AGENT_ID':c['id'],'APPLYGUARD_AGENT_TOKEN':c['token']})
+            try:
+                async with stdio_client(params) as (read,write):
+                    async with ClientSession(read,write) as session:
+                        await session.initialize()
+                        await session.call_tool('get_task',{})
+                        pending=asyncio.create_task(session.call_tool('search_materials',{'query':'Atlas'}))
+                        preview=None
+                        for _ in range(100):
+                            preview=a.ui_call({**c,'action':'status'})['disclosure_preview']
+                            if preview:break
+                            await asyncio.sleep(.02)
+                        self.assertIsNotNone(preview)
+                        self.assertFalse(pending.done())
+                        self.assertNotIn('张三',json.dumps(preview,ensure_ascii=False))
+                        chosen=preview['cards'][0]['id']
+                        a.ui_call({**c,'action':'review_disclosure','preview_id':preview['id'],'card_ids':[chosen]})
+                        result=await asyncio.wait_for(pending,5)
+                        self.assertFalse(result.isError)
+                        self.assertEqual([card['id'] for card in json.loads(result.content[0].text)['cards']],[chosen])
+            finally:
+                a.ui_call({**c,'action':'revoke'})
+                server.shutdown();server.server_close();thread.join()
+
     async def test_protocol_exact_quotes_and_revocation(self):
         from mcp import ClientSession,StdioServerParameters
         from mcp.client.stdio import stdio_client

@@ -39,6 +39,20 @@ def main() -> None:
                 results[name] = f'{type(exc).__name__}: {exc}'
         (storage / 'backend-check.json').write_text(json.dumps(results, indent=2), encoding='utf-8')
         return
+    if '--check-privacy' in sys.argv:
+        from backend.services.privacy_ner import status
+        from backend.services.outbound_privacy import PrivacySession
+        result={'model':status()['state'],'synthetic_name_masked':False,'number_preserved':False}
+        try:
+            if result['model']=='available':
+                original='张三参与测试，团队离线性能约提升20%。'
+                protected=PrivacySession().protect(original)
+                result['synthetic_name_masked']='张三' not in protected
+                result['number_preserved']='约提升20%' in protected
+        except Exception as exc:
+            result['error_type']=type(exc).__name__
+        (storage/'privacy-check.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
+        return
     from backend.app import _configure_runtime_temp, _load_dotenv, create_server
     from backend.services.job_refresh import start_scheduler
 

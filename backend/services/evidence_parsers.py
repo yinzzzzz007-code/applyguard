@@ -264,7 +264,8 @@ def _parse_word(path: Path, relative_path: str, workspace_dir: Path) -> ParseRes
                 media_type=media,
                 suggested_fields=(_s := _suggest(joined))[1],
         suggested_kind=_s[0],
-                conversion_note="正文无文字层，已对 Word 内嵌图片做 OCR",
+                conversion_note="正文无文字层，已尝试识别 Word 内嵌图片；图表和图片含义仍需核对原件。"
+                    + (" 图片识别未完成。" if image_err else ""),
             )
         # Last resort: LibreOffice → PDF → text/OCR
         preview = _libreoffice_to_pdf(path, workspace_dir)
@@ -295,6 +296,21 @@ def _parse_word(path: Path, relative_path: str, workspace_dir: Path) -> ParseRes
             media_type=media,
         )
 
+    import zipfile
+    with zipfile.ZipFile(path) as archive:
+        has_images = any(name.startswith('word/media/') and not name.endswith('/')
+                         for name in archive.namelist())
+    image_note = None
+    if has_images:
+        try:
+            image_spans, image_err = _docx_ocr_embedded_images(path, workspace_dir)
+        except (OSError, ValueError):
+            image_spans, image_err = [], '内嵌图片读取失败。'
+        spans.extend(image_spans)
+        image_note = ('含内嵌图片，已尝试识别最多 8 张图片中的文字；图表和图片含义仍需核对原件。'
+                      if image_spans else '含内嵌图片，未识别到图片文字；请核对原件。')
+        if image_err:
+            image_note += ' 图片识别未完成。'
     joined = "\n".join(s.raw_text for s in spans)
     preview = _libreoffice_to_pdf(path, workspace_dir)
     return ParseResult(
@@ -304,7 +320,8 @@ def _parse_word(path: Path, relative_path: str, workspace_dir: Path) -> ParseRes
         suggested_fields=(_s := _suggest(joined))[1],
         suggested_kind=_s[0],
         is_conversion=preview is not None,
-        conversion_note="预览为 LibreOffice 转换件，页码可能与 Word 原件分页不同" if preview else None,
+        conversion_note=" ".join(filter(None, [image_note,
+            "预览为 LibreOffice 转换件，页码可能与 Word 原件分页不同" if preview else None])) or None,
         preview_path=preview,
     )
 
@@ -405,9 +422,14 @@ def _docx_ocr_embedded_images(
             )
             if not media_names:
                 return [], "文档内没有可 OCR 的内嵌图片。"
+            if len(media_names) > 8:
+                last_err = "内嵌图片超过 8 张，未全部识别。"
             for idx, name in enumerate(media_names[:8], start=1):  # bound cost
                 suffix = Path(name).suffix.lower() or ".png"
                 dest = media_dir / f"{path.stem}_{idx}{suffix}"
+                if zf.getinfo(name).file_size > MAX_FILE_BYTES:
+                    last_err = "内嵌图片过大，未全部识别。"
+                    continue
                 dest.write_bytes(zf.read(name))
                 ocr_spans, ocr_err = _run_local_ocr(dest)
                 if ocr_err and not ocr_spans:
@@ -416,7 +438,7 @@ def _docx_ocr_embedded_images(
                 for s in ocr_spans:
                     spans.append(
                         SpanDraft(
-                            page=idx,
+                            page=None,
                             bbox=s.bbox,
                             raw_text=s.raw_text,
                             extractor="docx-embedded-ocr",
@@ -425,7 +447,7 @@ def _docx_ocr_embedded_images(
     except zipfile.BadZipFile as exc:
         return [], f"docx 不是有效的 ZIP 包：{exc}"
     if spans:
-        return spans, None
+        return spans, last_err
     return [], last_err or "内嵌图片 OCR 未识别到文字。"
 
 

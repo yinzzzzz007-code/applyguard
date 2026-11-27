@@ -100,3 +100,7 @@ is retained with the project.
 ## Desktop OCR
 
 The Windows desktop build bundles `rapidocr-onnxruntime` 1.2.3 (Apache-2.0) and ONNX Runtime 1.32.0 (MIT). Package metadata and license files are included in the executable. RapidOCR source: https://github.com/RapidAI/RapidOCR.
+
+## Local privacy recognition model
+
+Optional model: [CheezOne/pii-detector-chinese-japanese-korean-english-small](https://huggingface.co/CheezOne/pii-detector-chinese-japanese-korean-english-small), revision `333854f6b01cbf265590c5f34ddf7b97f8d6365f`, Apache-2.0. The model license is retained at `third_party_licenses/privacy-ner-APACHE-2.0.txt`. The model card attributes its base to `jhu-clsp/mmBERT-small` (MIT) and training data includes [Ai4Privacy / Ai Suisse SA OpenPII](https://huggingface.co/datasets/ai4privacy/pii-masking-openpii-1.5m) (CC-BY-4.0). Weights are downloaded separately by `scripts/setup_privacy_ner.py`, checked by SHA-256 and not committed to Git. Local inference uses ONNX Runtime and Tokenizers; model results require human review.

@@ -442,6 +442,12 @@ GitHub 可选入口新增点按引导：`AgentConnector.tsx`、`GithubGuideTip.t
 
 # 2026-11-25：桌面 OCR 与岗位驱动经历发现
 
+2026-11-27 工作区修改：证明材料 `.docx` 在提取正文后也检查内嵌图片，尝试本地 OCR 的前 8 张并保留两种片段；图片未识别或未处理完毕时提示核对，图表语义和原 Word 页码不由 OCR 保证。连接器与文本模型的有限规则脱敏、多轮搜索边界见 [连接器说明](agent-connector.md#2026-11-27-本地隐私与多轮查找)。验证入口：`python -m unittest tests.test_docx_extract tests.test_outbound_privacy tests.test_agent_bridge`；OCR 依赖缺失时真实识别用例会跳过，不等于真实 OCR 已验证。
+
+2026-11-27 连接器继续修改：用户可编辑查找计划、填写本次连接自定义敏感词，界面默认对每批搜索结果执行外发预览，未选择的片段不返回 Agent；任务和计划本身先于该预览发送。回环 MCP 及撤销回归见 `tests.test_agent_mcp`、`tests.test_outbound_privacy`。本地小模型自动识别、其他云端入口的逐项预览和真实 Harness 模型复测仍未完成。
+
+同日后续：接入可选本地 ONNX 隐私识别模型、最多 3 个并行 Harness 检索进程及候选原文冲突提示；模型可能漏检，冲突结果须人工核对。测试和使用边界见[连接器说明](agent-connector.md#2026-11-27-本地隐私与多轮查找)和[本轮验证报告](testing-report-2026-11-27-privacy-search.md)。其他云端入口的逐项预览和真实云端复测仍需单独验证。
+
 桌面入口使用内置 RapidOCR 识别扫描件，文件夹选择在冻结程序中由 Windows 对话框完成。岗位说明页提供 Harness 经历发现入口，授权连接后，已回传的原文片段可调用模型生成待编辑项目草稿；重复标题保留已有经历，用户在经历库保存。材料来源版本变更或授权失效时拒绝生成结果。验证入口为 `python scripts/verify_desktop_changes.py`，此入口不调用云端模型。
 
 扫描简历长项目不能只以标题作为默认草稿：`resume_draft_vault._claim_text` 在 420 字限制内优先保留完整行；超出仍需用户核对、编辑。关联确认入口为 `EvidenceWorkspacePage.tsx`，后端持久记录人工确认及材料版本，`grounded_workflow.load_grounding_experiences` 仍执行版本和事实检查。真实计费冲突复测入口 `scripts/verify_conflict_corpus_live.py` 在输入密钥后运行，私有日志包含摘录，不可直接公开；预算预留记录为 `output/desktop-check/session-budget.json`。

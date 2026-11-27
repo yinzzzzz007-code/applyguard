@@ -41,6 +41,9 @@ def sdk_step(client, action, original, proposal, issues):
 
     from agents import Agent, ModelSettings, OpenAIChatCompletionsModel, RunConfig, Runner
     from openai import AsyncOpenAI
+    from backend.services.outbound_privacy import PrivacySession
+    privacy = PrivacySession()
+    protected = privacy.protect({"original":original,"proposal":proposal,"issues":issues})
 
     async def run():
         async with AsyncOpenAI(api_key=client.api_key, base_url=client.base_url,
@@ -50,10 +53,9 @@ def sdk_step(client, action, original, proposal, issues):
                           output_type=Verdict if judge else Repair,
                           model=OpenAIChatCompletionsModel(model=client.model, openai_client=api),
                           model_settings=ModelSettings(temperature=0, max_tokens=1200, store=False))
-            result = await Runner.run(agent, json.dumps({"original":original,"proposal":proposal,
-                "issues":issues}, ensure_ascii=False), max_turns=1,
+            result = await Runner.run(agent, json.dumps(protected, ensure_ascii=False), max_turns=1,
                 run_config=RunConfig(tracing_disabled=True))
-            return result.final_output.model_dump()
+            return privacy.restore(result.final_output.model_dump())
     return asyncio.run(run())
 
 

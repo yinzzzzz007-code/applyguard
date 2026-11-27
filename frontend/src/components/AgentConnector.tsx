@@ -13,7 +13,9 @@ import {HarnessSetupGuide} from './HarnessSetupGuide'
 import {GithubGuideTip} from './GithubGuideTip'
 import {githubGuideSteps, githubGuideBlocker} from '../githubGuide'
 import {addDiscoveredProject} from '../resume/draftSelection'
-type Card = { id: string; quote: string; state: string; page: number | null; line: number; source: {path:string;version:string;commit_sha?:string}; interpretation:string; experience?:string; missing:string[]; numeric_confirmation_required:boolean }
+type Card = { id: string; quote: string; state: string; page: number | null; line: number; source: {path:string;version:string;commit_sha?:string}; interpretation:string; experience?:string; missing:string[]; numeric_confirmation_required:boolean; approved_for_agent?:boolean }
+type DisclosurePreview={id:string;cards:Card[]}
+type Conflict={left_id:string;right_id:string;left_quote:string;right_quote:string;left_source:{path:string};right_source:{path:string};reason:string}
 type SavedConnection={connection:AgentConnection;task:string;purpose:string;disclosure:string;discoveryJob?:string;suggestions?:Record<string,{title:string;description:string;reason:string}>}
 let savedConnection:SavedConnection|null=null
 let closeListener:(()=>void)|null=null
@@ -36,6 +38,14 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
   const [open,setOpen]=useState(inlineDiscovery||!!restored),[mode,setMode]=useState('local'),[roots,setRoots]=useState(()=>{try{return sessionStorage.getItem('applyguard.agent.lastFolders')||''}catch{return ''}}),[repos,setRepos]=useState('')
   const defaultTask='查找与简历经历和目标岗位有关的材料，重点寻找本人职责、技术和成果的依据。'
   const [task,setTask]=useState(restored?.task||defaultTask)
+  const [plan,setPlan]=useState('查找相关项目及背景；查找个人职责；查找使用的方法；查找成果、测试和可能的更正。')
+  const [workers,setWorkers]=useState(3)
+  const [privateTerms,setPrivateTerms]=useState('')
+  const [reviewDisclosures,setReviewDisclosures]=useState(true)
+  const [disclosurePreview,setDisclosurePreview]=useState<DisclosurePreview|null>(null)
+  const [conflicts,setConflicts]=useState<Conflict[]>([])
+  const [approvedPreview,setApprovedPreview]=useState<Record<string,boolean>>({})
+  const previewId=useRef<string|null>(null)
   const [purpose,setPurpose]=useState(restored?.purpose||'contribution'),[disclosure,setDisclosure]=useState(restored?.disclosure||''),[privateRepo,setPrivate]=useState(false)
   const [connection,setConnection]=useState<AgentConnection|null>(restored?.connection||null),[connected,setConnected]=useState(false),[cards,setCards]=useState<Card[]>([])
   const [setup,setSetup]=useState<HarnessSetup|null>(null),[setupBusy,setSetupBusy]=useState(false),[setupError,setSetupError]=useState('')
@@ -114,6 +124,10 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
     catch {setFolderError('取消未完成，请关闭系统选择窗口后重试。')}
   }
   const activeConnection=useRef<string|null>(connection?.id||null)
+  function updateDisclosurePreview(preview:DisclosurePreview|null) {
+    if(preview?.id!==previewId.current) { previewId.current=preview?.id||null; setApprovedPreview({}) }
+    setDisclosurePreview(preview)
+  }
   async function detectSetup() {
     setSetupBusy(true);setSetupError('')
     try {setSetup(await api({action:'setup'}))} catch(e) {setSetupError(e instanceof Error?e.message:'无法检测本机环境')}
@@ -136,7 +150,7 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
       pending=true
       try {
         const status=await api({...connection,action:'status'})
-        if (!cancelled && activeConnection.current===connection.id) {setCards(status.cards);setConnected(status.connected);setProgress(status.progress??null)}
+        if (!cancelled && activeConnection.current===connection.id) {setCards(status.cards);setConnected(status.connected);setProgress(status.progress??null);setConflicts(status.conflicts??[]);updateDisclosurePreview(status.disclosure_preview??null)}
       } catch(e) {
         if (!cancelled && activeConnection.current===connection.id) {setConnected(false);setError(e instanceof Error?e.message:'连接状态更新失败')}
       } finally {pending=false}
@@ -157,6 +171,7 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
     if(!inlineDiscovery||!connection||!connected||!job||discoveryJob!==job||disclosure!=='cloud_allowed'||progress?.run_state!=='finished')return
     const selected:Card[]=[]
     for(const card of [...cards.filter(item=>item.state==='NEEDS_REVIEW'),...cards.filter(item=>item.state==='CANDIDATE')]) {
+      if(card.approved_for_agent===false)continue
       if(autoSummarized.current.has(card.source.path))continue
       autoSummarized.current.add(card.source.path);selected.push(card)
       if(selected.length===3)break
@@ -202,7 +217,7 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
   }
   async function revoke() {
     if(!connection)return
-    try{await api({...connection,action:'revoke'});activeConnection.current=null;savedConnection=null;if(closeListener)window.removeEventListener('pagehide',closeListener);closeListener=null;setConnection(null);setConnected(false);setCards([]);setProgress(null);setGithubStep(-1);setSourceConfirmed({});setNumbers({});setNotice('连接已撤销；重新授权后才能继续读取。');setError('')}
+    try{await api({...connection,action:'revoke'});activeConnection.current=null;savedConnection=null;if(closeListener)window.removeEventListener('pagehide',closeListener);closeListener=null;setConnection(null);setConnected(false);setCards([]);setProgress(null);updateDisclosurePreview(null);setGithubStep(-1);setSourceConfirmed({});setNumbers({});setNotice('连接已撤销；重新授权后才能继续读取。');setError('')}
     catch(e){setError(e instanceof Error?e.message:'撤销未成功，请重试')}
   }
   async function copyText(text:string, label:string) {
@@ -222,6 +237,9 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
       {!connection ? <>
         <div className="github-guide-entry"><ActionButton type="button" className="btn secondary" disabledReason="请等待当前操作完成。" disabled={busy||folderBusy||sourceBusy} onClick={()=>void run(async()=>{await changeGithubScope(false);setMode('github');setGithubStep(0)})}>从 GitHub 查找公开仓库</ActionButton><p>支持用户名、公开邮箱或项目关键词。</p></div>
         <label className="agent-task">查找需求<textarea className="resume-input" value={task} onChange={e=>setTask(e.target.value)} /></label>
+        <label>查找计划（可修改）<textarea className="resume-input" maxLength={1200} value={plan} onChange={e=>setPlan(e.target.value)} /></label>
+        <label>并行查找任务<select className="resume-input" value={workers} onChange={e=>setWorkers(Number(e.target.value))}><option value={1}>1 个任务</option><option value={3}>3 个任务：职责、方法、结果</option></select></label>
+        <p className="muted">并行任务会增加模型调用和费用，共享授权范围、外发预览和最多 12 次搜索。</p>
         <label>搜索范围<select className="resume-input" value={mode} disabled={busy||folderBusy||sourceBusy} onChange={e=>{const next=e.target.value;void run(async()=>{if(next==='local'){await changeGithubScope(false);setGithubStep(-1)}setMode(next);setDisclosure('')})}}><option value="local">本地材料</option><option value="github">GitHub</option><option value="auto">自动选择已授权来源</option></select></label>
         {mode!=='github' && <fieldset className="agent-folder-picker"><legend>允许访问的文件夹</legend>
           <ActionButton type="button" className="btn secondary" disabledReason={folderBusy?'请先完成或取消文件夹选择。':busy?'正在处理，请稍候。':'已选满五个文件夹；移除一个后可继续添加。'} disabled={folderBusy||busy||folders.length>=5} onClick={()=>void selectFolder()}>
@@ -247,9 +265,14 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
             <GithubSources onPending={setSourceBusy} value={repos} onChange={value=>{setRepos(value);setDisclosure('')}}/>{guideTip('repositories')}</div>}
         </>}
         <label>查找目的<select className="resume-input" value={purpose} onChange={e=>setPurpose(e.target.value)}><option value="contribution">寻找本人贡献依据</option><option value="background">查技术背景（不可导入为个人经历）</option></select></label>
-        <div {...targetProps('disclosure')}><fieldset><legend>读取前确定材料外发规则</legend><label><input type="radio" name="agent-disclosure" value="cloud_allowed" checked={disclosure==='cloud_allowed'} onChange={e=>setDisclosure(e.target.value)} />允许片段进入我配置的云端模型上下文</label><label><input type="radio" name="agent-disclosure" value="isolated_local" checked={disclosure==='isolated_local'} onChange={e=>setDisclosure(e.target.value)} />我已配置隔离的本地模型，禁止外发</label></fieldset>{guideTip('disclosure')}</div>
+        <div {...targetProps('disclosure')}><fieldset><legend>读取前确定材料外发规则</legend><label><input type="radio" name="agent-disclosure" value="cloud_allowed" checked={disclosure==='cloud_allowed'} onChange={e=>setDisclosure(e.target.value)} />允许片段进入我配置的云端模型上下文</label><label><input type="radio" name="agent-disclosure" value="isolated_local" checked={disclosure==='isolated_local'} onChange={e=>setDisclosure(e.target.value)} />我已配置隔离的本地模型，禁止外发</label></fieldset><p className="muted">连接器会尝试在本机替换常见手机号、邮箱和 18 位身份证号；姓名、公司及其他隐私仍可能发送，请核对授权范围。</p>{guideTip('disclosure')}</div>
+        <label>额外需要替换的姓名、公司或其他敏感词（每行一项，仅在本次连接中使用）<textarea className="resume-input" value={privateTerms} onChange={e=>setPrivateTerms(e.target.value)} /></label>
+        {setup?.privacy_ner&&<p className="muted">{setup.privacy_ner.notice}</p>}
+        <p className="muted">敏感词按原文精确匹配，无法自动识别别名或所有个人信息。</p>
+        <label><input type="checkbox" checked={reviewDisclosures} onChange={e=>setReviewDisclosures(e.target.checked)} />发送每批检索片段前由我选择允许发送的内容</label>
+        <p className="muted">查找需求和计划将在启动后发送给 Agent，检索片段可逐批预览；其他功能的模型调用不由此预览控制。</p>
         <p>本接口只能约束自己的工具。请使用仅启用此连接器的检索配置；Agent 自带的 shell 等其他工具不受这里的目录授权限制。</p>
-        <div {...targetProps('authorize')}><ActionButton className="btn primary" disabledReason={folderBusy?'请先完成或取消文件夹选择。':sourceBusy?'正在处理仓库请求，请稍候。':issues.length?issues.join('；'):'正在处理，请稍候。'} guideRequirements={busy||folderBusy||sourceBusy?[]:requirements} disabled={busy||folderBusy||(mode!=='local'&&sourceBusy)||issues.length>0} aria-describedby="agent-authorization-issues" onClick={()=>void run(async()=>{if(sourceBusy&&mode!=='local')throw new Error('正在固定 GitHub 仓库版本，请稍候。');if(issues.length){throw new Error(issues.join('；'))}const c=await api({action:'create',mode,task,purpose,disclosure,private:mode!=='local'&&privateRepo,github_handle:mode!=='local'&&privateRepo?githubHandle:undefined,roots:mode==='github'?[]:roots.split('\n').map(s=>s.trim()).filter(Boolean),repos:mode==='local'?[]:repos.split('\n').map(s=>s.trim()).filter(Boolean)});try{if(mode!=='github')sessionStorage.setItem('applyguard.agent.lastFolders',roots)}catch{/* Optional convenience only. */}activeConnection.current=c.id;setConnection(c);if(inlineDiscovery)setDiscoveryJob(job);setGithubStep(step=>step<0?-1:steps.length-1);setClock(Date.now());setCards([]);setConnected(false);setProgress(null);setNotice('');setSourceConfirmed({});setNumbers({});if(disclosure==='cloud_allowed'){await api({...c,action:'start_harness'});setNotice('已启动 Harness，正在查找已授权范围内的材料。')}})}>{disclosure==='isolated_local'?'授权并生成手动配置':'授权并开始查找'}</ActionButton><div id="agent-authorization-issues" role="status">{issues.length>0&&<><p>继续前请完成：</p><ul>{issues.map(issue=><li key={issue}>{issue}</li>)}</ul></>}{folderBusy&&<p>请先完成或取消文件夹选择。</p>}{busy&&<p>正在处理，请稍候…</p>}</div>{guideTip('authorize')}</div>
+        <div {...targetProps('authorize')}><ActionButton className="btn primary" disabledReason={folderBusy?'请先完成或取消文件夹选择。':sourceBusy?'正在处理仓库请求，请稍候。':issues.length?issues.join('；'):'正在处理，请稍候。'} guideRequirements={busy||folderBusy||sourceBusy?[]:requirements} disabled={busy||folderBusy||(mode!=='local'&&sourceBusy)||issues.length>0} aria-describedby="agent-authorization-issues" onClick={()=>void run(async()=>{if(sourceBusy&&mode!=='local')throw new Error('正在固定 GitHub 仓库版本，请稍候。');if(issues.length){throw new Error(issues.join('；'))}const c=await api({action:'create',mode,task,plan,workers,private_terms:privateTerms.split('\n').map(s=>s.trim()).filter(Boolean),review_disclosures:reviewDisclosures,purpose,disclosure,private:mode!=='local'&&privateRepo,github_handle:mode!=='local'&&privateRepo?githubHandle:undefined,roots:mode==='github'?[]:roots.split('\n').map(s=>s.trim()).filter(Boolean),repos:mode==='local'?[]:repos.split('\n').map(s=>s.trim()).filter(Boolean)});try{if(mode!=='github')sessionStorage.setItem('applyguard.agent.lastFolders',roots)}catch{/* Optional convenience only. */}activeConnection.current=c.id;setConnection(c);if(inlineDiscovery)setDiscoveryJob(job);setGithubStep(step=>step<0?-1:steps.length-1);setClock(Date.now());setCards([]);setConnected(false);setProgress(null);setNotice('');setSourceConfirmed({});setNumbers({});if(disclosure==='cloud_allowed'){await api({...c,action:'start_harness'});setNotice('已启动 Harness，正在查找已授权范围内的材料。')}})}>{disclosure==='isolated_local'?'授权并生成手动配置':'授权并开始查找'}</ActionButton><div id="agent-authorization-issues" role="status">{issues.length>0&&<><p>继续前请完成：</p><ul>{issues.map(issue=><li key={issue}>{issue}</li>)}</ul></>}{folderBusy&&<p>请先完成或取消文件夹选择。</p>}{busy&&<p>正在处理，请稍候…</p>}</div>{guideTip('authorize')}</div>
       </> : <>
         <div className={`harness-status ${connected&&progress?.run_state!=='failed'&&progress?.run_state!=='timed_out'?'paired':''}`} role="status"><strong>{connectionStage(connection,connected,clock,progress)}</strong><span>{new Date(connection.expires*1000).toLocaleTimeString()} 到期 · 每 3 秒自动刷新</span></div>
         {expired?<p className="harness-warning">本次授权已过期。请撤销后重新授权，并使用新的命令与令牌。</p>:<div className="harness-launch">
@@ -273,13 +296,27 @@ export function AgentConnector({ensureWorkspace,onImported,inlineDiscovery=false
         <div className="button-row"><ActionButton className="btn secondary" disabledReason={expired?'授权已过期，请撤销后重新授权。':'正在刷新，请稍候。'} disabled={busy||expired} onClick={()=>void run(async()=>{const s=await api({...connection,action:'status'});if(activeConnection.current!==connection.id)return;setCards(s.cards);setConnected(s.connected);setProgress(s.progress??null)})}>刷新配对与候选证据</ActionButton><button className="btn secondary" onClick={()=>void revoke()}>撤销连接</button></div>
       </>}
       {connection&&connectionDetail(progress,clock)&&<p role="status" className={progress?.run_state==='failed'||progress?.run_state==='timed_out'?'harness-warning':'muted'}>{connectionDetail(progress,clock)}</p>}
+      {connection&&!!progress?.search_rounds&&<p className="muted">本次已发起 {progress.search_rounds} 轮材料搜索（最多 12 轮）。结果仍需核对来源和归属。</p>}
+      {connection&&!!progress?.workers&&<p className="muted">并行查找已结束 {progress.workers_finished??0} / {progress.workers} 个任务。</p>}
+      {connection&&progress?.conflict_state==='running'&&<p className="muted">正在对已允许外发的候选材料进行冲突复核。</p>}
+      {connection&&progress?.conflict_state==='insufficient'&&<p className="muted">没有足够可用的候选材料，未执行冲突复核。</p>}
+      {connection&&progress?.conflict_state==='failed'&&<p className="harness-warning">冲突复核未完成，请手动核对候选原文。</p>}
+      {connection&&progress?.conflict_state==='stale'&&<p className="harness-warning">材料在冲突复核期间发生变化，请重新查找。</p>}
+      {connection&&progress?.conflict_state==='finished'&&!conflicts.length&&<p className="muted">最多复核 6 条已允许外发的候选；没有可定位的冲突提示，不代表材料一定没有冲突。</p>}
+      {connection&&conflicts.map((item,index)=><section className="callout" key={`${item.left_id}-${item.right_id}`}><h4>可能存在冲突 {index+1}，请核对原件</h4><p>{item.left_source.path}</p><blockquote>{item.left_quote}</blockquote><p>{item.right_source.path}</p><blockquote>{item.right_quote}</blockquote><p>{item.reason}</p></section>)}
+      {connection&&disclosurePreview&&<section className="callout" aria-label="外发片段预览">
+        <h4>选择本批允许发送给 Agent 的片段</h4>
+        <p>以下是本机替换后的内容，未勾选的不发送；可能仍有未识别隐私。请在约 55 秒内确认，超时则不发送本批。</p>
+        {disclosurePreview.cards.map(card=><label key={card.id}><input type="checkbox" checked={!!approvedPreview[card.id]} onChange={e=>setApprovedPreview({...approvedPreview,[card.id]:e.target.checked})} />{card.source.path}<blockquote>{card.quote}</blockquote></label>)}
+        <ActionButton className="btn primary" disabled={busy} disabledReason="正在处理，请稍候。" onClick={()=>void run(async()=>{await api({...connection,action:'review_disclosure',preview_id:disclosurePreview.id,card_ids:disclosurePreview.cards.filter(card=>approvedPreview[card.id]).map(card=>card.id)});updateDisclosurePreview(null);setNotice('已提交本批选择，未选片段不会发送。')})}>确认本批选择</ActionButton>
+      </section>}
       {error&&<p role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
       {connected&&!cards.length&&<p>尚无候选证据。请让 Agent 调用搜索并回传引用，再刷新。</p>}
       {cards.map(c=><article className="agent-evidence" key={c.id}><h4>{c.source.path} · {c.state==='IMPORTED'?'已导入，待陈述核验':'待确认草稿'}</h4><p>{c.page?`第 ${c.page} 页`:`第 ${c.line} 行/段`} · 版本 {c.source.commit_sha||c.source.version}</p><blockquote>{c.quote}</blockquote><p>关联经历：{c.experience||'待指定'}</p><p>Agent 候选解释：{c.interpretation||'尚未回传解释'}</p><p>仍缺信息：{c.missing.join('；')||'仍需核对本人归属及支持关系'}</p>
         {job && purpose==='contribution' && (['CANDIDATE','NEEDS_REVIEW','IMPORTED'].includes(c.state)) && <div className="callout">
           <h4>按当前岗位整理遗漏经历</h4>
           <p>依据上方原文生成项目描述，个人分工和事实仍由你核对。生成时将岗位与这段材料发送给已配置的云端模型。</p>
-          <ActionButton className="btn secondary" disabled={busy||disclosure!=='cloud_allowed'} disabledReason="请先允许材料片段进入云端模型。" onClick={()=>void run(async()=>{
+          <ActionButton className="btn secondary" disabled={busy||disclosure!=='cloud_allowed'||c.approved_for_agent===false} disabledReason={c.approved_for_agent===false?'该片段未通过本次外发预览。':'请先允许材料片段进入云端模型。'} onClick={()=>void run(async()=>{
             const value=await api({...connection,action:'suggest_experience',card_id:c.id,job},120000)
             setExperienceSuggestions(prev=>({...prev,[c.id]:{title:value.title,description:value.description,reason:value.reason}}))
           })}>生成可编辑的经历建议</ActionButton>

@@ -140,6 +140,15 @@ class HttpModelClient:
             raise ModelFailure("Model API key is not configured", retryable=False, code="MODEL_KEY_MISSING")
         if not self.base_url.startswith("https://"):
             raise ModelFailure("Model API URL must use HTTPS", retryable=False)
+        from backend.services.outbound_privacy import PrivacySession
+        privacy = PrivacySession()
+        system_prompt = privacy.protect(system_prompt, use_ner=False)
+        try:
+            parsed_prompt = json.loads(user_prompt)
+        except (ValueError, TypeError):
+            user_prompt = privacy.protect(user_prompt)
+        else:
+            user_prompt = json.dumps(privacy.protect(parsed_prompt), ensure_ascii=False)
         payload: dict[str, Any] = {
             "model": self.model,
             "temperature": 0,
@@ -195,7 +204,7 @@ class HttpModelClient:
         if result is not None:
             if message.get('refusal') or _is_refused_finish(finish_reason) or ((self.require_complete or schema is not None) and finish_reason not in _OK_FINISH):
                 raise ModelFailure(f"Model response was truncated or refused (finish_reason={finish_reason})", retryable=finish_reason == 'length')
-            return result
+            return privacy.restore(result)
         if not isinstance(content, str) or not content.strip():
             raise ModelFailure("Model returned empty content")
         if finish_reason not in _OK_FINISH and finish_reason is not None:

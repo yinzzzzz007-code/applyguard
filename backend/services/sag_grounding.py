@@ -59,6 +59,15 @@ def search_queries(text: str) -> list[tuple[str, str]]:
         ('correction', text + '\n查找更正、勘误、撤回、修订后的数字和职责、旧稿作废或计划变更的原文。')]
 
 
+def check_cloud_sensitive_inputs(queries, sources, candidate):
+    """Fail closed for recognisable identifiers until SAG has source-safe masking."""
+    from backend.services.outbound_privacy import PrivacySession
+    privacy = PrivacySession()
+    privacy.protect([queries, sources, candidate])
+    if privacy.values:
+        raise GroundingUnavailable('SAG 云端检索检测到可能的个人信息，请先核对并处理相关内容再重试；当前不能安全替换原文引用。')
+
+
 class SAGRetriever:
     """Index immutable evidence snapshots; query only each claim's allowed sources.
 
@@ -140,6 +149,9 @@ class SAGRetriever:
         strategy = _retrieval_strategy(base_url)
         if strategy not in {'vector', 'full_expand'}:
             raise GroundingUnavailable('检索策略必须为vector或full_expand。')
+        local_vectors = uses_deepseek_api(base_url) or os.getenv('APPLYGUARD_EMBEDDING_BACKEND') == 'local'
+        if strategy == 'full_expand' or not local_vectors:
+            check_cloud_sensitive_inputs(queries, sources, candidate)
         from backend.services.sag_storage import check_index_directory
         check_index_directory(str(directory))
         directory.mkdir(parents=True, exist_ok=True)

@@ -1,5 +1,19 @@
 # 自带 Agent 与本机 DeepSeek Harness（2026-11-13 更新）
 
+## 2026-11-27 本地隐私与多轮查找
+
+Harness 的任务和检索结果返回给 Agent 前，在本机将规则识别出的常见手机号、邮箱和 18 位身份证号码替换为会话内占位符；占位符对应关系只在本次授权的内存中，撤销时清除。用户界面保留原文，Agent 回传的引用必须与脱敏后的候选逐字一致，导入仍核对原件版本。普通 HTTP 文本模型和措辞审核 SDK 的请求也使用独立请求内占位符，响应按映射恢复；本次不把它称为全链路脱敏。
+
+界面可填写每次连接需保护的姓名、公司等敏感词，并可编辑查找计划。连接器将这些词与格式规则一起在本地替换为会话占位符；该清单只作用于当前连接及其经历建议生成，不自动保护其他功能。界面默认开启逐批检索结果预览：用户在 55 秒内勾选允许返回给 Agent 的片段，未选片段不返回；超时或撤销时停止本批回传。任务和查找计划会在启动后交给 Agent，用户应在授权前自行检查。旧 API 客户端如未请求 `review_disclosures`，不启用逐批预览；不得对所有客户端声称默认已预览。
+
+可选本地模型 `CheezOne/pii-detector-chinese-japanese-korean-english-small`（Apache-2.0）在 CPU 上辅助识别姓名等直接标识；当前权重约 264 MB，不提交 Git。源码环境执行 `python scripts/setup_privacy_ner.py` 下载固定版本并校验散列，并安装桌面依赖中的 ONNX Runtime 和 Tokenizers；重新打包时若上述文件齐全，`ApplyGuard.spec` 包含四个模型文件。界面提示是否检测到文件和运行库，首次推理会校验模型文件。若要求模型不可缺失，可设置 `APPLYGUARD_PII_NER_MODE=required`；默认 `auto` 在未安装模型时仍使用格式规则和自定义敏感词。许可和数据来源见 [第三方声明](../THIRD_PARTY_NOTICES.md)。
+
+本地模型和规则均可能漏识别、误识别；公司、非标准号码、图片和其他隐私未受完整保护。SAG 使用云端模型或云端向量时，对识别到的个人信息保守阻止请求，不自动替换证据原文；用户需先处理相关材料。本地向量的 vector 路径不因该检查而阻止。不要据此承诺匿名、阻止所有个人信息外发或服务商不会保存数据。其他功能的发送不经过连接器逐批预览。
+
+用户可选择 1 或 3 个并行 Harness 检索进程；三个进程分别侧重职责、方法、结果及更正，使用独立会话目录但共享用户授权和 12 次搜索上限。逐批预览会排队等待用户确认，并行调用可能增加费用；失败任务会显示部分完成，不代表完成全部搜索。结束后可对最多 6 条已允许外发的候选做一次模型冲突复核，只保留能定位到本地原文的双侧引文，显示为待用户核对的可能冲突；模型漏检、误判和两份来源并非独立的情况仍可能存在。关键词检索、提示词和小样本测试均不保证覆盖率。
+
+回归入口：`python -m unittest tests.test_privacy_ner_live tests.test_outbound_privacy tests.test_harness_conflicts tests.test_agent_bridge tests.test_harness_autostart tests.test_agent_mcp`。前端构建后设置 `PLAYWRIGHT_MODULE` 指向本机 Playwright 包，运行 `node scripts/agent_disclosure_browser_smoke.cjs`；此脚本使用模拟接口和虚构数据，仅检查预览交互，不调用真实 Harness 或云端模型。
+
 入口位于「证明材料」页的「连接 DeepSeek Harness / 其他 Agent」。页面检测实际 Python、连接脚本、MCP 依赖和已安装的 Harness，并生成本机命令。无需替换路径占位符。本机 Harness 0.2.1-rc.3 已完成真实 Gemini 配对、检索与回传，详细证据见 [续测报告](testing-report-2026-11-13-gemini.md#连接修复首页视频与严格导出续测)。
 
 用户指定来源、决定外发规则，再授权。凭据在页面和运行进程中使用，30 分钟到期；撤销后旧凭据失效。离页会尽力撤权，崩溃／断网时由服务端到期兜底。已经传给 Agent／云端的片段不能通过撤权收回。手动上传仍可独立使用。
